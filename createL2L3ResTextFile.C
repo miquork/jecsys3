@@ -20,7 +20,7 @@ using namespace std;
 
 const bool debug = true;
 
-void createL2L3ResTextFiles(string set="RunC");
+void createL2L3ResTextFiles(string set);
 
 TLegend *_leg(0);
 void createL2L3ResTextFile() {
@@ -44,7 +44,7 @@ void createL2L3ResTextFile() {
 
   _leg = tdrLeg(0.45,0.90,0.75,0.90);
 
-  createL2L3ResTextFiles("RunC");
+  createL2L3ResTextFiles("RunCD");
 
   c1->Update();
   c1->SaveAs("pdf/createL2L3ResTextFile_2022C.pdf");
@@ -78,6 +78,7 @@ void createL2L3ResTextFiles(string set) {
 
   map<string,int> color;
   color["RunC"] = kYellow+2;
+  color["RunCD"] = kOrange+1;
 
   h->Fit(f1,"QRN");
   h->Fit(f1,"QRNM");
@@ -103,8 +104,10 @@ void createL2L3ResTextFiles(string set) {
   const char *run = set.c_str();
 
   string sin, sout;
-  sin = "../JERCProtoLab/Winter22Run3/L2Residual/Winter22Run3_V1/Winter22Run3_V1_MPF_LOGLIN_L2Residual_pythia8_AK4PFPuppi.txt";
-  sout = "../JERCProtoLab/Winter22Run3/global_fit/Winter22Run3_RunCD_V1_DATA_L2L3Residual_AK4PFPuppi.txt";
+  //sin = "../JERCProtoLab/Winter22Run3/L2Residual/Winter22Run3_V1/Winter22Run3_V1_MPF_LOGLIN_L2Residual_pythia8_AK4PFPuppi.txt"; // For V1 L2L3Res
+  //sout = "../JERCProtoLab/Winter22Run3/global_fit/Winter22Run3_RunCD_V1_DATA_L2L3Residual_AK4PFPuppi.txt"; // For V1 L2L3Res
+  sin = "../JERCProtoLab/Winter22Run3/L2Residual/WinterRun3_V2_PtJER/Winter22RunC_V2_MPF_LOGLIN_L2Residual_pythia8_AK4PFPuppi.txt"; // For V2 L2L3Res
+  sout = "../JERCProtoLab/Winter22Run3/global_fit/Winter22Run3_RunC_V2_DATA_L2L3Residual_AK4PFPuppi.txt"; // For V2 L2l3Res (L2Res RunC, L3Res RunCD)
 
   ifstream fin(sin.c_str());
   assert(fin.is_open());

@@ -52,12 +52,12 @@ bool _gf_useJESref = true;//false;
 // How to use: comment out datasets that are not needed to switch them off
 const unsigned int ndt = 44;
 const array<array<string,3>,ndt> _gf_datasets = {{
-    //{"ptchs1_zjet_a100", "Rjet",""},
+    //{"ptchs_zjet_a100", "Rjet",""},
     //{"mpfchs1_zjet_a100", "Rjet",""},
     {"hdm_mpfchs1_zjet", "Rjet",""},
-    {"chf_zjet_a100",  "chf",""},
-    {"nhf_zjet_a100",  "nhf",""},
-    {"nef_zjet_a100",  "nef",""},
+    //{"chf_zjet_a100",  "chf",""},
+    //{"nhf_zjet_a100",  "nhf",""},
+    //{"nef_zjet_a100",  "nef",""},
   }};
 
 // Use only these data sets (empty for all)
@@ -65,8 +65,8 @@ const array<array<string,3>,ndt> _gf_datasets = {{
 // 'name' should match the dataset name in the list above
 // How to use: uncomment individual datasets to use only those
 const array<string,29> _gf_datasets_whitelist = {
-  //"ptchs_zjet_a100",
-  //"mpfchs1_zjet_a100",
+  "ptchs_zjet_a100",
+  "mpfchs1_zjet_a100",
   "hdm_mpfchs1_zjet",
   "chf_zjet_a100",
   "nhf_zjet_a100",
@@ -114,13 +114,14 @@ const array<array<string,3>,nsrc> _gf_sources = {{
 // concatenated Rjet,chf,nef,nhf functions strings
 const int nshp = 112;
 const array<array<string,3>, nshp> _gf_shapes = {{
-
+    /*
     {"em3","Rjet","-0.3222+log(x)*(0.1973+log(x)*(-0.0774+log(x)*(-0.006124+log(x)*(0.001035+log(x)*(0.0002058+log(x)*-2.089e-05)))))"},
     {"em3","chf","2.59+log(x)*(-1.188+log(x)*(0.1324+log(x)*(0.01962+log(x)*(-0.001522+log(x)*(-0.0004592+log(x)*3.848e-05)))))"},
     {"em3","nef","-2.715+log(x)*(1.225+log(x)*(-0.1397+log(x)*(-0.02023+log(x)*(0.001699+log(x)*(0.0004898+log(x)*-4.382e-05)))))"},
     {"em3","nhf","2.168+log(x)*(-1.761+log(x)*(0.4903+log(x)*(-0.0334+log(x)*(-0.007356+log(x)*(0.001323+log(x)*-5.843e-05)))))"},
     // "em3" checksum: c8cb4a54ecee28c98c7fe286c0beafa9
-
+    */
+    /*
     {"tv402","Rjet","-3.512+log(x)*(3.975+log(x)*(-1.433+log(x)*(0.1443+log(x)*(0.01588+log(x)*(-0.003781+log(x)*0.0001845)))))"},
     {"tv402","chf","-14.72+log(x)*(12.93+log(x)*(-3.671+log(x)*(0.2582+log(x)*(0.04383+log(x)*(-0.007821+log(x)*0.0003428)))))"},
     {"tv402","nef","2.082+log(x)*(-0.8289+log(x)*(-0.2106+log(x)*(0.1027+log(x)*(0.00176+log(x)*(-0.002916+log(x)*0.0002057)))))"},
@@ -138,20 +139,20 @@ const array<array<string,3>, nshp> _gf_shapes = {{
     {"tv300pn","nef","-14.02+log(max(30.,x))*(12.55+log(max(30.,x))*(-3.805+log(max(30.,x))*(0.3161+log(max(30.,x))*(0.05375+log(max(30.,x))*(-0.01122+log(max(30.,x))*0.0005451)))))"},
     {"tv300pn","nhf","6.388+log(max(30.,x))*(-5.397+log(max(30.,x))*(1.524+log(max(30.,x))*(-0.1035+log(max(30.,x))*(-0.026+log(max(30.,x))*(0.00501+log(max(30.,x))*-0.0002474)))))"},
     // "tv300pn" checksum: a25af6468140b2a27a00c0fc1bab83df
+    */
 
-    /*
     {"hhp3","Rjet","2.817+log(x)*(-2.491+log(x)*(0.698+log(x)*(-0.04045+log(x)*(-0.008571+log(x)*(0.001366+log(x)*-5.705e-05)))))"},
     {"hhp3","chf","1.363+log(x)*(-1.602+log(x)*(0.5867+log(x)*(-0.06816+log(x)*(-0.00732+log(x)*(0.002+log(x)*-0.0001039)))))"},
     {"hhp3","nef","-7.619+log(x)*(7.721+log(x)*(-2.651+log(x)*(0.2725+log(x)*(0.03317+log(x)*(-0.00842+log(x)*0.000441)))))"},
     {"hhp3","nhf","7.178+log(x)*(-6.88+log(x)*(2.246+log(x)*(-0.1991+log(x)*(-0.03391+log(x)*(0.007537+log(x)*-0.0003856)))))"},
     // "hhp3" checksum: 57569f81de14365a30d012311898ae2a
-    */
-    {"hhp12","Rjet","((2.817+log(x)*(-2.491+log(x)*(0.698+log(x)*(-0.04045+log(x)*(-0.008571+log(x)*(0.001366+log(x)*-5.705e-05))))))-1)*4+1"},
-    {"hhp12","chf","(1.363+log(x)*(-1.602+log(x)*(0.5867+log(x)*(-0.06816+log(x)*(-0.00732+log(x)*(0.002+log(x)*-0.0001039))))))*4"},
-    {"hhp12","nef","(-7.619+log(x)*(7.721+log(x)*(-2.651+log(x)*(0.2725+log(x)*(0.03317+log(x)*(-0.00842+log(x)*0.000441))))))*4"},
-    {"hhp12","nhf","(7.178+log(x)*(-6.88+log(x)*(2.246+log(x)*(-0.1991+log(x)*(-0.03391+log(x)*(0.007537+log(x)*-0.0003856))))))*4"},
+    /*
+    {"hhp18","Rjet","((2.817+log(x)*(-2.491+log(x)*(0.698+log(x)*(-0.04045+log(x)*(-0.008571+log(x)*(0.001366+log(x)*-5.705e-05))))))-1)*6+1"},
+    {"hhp18","chf","(1.363+log(x)*(-1.602+log(x)*(0.5867+log(x)*(-0.06816+log(x)*(-0.00732+log(x)*(0.002+log(x)*-0.0001039))))))*6"},
+    {"hhp18","nef","(-7.619+log(x)*(7.721+log(x)*(-2.651+log(x)*(0.2725+log(x)*(0.03317+log(x)*(-0.00842+log(x)*0.000441))))))*6"},
+    {"hhp18","nhf","(7.178+log(x)*(-6.88+log(x)*(2.246+log(x)*(-0.1991+log(x)*(-0.03391+log(x)*(0.007537+log(x)*-0.0003856))))))*6"},
     // custom variant
-    
+    */
     /*
     {"hhblue103","Rjet","-52.44+log(max(55.,x))*(36.13+log(max(55.,x))*(-7.941+log(max(55.,x))*(0.2816+log(max(55.,x))*(0.116+log(max(55.,x))*(-0.01448+log(max(55.,x))*0.0004894)))))"},
     {"hhblue103","chf","6.354+log(max(55.,x))*(-3.394+log(max(55.,x))*(0.3485+log(max(55.,x))*(0.06261+log(max(55.,x))*(-0.004791+log(max(55.,x))*(-0.001639+log(max(55.,x))*0.0001499)))))"},
