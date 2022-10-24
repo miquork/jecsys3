@@ -20,7 +20,7 @@ void unittest_zjet() {
 
   // Set file to be tested against reference
   const char *cd = "../JERCProtoLab/Winter22Run3/L3Residual_Z";
-  TFile *fnew = new TFile(Form("%s/jme_bplusZ_merged_2022muon_EOS_v2p1_Run2022E_v9c.root",cd),"READ"); id = "v9ce"; // RunE (no corrections)
+  TFile *fnew = new TFile(Form("%s/jme_bplusZ_merged_2022muon_EOS_v2p1_Run2022E_v9c.root",cd),"READ"); id = "RunE";//"v9ce"; // RunE (no corrections)
   //TFile *fnew = new TFile(Form("%s/jme_bplusZ_merged_2022muon_EOS_v2p1_Run2022E_v9b.root",cd),"READ"); id = "v9be"; // RunE + CD_V2_L2L3Res input (only L2L3Res, no L2L3! bigger DY)
   //TFile *fnew = new TFile(Form("%s/jme_bplusZ_merged_2022muon_EOS_v2p1_Run2022E_v9.root",cd),"READ"); id = "v9e"; // RunE + CD_V2_L2L3Res input (only L2L3Res, no L2L3! smaller DY)
   //TFile *fnew = new TFile(Form("%s/jme_bplusZ_merged_2022muon_EOS_v2p0_Run2022CD_v7.root",cd),"READ"); id = "v7cd"; // RunC_V2_L2L3Res closure (problematic?)
@@ -31,7 +31,7 @@ void unittest_zjet() {
   //TFile *fref = new TFile(Form("%s/jme_bplusZ_merged_2022muon_EOS_v2p1_Run2022E_v9b.root",cd),"READ"); idref = "v9be"; // RunE + CD_V2_L2L3Res (only L2L3Res, no L2L3! bigger DY)
   //TFile *fref = new TFile(Form("%s/jme_bplusZ_merged_2022muon_EOS_v2p1_Run2022E_v9.root",cd),"READ"); idref = "v9e"; // RunE + CD_V2_L2L3Res input (only L2L3Res, no L2L3! smaller DY)
   //TFile *fref = new TFile(Form("%s/jme_bplusZ_merged_2022muon_EOS_v2p0_Run2022CD_v7.root",cd),"READ"); idref = "v7cd"; // RunC_V2_L2L3Res closure (problematic?)
-  TFile *fref = new TFile(Form("%s/jme_bplusZ_merged_2022muon_EOS_v2p0_Run2022CD_v6.root",cd),"READ"); idref = "v6cd"; // RunC_V2_L2L3Res input (stable, no corrections applied)
+  TFile *fref = new TFile(Form("%s/jme_bplusZ_merged_2022muon_EOS_v2p0_Run2022CD_v6.root",cd),"READ"); idref = "RunCD";//"v6cd"; // RunC_V2_L2L3Res input (stable, no corrections applied)
   assert(fref  && !fref->IsZombie());
   const char *cidref = idref.c_str();
   
