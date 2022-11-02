@@ -2,18 +2,46 @@
 #include "TFile.h"
 #include "TProfile2D.h"
 #include "TH2D.h"
+#include "TMath.h"
 
 #include <string>
 #include <vector>
 
+#include "../tdrstyle_mod22.C"
+
+// use pulls instead of relative changes
+bool doPull = true;
+bool plotJetVeto = true;
+// If these are non-zero (not ""), will use just this
+string oneTrig = "";
+//string oneTrig = "HLT_PFJet500";
+//string oneTrig = "HLT_PFJet450";
+//string oneTrig = "HLT_PFJet320";
+//string oneTrig = "HLT_PFJet40";
+//string oneTrig = "HLT_PFJet60";
+//string oneTrig = "HLT_PFJet80";
+//string oneTrig = "HLT_PFJet140";
+//string oneTrig = "HLT_PFJet260";
+string oneHist = "";
+//string oneHist = "p2asymm";
+//string oneHist = "p2nhf";
+//string oneHist = "p2nhf";
+
 void doJetVeto() {
 
+  setTDRStyle();
+  TDirectory *curdir = gDirectory;
+  
+  lumi_136TeV = "RunE, 5.5 fb^{-1}";
   TFile *f = new TFile("../dijet/rootfiles/jmenano_data_out_v12e.root","READ");
+  //lumi_136TeV = "RunF, 1.4 fb^{-1}";
+  //TFile *f = new TFile("../dijet/rootfiles/jmenano_data_out_v12f.root","READ");
+
   assert(f && !f->IsZombie());
 
   vector<string> vtrg;
+  //vtrg.push_back("HLT_ZeroBias"); // analyze correct PD
 
-  vtrg.push_back("HLT_ZeroBias");
   vtrg.push_back("HLT_PFJet40");
   vtrg.push_back("HLT_PFJet60");
   vtrg.push_back("HLT_PFJet80");
@@ -28,6 +56,7 @@ void doJetVeto() {
   vtrg.push_back("HLT_PFJetFwd40");
   vtrg.push_back("HLT_PFJetFwd60");
   vtrg.push_back("HLT_PFJetFwd80");
+  // NB: these had wrong |eta| threshold in v12+v13
   vtrg.push_back("HLT_PFJetFwd140");
   vtrg.push_back("HLT_PFJetFwd200");
   vtrg.push_back("HLT_PFJetFwd260");
@@ -35,14 +64,22 @@ void doJetVeto() {
   vtrg.push_back("HLT_PFJetFwd400");
   vtrg.push_back("HLT_PFJetFwd450");
   vtrg.push_back("HLT_PFJetFwd500");
+  if (oneTrig!="") {
+    vtrg.clear();
+    vtrg.push_back(oneTrig);
+  }
   int ntrg = vtrg.size();
 
   vector<string> vh;
   vh.push_back("p2asymm");
   vh.push_back("h2pt");
-  //vh.push_back("p2nef");
+  vh.push_back("p2nef");
   //vh.push_back("p2chf");
   //vh.push_back("p2nhf");
+  if (oneHist!="") {
+    vh.clear();
+    vh.push_back(oneHist);
+  }
   int nh = vh.size();
 
   TH2D *h2sums(0), *h2refsum(0), *h2jes(0);
@@ -145,8 +182,23 @@ void doJetVeto() {
 	  for (int j = 1; j != ny+1; ++j) {
 	    if (h2->GetBinError(i,j)!=0 && q68!=0) {
 	      //if (h2->GetBinError(i, j) < q68) {
-	      h2->SetBinContent(i, j, (h2->GetBinContent(i, j)-median) / q68);
-	      h2->SetBinError(i, j, h2->GetBinError(i, j) / q68);
+	      if (doPull) {
+		h2->SetBinContent(i, j, (h2->GetBinContent(i, j)-median) / q68);
+		h2->SetBinError(i, j, h2->GetBinError(i, j) / q68);
+	      }
+	      else {
+		//if (fabs(median)<0.25) {
+		if (median<0.5) {
+		  h2->SetBinContent(i,j,(h2->GetBinContent(i,j)-median)/
+				    (1+fabs(median)));
+		  h2->SetBinError(i, j, h2->GetBinError(i, j) /
+				  (1+fabs(median)));
+		}
+		else {
+		  h2->SetBinContent(i,j,(h2->GetBinContent(i,j)-median)/median);
+		  h2->SetBinError(i, j, h2->GetBinError(i, j) / median);
+		}
+	      }
 	      //}
 	      //else {
 	      //h2->SetBinContent(i, j, 0.);
@@ -170,12 +222,32 @@ void doJetVeto() {
 		
     } // for itrg
 
+    double ntrg2 = (oneTrig!="" ? 1 : max(1, ntrg/2));
     const char *c1name = Form("c1_%s",hname.c_str());
-    TCanvas *c1 = new TCanvas(c1name,c1name,800,600);
-    h2sum->Draw("COLZ");
-    h2sum->GetZaxis()->SetRangeUser(-100,100);
-    h2sum->Draw("COLZ");    
+    //TCanvas *c1 = new TCanvas(c1name,c1name,800,600);
+    TH1D *h1 = tdrHist(Form("h1_%s_%s",oneTrig.c_str(),hname.c_str()),
+		       "#phi",-TMath::Pi(),TMath::Pi(),"#eta",-5.2,5.2);
+    if (doPull) h1->GetZaxis()->SetRangeUser(-5*ntrg2,5*ntrg2);
+    else        h1->GetZaxis()->SetRangeUser(-0.50,0.50);
+    //lumi_136TeV = "RunE, 5.5 fb^{-1}";
+    TCanvas *c1 = tdrCanvas(c1name,h1,8,11,kRectangular);
+    c1->SetRightMargin(0.15);
+    h2sum->Draw("COLZ SAME");
+    if (doPull) h2sum->GetZaxis()->SetRangeUser(-5*ntrg2,5*ntrg2);
+    else        h2sum->GetZaxis()->SetRangeUser(-0.5,0.5);
+    //h2sum->Draw("COLZ");
 
+    TLatex *tex = new TLatex();
+    tex->SetNDC(); tex->SetTextSize(0.035);
+    tex->DrawLatex(0.15,0.87,hname.c_str());//oneHist.c_str());
+    tex->DrawLatex(0.15,0.83,oneTrig.c_str());
+
+    gPad->RedrawAxis();
+    gPad->Update();
+
+    c1->SaveAs(Form("pdf/doJetVeto/doJetVeto_%s_%s.pdf",
+		    hname.c_str(), doPull ? "pull" : "rel"));
+    
     if (!h2refsum && hname=="p2asymm") {
       h2refsum = (TH2D*)h2sum->Clone("h2refsum");
     }
@@ -188,11 +260,22 @@ void doJetVeto() {
     }
   } // for ih
 
-  TCanvas *c1 = new TCanvas("c1","c1",800,600);
-  h2sums->Draw("COLZ");
-  h2sums->GetZaxis()->SetRangeUser(-100,100);
+  TH1D *h1 = tdrHist("h1","#phi",-TMath::Pi(),TMath::Pi(),"#eta",-5.2,5.2);
+  if (doPull)
+    h1->GetZaxis()->SetRangeUser(-100,100);
+  else
+    h1->GetZaxis()->SetRangeUser(-0.50,0.50);
+  //lumi_136TeV = "RunE, 5.5 fb^{-1}";
+  //TCanvas *c1 = new TCanvas("c1","c1",800,600);
+  TCanvas *c1 = tdrCanvas("c1",h1,8,11,kRectangular);
+  gPad->SetRightMargin(0.15);
+  h2sums->Draw("COLZ SAME");
+  if (doPull)
+    h2sums->GetZaxis()->SetRangeUser(-100,100);
+  else
+    h2sums->GetZaxis()->SetRangeUser(-0.50,0.50);
   //h2sums->GetZaxis()->SetRangeUser(-50,5);
-  h2sums->Draw("COLZ");
+  //h2sums->Draw("COLZ");
 
   TH2D *h2veto = (TH2D*)h2sums->Clone("jetvetomap");
   TH2D *h2cold = (TH2D*)h2sums->Clone("jetvetomap_cold");
@@ -231,24 +314,38 @@ void doJetVeto() {
       }
     } // for j
   } // for j
-  h2veto->SetLineColor(kRed);
-  h2veto->Draw("SAME BOX");
-  h2both->SetLineColor(kOrange+1);
-  h2both->Draw("SAME BOX");
-  h2hot->SetLineColor(kRed);
-  h2hot->Draw("SAME BOX");
-
-  c1->Update();
-  c1->SaveAs("pdf/doJetVeto/doJetVeto_h2map.pdf");
+  if (plotJetVeto) {
+    h2veto->SetLineColor(kRed);
+    h2veto->Draw("SAME BOX");
+    h2both->SetLineColor(kOrange+1);
+    h2both->Draw("SAME BOX");
+    h2hot->SetLineColor(kRed);
+    h2hot->Draw("SAME BOX");
+  }
+  gPad->RedrawAxis();
+  gPad->Update();
+  if (oneTrig!="" && oneHist!="") {
+    c1->SaveAs(Form("pdf/doJetVeto/doJetVeto_%s_%s_%s.pdf",
+		    oneTrig.c_str(), oneHist.c_str(),
+		    doPull ? "pull" : "rel"));
+  }
+  else
+    c1->SaveAs("pdf/doJetVeto/doJetVeto_h2map.pdf");
 
   //h2eep->SetLineColor(kOrange+1);
   //h2eep->Draw("SAME BOX");
 
   if (h2jes) {
-    TCanvas *c2 = new TCanvas("c2","c2",800,600);
-    h2jes->Draw("COLZ");
+    TH1D *h2 = tdrHist("h2","#phi",-TMath::Pi(),+TMath::Pi(),"#eta",-5.2,5.2);
+    h2->GetZaxis()->SetRangeUser(-0.50,0.50);
+    //TCanvas *c2 = new TCanvas("c2","c2",800,600);
+    TCanvas *c2 = tdrCanvas("c2",h2,8,11,kRectangular);
+    gPad->SetRightMargin(0.15);
+    h2jes->Draw("SAME COLZ");
     h2jes->GetZaxis()->SetRangeUser(-0.50,0.50);
-    h2jes->Draw("COLZ");
+    //h2jes->Draw("COLZ");
+    gPad->RedrawAxis();
+    gPad->Update();
     c2->SaveAs("pdf/doJetVeto/doJetVeto_h2jes.pdf");
   }
 
