@@ -57,6 +57,7 @@ void doJetVeto() {
   vtrg.push_back("HLT_PFJetFwd60");
   vtrg.push_back("HLT_PFJetFwd80");
   // NB: these had wrong |eta| threshold in v12+v13
+  /*
   vtrg.push_back("HLT_PFJetFwd140");
   vtrg.push_back("HLT_PFJetFwd200");
   vtrg.push_back("HLT_PFJetFwd260");
@@ -64,6 +65,7 @@ void doJetVeto() {
   vtrg.push_back("HLT_PFJetFwd400");
   vtrg.push_back("HLT_PFJetFwd450");
   vtrg.push_back("HLT_PFJetFwd500");
+  */
   if (oneTrig!="") {
     vtrg.clear();
     vtrg.push_back(oneTrig);
