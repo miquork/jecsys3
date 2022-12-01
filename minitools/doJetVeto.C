@@ -27,13 +27,21 @@ string oneHist = "";
 //string oneHist = "p2nhf";
 //string oneHist = "p2nhf";
 
-void doJetVeto() {
+void doJetVeto(string run = "CD") {
 
   setTDRStyle();
   TDirectory *curdir = gDirectory;
-  
-  lumi_136TeV = "RunE, 5.5 fb^{-1}";
-  TFile *f = new TFile("../dijet/rootfiles/jmenano_data_out_v12e.root","READ");
+
+  TFile *f(0);
+  if (run=="CD") {
+    lumi_136TeV = "RunCD, 7.6 fb^{-1}";
+    f = new TFile("../dijet/rootfiles/jmenano_data_out_v13cd.root","READ");
+  }
+  if (run=="E") {
+    lumi_136TeV = "RunE, 5.5 fb^{-1}";
+    f = new TFile("../dijet/rootfiles/jmenano_data_out_v13e.root","READ"); // new v6
+  }
+ ///TFile *f = new TFile("../dijet/rootfiles/jmenano_data_out_v12e.root","READ");
   //lumi_136TeV = "RunF, 1.4 fb^{-1}";
   //TFile *f = new TFile("../dijet/rootfiles/jmenano_data_out_v12f.root","READ");
 
@@ -56,7 +64,7 @@ void doJetVeto() {
   vtrg.push_back("HLT_PFJetFwd40");
   vtrg.push_back("HLT_PFJetFwd60");
   vtrg.push_back("HLT_PFJetFwd80");
-  // NB: these had wrong |eta| threshold in v12+v13
+  // NB: these had wrong |eta| threshold in v12+v13. To be fixed in v14
   /*
   vtrg.push_back("HLT_PFJetFwd140");
   vtrg.push_back("HLT_PFJetFwd200");
@@ -66,6 +74,25 @@ void doJetVeto() {
   vtrg.push_back("HLT_PFJetFwd450");
   vtrg.push_back("HLT_PFJetFwd500");
   */
+
+  // Add dijet average triggers for better h2jes
+  vtrg.push_back("HLT_DiPFJetAve40");
+  vtrg.push_back("HLT_DiPFJetAve60");
+  vtrg.push_back("HLT_DiPFJetAve80");
+  vtrg.push_back("HLT_DiPFJetAve140");
+  vtrg.push_back("HLT_DiPFJetAve200");
+  vtrg.push_back("HLT_DiPFJetAve260");
+  vtrg.push_back("HLT_DiPFJetAve320");
+  vtrg.push_back("HLT_DiPFJetAve400");
+  vtrg.push_back("HLT_DiPFJetAve500");
+  
+  vtrg.push_back("HLT_DiPFJetAve60_HFJEC");
+  vtrg.push_back("HLT_DiPFJetAve80_HFJEC");
+  vtrg.push_back("HLT_DiPFJetAve100_HFJEC");
+  vtrg.push_back("HLT_DiPFJetAve160_HFJEC");
+  vtrg.push_back("HLT_DiPFJetAve220_HFJEC");
+  vtrg.push_back("HLT_DiPFJetAve300_HFJEC");
+  
   if (oneTrig!="") {
     vtrg.clear();
     vtrg.push_back(oneTrig);
@@ -247,8 +274,8 @@ void doJetVeto() {
     gPad->RedrawAxis();
     gPad->Update();
 
-    c1->SaveAs(Form("pdf/doJetVeto/doJetVeto_%s_%s.pdf",
-		    hname.c_str(), doPull ? "pull" : "rel"));
+    c1->SaveAs(Form("pdf/doJetVeto/doJetVeto_%s_%s_Run%s.pdf",
+		    hname.c_str(), doPull ? "pull" : "rel", run.c_str()));
     
     if (!h2refsum && hname=="p2asymm") {
       h2refsum = (TH2D*)h2sum->Clone("h2refsum");
@@ -279,60 +306,84 @@ void doJetVeto() {
   //h2sums->GetZaxis()->SetRangeUser(-50,5);
   //h2sums->Draw("COLZ");
 
-  TH2D *h2veto = (TH2D*)h2sums->Clone("jetvetomap");
-  TH2D *h2cold = (TH2D*)h2sums->Clone("jetvetomap_cold");
+  TH2D *h2veto = (TH2D*)h2sums->Clone("jetvetomap"); // default map
   TH2D *h2hot = (TH2D*)h2sums->Clone("jetvetomap_hot");
-  TH2D *h2both = (TH2D*)h2sums->Clone("jetvetomap_both");
+  TH2D *h2cold = (TH2D*)h2sums->Clone("jetvetomap_cold");
+  //TH2D *h2both = (TH2D*)h2sums->Clone("jetvetomap_both");
+  TH2D *h2hotandcold = (TH2D*)h2sums->Clone("jetvetomap_hotandcold");
   TH2D *h2eep = (TH2D*)h2sums->Clone("jetvetomap_eep");
+  TH2D *h2all = (TH2D*)h2sums->Clone("jetvetomap_all");
   h2veto->Reset();
+  h2hot->Reset();
   h2cold->Reset();
   h2hot->Reset();
-  h2both->Reset();
+  //h2both->Reset();
+  h2hotandcold->Reset();
   h2eep->Reset();
+  h2all->Reset();
+
+  h2veto->SetTitle("JME recommended map, used for JEC. Hot+Cold+EEP");
+  h2hot ->SetTitle("Hot zones. Use for steep jet pT spectra and MET tails");
+  h2cold->SetTitle("Cold zones. Mostly ECAL holes. Use for MET tails");
+  h2hotandcold->SetTitle("Union of hot and cold zone maps");
+  h2eep->SetTitle("EE+ water leak region. Complete loss of ECAL energy");
+  h2all->SetTitle("Union of hot, cold and EEP maps");
+  h2sums->SetTitle("Raw pull map. Pull=(x_i-mu)/sigma. Summed over triggers");
 
   for (int i = 1; i != h2sums->GetNbinsX()+1; ++i) {
     for (int j = 1; j != h2sums->GetNbinsY()+1; ++j) {
       double eta = h2sums->GetXaxis()->GetBinCenter(i);
       double phi = h2sums->GetYaxis()->GetBinCenter(j);
-      if ((h2sums->GetBinContent(i,j)>80 && fabs(eta)<2.5) ||
-	  h2sums->GetBinContent(i,j)>100) {
+      //if ((h2sums->GetBinContent(i,j)>80 && fabs(eta)<2.5) || // v3-4
+	  //h2sums->GetBinContent(i,j)>100) { // v3
+	  //h2sums->GetBinContent(i,j)>50) { // looser for hot regions, v4
+      if (h2sums->GetBinContent(i,j)>70) { // v5+
 	h2veto->SetBinContent(i,j,100);
-	h2both->SetBinContent(i,j,100);
+	//h2both->SetBinContent(i,j,100);
+	h2hotandcold->SetBinContent(i,j,100);
+	h2all->SetBinContent(i,j,100);
 	h2hot->SetBinContent(i,j,100);
       }
-      if ((h2sums->GetBinContent(i,j)<-50 && fabs(eta)<2.5) || // two
-	  //if ((h2sums->GetBinContent(i,j)<-70 && fabs(eta)<2.5) || // >two
-	  h2sums->GetBinContent(i,j)<-100) {
+      //if ((h2sums->GetBinContent(i,j)<-50 && fabs(eta)<2.5) || // v3-4
+      //  h2sums->GetBinContent(i,j)<-100) { // v3-4
+      if (h2sums->GetBinContent(i,j)<-80) { // v5+
 	h2veto->SetBinContent(i,j,100);
-	h2both->SetBinContent(i,j,100);
+	//h2both->SetBinContent(i,j,100);
+	h2hotandcold->SetBinContent(i,j,100);
+	h2all->SetBinContent(i,j,100);
 	h2cold->SetBinContent(i,j,-100);
       }
       // extra manual margin for EE+ water leak region
       if (eta>1.5 && phi>1.85 &&
 	  eta<2.2 && phi<2.7 &&
 	  phi<2.7-(2.7-2.1)/(2.1-1.6)*(eta-1.6)) {
-	h2veto->SetBinContent(i,j,100);
-	h2eep->SetBinContent(i,j,100);
+	if (run=="E" || run=="F") {
+	  h2veto->SetBinContent(i,j,100);
+	  h2all->SetBinContent(i,j,100);
+	  h2eep->SetBinContent(i,j,100);
+	}
       }
     } // for j
   } // for j
   if (plotJetVeto) {
     h2veto->SetLineColor(kRed);
     h2veto->Draw("SAME BOX");
-    h2both->SetLineColor(kOrange+1);
-    h2both->Draw("SAME BOX");
+    //h2both->SetLineColor(kOrange+1);
+    //h2both->Draw("SAME BOX");
+    h2hotandcold->SetLineColor(kOrange+1);
+    h2hotandcold->Draw("SAME BOX");
     h2hot->SetLineColor(kRed);
     h2hot->Draw("SAME BOX");
   }
   gPad->RedrawAxis();
   gPad->Update();
   if (oneTrig!="" && oneHist!="") {
-    c1->SaveAs(Form("pdf/doJetVeto/doJetVeto_%s_%s_%s.pdf",
+    c1->SaveAs(Form("pdf/doJetVeto/doJetVeto_%s_%s_%s_Run%s.pdf",
 		    oneTrig.c_str(), oneHist.c_str(),
-		    doPull ? "pull" : "rel"));
+		    doPull ? "pull" : "rel",run.c_str()));
   }
   else
-    c1->SaveAs("pdf/doJetVeto/doJetVeto_h2map.pdf");
+    c1->SaveAs(Form("pdf/doJetVeto/doJetVeto_h2map_Run%s.pdf",run.c_str()));
 
   //h2eep->SetLineColor(kOrange+1);
   //h2eep->Draw("SAME BOX");
@@ -348,16 +399,24 @@ void doJetVeto() {
     //h2jes->Draw("COLZ");
     gPad->RedrawAxis();
     gPad->Update();
-    c2->SaveAs("pdf/doJetVeto/doJetVeto_h2jes.pdf");
+    c2->SaveAs(Form("pdf/doJetVeto/doJetVeto_h2jes_%s.pdf",run.c_str()));
+
+    h2jes->SetTitle("Dijet asymmetry map, (pTprobe-pTtag)/pTave for |eta,tag|<1.3");
   }
 
-  TFile *fout = new TFile("rootfiles/jetveto2022E.root","RECREATE");
+  //TFile *fout = new TFile("rootfiles/jetveto2022E.root","RECREATE");
+  TFile *fout = new TFile(Form("rootfiles/jetveto2022%s.root",run.c_str()),
+			  "RECREATE");
   fout->cd();
   h2veto->Write("jetvetomap");
   h2hot->Write("jetvetomap_hot");
   h2cold->Write("jetvetomap_cold");
-  h2both->Write("jetvetomap_both");
+  //h2both->Write("jetvetomap_both");
+  h2hotandcold->Write("jetvetomap_hotandcold");
   h2eep->Write("jetvetomap_eep");
+  h2all->Write("jetvetomap_all");
+  h2jes->Write("jetasymmetrymap");
+  h2sums->Write("jetpullsummap");
   fout->Write();
   fout->Close();
 } // doJetveto
