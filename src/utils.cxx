@@ -1,8 +1,10 @@
 #include "utils.hpp"
 
 
-std::string NWhiteSpaces(int n) { return std::string(n, ' ' );};
+std::string NWhiteSpaces(int n) { return std::string(std::max(0,n), ' ' );};
 TString CompleteWhiteSpaces(TString text, int ntot) { return text+NWhiteSpaces(ntot-text.Length());};
+
+bool FindInString(const std::string& search, const std::string& str) {return str.find(search)!=std::string::npos ;}
 
 void PrintLoading(TString type, TString name, TString objname, std::string color) {
   Print("Loading "+type+" for "+CompleteWhiteSpaces(name)+": "+objname+"..."+reset, color);
@@ -13,7 +15,7 @@ void PrintParameter(TString name, double val, double err, std::string color){
 }
 
 void RemoveZerosFromGraph(TGraphErrors *graph) {
-  for (int i = 0; i < graph->GetN(); i++) {
+  for (int i = graph->GetN()-1; i != -1; --i) {// Must go backwards to keep point ordering
     if (graph->GetY()[i]==0 && graph->GetEY()[i]==0) {
       graph->RemovePoint(i);
     }

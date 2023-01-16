@@ -44,6 +44,9 @@ public:
   void LoadInputs();
   void LoadSystematics();
   void LoadShapes();
+  void LoadReference();
+  void LoadFSR();
+  void ScaleFSR();
   void SetupFitFunction();
   void DoGlobalFit();
   void StoreFitOutput();
@@ -66,6 +69,8 @@ public:
   std::vector<TString> input_hnames;
   std::set<TString> shape_types;
   std::map<TString, TH1D*> reference_objects;
+
+  std::map<TString, SystematicContainer*> fsrs;
 
   TFitter *fitter;
   std::unique_ptr<TMatrixD> error_matrix;

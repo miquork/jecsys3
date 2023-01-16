@@ -12,6 +12,7 @@ public:
   void set_name(TString x) {name_ = x;}
   void set_type(TString x) {type_ = x;}
   void set_hname(TString x) {hname_ = x;}
+  void set_raw(TGraphErrors* x) {raw_.reset(x);}
   void set_input(TGraphErrors* x) {input_.reset(x);}
   void set_output(TGraphErrors* x) {output_.reset(x);}
   void set_variation(TGraphErrors* x) {variation_.reset(x);}
@@ -19,6 +20,7 @@ public:
   TString name() const {return name_;}
   TString type() const {return type_;}
   TString hname() const {return hname_;}
+  TGraphErrors* raw() const {return raw_.get();}
   TGraphErrors* input() const {return input_.get();}
   TGraphErrors* output() const {return output_.get();}
   TGraphErrors* variation() const {return variation_.get();}
@@ -29,7 +31,7 @@ public:
 private:
   std::string color_=blue;
   TString name_, type_, hname_;
-  std::unique_ptr<TGraphErrors> input_, output_, variation_;
+  std::unique_ptr<TGraphErrors> raw_, input_, output_, variation_;
 };
 
 

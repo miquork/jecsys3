@@ -70,29 +70,12 @@ void GlobalFit::LoadInputs(){
     }
     TString hname = ReplaceDefault(info["hname"]);
     if (debug) PrintLoading("hist", name, hname);
-    TGraphErrors* g;
-    if (info["type"]=="Resp"){
-      unique_ptr<TH1D> h; h.reset((TH1D*)input_files[info["fname"].Data()]->Get(hname));
-      assert(h);
-      g = new TGraphErrors(h.get());
-    } else {
-      g = (TGraphErrors*)input_files[info["fname"].Data()]->Get(hname);
-    }
-    RemoveZerosFromGraph(g);
-    my_data[name] = new DataContainer(name, info["type"], hname, g);
+    unique_ptr<TGraphErrors> g; g.reset((TGraphErrors*)input_files[info["fname"].Data()]->Get(hname));
+    my_data[name] = new DataContainer(name, info["type"], hname, g.get());
     nTotalPoints += my_data[name]->GetN();
     if (debug) {PrintLine("successfully", yellow); cout << *my_data[name] << endl;}
   }
 
-
-  for (auto [name, info]: reference_obj_map) {
-    TString hname = ReplaceDefault(info["hname"]);
-    if (debug) PrintLoading("hist", name, hname);
-    reference_objects[name] =(TH1D*)input_files[info["fname"].Data()]->Get(hname)->Clone(name);
-    assert(reference_objects[name]);
-    reference_objects[name]->SetDirectory(0);
-    if (debug) {PrintLine("successfully", yellow);}
-  }
 }
 
 void GlobalFit::LoadSystematics(){
@@ -104,8 +87,22 @@ void GlobalFit::LoadSystematics(){
     }
     TString hname = ReplaceDefault(info["hname"]);
     if (debug) PrintLoading("source", name, hname);
-    unique_ptr<TH1D> h; h.reset((TH1D*)input_files[info["fname"].Data()]->Get(hname));
-    sources[name] = new SystematicContainer(name,appliesTo, atoi(info["index"]), hname, h.get());
+    unique_ptr<TH1D> h;
+
+    if (FindInString("scale", name.Data())){
+      // h.reset((TH1D*)input_files[info["fname"].Data()]->Get(info["appliesTo"]));
+      h.reset(new TH1D(name,name, 10000,10,5000));
+      double scale = stod(hname.ReplaceAll("scale","").Data());
+      hname = name;
+      for (int i = 1; i != h->GetNbinsX()+1; ++i) {
+        h->SetBinContent(i, scale);
+        h->SetBinError(i, scale);
+      }
+    } else {
+      h.reset((TH1D*)input_files[info["fname"].Data()]->Get(hname));
+    }
+    // sources[name] = new SystematicContainer(name,appliesTo, atoi(info["index"]), hname, h.get());
+    sources[name] = new SystematicContainer(name,appliesTo, sources.size() , hname, h.get());
     assert(sources[name]);
     if (debug) {PrintLine("successfully", yellow); cout << *sources[name] << endl;};
   }
@@ -113,14 +110,62 @@ void GlobalFit::LoadSystematics(){
 
 void GlobalFit::LoadShapes(){
   for (auto [name, info]: shapes_map) {
+    TString appliesTo = info["appliesTo"];
+    if (FindInVector(types,appliesTo)<0) {
+      PrintLine("Skipping source: "+name+" index: "+to_string(FindInVector(types,appliesTo)), yellow);
+      continue;
+    }
     if (debug) PrintLoading("shape", name, "");
-    shapes[name] = new ShapeContainer(name,info["form"],info["appliesTo"],atoi(info["index"]),atoi(info["ispositive"]));
+    // shapes[name] = new ShapeContainer(name,info["form"],info["appliesTo"],atoi(info["index"]),atoi(info["ispositive"]));
+    int index = shapes.size();
+    if (info["appliesTo"]!="Resp") index = shapes[info["type"]]->index();
+    shapes[name] = new ShapeContainer(name,info["form"],info["appliesTo"],index,atoi(info["ispositive"]));
     assert(shapes[name]);
     if (debug) {PrintLine("successfully", yellow); cout << *shapes[name] << endl;};
     shape_types.insert(info["type"]);
   }
 }
 
+void GlobalFit::LoadReference(){
+  for (auto [name, info]: reference_obj_map) {
+    TString hname = ReplaceDefault(info["hname"]);
+    if (debug) PrintLoading("hist", name, hname);
+    reference_objects[name] =(TH1D*)input_files[info["fname"].Data()]->Get(hname)->Clone(name);
+    assert(reference_objects[name]);
+    reference_objects[name]->SetDirectory(0);
+    if (debug) {PrintLine("successfully", yellow);}
+  }
+}
+
+void GlobalFit::LoadFSR(){
+  for (auto [name, info]: kfsr_hnames_map) {
+    TString hname = ReplaceDefault(info["hname"]);
+    if (debug) PrintLoading("kfsr", name, hname);
+    unique_ptr<TH1D> h; h.reset((TH1D*)input_files[info["fname"].Data()]->Get(hname));
+    fsrs[name] = new SystematicContainer(name,info["appliesTo"], -1, hname, h.get());
+    assert(fsrs[name]);
+    if (debug) {PrintLine("successfully", yellow); cout << *fsrs[name] << endl;};
+  }
+}
+
+void GlobalFit::ScaleFSR(){
+  for (auto [name, fsr]: fsrs) {
+    auto dt = my_data[fsr->appliesTo()];
+    TGraphErrors* raw = dt->raw();
+    TGraphErrors* input = dt->input();
+    TGraphErrors* output = dt->output();
+    TGraphErrors* variation = dt->variation();
+    for (int i = 0; i != raw->GetN(); ++i) {
+      double pt = raw->GetX()[i];
+      double r = raw->GetY()[i];
+      double shift = fsr->hist()->GetBinContent(fsr->hist()->FindBin(pt));
+      input->SetPoint(i, pt, r+shift);
+      output->SetPoint(i, pt, r+shift);
+      variation->SetPoint(i, pt, r+shift);
+    }
+  }
+
+}
 
 void GlobalFit::SetupFitFunction(){
   // Set the minimizer tool for the global fit
@@ -142,7 +187,7 @@ void GlobalFit::SetupFitFunction(){
   fitter = new TFitter(nTotPars);
   fitter->SetFCN(jesFitter);
   for (int i = 0; i != nTotPars; ++i) {
-    fitter->SetParameter(i, "", 0, (i<nFitPars ? 0.01 : 1),-100, 100);
+    fitter->SetParameter(i, "", 1, (i<nFitPars ? 0.01 : 1),-100, 100);
   }
 
 }
@@ -260,18 +305,21 @@ void GlobalFit::StoreFitOutput(){
 
 
   // Store all jes response
-  for (auto [name,jes]: my_data){
-    TGraphErrors* input = jes->input();
-    TGraphErrors* output = jes->output();
-    TGraphErrors* variation = jes->variation();
-    multiplyGraph(input,1./ScaleFullSimShape); // transform it in percentage
-    multiplyGraph(output,1./ScaleFullSimShape); // transform it in percentage
-    multiplyGraph(variation,1./ScaleFullSimShape); // transform it in percentage
+  for (auto [name,dt]: my_data){
+    TGraphErrors* raw = dt->raw();
+    TGraphErrors* input = dt->input();
+    TGraphErrors* output = dt->output();
+    TGraphErrors* variation = dt->variation();
+    double scale = (dt->type()=="Resp") ? 1.: 1./ScaleFullSimShape; // transform PF comp in percentage
+    multiplyGraph(input,scale);
+    multiplyGraph(output,scale);
+    multiplyGraph(variation,scale);
     std::vector<TF1*> funcs;
     for (auto [name,shape]: shapes){
-      if (shape->appliesTo()==jes->type()) funcs.push_back(shape->func());
+      if (shape->appliesTo()==dt->type()) funcs.push_back(shape->func());
     }
     PropagateErrorToGraph(variation, funcs, *error_matrix.get());
+    raw->Write(name+"_raw", TObject::kOverwrite);
     input->Write(name+"_prefit",TObject::kOverwrite);
     output->Write(name+"_postfit",TObject::kOverwrite);
     variation->Write(name+"_variation",TObject::kOverwrite);
@@ -288,8 +336,8 @@ void GlobalFit::StoreFitOutput(){
     shape->func()->Write("shape_input_"+name,TObject::kOverwrite);
     TF1* prefit = new TF1("shape_prefit_"+name,"[0]*("+shape->form()+")",func_range_min,func_range_max);
     TF1* postfit = new TF1("shape_postfit_"+name,"[0]*("+shape->form()+")",func_range_min,func_range_max);
-    prefit->SetParameter(0,ScaleFullSimShape);
-    postfit->SetParameter(0,ScaleFullSimShape*_jesFit->GetParameter(shape->index()));
+    prefit->SetParameter(0,1);
+    postfit->SetParameter(0,_jesFit->GetParameter(shape->index()));
     prefit->Write(prefit->GetName(),TObject::kOverwrite);
     postfit->Write(postfit->GetName(),TObject::kOverwrite);
   }
@@ -306,6 +354,9 @@ void GlobalFit::Run(){
   LoadInputs();
   LoadSystematics();
   LoadShapes();
+  LoadReference();
+  LoadFSR();
+  ScaleFSR();
   SetupFitFunction();
   DoGlobalFit();
   StoreFitOutput();
@@ -399,10 +450,9 @@ void jesFitter(Int_t& npar, Double_t* grad, Double_t& chi2, Double_t* par, Int_t
         //
         // Calculate total shift caused by all nuisance parameters
         double shift = 0;
-        // vector<SystematicContainer> &_vsrc = _msrc[dt_name];
         for (auto [src_name_,source]: sources){
           if (dt_name!=source->appliesTo()) continue;
-          if (debug) PrintLine("adding "+src_name_+" to shift for "+ dt_name+"("+source->appliesTo()+")", yellow);
+          if (debug) PrintLine("adding1 "+src_name_+" to shift for "+ dt_name+"("+source->appliesTo()+")", yellow);
           TH1D* hsrc = source->hist(); assert(hsrc);
           shift += nuisance_pars[source->index()] * hsrc->GetBinContent(hsrc->FindBin(pt));
         }
@@ -411,10 +461,11 @@ void jesFitter(Int_t& npar, Double_t* grad, Double_t& chi2, Double_t* par, Int_t
           if ("Resp"==shape->appliesTo()) continue;
           if (dt_type!=shape->appliesTo()) continue;
           if (pt<40 || pt>600) continue;
-          if (debug) PrintLine("adding "+shape_name+" to shift for "+ dt_type+"("+shape->appliesTo()+")", yellow);
+          if (debug) PrintLine("adding2 "+shape_name+" to shift for "+ dt_type+"("+shape->appliesTo()+") index:"+to_string(shape->index()), yellow);
+
           TF1* func = shape->func(); assert(func);
-          cout << "Adding to shift: " << nuisance_pars[shape->index()] << " " <<  func->Eval(pt) << " " << nuisance_pars[shape->index()] * func->Eval(pt)* GlobalFit::ScaleFullSimShape << " " << nuisance_pars[shape->index()] * func->Eval(pt) / GlobalFit::ScaleFullSimShape <<  endl;;
-          shift += nuisance_pars[shape->index()] * func->Eval(pt) * GlobalFit::ScaleFullSimShape;
+          shift += fit_pars[shape->index()] * func->Eval(pt) * GlobalFit::ScaleFullSimShape;
+          cout << "  --> index:" << shape->index() << " " << fit_pars[shape->index()] << " " << func->Eval(pt) << " " << shift << endl;
         }
 
         // Add chi2 from residual

@@ -53,8 +53,7 @@ void PrintLine(const T text){
 void PrintLoading(TString type, TString name, TString objname, std::string color=yellow);
 void PrintParameter(TString name, double val, double err, std::string color=blue);
 
-
-// bool FindInString(const std::string& search, const std::string& str);
+bool FindInString(const std::string& search, const std::string& str);
 
 template <typename T>
 int FindInVector(const std::vector<T>& vec, const T& el) {

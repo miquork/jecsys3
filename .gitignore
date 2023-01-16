@@ -30,3 +30,9 @@
 *.exe
 *.out
 *.app
+
+#python
+*.pyc
+
+#MacOS
+*.DS_Store

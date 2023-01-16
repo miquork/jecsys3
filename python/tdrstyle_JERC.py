@@ -512,8 +512,9 @@ def tdrHeader(leg, legTitle, textAlign=12, textSize=0.04, textFont=42, textColor
 # ##     ## ##    ##  ##     ## ##  ##  ##
 # ########  ##     ## ##     ##  ###  ###
 
-def tdrDraw(h, opt, marker=rt.kFullCircle, mcolor=rt.kBlack, lstyle=rt.kSolid, lcolor=-1, fstyle=1001, fcolor=rt.kYellow+1, alpha=-1):
+def tdrDraw(h, opt, marker=rt.kFullCircle, msize=1.0, mcolor=rt.kBlack, lstyle=rt.kSolid, lcolor=-1, fstyle=1001, fcolor=rt.kYellow+1, alpha=-1):
   h.SetMarkerStyle(marker)
+  h.SetMarkerSize(msize)
   h.SetMarkerColor(mcolor)
   h.SetLineStyle(lstyle)
   h.SetLineColor(mcolor if lcolor==-1 else lcolor)

@@ -8,6 +8,7 @@ DataContainer::DataContainer(TString name_, TString type_, TString hname_, TGrap
   set_type(type_);
   set_hname(hname_);
   RemoveZerosFromGraph(graph_);
+  set_raw((TGraphErrors*)graph_->Clone(name_+"_raw"));
   set_input((TGraphErrors*)graph_->Clone(name_+"_in"));
   set_output((TGraphErrors*)graph_->Clone(name_+"_out"));
   set_variation((TGraphErrors*)graph_->Clone(name_+"_variation"));
