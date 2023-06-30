@@ -37,6 +37,7 @@
 //using namespace globalFit;
 using namespace std;
 const bool debug = true;
+const bool saveROOT = false;
 
 // Helper functions to draw fit uncertainty band for arbitrary TF1 
 Double_t fitError(Double_t *x, Double_t *p);
@@ -136,11 +137,16 @@ void globalFitEtaBin(double etamin, double etamax, string run) {
   _hjesref = (TH1D*)_hjesref->Clone("hjesref");
   TH1D *herr = (TH1D*)deta->Get("herr"); assert(herr);
 
-  // Set whitelist for quickly selecting only subset of datasets
+  // Set whitelists for quickly selecting only subset of datasets or shapes
   set<string> whitelist;
   for (unsigned int i = 0; i != _gf_datasets_whitelist.size(); ++i) {
     if (_gf_datasets_whitelist[i]!="")
       whitelist.insert(_gf_datasets_whitelist[i]);
+  }
+  set<string> whitelistshape;
+  for (unsigned int i = 0; i != _gf_shapes_whitelist.size(); ++i) {
+    if (_gf_shapes_whitelist[i]!="")
+      whitelistshape.insert(_gf_shapes_whitelist[i]);
   }
 
   // Create listing of all active datasets
@@ -170,6 +176,12 @@ void globalFitEtaBin(double etamin, double etamax, string run) {
       assert(h);
       g = new TGraphErrors(h);
       cleanGraph(g);
+    }
+
+    // Undo previous L2L3Res, if so requested
+    if (string(type)=="Rjet" && _gf_undoJESref) {
+      if (debug) cout << "...undoing JES for " << type << endl << flush;
+      scaleGraph(g, _hjesref);
     }
 
     // Create fitData object
@@ -258,6 +270,9 @@ void globalFitEtaBin(double etamin, double etamax, string run) {
     string funcstring = _gf_shapes[i][2];
 
     if (name=="") continue; // ignore extra empty (commented out) elements
+    // Check if input dataset is whitelisted
+    if (!whitelistshape.empty() &&
+	whitelistshape.find(name)==whitelistshape.end()) continue;
 
     // Use running indexing for active shapes
     if (shapes.find(name)==shapes.end())
@@ -481,6 +496,7 @@ void globalFitDraw(string run) {
   // 5. Draw results
   //////////////////
   bool drawResults = true;
+  bool usingMu(false);
   if (drawResults) {
 
     // Graphical settings in globalFitStyles.h
@@ -490,7 +506,19 @@ void globalFitDraw(string run) {
     // Create canvas
     lumi_136TeV = Form("globalFit.C(\"%s\")",run.c_str());
     //TH1D *h = tdrHist("h","JES",0.982+1e-5,1.025-1e-5); // ratio (hdm)
-    TH1D *h = tdrHist("h","JES",0.88+1e-5,1.05-1e-5); // ratio (hdm)
+    TH1D *h = tdrHist("h","JES",0.88+1e-5,1.15-1e-5,
+		      //0.88+1e-5,1.05-1e-5,
+		      "p_{T} (GeV)",15,4500); // ratio (hdm)
+    string epoch = string(crun);
+    //if (epoch=="Run22C" || epoch=="Run22D" ||
+    //	epoch=="Run22E" || epoch=="Run22F" || epoch=="Run22G") {
+    //h->SetMaximum(1.12-1e-5);
+    //h->SetMinimum(0.88+1e-5);
+    //}
+    //if (epoch=="Run22F" || epoch=="Run22G") {
+    //h->SetMaximum(1.15-1e-5);
+    //h->SetMinimum(0.91+1e-5);
+    //}
     TCanvas *c1 = tdrCanvas("c1",h,8,11,kSquare);
     gPad->SetLogx();
 
@@ -500,8 +528,8 @@ void globalFitDraw(string run) {
 
     // Draw fit on the back
     assert(_jesFit);
-    _jesFit->SetRange(15.,3500.); // nice range
-    _jesFit->SetNpx(3485.); // dense binning for log scale
+    _jesFit->SetRange(15.,4500.); // nice range
+    _jesFit->SetNpx(4485.); // dense binning for log scale
     _obs = "Rjet";
     TGraph *gr = new TGraph(_jesFit); // use graph to keep '_obs' setting
     TGraphErrors *gre = new TGraphErrors(gr->GetN());
@@ -515,10 +543,12 @@ void globalFitDraw(string run) {
     }
     if (debug) cout << "Draw JES" << endl << flush;
     tdrDraw(herr,"E3",kFullCircle,kCyan+2,kSolid,-1,1001,kCyan+1);
+    //if (epoch!="Run22F") {
     tdrDraw(gre,"E3",kNone,kBlack,kSolid,-1,1001,kYellow+1);
     tdrDraw(gr,"Lz",kNone,kBlack);
+    //}
     l->SetLineStyle(kDashed);
-    l->DrawLine(15,1,3500,1);
+    l->DrawLine(15,1,4500,1);
 
     leg2->AddEntry(l,"Run 3 avg.","L");
     leg2->AddEntry(herr,"Total unc.","F");
@@ -526,11 +556,12 @@ void globalFitDraw(string run) {
 
     // Separate canvas for CHF, NHF, NEF
     //TH1D *hc = tdrHist("hc","PF composition (0.01)",-2+1e-5,2-1e-5);
-    TH1D *hc = tdrHist("hc","PF composition (0.01)",-10+1e-4,10-1e-4);
+    TH1D *hc = tdrHist("hc","PF composition (0.01)",-10+1e-4,10-1e-4,
+		       "p_{T} (GeV)",15,4500);
     //hc->GetYaxis()->SetRangeUser(-4.5+1e-5,4.5-1e-5);
     TCanvas *c1c = tdrCanvas("c1c",hc,8,11,kSquare);
     gPad->SetLogx();
-    l->DrawLine(15,0,3500,0);
+    l->DrawLine(15,0,4500,0);
     TLegend *legc = tdrLeg(0.45,0.90,0.65,0.90);
 
     // Separate canvas for CEF, MUF
@@ -545,7 +576,7 @@ void globalFitDraw(string run) {
     TGraphErrors *gzljet(0);
     TGraphErrors *gzmjet(0);
     TGraphErrors *ggjet(0);
-
+  
     if (debug) cout << "Draw data" << endl << flush;
     for (unsigned int i = 0; i != _vdt.size(); ++i) {
       
@@ -560,7 +591,10 @@ void globalFitDraw(string run) {
 	leg->AddEntry(go,_gf_label[name],"PLE");
 	leg->SetY1NDC(leg->GetY1NDC()-0.05);
       }
-      else if (type=="cef" || type=="muf") c1l->cd();
+      else if (type=="cef" || type=="muf") {
+	usingMu = true;
+	c1l->cd();
+      }
       else {
 	c1c->cd();
 	legc->AddEntry(go,_gf_label[name],"PLE");
@@ -586,7 +620,7 @@ void globalFitDraw(string run) {
 	TGraphErrors *gr = (TGraphErrors*)go->Clone("gr");
 	assert(_hjesref);
 	assert(gr);
-	scaleGraph(gr,_hjesref);
+	if (_gf_useJESref) scaleGraph(gr,_hjesref);
 	shiftGraph(gr,-1);
 	scaleGraph(gr,100);
 	tdrDraw(gr,"Pz",kFullCircle,kBlack);
@@ -703,7 +737,9 @@ void globalFitDraw(string run) {
    
     c1->SaveAs(Form("pdf/globalFit/globalFit_%s_rjet.pdf",crun));
     c1c->SaveAs(Form("pdf/globalFit/globalFit_%s_pf.pdf",crun));
-    c1l->SaveAs(Form("pdf/globalFit/globalFit_%s_mu.pdf",crun));
+    if (usingMu) c1l->SaveAs(Form("pdf/globalFit/globalFit_%s_mu.pdf",crun));
+    //
+    if (saveROOT) c1->SaveAs(Form("pdf/globalFit/globalFit_%s_rjet.root",crun));
   } // drawResults
 } // globalFitEtaBin
 

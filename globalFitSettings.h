@@ -42,7 +42,9 @@ struct fitShape {
 bool _gf_penalizeFitPars = true;
 
 // Permit baseline shift for JES with L2L3Res inputs. Needed for PFcomp fit
-bool _gf_useJESref = true;//false;
+bool _gf_useJESref = false;//true;//false;
+// Alternatively, undo JES completely to show pre-closure plots
+bool _gf_undoJESref = true;
 
 // Listing of all available 'datasets'
 // {name, type, name2}
@@ -52,12 +54,12 @@ bool _gf_useJESref = true;//false;
 // How to use: comment out datasets that are not needed to switch them off
 const unsigned int ndt = 44;
 const array<array<string,3>,ndt> _gf_datasets = {{
-    //{"ptchs_zjet_a100", "Rjet",""},
-    //{"mpfchs1_zjet_a100", "Rjet",""},
+    {"ptchs_zjet_a100", "Rjet",""},
+    {"mpfchs1_zjet_a100", "Rjet",""},
     {"hdm_mpfchs1_zjet", "Rjet",""},
-    //{"chf_zjet_a100",  "chf",""},
-    //{"nhf_zjet_a100",  "nhf",""},
-    //{"nef_zjet_a100",  "nef",""},
+    {"chf_zjet_a100",  "chf",""},
+    {"nhf_zjet_a100",  "nhf",""},
+    {"nef_zjet_a100",  "nef",""},
   }};
 
 // Use only these data sets (empty for all)
@@ -65,12 +67,24 @@ const array<array<string,3>,ndt> _gf_datasets = {{
 // 'name' should match the dataset name in the list above
 // How to use: uncomment individual datasets to use only those
 const array<string,29> _gf_datasets_whitelist = {
-  "ptchs_zjet_a100",
-  "mpfchs1_zjet_a100",
+  //"ptchs_zjet_a100",
+  //"mpfchs1_zjet_a100",
   "hdm_mpfchs1_zjet",
   "chf_zjet_a100",
   "nhf_zjet_a100",
   "nef_zjet_a100",
+};
+
+// Use only these shapes (empty for all)
+// {name}
+// 'name' should match the dataset name in the list above
+// How to use: uncomment individual datasets to use only those
+const array<string,29> _gf_shapes_whitelist = {
+  "em3",
+  "tv402","tv3n1","tv300pn",
+  "hhp3",
+  "hhpfc", // Run23
+  "hhnoise" // Run22
 };
 
 // Listing one-sided (positive-definite) sources
@@ -79,6 +93,7 @@ const array<string,npos> _gf_posdef =
   {"tv4","tv402","tv404","tv405","tv410","tv416","tv420","tv430",
    "tv3n1","tv300pn",
    //"hhp3",
+   //"hhpfc",
    "hhred103","hhred100","hhred097", "hhblue103","hhblue100","hhblue097"};
 
 // Listing source limits
@@ -114,14 +129,14 @@ const array<array<string,3>,nsrc> _gf_sources = {{
 // concatenated Rjet,chf,nef,nhf functions strings
 const int nshp = 112;
 const array<array<string,3>, nshp> _gf_shapes = {{
-    /*
+
     {"em3","Rjet","-0.3222+log(x)*(0.1973+log(x)*(-0.0774+log(x)*(-0.006124+log(x)*(0.001035+log(x)*(0.0002058+log(x)*-2.089e-05)))))"},
     {"em3","chf","2.59+log(x)*(-1.188+log(x)*(0.1324+log(x)*(0.01962+log(x)*(-0.001522+log(x)*(-0.0004592+log(x)*3.848e-05)))))"},
     {"em3","nef","-2.715+log(x)*(1.225+log(x)*(-0.1397+log(x)*(-0.02023+log(x)*(0.001699+log(x)*(0.0004898+log(x)*-4.382e-05)))))"},
     {"em3","nhf","2.168+log(x)*(-1.761+log(x)*(0.4903+log(x)*(-0.0334+log(x)*(-0.007356+log(x)*(0.001323+log(x)*-5.843e-05)))))"},
     // "em3" checksum: c8cb4a54ecee28c98c7fe286c0beafa9
-    */
-    /*
+
+
     {"tv402","Rjet","-3.512+log(x)*(3.975+log(x)*(-1.433+log(x)*(0.1443+log(x)*(0.01588+log(x)*(-0.003781+log(x)*0.0001845)))))"},
     {"tv402","chf","-14.72+log(x)*(12.93+log(x)*(-3.671+log(x)*(0.2582+log(x)*(0.04383+log(x)*(-0.007821+log(x)*0.0003428)))))"},
     {"tv402","nef","2.082+log(x)*(-0.8289+log(x)*(-0.2106+log(x)*(0.1027+log(x)*(0.00176+log(x)*(-0.002916+log(x)*0.0002057)))))"},
@@ -139,13 +154,31 @@ const array<array<string,3>, nshp> _gf_shapes = {{
     {"tv300pn","nef","-14.02+log(max(30.,x))*(12.55+log(max(30.,x))*(-3.805+log(max(30.,x))*(0.3161+log(max(30.,x))*(0.05375+log(max(30.,x))*(-0.01122+log(max(30.,x))*0.0005451)))))"},
     {"tv300pn","nhf","6.388+log(max(30.,x))*(-5.397+log(max(30.,x))*(1.524+log(max(30.,x))*(-0.1035+log(max(30.,x))*(-0.026+log(max(30.,x))*(0.00501+log(max(30.,x))*-0.0002474)))))"},
     // "tv300pn" checksum: a25af6468140b2a27a00c0fc1bab83df
-    */
 
     {"hhp3","Rjet","2.817+log(x)*(-2.491+log(x)*(0.698+log(x)*(-0.04045+log(x)*(-0.008571+log(x)*(0.001366+log(x)*-5.705e-05)))))"},
     {"hhp3","chf","1.363+log(x)*(-1.602+log(x)*(0.5867+log(x)*(-0.06816+log(x)*(-0.00732+log(x)*(0.002+log(x)*-0.0001039)))))"},
     {"hhp3","nef","-7.619+log(x)*(7.721+log(x)*(-2.651+log(x)*(0.2725+log(x)*(0.03317+log(x)*(-0.00842+log(x)*0.000441)))))"},
     {"hhp3","nhf","7.178+log(x)*(-6.88+log(x)*(2.246+log(x)*(-0.1991+log(x)*(-0.03391+log(x)*(0.007537+log(x)*-0.0003856)))))"},
     // "hhp3" checksum: 57569f81de14365a30d012311898ae2a
+
+    {"hhpfc","Rjet","15.64+log(x)*(-11.27+log(x)*(2.735+log(x)*(-0.2815+log(x)*0.01065)))"},
+    {"hhpfc","chf","-2.061+log(x)*(1.798+log(x)*(-0.3602+log(x)*0.02139))"},
+    {"hhpfc","nef","-2.86+log(x)*(1.904+log(x)*(-0.3753+log(x)*0.02323))"},
+    {"hhpfc","nhf","13.04+log(x)*(-10.17+log(x)*(2.611+log(x)*(-0.2802+log(x)*0.01085)))"},
+    // "hhpfc" checksum: 2adb48123dcde1aa50a8bba8d138f7ca
+
+    {"hhnoise","Rjet","5.28+log(x)*(-6.859+log(x)*(2.04+log(x)*(-0.09325+log(x)*(-0.04397+log(x)*(0.006839+log(x)*-0.0002948)))))"},
+    {"hhnoise","chf","-2.11+log(x)*(3.659+log(x)*(-1.207+log(x)*(0.07304+log(x)*(0.02414+log(x)*(-0.004134+log(x)*0.0001881)))))"},
+    {"hhnoise","nef","-7.498+log(x)*(6.744+log(x)*(-1.875+log(x)*(0.1007+log(x)*(0.03691+log(x)*(-0.006191+log(x)*0.0002811)))))"},
+    {"hhnoise","nhf","8.571+log(x)*(-9.248+log(x)*(2.631+log(x)*(-0.1182+log(x)*(-0.05626+log(x)*(0.008792+log(x)*-0.0003823)))))"},
+    // "hhnoise" checksum: bdbd8c2eba49736fa0f627106e80d40e
+
+    {"hhnoise3","Rjet","(5.28+log(x)*(-6.859+log(x)*(2.04+log(x)*(-0.09325+log(x)*(-0.04397+log(x)*(0.006839+log(x)*-0.0002948)))))-1)*3+1"},
+    {"hhnoise3","chf","(-2.11+log(x)*(3.659+log(x)*(-1.207+log(x)*(0.07304+log(x)*(0.02414+log(x)*(-0.004134+log(x)*0.0001881))))))*3"},
+    {"hhnoise3","nef","(-7.498+log(x)*(6.744+log(x)*(-1.875+log(x)*(0.1007+log(x)*(0.03691+log(x)*(-0.006191+log(x)*0.0002811))))))*3"},
+    {"hhnoise3","nhf","(8.571+log(x)*(-9.248+log(x)*(2.631+log(x)*(-0.1182+log(x)*(-0.05626+log(x)*(0.008792+log(x)*-0.0003823))))))*3"},
+    // "hhnoise" checksum: bdbd8c2eba49736fa0f627106e80d40e, hand modified
+
     /*
     {"hhp18","Rjet","((2.817+log(x)*(-2.491+log(x)*(0.698+log(x)*(-0.04045+log(x)*(-0.008571+log(x)*(0.001366+log(x)*-5.705e-05))))))-1)*6+1"},
     {"hhp18","chf","(1.363+log(x)*(-1.602+log(x)*(0.5867+log(x)*(-0.06816+log(x)*(-0.00732+log(x)*(0.002+log(x)*-0.0001039))))))*6"},
