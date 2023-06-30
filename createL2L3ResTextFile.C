@@ -48,11 +48,14 @@ void createL2L3ResTextFile() {
   //createL2L3ResTextFiles("RunCD");
   createL2L3ResTextFiles("Run22F");
   createL2L3ResTextFiles("Run22G");
+  createL2L3ResTextFiles("Run23BC123");
+  createL2L3ResTextFiles("Run23C4");
 
   c1->Update();
   //c1->SaveAs("pdf/createL2L3ResTextFile_2022C.pdf");
   //c1->SaveAs("pdf/createL2L3ResTextFile_Run22F.pdf");
-  c1->SaveAs("pdf/createL2L3ResTextFile_Run22FG_prompt.pdf");
+  //c1->SaveAs("pdf/createL2L3ResTextFile_Run22FG_prompt.pdf");
+  c1->SaveAs("pdf/createL2L3ResTextFile_Run22FG_Run23BC_prompt.pdf");
 }
 
 void createL2L3ResTextFiles(string set) {
@@ -74,6 +77,12 @@ void createL2L3ResTextFiles(string set) {
   if (set=="Run22G") {
     f = new TFile(Form("../JERCProtoLab/textFiles/Summer22EERun3_RunG_V2_DATA/jecdata%s.root",set.c_str()),"READ");
   }
+  if (set=="Run23BC123") {
+    f = new TFile(Form("../JERCProtoLab/textFiles/Winter23Prompt23_RunBC123_V2_DATA/jecdata%s.root",set.c_str()),"READ");
+  }
+  if (set=="Run23C4") {
+    f = new TFile(Form("../JERCProtoLab/textFiles/Winter23Prompt23_RunC4_V2_DATA/jecdata%s.root",set.c_str()),"READ");
+  }
   
   assert(f && !f->IsZombie());
   TH1D *h(0);
@@ -93,6 +102,8 @@ void createL2L3ResTextFiles(string set) {
   //color["RunCD"] = kOrange+1;
   color["Run22F"] = kOrange+1;
   color["Run22G"] = kRed;
+  color["Run23BC123"] = kGreen+2;
+  color["Run23C4"] = kBlue;
 
   h->Fit(f1,"QRN");
   h->Fit(f1,"QRNM");
@@ -124,13 +135,20 @@ void createL2L3ResTextFiles(string set) {
   //sout = "../JERCProtoLab/Winter22Run3/global_fit/Winter22Run3_RunC_V2_DATA_L2L3Residual_AK4PFPuppi.txt"; // For V2 L2l3Res (L2Res RunC, L3Res RunCD)
   //
   if (set=="Run22F") {
-    
     sin = "../JERCProtoLab/textFiles/Summer22EERun3_RunF_V2_DATA/Summer22EERun3_RunF_V2_DATA_L2Residual_AK4PFPuppi.txt"; // For V2 L2L3Res
     sout = "../JERCProtoLab/textFiles/Summer22EERun3_RunF_V2_DATA/Summer22EERun3_RunF_V2_DATA_L2L3Residual_AK4PFPuppi.txt"; // For V2 L2L3Res
   }
   if (set=="Run22G") {
     sin = "../JERCProtoLab/textFiles/Summer22EERun3_RunG_V2_DATA/Summer22EERun3_RunG_V2_DATA_L2Residual_AK4PFPuppi.txt"; // For V2 L2L3Res
     sout = "../JERCProtoLab/textFiles/Summer22EERun3_RunG_V2_DATA/Summer22EERun3_RunG_V2_DATA_L2L3Residual_AK4PFPuppi.txt"; // For V2 L2L3Res
+  }
+  if (set=="Run23BC123") {
+    sin = "../JERCProtoLab/textFiles/Winter23Prompt23_RunBC123_V2_DATA/Winter23Prompt23_RunA_V1_DATA_L2Residual_AK4PFPuppi.txt"; // For V2 L2L3Res
+    sout = "../JERCProtoLab/textFiles/Winter23Prompt23_RunBC123_V2_DATA/Winter23Prompt23_RunBC_V2_DATA_L2L3Residual_AK4PFPuppi.txt"; // For V2 L2L3Res
+  }
+  if (set=="Run23C4") {
+    sin = "../JERCProtoLab/textFiles/Winter23Prompt23_RunC4_V2_DATA/Winter23Prompt23_RunA_V1_DATA_L2Residual_AK4PFPuppi.txt"; // For V2 L2L3Res
+    sout = "../JERCProtoLab/textFiles/Winter23Prompt23_RunC4_V2_DATA/Winter23Prompt23_RunC4_V2_DATA_L2L3Residual_AK4PFPuppi.txt"; // For V2 L2L3Res
   }
     
   ifstream fin(sin.c_str());
