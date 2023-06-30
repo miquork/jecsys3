@@ -30,7 +30,8 @@ void createL2L3ResTextFile() {
   double ptmin = 15;
   double ptmax = 4500;
   TH1D *h = tdrHist("h","Absolute response at |#eta| < 1.3",
-		    0.88+1e-4,1.05-1e-4,"p_{T} (GeV)",ptmin,ptmax);
+		    0.90+1e-4,1.30-1e-4,"p_{T} (GeV)",ptmin,ptmax);
+		    //0.88+1e-4,1.05-1e-4,"p_{T} (GeV)",ptmin,ptmax);
   lumi_136TeV = "X.X fb^{-1}";
   TCanvas *c1 = tdrCanvas("c1",h,8,11,kSquare);
   c1->SetLeftMargin(0.17);
@@ -44,10 +45,14 @@ void createL2L3ResTextFile() {
 
   _leg = tdrLeg(0.45,0.90,0.75,0.90);
 
-  createL2L3ResTextFiles("RunCD");
+  //createL2L3ResTextFiles("RunCD");
+  createL2L3ResTextFiles("Run22F");
+  createL2L3ResTextFiles("Run22G");
 
   c1->Update();
-  c1->SaveAs("pdf/createL2L3ResTextFile_2022C.pdf");
+  //c1->SaveAs("pdf/createL2L3ResTextFile_2022C.pdf");
+  //c1->SaveAs("pdf/createL2L3ResTextFile_Run22F.pdf");
+  c1->SaveAs("pdf/createL2L3ResTextFile_Run22FG_prompt.pdf");
 }
 
 void createL2L3ResTextFiles(string set) {
@@ -61,8 +66,15 @@ void createL2L3ResTextFiles(string set) {
   // Need good starting values and/or a few iterations to converge
   // Fit done to hjesfit from each IOV
   TDirectory *curdir = gDirectory;
-  TFile *f = new TFile(Form("rootfiles/jecdata%s.root",set.c_str()),"READ");
-
+  TFile *f(0);
+  //TFile *f = new TFile(Form("rootfiles/jecdata%s.root",set.c_str()),"READ");
+  if (set=="Run22F") {
+    f = new TFile(Form("../JERCProtoLab/textFiles/Summer22EERun3_RunF_V2_DATA/jecdata%s.root",set.c_str()),"READ");
+  }
+  if (set=="Run22G") {
+    f = new TFile(Form("../JERCProtoLab/textFiles/Summer22EERun3_RunG_V2_DATA/jecdata%s.root",set.c_str()),"READ");
+  }
+  
   assert(f && !f->IsZombie());
   TH1D *h(0);
   //h = (TH1D*)f->Get("ratio/eta00-13/sys/hjesfit2");
@@ -77,8 +89,10 @@ void createL2L3ResTextFiles(string set) {
     f1->SetParameters(0.99, 1.5,0.01, 0.01,1000.,1.3, 0.001);
 
   map<string,int> color;
-  color["RunC"] = kYellow+2;
-  color["RunCD"] = kOrange+1;
+  //color["RunC"] = kYellow+2;
+  //color["RunCD"] = kOrange+1;
+  color["Run22F"] = kOrange+1;
+  color["Run22G"] = kRed;
 
   h->Fit(f1,"QRN");
   h->Fit(f1,"QRNM");
@@ -106,9 +120,19 @@ void createL2L3ResTextFiles(string set) {
   string sin, sout;
   //sin = "../JERCProtoLab/Winter22Run3/L2Residual/Winter22Run3_V1/Winter22Run3_V1_MPF_LOGLIN_L2Residual_pythia8_AK4PFPuppi.txt"; // For V1 L2L3Res
   //sout = "../JERCProtoLab/Winter22Run3/global_fit/Winter22Run3_RunCD_V1_DATA_L2L3Residual_AK4PFPuppi.txt"; // For V1 L2L3Res
-  sin = "../JERCProtoLab/Winter22Run3/L2Residual/WinterRun3_V2_PtJER/Winter22RunC_V2_MPF_LOGLIN_L2Residual_pythia8_AK4PFPuppi.txt"; // For V2 L2L3Res
-  sout = "../JERCProtoLab/Winter22Run3/global_fit/Winter22Run3_RunC_V2_DATA_L2L3Residual_AK4PFPuppi.txt"; // For V2 L2l3Res (L2Res RunC, L3Res RunCD)
-
+  //sin = "../JERCProtoLab/Winter22Run3/L2Residual/WinterRun3_V2_PtJER/Winter22RunC_V2_MPF_LOGLIN_L2Residual_pythia8_AK4PFPuppi.txt"; // For V2 L2L3Res
+  //sout = "../JERCProtoLab/Winter22Run3/global_fit/Winter22Run3_RunC_V2_DATA_L2L3Residual_AK4PFPuppi.txt"; // For V2 L2l3Res (L2Res RunC, L3Res RunCD)
+  //
+  if (set=="Run22F") {
+    
+    sin = "../JERCProtoLab/textFiles/Summer22EERun3_RunF_V2_DATA/Summer22EERun3_RunF_V2_DATA_L2Residual_AK4PFPuppi.txt"; // For V2 L2L3Res
+    sout = "../JERCProtoLab/textFiles/Summer22EERun3_RunF_V2_DATA/Summer22EERun3_RunF_V2_DATA_L2L3Residual_AK4PFPuppi.txt"; // For V2 L2L3Res
+  }
+  if (set=="Run22G") {
+    sin = "../JERCProtoLab/textFiles/Summer22EERun3_RunG_V2_DATA/Summer22EERun3_RunG_V2_DATA_L2Residual_AK4PFPuppi.txt"; // For V2 L2L3Res
+    sout = "../JERCProtoLab/textFiles/Summer22EERun3_RunG_V2_DATA/Summer22EERun3_RunG_V2_DATA_L2L3Residual_AK4PFPuppi.txt"; // For V2 L2L3Res
+  }
+    
   ifstream fin(sin.c_str());
   assert(fin.is_open());
   ofstream fout(sout.c_str());
@@ -125,7 +149,9 @@ void createL2L3ResTextFiles(string set) {
   if (debug) cout << "Old L2L3Residual header:" << endl;
   if (debug) cout << header << endl;
 
+  //header = "{ 1 JetEta 1 JetPt [2]*([3]*([4]+[5]*TMath::Log(max([0],min([1],x))))*1./([6]+[7]/x+[8]*log(x)/x+[9]*(pow(x/[10],[11])-1)/(pow(x/[10],[11])+1)+[12]*pow(x,-0.3051))) Correction L2Relative}";
   header = "{ 1 JetEta 1 JetPt [2]*([3]*([4]+[5]*TMath::Log(max([0],min([1],x))))*1./([6]+[7]/x+[8]*log(x)/x+[9]*(pow(x/[10],[11])-1)/(pow(x/[10],[11])+1)+[12]*pow(x,-0.3051))) Correction L2Relative}";
+  //([6]+[7]*100./3.*(TMath::Max(0.,1.03091-0.051154*pow(x,-0.154227))-TMath::Max(0.,1.03091-0.051154*TMath::Power(208.,-0.154227)))+[8]*0.021*(-1.+1./(1.+exp(-(TMath::Log(x)-5.030)/0.395))))) Correction L2Relative}
   if (debug) cout << "New L2L3Residual header:" << endl;
   if (debug) cout << header << endl;
   fout << header << endl;

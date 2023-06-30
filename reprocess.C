@@ -51,7 +51,7 @@ string CorLevel = "L1L2L3Res"; // Closure test for L2L3Res
 /////////////////////////////////////
 
 // Z+jet
-double fzptmin(40);//15.);//40.);   // Z+jet pTmin
+double fzptmin(15.);//40.);   // Z+jet pTmin
 double fzptmax(700.);//1300.);  // Z+jet pTmax
 double fzmpfptmin(15); // Z+jet MPF pTmin
 double fzmpfptmax(700.);//1300);// Z+jet MPF pTmax

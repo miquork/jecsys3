@@ -167,6 +167,8 @@ const array<array<string,3>, nshp> _gf_shapes = {{
     {"hhpfc","nhf","13.04+log(x)*(-10.17+log(x)*(2.611+log(x)*(-0.2802+log(x)*0.01085)))"},
     // "hhpfc" checksum: 2adb48123dcde1aa50a8bba8d138f7ca
 
+    // RunGC
+    /*
     {"hhnoise","Rjet","5.28+log(x)*(-6.859+log(x)*(2.04+log(x)*(-0.09325+log(x)*(-0.04397+log(x)*(0.006839+log(x)*-0.0002948)))))"},
     {"hhnoise","chf","-2.11+log(x)*(3.659+log(x)*(-1.207+log(x)*(0.07304+log(x)*(0.02414+log(x)*(-0.004134+log(x)*0.0001881)))))"},
     {"hhnoise","nef","-7.498+log(x)*(6.744+log(x)*(-1.875+log(x)*(0.1007+log(x)*(0.03691+log(x)*(-0.006191+log(x)*0.0002811)))))"},
@@ -178,6 +180,13 @@ const array<array<string,3>, nshp> _gf_shapes = {{
     {"hhnoise3","nef","(-7.498+log(x)*(6.744+log(x)*(-1.875+log(x)*(0.1007+log(x)*(0.03691+log(x)*(-0.006191+log(x)*0.0002811))))))*3"},
     {"hhnoise3","nhf","(8.571+log(x)*(-9.248+log(x)*(2.631+log(x)*(-0.1182+log(x)*(-0.05626+log(x)*(0.008792+log(x)*-0.0003823))))))*3"},
     // "hhnoise" checksum: bdbd8c2eba49736fa0f627106e80d40e, hand modified
+    */
+    // RunGfix
+    {"hhnoise","Rjet","-2.822+log(x)*(-0.05219+log(x)*(0.1295+log(x)*(0.003666+log(x)*(-0.001746+log(x)*(-0.000216+log(x)*2.772e-05)))))"},
+    {"hhnoise","chf","-1.805+log(x)*(2.518+log(x)*(-0.8305+log(x)*(0.08099+log(x)*(0.006106+log(x)*(-0.001582+log(x)*7.705e-05)))))"},
+    {"hhnoise","nef","-3.583+log(x)*(2.995+log(x)*(-0.7649+log(x)*(0.03897+log(x)*(0.01168+log(x)*(-0.001744+log(x)*6.837e-05)))))"},
+    {"hhnoise","nhf","9.528+log(x)*(-9.178+log(x)*(2.683+log(x)*(-0.2096+log(x)*(-0.03239+log(x)*(0.006442+log(x)*-0.0003013)))))"},
+    // "hhnoise" checksum: a6b125bd41febeacfb42c782eaa93449
 
     /*
     {"hhp18","Rjet","((2.817+log(x)*(-2.491+log(x)*(0.698+log(x)*(-0.04045+log(x)*(-0.008571+log(x)*(0.001366+log(x)*-5.705e-05))))))-1)*6+1"},

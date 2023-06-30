@@ -20,36 +20,40 @@ TH1D *extendHist(TH1D* h) {
 
 void reformatHcalNoise() {
 
-  TFile *f = new TFile("rootfiles/DATA_PromptReco-Run2022G-JetMET_PFCutVariation.root","READ");
-  TFile *f2 = new TFile("rootfiles/DATA_ReReco-Run2022C-JetHT_PFCutVariation.root","READ");
+  TFile *f = new TFile("rootfiles/DATA_PromptReco-Run2022G-JetMET_PFCutVariation-2.root","READ");
+  //TFile *f = new TFile("rootfiles/DATA_PromptReco-Run2022G-JetMET_PFCutVariation.root","READ");
+  //TFile *f2 = new TFile("rootfiles/DATA_ReReco-Run2022C-JetHT_PFCutVariation.root","READ");
   assert(f && !f->IsZombie());
-  assert(f2 && !f2->IsZombie());
-  TFile *fout = new TFile("rootfiles/DATA_Run2022GC_HBnoise.root","RECREATE");
+  //assert(f2 && !f2->IsZombie());
+  TFile *fout = new TFile("rootfiles/DATA_Run2022Gfix_HBnoise.root","RECREATE");
   //DATA_Run2022C_HBnoise.root","RECREATE");
   assert(fout && !fout->IsZombie());
 
   TProfile *pr = (TProfile*)f->Get("Rjet_newBinning");
   assert(pr);
-  TProfile *pr2 = (TProfile*)f2->Get("Rjet_newBinning");
-  assert(pr2);
+  //TProfile *pr2 = (TProfile*)f2->Get("Rjet_newBinning");
+  //assert(pr2);
 
-  TProfile *pchf = (TProfile*)f2->Get("chf");
+  //TProfile *pchf = (TProfile*)f2->Get("chf");
+  TProfile *pchf = (TProfile*)f->Get("chf");
   assert(pchf);
   TH1D *hchf = pchf->ProjectionX("chf_HBnoise");
-  hchf = extendHist(hchf);
+  //hchf = extendHist(hchf);
 
-  TProfile *pnhf = (TProfile*)f2->Get("nhf");
+  //TProfile *pnhf = (TProfile*)f2->Get("nhf");
+  TProfile *pnhf = (TProfile*)f->Get("nhf");
   assert(pnhf);
   TH1D *hnhf = pnhf->ProjectionX("nhf_HBnoise");
-  hnhf = extendHist(hnhf);
+  //hnhf = extendHist(hnhf);
 
-  TProfile *pnef = (TProfile*)f2->Get("gammaf");
+  //TProfile *pnef = (TProfile*)f2->Get("gammaf");
+  TProfile *pnef = (TProfile*)f->Get("gammaf");
   assert(pnef);
   TH1D *hnef = pnef->ProjectionX("gammaf_HBnoise");
-  hnef = extendHist(hnef);
+  //hnef = extendHist(hnef);
 
   TH1D *hr = pr->ProjectionX("Rjet_HBnoise");
-  TH1D *hr2 = pr2->ProjectionX("Rjet_HBnoise2");
+  //TH1D *hr2 = pr2->ProjectionX("Rjet_HBnoise2");
   for (int i = 1; i != hr->GetNbinsX()+1; ++i) {
     double a = hr->GetBinContent(i);
     double ae = hr->GetBinError(i);
@@ -58,14 +62,14 @@ void reformatHcalNoise() {
     hr->SetBinContent(i, r);
     hr->SetBinError(i, 2*ae);
 
-    double a2 = hr2->GetBinContent(i);
-    double ae2 = hr2->GetBinError(i);
-    double r2 = (1+a2)/(1-a2);
-    hr2->SetBinContent(i, r2);
-    hr2->SetBinError(i, 2*ae2);
+    //double a2 = hr2->GetBinContent(i);
+    //double ae2 = hr2->GetBinError(i);
+    //double r2 = (1+a2)/(1-a2);
+    //hr2->SetBinContent(i, r2);
+    //hr2->SetBinError(i, 2*ae2);
   }
-  hr = extendHist(hr);
-  hr2 = extendHist(hr2);
+  //hr = extendHist(hr);
+  //hr2 = extendHist(hr2);
 
   // Fix CHF in 2022G
   /*
@@ -81,6 +85,7 @@ void reformatHcalNoise() {
   }
   */
   // Scale RunG Rjet by x1/3 and match CHF,NHF,NEF from RunC
+  /*
   for (int i = 1; i != hr->GetNbinsX()+1; ++i) {
 
     if (hr->GetBinContent(i)==0 && hr->GetBinError(i)==0) continue;
@@ -106,6 +111,49 @@ void reformatHcalNoise() {
     hnhf->SetBinError(i, enhf);
     hnef->SetBinContent(i, nef);
     hnef->SetBinError(i, enef);
+  }
+  */
+
+  // Scale RunG Rjet and CHF,NHF,NEF by x1/4
+  // Clean out pT>1 TeV which seems noisy with small errors
+  for (int i = 1; i != hr->GetNbinsX()+1; ++i) {
+
+    if (hr->GetBinContent(i)==0 && hr->GetBinError(i)==0) continue;
+
+    double errmin = 0.005;
+    double dr = (1-hr->GetBinContent(i)) / 4.;// / 3.;
+    double r = 1 - dr;
+    double er = max(hr->GetBinError(i) / 4., errmin);// / 3.;
+    double dr2 = (1-hr->GetBinContent(i));//(1-hr2->GetBinContent(i));
+
+    double k = (dr2!=0 ? dr / dr2 : 1);
+    double chf = hchf->GetBinContent(i) * k;
+    double echf = max(hchf->GetBinError(i) * k, errmin*0.6);
+    double nhf = hnhf->GetBinContent(i) * k;
+    double enhf = max(hnhf->GetBinError(i) * k, errmin*0.25);
+    double nef = hnef->GetBinContent(i) * k;
+    double enef = max(hnef->GetBinError(i) * k, errmin*0.15);
+
+    if (hr->GetBinCenter(i)<1000.) {
+      hr->SetBinContent(i, r);
+      hr->SetBinError(i, er);
+      hchf->SetBinContent(i, chf);
+      hchf->SetBinError(i, echf);
+      hnhf->SetBinContent(i, nhf);
+      hnhf->SetBinError(i, enhf);
+      hnef->SetBinContent(i, nef);
+      hnef->SetBinError(i, enef);
+    }
+    else {
+      hr->SetBinContent(i, 0);
+      hr->SetBinError(i, 0);
+      hchf->SetBinContent(i, 0);
+      hchf->SetBinError(i, 0);
+      hnhf->SetBinContent(i, 0);
+      hnhf->SetBinError(i, 0);
+      hnef->SetBinContent(i, 0);
+      hnef->SetBinError(i, 0);
+    }
   }
 
   fout->cd();
