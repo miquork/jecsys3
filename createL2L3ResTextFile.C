@@ -45,9 +45,25 @@ void createL2L3ResTextFile() {
 
   _leg = tdrLeg(0.45,0.90,0.75,0.90);
 
+  //createL2L3ResTextFiles("RunC"); // crash
   //createL2L3ResTextFiles("RunCD");
+  createL2L3ResTextFiles("Ref");
+
+  createL2L3ResTextFiles("Run22C");
+  createL2L3ResTextFiles("Run22D");
+  createL2L3ResTextFiles("Run22E");
   createL2L3ResTextFiles("Run22F");
   createL2L3ResTextFiles("Run22G");
+
+
+  //createL2L3ResTextFiles("Run23B"); // empty
+  //createL2L3ResTextFiles("Run23C1");
+  //createL2L3ResTextFiles("Run23C2");
+  //createL2L3ResTextFiles("Run23C3");
+  //createL2L3ResTextFiles("Run23C4");
+
+  createL2L3ResTextFiles("Run22CD");
+  //createL2L3ResTextFiles("Run22FG");
   createL2L3ResTextFiles("Run23BC123");
   createL2L3ResTextFiles("Run23C4");
 
@@ -55,15 +71,19 @@ void createL2L3ResTextFile() {
   //c1->SaveAs("pdf/createL2L3ResTextFile_2022C.pdf");
   //c1->SaveAs("pdf/createL2L3ResTextFile_Run22F.pdf");
   //c1->SaveAs("pdf/createL2L3ResTextFile_Run22FG_prompt.pdf");
-  c1->SaveAs("pdf/createL2L3ResTextFile_Run22FG_Run23BC_prompt.pdf");
+  //c1->SaveAs("pdf/createL2L3ResTextFile_Run22FG_Run23BC_prompt.pdf");
+  c1->SaveAs("pdf/createL2L3ResTextFile_Run22CDEFG_23BC_prompt.pdf");
 }
 
 void createL2L3ResTextFiles(string set) {
 
   //if (debug) 
+  cout << "****************************************************************\n";
   cout << "Warning: sscanf only works correctly when code is compiled (.C+)\n";
+  cout << "****************************************************************\n";
 
-  cout << "Processing " << set << endl << flush;
+  cout << "** Processing " << set << " **" << endl << flush;
+  cout << "******************************\n";
 
   // Simplify complex sum into an effective formula
   // Need good starting values and/or a few iterations to converge
@@ -71,19 +91,30 @@ void createL2L3ResTextFiles(string set) {
   TDirectory *curdir = gDirectory;
   TFile *f(0);
   //TFile *f = new TFile(Form("rootfiles/jecdata%s.root",set.c_str()),"READ");
+  if (set=="Ref") { // reference JEC
+    f = new TFile("rootfiles/jecdataRunCD_v6.root","READ");
+  }
+  else
+    f = new TFile(Form("rootfiles/jecdata%s.root",set.c_str()),"READ");
+
+  /*
   if (set=="Run22F") {
     f = new TFile(Form("../JERCProtoLab/textFiles/Summer22EERun3_RunF_V2_DATA/jecdata%s.root",set.c_str()),"READ");
   }
   if (set=="Run22G") {
     f = new TFile(Form("../JERCProtoLab/textFiles/Summer22EERun3_RunG_V2_DATA/jecdata%s.root",set.c_str()),"READ");
   }
+  if (set=="Run22G") {
+    f = new TFile(Form("../JERCProtoLab/textFiles/Summer22EERun3_RunG_V2_DATA/jecdata%s.root",set.c_str()),"READ");
+  }
+
   if (set=="Run23BC123") {
     f = new TFile(Form("../JERCProtoLab/textFiles/Winter23Prompt23_RunBC123_V2_DATA/jecdata%s.root",set.c_str()),"READ");
   }
   if (set=="Run23C4") {
     f = new TFile(Form("../JERCProtoLab/textFiles/Winter23Prompt23_RunC4_V2_DATA/jecdata%s.root",set.c_str()),"READ");
   }
-  
+  */  
   assert(f && !f->IsZombie());
   TH1D *h(0);
   //h = (TH1D*)f->Get("ratio/eta00-13/sys/hjesfit2");
@@ -97,13 +128,35 @@ void createL2L3ResTextFiles(string set) {
   if (set=="2017H") 
     f1->SetParameters(0.99, 1.5,0.01, 0.01,1000.,1.3, 0.001);
 
+  // To avoid division by zero errors
+  f1->SetParLimits(4,10.,6500.);
+  f1->SetParLimits(5,0.,10.);
+  
   map<string,int> color;
-  //color["RunC"] = kYellow+2;
-  //color["RunCD"] = kOrange+1;
+  color["RunC"] = kYellow+2;
+  color["RunCD"] = kOrange+1;
+  color["Ref"] = kBlue;
+  /*
   color["Run22F"] = kOrange+1;
   color["Run22G"] = kRed;
   color["Run23BC123"] = kGreen+2;
   color["Run23C4"] = kBlue;
+  */
+
+  color["Run22CD"] = kGreen+4;//+2;
+  color["Run22C"] = kGreen+1;
+  color["Run22D"] = kGreen+2;
+  color["Run22E"] = kGreen+3;//kMagenta+1;
+  color["Run22FG"] = kBlue;
+  color["Run22F"] = kCyan+2;
+  color["Run22G"] = kCyan+3;
+
+  color["Run23BC123"] = kRed;
+  color["Run23B"] = kRed-6;
+  color["Run23C1"] = kOrange;
+  color["Run23C2"] = kOrange+1;
+  color["Run23C3"] = kOrange+2;
+  color["Run23C4"] = kMagenta+2;//kGray+2;
 
   h->Fit(f1,"QRN");
   h->Fit(f1,"QRNM");
@@ -114,7 +167,10 @@ void createL2L3ResTextFiles(string set) {
   f1->Draw("SAME");
 
   _leg->SetY1(_leg->GetY1()-0.05);
-  _leg->AddEntry(h,set.c_str(),"FL");
+  if (set=="Ref")
+    _leg->AddEntry(h,"Old 22C (ref.)","FL");
+  else
+    _leg->AddEntry(h,set.c_str(),"FL");
 
   const int np = 7;
   double p[np];
@@ -129,11 +185,25 @@ void createL2L3ResTextFiles(string set) {
   const char *run = set.c_str();
 
   string sin, sout;
-  //sin = "../JERCProtoLab/Winter22Run3/L2Residual/Winter22Run3_V1/Winter22Run3_V1_MPF_LOGLIN_L2Residual_pythia8_AK4PFPuppi.txt"; // For V1 L2L3Res
+  if (set=="RunC" || set=="RunCD" || set=="Ref")
+    sin = "../JERCProtoLab/Winter22Run3/L2Residual/Winter22Run3_V1/Winter22Run3_V1_MPF_LOGLIN_L2Residual_pythia8_AK4PFPuppi.txt"; // For V1 L2L3Res
   //sout = "../JERCProtoLab/Winter22Run3/global_fit/Winter22Run3_RunCD_V1_DATA_L2L3Residual_AK4PFPuppi.txt"; // For V1 L2L3Res
   //sin = "../JERCProtoLab/Winter22Run3/L2Residual/WinterRun3_V2_PtJER/Winter22RunC_V2_MPF_LOGLIN_L2Residual_pythia8_AK4PFPuppi.txt"; // For V2 L2L3Res
   //sout = "../JERCProtoLab/Winter22Run3/global_fit/Winter22Run3_RunC_V2_DATA_L2L3Residual_AK4PFPuppi.txt"; // For V2 L2l3Res (L2Res RunC, L3Res RunCD)
   //
+  if (set=="Run22C" || set=="Run22D" || set=="Run22CD") {
+    //sin = "CondFormats/JetMETObjects/data/Winter22Run3_V1_MC_L2Residual_AK4PFPuppi.txt";
+    sin = "CondFormats/JetMETObjects/data/Winter22Run3_RunC_V2_DATA_L2Residual_AK4PFPuppi.txt";
+  } 
+  if (set=="Run22E" || set=="Run22F" || set=="Run22G" || set=="Run22FG") {
+    sin = "CondFormats/JetMETObjects/data/Winter23Prompt23_RunA_V1_DATA_L2Residual_AK4PFPuppi.txt";
+  }
+  if (set=="Run23B" || set=="Run23C1" || set=="Run23C2" || set=="Run23C3" || 
+      set=="Run23BC123" || set=="Run23C4") {
+    sin = "CondFormats/JetMETObjects/data/Winter23Prompt23_RunA_V1_DATA_L2Residual_AK4PFPuppi.txt";
+  }
+  sout = Form("textfiles/Sami_20230630/%s_DATA_L2L3Residual_AK4PFPuppi.txt",run);
+  /*
   if (set=="Run22F") {
     sin = "../JERCProtoLab/textFiles/Summer22EERun3_RunF_V2_DATA/Summer22EERun3_RunF_V2_DATA_L2Residual_AK4PFPuppi.txt"; // For V2 L2L3Res
     sout = "../JERCProtoLab/textFiles/Summer22EERun3_RunF_V2_DATA/Summer22EERun3_RunF_V2_DATA_L2L3Residual_AK4PFPuppi.txt"; // For V2 L2L3Res
@@ -150,7 +220,8 @@ void createL2L3ResTextFiles(string set) {
     sin = "../JERCProtoLab/textFiles/Winter23Prompt23_RunC4_V2_DATA/Winter23Prompt23_RunA_V1_DATA_L2Residual_AK4PFPuppi.txt"; // For V2 L2L3Res
     sout = "../JERCProtoLab/textFiles/Winter23Prompt23_RunC4_V2_DATA/Winter23Prompt23_RunC4_V2_DATA_L2L3Residual_AK4PFPuppi.txt"; // For V2 L2L3Res
   }
-    
+  */
+
   ifstream fin(sin.c_str());
   assert(fin.is_open());
   ofstream fout(sout.c_str());
@@ -195,13 +266,13 @@ void createL2L3ResTextFiles(string set) {
     if (cnt<cntmax && debug)
       cout << Form("  %9.6f %9.6f   %d   %d %d   %d   %d   %8.6f %8.6f"
 		   "   %8.6f %8.6f   "
-		   "%5.4f %5.4f %5.5f %5.5f %5.1f %5.4f %5.5f",
+		   "%5.4f %5.4f %5.5f %5.5f %5.2f %5.4f %5.5f",
 		   etamin, etamax, nparnew, xmin, xmax, ptmin0, ptmax1,
 		   p2, p3, p4, p5,
 		   p[0], p[1], p[2], p[3], p[4], p[5], p[6]) << endl;
     fout << Form("  %9.6f %9.6f   %d   %d %d   %d   %d   %8.6f %8.6f"
 		 "   %8.6f %8.6f   "
-		 "%5.4f %5.4f %5.5f %5.5f %5.1f %5.4f %5.5f",
+		 "%5.4f %5.4f %5.5f %5.5f %5.2f %5.4f %5.5f",
 		 etamin, etamax, nparnew, xmin, xmax, ptmin0, ptmax1,
 		 p2, p3, p4, p5,
 		 p[0], p[1], p[2], p[3], p[4], p[5], p[6]) << endl;

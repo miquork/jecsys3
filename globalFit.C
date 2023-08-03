@@ -374,6 +374,7 @@ void globalFitEtaBin(double etamin, double etamax, string run) {
   }
   
   cout << endl;
+  cout << "Listing global fit results for " << run << endl;
   cout << Form("Used %d data points, %d fit parameters and %d nuisances.\n"
 	       "Data chi2/NDF = %1.1f / %d [%1.0f,%1.0f]\n"
 	       "Nuisance chi2/Nsrc = %1.1f / %d\n"
