@@ -34,8 +34,8 @@ void drawJetVetoV2() {
   TFile *f22cd = new TFile("rootfiles/jetveto2022CD.root","READ");
   assert(f22cd && !f22cd->IsZombie());
 
-  TFile *f22ef = new TFile("rootfiles/jetveto2022EF.root","READ");
-  assert(f22ef && !f17->IsZombie());
+  TFile *f22efg = new TFile("rootfiles/jetveto2022EFG.root","READ");
+  assert(f22efg && !f22efg->IsZombie());
 
   TFile *f23bc = new TFile("rootfiles/jetveto2023BC.root","READ");
   assert(f23bc && !f23bc->IsZombie());
@@ -47,7 +47,7 @@ void drawJetVetoV2() {
   curdir->cd();
 
   TH2D *h2_22cd = (TH2D*)f22cd->Get("jetvetomap"); assert(h2_22cd);
-  TH2D *h2_22ef = (TH2D*)f22ef->Get("jetvetomap"); assert(h2_22ef);
+  TH2D *h2_22efg = (TH2D*)f22efg->Get("jetvetomap"); assert(h2_22efg);
   TH2D *h2_23bc = (TH2D*)f23bc->Get("jetvetomap"); assert(h2_23bc);
   TH2D *h2_23d  = (TH2D*)f23d->Get("jetvetomap"); assert(h2_23d);
 
@@ -55,7 +55,8 @@ void drawJetVetoV2() {
   h->SetMaximum(+TMath::Pi());
   h->SetMinimum(-TMath::Pi());
 
-  lumi_13TeV = "Run3, 45.6 fb^{-1} (+23D, not 22G)";
+  //lumi_13TeV = "Run3, 48.7 fb^{-1} (+23D)";
+  // 2023 recorded 28.89/fb, 2022 recorded 38.48/fb
   TCanvas *c1 = tdrCanvas("c1",h,4,0,kRectangular);
 
   TLine *l = new TLine();
@@ -84,12 +85,12 @@ void drawJetVetoV2() {
   h2_22cd->SetFillColorAlpha(kYellow+2, 0.35); // 35% transparent
   h2_22cd->Draw("SAMEBOX");
 
-  rezero(h2_22ef);
-  h2_22ef->GetZaxis()->SetRangeUser(-10,10);
-  h2_22ef->SetFillStyle(1001);
-  h2_22ef->SetLineColor(kBlue);
-  h2_22ef->SetFillColorAlpha(kBlue, 0.35); // 35% transparent
-  h2_22ef->Draw("SAMEBOX");
+  rezero(h2_22efg);
+  h2_22efg->GetZaxis()->SetRangeUser(-10,10);
+  h2_22efg->SetFillStyle(1001);
+  h2_22efg->SetLineColor(kBlue);
+  h2_22efg->SetFillColorAlpha(kBlue, 0.35); // 35% transparent
+  h2_22efg->Draw("SAMEBOX");
 
   rezero(h2_23bc);
   h2_23bc->GetZaxis()->SetRangeUser(-10,10);
@@ -106,7 +107,7 @@ void drawJetVetoV2() {
   h2_23d->Draw("SAMEBOX");
   
   TH2D *h2sum = (TH2D*)h2_22cd->Clone("h2_run3");
-  h2sum->Add(h2_22ef);
+  h2sum->Add(h2_22efg);
   h2sum->Add(h2_23bc);
   h2sum->Add(h2_23d);
   TH2D *h2all = (TH2D*)h2sum->Clone("h2all");
@@ -133,7 +134,7 @@ void drawJetVetoV2() {
   TLegend *leg = tdrLeg(0.14,0.90-6*0.05,0.34,0.90);
   //leg->AddEntry(h2em,"Cold (GH)","F");
   leg->AddEntry(h2_22cd,"22CD","F");
-  leg->AddEntry(h2_22ef,"22EF","F");
+  leg->AddEntry(h2_22efg,"22EFG","F");
   leg->AddEntry(h2_23bc,"23BC","F");
   leg->AddEntry(h2_23d, "23D","F");
   //leg->AddEntry(h2em,"EM mask","F");

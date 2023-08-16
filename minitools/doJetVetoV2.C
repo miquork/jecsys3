@@ -1,5 +1,7 @@
 // Purpose: Produce jet veto maps from JMENANO analyzer on dijets
-//          Updated version for 2023. Sum absolute pulls to avoid cancellation
+//          Updated version for 2023. Sum absolute pulls to avoid cancellatio
+// Author:  Mikko Voutilainen (at) cern (dot) ch
+// Date:    2023-08-14
 #include "TFile.h"
 #include "TProfile2D.h"
 #include "TH2D.h"
@@ -42,7 +44,8 @@ void doJetVetoV2(string run = "") {
   doJetVetoV2s("2022E");
   doJetVetoV2s("2022F");
     doJetVetoV2s("2022EF");
-  //doJetVetoV2s("2022G");
+  doJetVetoV2s("2022G");
+    doJetVetoV2s("2022EFG");
 
   doJetVetoV2s("2023BCv123");
   doJetVetoV2s("2023Cv4");
@@ -58,32 +61,35 @@ void doJetVetoV2s(string run) {
   TFile *f(0);
   if (run=="2022C") {
     lumi_136TeV = "Run2022C, 5.1 fb^{-1}";
-    f = new TFile("rootfiles/Iita_20230814/jmenano_data_out_2022C_v1.root","READ");
+    f = new TFile("rootfiles/Iita_20230816/jmenano_data_out_2022C_v1.root","READ");
   }
   if (run=="2022D") {
     lumi_136TeV = "Run2022D, 3.0 fb^{-1}";
-    f = new TFile("rootfiles/Iita_20230814/jmenano_data_out_2022D_v1.root","READ");
+    f = new TFile("rootfiles/Iita_20230816/jmenano_data_out_2022D_v1.root","READ");
   }
-  if (run=="2022CD") {
+  if (run=="2022CD") { // hadd
     lumi_136TeV = "Run2022CD, 8.1 fb^{-1}";
-    f = new TFile("rootfiles/Iita_20230814/jmenano_data_out_2022CD_v1.root","READ");
+    f = new TFile("rootfiles/Iita_20230816/jmenano_data_out_2022CD_v1.root","READ");
   }
   if (run=="2022E") {
     lumi_136TeV = "Run2022E, 5.9 fb^{-1}";
-    f = new TFile("rootfiles/Iita_20230814/jmenano_data_out_2022E_v1.root","READ");
+    f = new TFile("rootfiles/Iita_20230816/jmenano_data_out_2022E_v1.root","READ");
   }
   if (run=="2022F") {
     lumi_136TeV = "Run2022F, 18.0 fb^{-1}";
-    f = new TFile("rootfiles/Iita_20230814/jmenano_data_out_2022F_v1.root","READ");
+    f = new TFile("rootfiles/Iita_20230816/jmenano_data_out_2022F_v1.root","READ");
   }
-  if (run=="2022EF") {
+  if (run=="2022EF") { // hadd
     lumi_136TeV = "Run2022EF, 23.9 fb^{-1}";
-    f = new TFile("rootfiles/Iita_20230814/jmenano_data_out_2022EF_v1.root","READ");
+    f = new TFile("rootfiles/Iita_20230816/jmenano_data_out_2022EF_v1.root","READ");
   }
-  if (run=="2022G") {
+  if (run=="2022G") { // new
     lumi_136TeV = "Run2022G, 3.1 fb^{-1}";
-    f = new TFile("rootfiles/Iita_20230814/jmenano_data_out_2022G_v1.root","READ");
-    assert(false);
+    f = new TFile("rootfiles/Iita_20230816/jmenano_data_out_2022G_v1.root","READ");
+  }
+  if (run=="2022EFG") { // hadd
+    lumi_136TeV = "Run2022EFG, 27.0 fb^{-1}";
+    f = new TFile("rootfiles/Iita_20230816/jmenano_data_out_2022EF_v1.root","READ");
   }
   
   if (run=="2023BCv123") {
@@ -469,7 +475,8 @@ void doJetVetoV2s(string run) {
       if (eta>1.5 && phi>1.85 &&
 	  eta<2.2 && phi<2.7 &&
 	  phi<2.7-(2.7-2.1)/(2.1-1.6)*(eta-1.6)) {
-	if (run=="2022E" || run=="2022F" || run=="2022G") {
+	if (run=="2022E" || run=="2022F" || run=="2022G" ||
+	    run=="2022EF" || run=="2022EFG") {
 	  h2veto->SetBinContent(i,j,100);
 	  h2eep->SetBinContent(i,j,100);
 	  h2all->SetBinContent(i,j,100);
