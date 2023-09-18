@@ -58,6 +58,10 @@ void doJetVetoV2s(string run) {
   setTDRStyle();
   TDirectory *curdir = gDirectory;
 
+  TFile *fout = new TFile(Form("rootfiles/jetveto%s.root",run.c_str()),
+			  "RECREATE");
+  fout->mkdir("trigs");
+  
   TFile *f(0);
   if (run=="2022C") {
     lumi_136TeV = "Run2022C, 5.1 fb^{-1}";
@@ -105,7 +109,8 @@ void doJetVetoV2s(string run) {
     f = new TFile("rootfiles/Iita_20230814/nano_data_out_2023BC_v1.root","READ");
   }
   if (run=="2023D") {
-    lumi_136TeV = "Run2023D, X.X fb^{-1}";
+    // 9525/pbv
+    lumi_136TeV = "Run2023D, 9.5 fb^{-1}";
     f = new TFile("rootfiles/Iita_20230814/nano_data_out_2023D_v1.root","READ");
   }
 
@@ -310,8 +315,11 @@ void doJetVetoV2s(string run) {
 	h2nomsum->Add(h2nom);
 	h2abssum->Add(h2abs);
       }
+      fout->cd("trigs");
+      h2nom->Write(Form("jetpullmap_nom_%s_%s",hname.c_str(),trg.c_str()));
+      curdir->cd();
       delete h2;
-		
+					
     } // for itrg
 
     double ntrg2 = (oneTrig!="" ? 1 : max(1, ntrg/2));
@@ -580,14 +588,13 @@ void doJetVetoV2s(string run) {
     h2jesnorm->SetTitle("Dijet asymmetry map, (pTprobe-pTtag)/pTave for |eta,tag|<1.3 normalized vs #phi_{probe}");
   } // if (h2jes)
 
-  TFile *fout = new TFile(Form("rootfiles/jetveto%s.root",run.c_str()),
-			  "RECREATE");
   fout->cd();
   h2veto->Write("jetvetomap");
   h2hot->Write("jetvetomap_hot");
   h2cold->Write("jetvetomap_cold");
   h2hotandcold->Write("jetvetomap_hotandcold");
-  //h2eep->Write("jetvetomap_eep");
+  if (h2eep->Integral()!=0) h2eep->Write("jetvetomap_eep");
+  if (h2bpix->Integral()!=0) h2bpix->Write("jetvetomap_bpix");
   h2all->Write("jetvetomap_all");
   if (h2jes) h2jes->Write("jetasymmetrymap");
   if (h2jesnorm) h2jesnorm->Write("jetasymmetrymap_norm");
