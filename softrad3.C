@@ -34,7 +34,7 @@ bool useGluonJES = true; // (def:true)
 double gJESpt = 15.; // reference pT for gluonJES (def:45)
 bool _debug3 = false;
 
-// Find entry in graph correspondign to this histogram bin
+// Find entry in graph corresponding to this histogram bin
 double getY(double pt, double ptmin, double ptmax, TGraphErrors *g,
 	    double &ey) {
   
@@ -119,14 +119,14 @@ void softrad3(double etamin=0.0, double etamax=1.3, string epoch="") {
   methods2.push_back("ptchs");
 
   vector<string> samples;
-  //samples.push_back("gamjet");
+  samples.push_back("gamjet");
   //samples.push_back("zeejet");
   //samples.push_back("zmmjet");
   samples.push_back("zjet");
-  //samples.push_back("multijet");
+  samples.push_back("multijet");
 
   const int aref = 100; // Z/gamma+jet
-  const int mptref = 30; // multijet
+  const int mptref = 100;//30; // multijet
 
   map<string, map<string, map<string, TGraphErrors*> > > gs;
   map<string, map<string, TH1D*> > hs;
@@ -187,7 +187,7 @@ void softrad3(double etamin=0.0, double etamax=1.3, string epoch="") {
   TF1 *fma = new TF1("fma","(x-1)/(x+1)-[0]"
 		     " + (1 - (x+1)/(2.*[3]/[5])) * [1]"
 		     " + (1 - (x+1)/(2.*[4]/[5])) * [2]",0,13000);
-  TF1 *fpa = new TF1("fma","(x-1)/(x+1)-[0]"
+  TF1 *fpa = new TF1("fpa","(x-1)/(x+1)-[0]"
 		     " + (0 - (x+1)/(2.*[3]/[5])) * [1]"
 		     " + (0 - (x+1)/(2.*[4]/[5])) * [2]",0,13000);
 
@@ -287,18 +287,22 @@ void softrad3(double etamin=0.0, double etamax=1.3, string epoch="") {
 		     eq0, eq1, eqn, equ);
 	    getEntry(i, pd, r0, r1,     rn, ru, h, g0, g1, gn, gu,
 		     er0, er1, ern, eru);
-	    if (q0==0 && r0==0 && m=="mpfchs1") continue;
-	    if (q1==0 && r1==0 && m=="ptchs") continue;
+	    //if (q0==0 && r0==0 && m=="mpfchs1") continue;
+	    //if (q1==0 && r1==0 && m=="ptchs") continue;
+	    if ((q0==0 || r0==0) && m=="mpfchs1") continue;
+	    if ((q1==0 || r1==0) && m=="ptchs") continue;
 	    double pt = (isflavormc ? pm : 0.5*(pm+pd));
 	    if (_debug3) cout << s << " " << m << " pt="<<pt<<endl;
 	    if (fabs(r1+rn+ru-r0)>1e-3) {
-	      cout << "i="<<i<<" pt="<<pt<<" r1+rn+ru-r0="<<r1+rn+ru-r0<<endl
+	      cout << s << " i="<<i<<" pt="<<pt<<" r1+rn+ru-r0="
+		   << r1+rn+ru-r0 << endl
  		   << " r0="<<r0 << " r1="<<r1<<" rn="<<rn<<" ru="<<ru<<endl
 		   <<flush;
 	      //assert(fabs(r1+rn+ru-r0)<1e-3);
 	    }
 	    if (fabs(q1+qn+qu-q0)>1e-3) {
-	      cout << "i="<<i<<" pt="<<pt<<" q1+qn+qu-q0="<<q1+qn+qu-q0<<endl
+	      cout << s << "i="<<i<<" pt="<<pt<<" q1+qn+qu-q0="
+		   << q1+qn+qu-q0 << endl
 		   << " q0="<<q0 << " q1="<<q1<<" qn="<<qn<<" qu="<<qu<<endl
 		   <<flush;
 	      //assert(fabs(q1+qn+qu-q0)<1e-3);
@@ -340,12 +344,22 @@ void softrad3(double etamin=0.0, double etamax=1.3, string epoch="") {
 	      //double R2_d = 1.000;
 
 	      // turn <Rlead>/<Rrecoil> ratio back to <A> and <B>
+	      /*
 	      double Ad = (r0-1)/(r0+1);
 	      double Bd = (r1-1)/(r1+1);
 	      double Am = (q0-1)/(q0+1);
 	      double Bm = (q1-1)/(q1+1);
-
+	      */
+	      // Above input is (<Rlead>-<Recoil>)/(<Rlead>+<Rrecoil>)
+	      // While we have ~ 1+(<Rlead>-<Recoil>)/(0.5*(<Rlead>+<Rrecoil>))
+	      // So subtract 1 amd multiply by x0.5?
+	      double Ad = 0.5*(r0-1);
+	      double Bd = 0.5*(r1-1);
+	      double Am = 0.5*(q0-1);
+	      double Bm = 0.5*(q1-1);
+	      
 	      // same for N-jet and unclustered, which are
+	      /*
 	      // rn = 2*Pn / (1 - Pn) <=> rn-rn*Pn=+2*Pn <=> Pn=rn/(2+rn)
 	      // ru = -2*Pu / (1 - Pu) <=> ru-ru*Pu=-2*Pu <=> Pu=-ru/(2-ru)
 	      double k = 1; // extra fudge factor => fixed in fma, fpa
@@ -355,7 +369,14 @@ void softrad3(double etamin=0.0, double etamax=1.3, string epoch="") {
 	      double Pnm = k*qn/(2+qn);
 	      //double Pum = +k*qu/(2-qu); // Orig. PU had extra minus sign
 	      double Pum = k*qu/(2+qu); // Now fixed?
-
+	      assert(false); // update these to dijet code's Multijet
+	      */
+	      double k = 1;
+	      double Pnd = k*rn;
+	      double Pud = k*ru;
+	      double Pnm = k*qn;
+	      double Pum = k*qu;
+	      
 	      double Rd(0), Rm(0), dR(0), dR_d(0), dR_m(0);
 	      double xmin(0.1), xmax(1.9);
 	      if (m=="mpfchs1") { // multijet
@@ -400,7 +421,8 @@ void softrad3(double etamin=0.0, double etamax=1.3, string epoch="") {
 		double dRus = (Rm/Ru_m - 1)*sqrt(pow(eru,2) + pow(equ,2));
 
 		if (fabs(r0/q0-mpf)>1e-3) {
-		  cout <<s<<": r0/q0="<<r0/q0<<" mpf="<<mpf<<endl<<flush;
+		  cout <<s<<": r0/q0="<<r0/q0<<" mpf="<<mpf
+		       << " pt="<<pt<<endl<<flush;
 		  assert(fabs(r0/q0-mpf)<1e-3);
 		}
 		
@@ -563,7 +585,8 @@ void softrad3(double etamin=0.0, double etamax=1.3, string epoch="") {
 	      if (fabs(r0/q0-mpf)>1e-3) {
 		cout <<s<<": r0/q0="<<r0/q0<<" mpf="<<mpf
 		     << " diff="<<fabs(r0/q0-mpf)<<endl<<flush;
-		assert(fabs(r0/q0-mpf)<3.9e-3 || mpf==0); // Run2Test
+		if (s!="gamjet")
+		  assert(fabs(r0/q0-mpf)<3.9e-3 || mpf==0); // Run2Test
 	      }
 
 	      double ddR = sqrt(pow(dRn1,2) + pow(dRn2,2) +

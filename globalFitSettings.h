@@ -9,7 +9,7 @@ using std::string;
 using std::map;
 
 // Global minimum (stat.) uncertainty for input data
-double globalErrMin = 0;//0.002559; // chi2/NDF=101.0/101
+double globalErrMin = 0.003;//0.002559; // chi2/NDF=101.0/101
 
 // Input data
 struct fitData {
@@ -41,10 +41,15 @@ struct fitShape {
 // Gaussian prior for fit parameters
 bool _gf_penalizeFitPars = true;
 
+// Downweight PF compositin data to get broad features
+double _gf_fitPFcomp_minErr = 0.001;
+// Do PFcomp, Z+jet HDM fit (will still plot these, if enabled)
+bool _gf_fitPFcomp = false;
+bool _gf_fitZjetHDM = true;//false;
 // Permit baseline shift for JES with L2L3Res inputs. Needed for PFcomp fit
 bool _gf_useJESref = false;//true;//false;
 // Alternatively, undo JES completely to show pre-closure plots
-bool _gf_undoJESref = true;
+bool _gf_undoJESref = false;//true;
 
 // Listing of all available 'datasets'
 // {name, type, name2}
@@ -60,6 +65,21 @@ const array<array<string,3>,ndt> _gf_datasets = {{
     {"chf_zjet_a100",  "chf",""},
     {"nhf_zjet_a100",  "nhf",""},
     {"nef_zjet_a100",  "nef",""},
+    {"ptchs_gamjet_a100", "Rjet",""},
+    {"mpfchs1_gamjet_a100", "Rjet",""},
+    {"hdm_mpfchs1_gamjet", "Rjet",""},
+    {"chf_gamjet_a100",  "chf",""},
+    {"nhf_gamjet_a100",  "nhf",""},
+    {"nef_gamjet_a100",  "nef",""},
+    {"ptchs_multijet_a100", "Rjet","crecoil_multijet_a100"},
+    {"mpfchs1_multijet_a100", "Rjet","crecoil_multijet_a100"},
+    {"hdm_mpfchs1_multijet", "Rjet","crecoil_multijet_a100"},
+    {"chf_multijet_a100",  "chf",""},
+    {"nhf_multijet_a100",  "nhf",""},
+    {"nef_multijet_a100",  "nef",""},
+    {"chf_incjet_a100",  "chf",""},
+    {"nhf_incjet_a100",  "nhf",""},
+    {"nef_incjet_a100",  "nef",""},
   }};
 
 // Use only these data sets (empty for all)
@@ -73,6 +93,21 @@ const array<string,29> _gf_datasets_whitelist = {
   "chf_zjet_a100",
   "nhf_zjet_a100",
   "nef_zjet_a100",
+  //"ptchs_gamjet_a100",
+  //"mpfchs1_gamjet_a100",
+  "hdm_mpfchs1_gamjet",
+  "chf_gamjet_a100",
+  "nhf_gamjet_a100",
+  "nef_gamjet_a100",
+  //"ptchs_multijet_a100",
+  //"mpfchs1_multijet_a100",
+  "hdm_mpfchs1_multijet",
+  //"chf_multijet_a100",
+  //"nhf_multijet_a100",
+  //"nef_multijet_a100",
+  "chf_incjet_a100",
+  "nhf_incjet_a100",
+  "nef_incjet_a100",
 };
 
 // Use only these shapes (empty for all)
@@ -84,17 +119,26 @@ const array<string,29> _gf_shapes_whitelist = {
   "tv402","tv3n1","tv300pn",
   "hhp3",
   "hhpfc", // Run23
-  "hhnoise" // Run22
+  "hhnoise", // Run22
+  //"x0p5",
+  "x1",
+  //"x1p5",
+  //"x2",
+  //"x3",
+  //"x4", // test TeV scale
+  "hbtime"
 };
 
 // Listing one-sided (positive-definite) sources
-const int npos = 17;
+const int npos = 19;
 const array<string,npos> _gf_posdef =
   {"tv4","tv402","tv404","tv405","tv410","tv416","tv420","tv430",
    "tv3n1","tv300pn",
    //"hhp3",
    //"hhpfc",
-   "hhred103","hhred100","hhred097", "hhblue103","hhblue100","hhblue097"};
+   "hhred103","hhred100","hhred097", "hhblue103","hhblue100","hhblue097",
+   /*"x2",*/ "hbtime"
+  };
 
 // Listing source limits
 // (How to best implement this?)
@@ -130,6 +174,28 @@ const array<array<string,3>,nsrc> _gf_sources = {{
 const int nshp = 112;
 const array<array<string,3>, nshp> _gf_shapes = {{
 
+    {"x0p5","Rjet","10.*pow(x/3000.,0.5)"},
+    {"x1","Rjet","10.*pow(x/3000.,1)"},
+    {"x1p5","Rjet","10.*pow(x/3000.,1.5)"},
+    {"x2","Rjet","10.*pow(x/3000.,2)"},
+    {"x3","Rjet","10.*pow(x/3000.,3)"},
+    {"x4","Rjet","10.*pow(x/3000.,4)"},
+    // Quick tests for 10% pT^2 and pT^3 uncertainty at 3 TeV
+
+    {"hbtime","Rjet","0.1394+log(x)*(-0.08167+log(x)*(-0.001402+log(x)*(0.005871+log(x)*(0.0003952+log(x)*(-0.0003595+log(x)*2.291e-05)))))"},
+    {"hbtime","chf","1.029+log(x)*(-0.9924+log(x)*(0.2604+log(x)*(0.03122+log(x)*(-0.02631+log(x)*(0.004353+log(x)*-0.0002299)))))"},
+    {"hbtime","nef","-1.396+log(x)*(1.355+log(x)*(-0.3602+log(x)*(-0.04115+log(x)*(0.03584+log(x)*(-0.005978+log(x)*0.0003229)))))"},
+    {"hbtime","nhf","0.5664+log(x)*(-0.5401+log(x)*(0.1418+log(x)*(0.01537+log(x)*(-0.01331+log(x)*(0.002179+log(x)*-0.0001194)))))"},
+    // "hbtime" checksum: af96d36f092413556b2d757953e90fae
+    /*
+    // Add 2.* by hand (5ns -> 10ns equivalent)
+    {"hbtime","Rjet","2.*log(x/15.)*(-0.001278+log(x/15.)*(0.01576+log(x/15.)*-0.01456))"},
+    {"hbtime","chf","2.*log(x/15.)*(6.107e-05+log(x/15.)*(-0.004846+log(x/15.)*0.006862))"},
+    {"hbtime","nef","2.*log(x/15.)*(-0.007979+log(x/15.)*(0.01026+log(x/15.)*-0.003737))"},
+    {"hbtime","nhf","2.*log(x/15.)*(0.005884+log(x/15.)*(-0.001467+log(x/15.)*-0.004223))"},
+    // "hbtime" checksum: cc2b0bb93a82fa64200db36d81c05b1e
+    */
+    
     {"em3","Rjet","-0.3222+log(x)*(0.1973+log(x)*(-0.0774+log(x)*(-0.006124+log(x)*(0.001035+log(x)*(0.0002058+log(x)*-2.089e-05)))))"},
     {"em3","chf","2.59+log(x)*(-1.188+log(x)*(0.1324+log(x)*(0.01962+log(x)*(-0.001522+log(x)*(-0.0004592+log(x)*3.848e-05)))))"},
     {"em3","nef","-2.715+log(x)*(1.225+log(x)*(-0.1397+log(x)*(-0.02023+log(x)*(0.001699+log(x)*(0.0004898+log(x)*-4.382e-05)))))"},
