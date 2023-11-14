@@ -1,6 +1,6 @@
 // Purpose: Create L2L3Res text file with simple parameterization
 //          Takes as input previous L2Res and complex 9p global JES fit
-//          Outputs same L2Res and "simple" 7p fit
+//          Outputs same L2Res and "simple" 7p->8p fit
 //          ("simple" as in removing main parameter degeneracies)
 //          For merging IOVs together at text file level, use
 //          [minitools/mergeL2L3ResTextFiles.C]
@@ -132,7 +132,8 @@ void createL2L3ResTextFiles(string set) {
   else if (set=="Run22E-22Sep2023") {
     f = new TFile("rootfiles/jecdataRun22E.root","READ"); isRun3=true;
   }
-  else if (set=="Run22F-Prompt" || set=="Run22G-Prompt") {
+  else if (set=="Run22F-Prompt" || set=="Run22G-Prompt" ||
+	   set=="Run22FG-Prompt") {
     f = new TFile("rootfiles/jecdataRun22FG.root","READ"); isRun3=true;
   }
   else if (set=="Run23C123-Prompt") {
@@ -320,6 +321,10 @@ void createL2L3ResTextFiles(string set) {
   if (set=="Run22E-22Sep2023") {
     sin = "CondFormats/JetMETObjects/data/Summer22EE_RunE_V2_MPF_L2Residual_AK4PFPuppi.txt"; isL2Res = true;
   }
+  if (set=="Run22FG-Prompt") {
+    sin = "CondFormats/JetMETObjects/data/Summer22EEPrompt22_RunFG_V2_L2Residual_AK4PFPuppi.txt"; isL2Res = true;
+    assert(false); // 22FG_L2Res not yet available
+  }
   if (set=="Run22F-Prompt") {
     sin = "CondFormats/JetMETObjects/data/Summer22EEPrompt22_RunF_V2_L2Residual_AK4PFPuppi.txt"; isL2Res = true;
   }
@@ -349,7 +354,8 @@ void createL2L3ResTextFiles(string set) {
 
   //header = "{ 1 JetEta 1 JetPt [2]*([3]*([4]+[5]*TMath::Log(max([0],min([1],x))))*1./([6]+[7]/x+[8]*log(x)/x+[9]*(pow(x/[10],[11])-1)/(pow(x/[10],[11])+1)+[12]*pow(x,-0.3051))) Correction L2Relative}";
   if (isRun3) {
-    header = "{ 1 JetEta 1 JetPt [2]*([3]*([4]+TMath::Log(max([0],min([1],x))))*([5]+TMath::Log(max([0],min([1],x)))*[6]+[7]/x))*1./([8]+[9]/x+[10]*log(x)/x+[11]*(pow(x/[12],[13])-1)/(pow(x/[12],[13])+1)+[14]*pow(x,-0.3051)+[15]*x)) Correction L2Relative}";
+    //Old L2Residual header: [2]*([3]*([4]+TMath::Log(max([0],min([1],x)))*([5]+TMath::Log(max([0],min([1],x)))*[6])+[7]/x))
+    header = "{ 1 JetEta 1 JetPt [2]*([3]*([4]+TMath::Log(max([0],min([1],x)))*([5]+TMath::Log(max([0],min([1],x)))*[6])+[7]/x))*1./([8]+[9]/x+[10]*log(x)/x+[11]*(pow(x/[12],[13])-1)/(pow(x/[12],[13])+1)+[14]*pow(x,-0.3051)+[15]*x) Correction L2Relative}";
   }
   else {
     header = "{ 1 JetEta 1 JetPt [2]*([3]*([4]+[5]*TMath::Log(max([0],min([1],x))))*1./([6]+[7]/x+[8]*log(x)/x+[9]*(pow(x/[10],[11])-1)/(pow(x/[10],[11])+1)+[12]*pow(x,-0.3051))) Correction L2Relative}";
@@ -382,6 +388,7 @@ void createL2L3ResTextFiles(string set) {
 		    "  %lf %lf %lf",
 		    &etamin, &etamax, &npar, &xmin, &xmax, &ptmin0, &ptmax1,
 		    &p2, &p3, &p4, &p5,  &p6, &p7, &p8)==14);
+      assert(false); // takin L2Residual only for 22Sep2023
     }
     assert(!(etamin==0 && etamax==0));
     if (fabs(etamin)<0.01 && fabs(etamax)<0.01) {
@@ -390,20 +397,26 @@ void createL2L3ResTextFiles(string set) {
     }
 
     if (isRun3) {
-      int nparnew = 17;
+      int nparnew = 18;//17;
       if (cnt<cntmax && debug)
-	cout << Form("  %9.6f %9.6f   %d   %d %d   %d   %d   %8.6f %8.6f"
-		     "   %8.6f %8.6f %8.6f %8.6f   "
-		     "%5.4f %5.4f %5.5f %5.5f %5.2f %5.4f %5.5f",
-		     etamin, etamax, nparnew, xmin, xmax, ptmin0, ptmax1,
+	cout << Form("  %9.6f %9.6f   %d   %d %d"
+		     "   %d   %d"
+		     "   %8.6f %8.6f %8.6f %8.6f %8.6f %8.6f"
+		     "   %5.4f %5.4f %5.5f %5.5f %5.2f %5.4f %5.5f %5.5f",
+		     etamin, etamax, nparnew, xmin, xmax,
+		     ptmin0, ptmax1,
 		     p2, p3, p4, p5, p6, p7,
-		     p[0], p[1], p[2], p[3], p[4], p[5], p[6]) << endl;
-      fout << Form("  %9.6f %9.6f   %d   %d %d   %d   %d   %8.6f %8.6f"
-		   "   %8.6f %8.6f   "
-		   "%5.4f %5.4f %5.5f %5.5f %5.2f %5.4f %5.5f",
-		   etamin, etamax, nparnew, xmin, xmax, ptmin0, ptmax1,
-		   p2, p3, p4, p5,
-		   p[0], p[1], p[2], p[3], p[4], p[5], p[6]) << endl;
+		     p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7])
+	     << endl;
+      fout << Form("  %9.6f %9.6f   %d   %d %d"
+		   "   %d   %d"
+		   "   %8.6f %8.6f %8.6f %8.6f %8.6f %8.6f"
+		   "   %5.4f %5.4f %5.5f %5.5f %5.2f %5.4f %5.5f %5.5f",
+		   etamin, etamax, nparnew, xmin, xmax,
+		   ptmin0, ptmax1,
+		   p2, p3, p4, p5, p6, p7,
+		   p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7])
+	   << endl;
       ++cnt;
     }
     else {
