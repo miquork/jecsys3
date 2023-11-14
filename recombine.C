@@ -44,8 +44,33 @@ void recombine(string type="Run2") {
   //finns.push_back(make_pair<double,string>(41.48,"2017BCDEF"));
   //finns.push_back(make_pair<double,string>(59.83,"2018ABCD"));
   
-  finns.push_back(make_pair<double,string>(5.,"Run23B"));
-  finns.push_back(make_pair<double,string>(5.,"Run23C"));
+  //finns.push_back(make_pair<double,string>(5.,"Run23B"));
+  //finns.push_back(make_pair<double,string>(5.,"Run23C"));
+
+  // From Sami:
+  // 2023B: 588.500348652,
+  // 2023C1: 4303.056200928,
+  // 2023C2: 2839.689281898,
+  // 2023C3: 1585.740698017,
+  // 2023C4: 9847.218243861,
+  // 2023D: 9525.199061042,
+  
+  // 2022E: 5878.354165126, 
+  // 2022F: 18006.977823872, 
+  // 2022G: 3121.865601704
+  
+  // 2022C: 5070.714850818
+  // 2022D: 3006.332095564,
+  
+  // tietenkin 2023 lumit kertaa 2 koska datasetit Muon0 ja Muon1
+
+  finns.push_back(make_pair<double,string>(5.071+3.006,"Run22CD"));
+  finns.push_back(make_pair<double,string>(5.878,"Run22E"));
+  finns.push_back(make_pair<double,string>(18.007+3.122,"Run22FG"));
+  //finns.push_back(make_pair<double,string>(1*(0.589+8.728),"Run23BC123"));
+  finns.push_back(make_pair<double,string>(1*8.728,"Run23C123"));
+  finns.push_back(make_pair<double,string>(1*(9.847+9.525),"Run23C4D"));
+  // total 92.46 if 2023 double, if no 2023 double 63.77
 
   vector<pair<double,TDirectory*> > fins(finns.size());
   for (unsigned int i = 0; i != finns.size(); ++i) {

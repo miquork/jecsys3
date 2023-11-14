@@ -169,6 +169,13 @@ void globalFitEtaBin(double etamin, double etamax, string run) {
 
     if (debug) cout << "..." << name << ": " << type << endl << flush;
 
+    // Multijet special for crecoil
+    TGraphErrors *g2(0);
+    if (string(name2)!="") {
+      g2 = (TGraphErrors*)deta->Get(name2);
+      assert(g2);
+    }
+    
     // Patch HDM input from TH1D to graph [temporary]
     // => fix in softrad3.C and globalFitSyst.C (for hadw)
     if (TString(name).Contains("hdm_")) {
@@ -181,7 +188,26 @@ void globalFitEtaBin(double etamin, double etamax, string run) {
     // Undo previous L2L3Res, if so requested
     if (string(type)=="Rjet" && _gf_undoJESref) {
       if (debug) cout << "...undoing JES for " << type << endl << flush;
-      scaleGraph(g, _hjesref);
+
+      // Special treatment for multijet
+      if (TString(name).Contains("multijet")) {
+
+	for (int i = 0; i != g->GetN(); ++i) {
+	  double pt = g->GetX()[i];
+	  assert(g2);
+	  double ptref = g2->GetY()[i] * pt;
+	  double ijes = _hjesref->FindBin(pt);
+	  double jes = _hjesref->GetBinContent(ijes);
+	  double ijesref = _hjesref->FindBin(ptref);
+	  double jesref = _hjesref->GetBinContent(ijesref);
+	  double k = jes / jesref;
+	  g->SetPoint(i, g->GetX()[i], k * g->GetY()[i]);
+	  g->SetPointError(i, g->GetEX()[i], k * g->GetEY()[i]);
+	}
+      }
+      else  {
+	scaleGraph(g, _hjesref);
+      }
     }
 
     // Create fitData object
@@ -192,10 +218,7 @@ void globalFitEtaBin(double etamin, double etamax, string run) {
     data.output = (TGraphErrors*)g->Clone(Form("%s_out",name));
 
     // Multijet special
-    if (string(name2)!="") {
-      TGraphErrors *g2 = (TGraphErrors*)deta->Get(name2);
-      assert(g2);
-      
+    if (g2) { //string(name2)!="") {
       data.input2 = (TGraphErrors*)g2->Clone(Form("%s_in2",name2));
       data.output2 = (TGraphErrors*)g2->Clone(Form("%s_out2",name2));
     }
@@ -506,8 +529,11 @@ void globalFitDraw(string run) {
 
     // Create canvas
     lumi_136TeV = Form("globalFit.C(\"%s\")",run.c_str());
+    if (run=="Run3") lumi_136TeV = "Run3, 64 fb^{-1}";
     //TH1D *h = tdrHist("h","JES",0.982+1e-5,1.025-1e-5); // ratio (hdm)
-    TH1D *h = tdrHist("h","JES",0.88+1e-5,1.15-1e-5,
+    TH1D *h = tdrHist("h","JES",
+		      0.83+1e-5,1.15-1e-5,
+		      //0.88+1e-5,1.15-1e-5,
 		      //0.88+1e-5,1.05-1e-5,
 		      "p_{T} (GeV)",15,4500); // ratio (hdm)
     string epoch = string(crun);
@@ -524,8 +550,10 @@ void globalFitDraw(string run) {
     gPad->SetLogx();
 
     TLine *l = new TLine();
-    TLegend *leg = tdrLeg(0.60,0.90,0.80,0.90);
-    TLegend *leg2 = tdrLeg(0.45,0.15,0.65,0.30);
+    //TLegend *leg = tdrLeg(0.60,0.90,0.80,0.90);
+    TLegend *leg = tdrLeg(0.50,0.90,0.70,0.90);
+    //TLegend *leg2 = tdrLeg(0.45,0.15,0.65,0.30);
+    TLegend *leg2 = tdrLeg(0.45,0.15,0.65,0.25);
 
     // Draw fit on the back
     assert(_jesFit);
@@ -544,20 +572,54 @@ void globalFitDraw(string run) {
     }
     if (debug) cout << "Draw JES" << endl << flush;
     tdrDraw(herr,"E3",kFullCircle,kCyan+2,kSolid,-1,1001,kCyan+1);
+
+    // Add reference JEC for Run 2 UL reruns
+    if (TString(epoch).Contains("UL")) {
+      assert(_hjesref);
+      tdrDraw(_hjesref,"E3",kNone,kOrange+2,kSolid,-1,1001,kOrange+1);
+      _hjesref->SetFillColorAlpha(kOrange+1,0.7);
+      TH1D *hjesrefl = (TH1D*)_hjesref->Clone("hjesrefl");
+      tdrDraw(hjesrefl,"HIST",kNone,kOrange+2,kSolid,-1,kNone);
+      //leg2->SetY2(leg2->GetY2()+0.05);
+      leg2->AddEntry(_hjesref,"Ref. JES.","LF");
+
+      TFile *f2(0);
+      if (epoch=="2016ULAPV")
+	f2 = new TFile("../jecsys2020/rootfiles/jecdata2016BCDEF.root","READ");
+      if (epoch=="2016UL")
+	f2 = new TFile("../jecsys2020/rootfiles/jecdata2016GH.root","READ");
+      if (epoch=="2017UL")
+	f2 = new TFile("../jecsys2020/rootfiles/jecdata2017BCDEF.root","READ");
+      if (epoch=="2018UL")
+	f2 = new TFile("../jecsys2020/rootfiles/jecdata2018ABCD.root","READ");
+      assert(f2);
+      TH1D *hrefit = (TH1D*)f2->Get("ratio/eta00-13/sys/hjesfit2"); // UL refit
+      assert(hrefit);
+      TH1D *hrefitl = (TH1D*)hrefit->Clone("hrefitl");
+      tdrDraw(hrefit,"E3",kNone,kRed+1,kSolid,-1,1001,kRed);
+      tdrDraw(hrefitl,"HIST",kNone,kRed+1,kSolid,-1,kNone);
+      hrefit->SetFillColorAlpha(kRed,0.7);
+      leg2->SetY2(leg2->GetY2()+0.05);
+      leg2->AddEntry(hrefit,"UL refit","LF");
+    }
+
     //if (epoch!="Run22F") {
     tdrDraw(gre,"E3",kNone,kBlack,kSolid,-1,1001,kYellow+1);
     tdrDraw(gr,"Lz",kNone,kBlack);
     //}
     l->SetLineStyle(kDashed);
     l->DrawLine(15,1,4500,1);
-
-    leg2->AddEntry(l,"Run 3 avg.","L");
-    leg2->AddEntry(herr,"Total unc.","F");
+    
+    //if (!TString(epoch).Contains("UL"))
+    //leg2->AddEntry(l,"Run 3 avg.","L");
+    //leg2->AddEntry(herr,"Total unc.","F");
+    leg2->AddEntry(herr,"Run2 total unc.","F");
     leg2->AddEntry(gre,"Fit unc.","FL");
 
     // Separate canvas for CHF, NHF, NEF
     //TH1D *hc = tdrHist("hc","PF composition (0.01)",-2+1e-5,2-1e-5);
-    TH1D *hc = tdrHist("hc","PF composition (0.01)",-10+1e-4,10-1e-4,
+    //TH1D *hc = tdrHist("hc","PF composition (0.01)",-10+1e-4,10-1e-4,
+    TH1D *hc = tdrHist("hc","PF composition (0.01)",-15+1e-4,15-1e-4,
 		       "p_{T} (GeV)",15,4500);
     //hc->GetYaxis()->SetRangeUser(-4.5+1e-5,4.5-1e-5);
     TCanvas *c1c = tdrCanvas("c1c",hc,8,11,kSquare);
@@ -598,8 +660,10 @@ void globalFitDraw(string run) {
       }
       else {
 	c1c->cd();
-	legc->AddEntry(go,_gf_label[name],"PLE");
-	legc->SetY1NDC(legc->GetY1NDC()-0.05);
+	if (_gf_label[name] && string(_gf_label[name])!="X") {
+	  legc->AddEntry(go,_gf_label[name],"PLE");
+	  legc->SetY1NDC(legc->GetY1NDC()-0.05);
+	}
 	// Turn into percentages
 	scaleGraph(gi,100);
 	scaleGraph(go,100);
@@ -612,11 +676,16 @@ void globalFitDraw(string run) {
       if (_gf_size[name]==0)   _gf_size[name] = 1.0;
       
       tdrDraw(go,"Pz",_gf_marker[name],_gf_color[name]);
-      if (name=="hdm_mpfchs1_multijet")
+      if (name=="hdm_mpfchs1_multijet" || name=="mpfchs1_multijet_a100" ||
+	  name=="ptchs_multijet_a100") {
+	//if (TString(name.c_str()).Contains("multijet")) {
 	tdrDraw(gi,"Pz",kOpenTriangleUp,_gf_color[name]);
+      }
       //if (name=="hdm_cmb_mj" || (run=="2017H" && name=="hdm_cmb")) {
       if (name=="mpfchs1_zjet_a100" || name=="hdm_mpfchs1_zjet" ||
-	  name=="ptchs_zjet_a100") {
+	  name=="ptchs_zjet_a100" || //) {
+	  name=="mpfchs1_gamjet_a100" || name=="hdm_mpfchs1_gamjet" ||
+	  name=="ptchs_gamjet_a100") {
 	c1c->cd();
 	TGraphErrors *gr = (TGraphErrors*)go->Clone("gr");
 	assert(_hjesref);
@@ -624,9 +693,14 @@ void globalFitDraw(string run) {
 	if (_gf_useJESref) scaleGraph(gr,_hjesref);
 	shiftGraph(gr,-1);
 	scaleGraph(gr,100);
-	tdrDraw(gr,"Pz",kFullCircle,kBlack);
-	legc->AddEntry(gr,_gf_label[name+"2"],"PLE");
-	legc->SetY1NDC(legc->GetY1NDC()-0.05);
+	//tdrDraw(gr,"Pz",kFullCircle,kBlack);
+	tdrDraw(gr,"Pz",
+		(_gf_marker[name+"2"] ? _gf_marker[name+"2"] : kFullCircle),
+		(_gf_color[name+"2"] ? _gf_color[name+"2"] : kBlack));
+	if (_gf_label[name+"2"]!="X") {
+	  legc->AddEntry(gr,_gf_label[name+"2"],"PLE");
+	  legc->SetY1NDC(legc->GetY1NDC()-0.05);
+	}
       }
 
       go->SetMarkerSize(_gf_size[name]);
@@ -658,7 +732,7 @@ void globalFitDraw(string run) {
     }
 
     scaleGraph(gchf,100);
-    tdrDraw(gchf,"Lz",kNone,kRed,kSolid);
+    tdrDraw(gchf,"Lz",kNone,kRed,_gf_fitPFcomp ? kSolid : kDotted);
 
     _obs = "nhf";
     TGraph *gnhf = new TGraph(_jesFit);  // use graph to keep '_obs' setting
@@ -670,7 +744,7 @@ void globalFitDraw(string run) {
     }
 
     scaleGraph(gnhf,100);
-    tdrDraw(gnhf,"Lz",kNone,kGreen+2,kSolid);
+    tdrDraw(gnhf,"Lz",kNone,kGreen+2,_gf_fitPFcomp ? kSolid : kDotted);
 
     _obs = "nef";
     TGraph *gnef = new TGraph(_jesFit);  // use graph to keep '_obs' setting
@@ -682,14 +756,14 @@ void globalFitDraw(string run) {
     }
     //tdrDraw(gnefe,"E3",kNone,kBlue+1,kSolid,-1,1001,kBlue-9);
     scaleGraph(gnef,100);
-    tdrDraw(gnef,"Lz",kNone,kBlue,kSolid);
+    tdrDraw(gnef,"Lz",kNone,kBlue,_gf_fitPFcomp ? kSolid : kDotted);
 
     _obs = "Rjet";
     TGraph *grjt = new TGraph(_jesFit);  // use graph to keep '_obs' setting
     if (_gf_useJESref) scaleGraph(grjt,_hjesref);
     shiftGraph(grjt,-1);
     scaleGraph(grjt,100);
-    tdrDraw(grjt,"Lz",kNone,kBlack,kSolid);
+    tdrDraw(grjt,"Lz",kNone,kBlack,_gf_fitPFcomp ? kSolid : kDotted);
 
 
     // test case: gamma+jet true response in MC
@@ -741,6 +815,56 @@ void globalFitDraw(string run) {
     if (usingMu) c1l->SaveAs(Form("pdf/globalFit/globalFit_%s_mu.pdf",crun));
     //
     if (saveROOT) c1->SaveAs(Form("pdf/globalFit/globalFit_%s_rjet.root",crun));
+
+    // Test
+    c1->cd();
+    //TGraphErrors *gnhf0 = (TGraphErrors*)f->Get("ratio/eta00-13/nhf_multijet_a100");
+    TGraphErrors *gnhf0 = (TGraphErrors*)f->Get("ratio/eta00-13/nhf_incjet_a100");
+    assert(gnhf0);
+    gnhf0 = (TGraphErrors*)gnhf0->Clone("gnhf0");
+    double nhf_off(1);
+    if (run=="Run22CD") nhf_off = 1.0;
+    if (run=="Run22E")  nhf_off = 2.0;
+    if (run=="Run22FG")  nhf_off = 0.0;
+    if (run=="Run23C123")  nhf_off = 1.0;
+    if (run=="Run23C4D")  nhf_off = 4.5;
+    if (run=="Run3")  {
+      nhf_off = ((5.1+3.0)*1.0 + 5.9*2.0 + (18.0+3.1)*0.0 +
+		 8.7*1.0 + (9.8+9.5)*4.5) /
+	((5.1+3.0) + 5.9 + (18.0+3.1) + 8.7 + (9.8+9.5));
+    }
+    for (int i = 0; i != gnhf0->GetN(); ++i) {
+      double x = gnhf0->GetX()[i];
+      //double ex = gnhf0->GetEX()[i];
+      double y = gnhf0->GetY()[i];
+      //double ey = gnhf0->GetEY()[i];
+      //gnhf0->SetPoint(i, x, 1+y);
+      gnhf0->SetPoint(i, x, (1+y)-nhf_off*0.01); // small offset
+      //gnhf0->SetPointError(i, ex, ey);
+    }
+    //leg->AddEntry(gnhf0,"Not fit: Dijet NHF","PLE");
+    //leg->AddEntry(gnhf0,"Not fit: Incjet NHF-1%","PLE");
+    leg->AddEntry(gnhf0,Form("Not fit: jet NHF-%1.1f%%",nhf_off),"PLE");
+    leg->SetY1NDC(leg->GetY1NDC()-0.05);
+    //tdrDraw(gnhf0,"Pz",kFullSquare,kGreen+2);
+    tdrDraw(gnhf0,"Pz",kOpenSquare,kGreen+2);
+
+    // Add average JEC also on the plot
+    if (run=="Run3") {
+      TFile *f2 = new TFile("rootfiles/jecdataRun3Data.root","READ");
+      assert(f2 && !f2->IsZombie());
+      TH1D *hrjet = (TH1D*)f2->Get("ratio/eta00-13/run3/hFit_Rjet");
+      assert(hrjet);
+      tdrDraw(hrjet,"E3",kNone,kOrange+2,kSolid,-1,1001,kOrange+1);
+      hrjet->SetFillColorAlpha(kOrange+1,0.7);
+      leg->AddEntry(hrjet,"Avg. JES","F");
+      leg->SetY1NDC(leg->GetY1NDC()-0.05);
+    }
+
+    if (string(crun)=="Run3")
+    c1->SaveAs(Form("pdf/globalFit/globalFit_%s_rjet_wNHF.pdf",crun));
+    else
+    c1->SaveAs(Form("pdf/globalFit/globalFit_%s_rjet.pdf",crun));
   } // drawResults
 } // globalFitEtaBin
 
@@ -822,7 +946,9 @@ void jesFitter(Int_t& npar, Double_t* grad, Double_t& chi2, Double_t* par,
 	double fit = _jesFit->EvalPar(&pt,par);
 
 	// For multijet balancing, multiply data by reference JES
-	if (TString(name.c_str()).Contains("multijet")) {
+	//if (TString(name.c_str()).Contains("multijet")) {
+	if (name=="hdm_mpfchs1_multijet" || name=="mpfchs1_multijet_a100" ||
+	    name=="ptchs_multijet_a100") {
 	  assert(gin2);
 	  double ptref = gin2->GetY()[i] * pt;
 	  double fitRef = _jesFit->EvalPar(&ptref,par);
@@ -830,6 +956,16 @@ void jesFitter(Int_t& npar, Double_t* grad, Double_t& chi2, Double_t* par,
 	  sigma *= fitRef;
 	} // multijet
 
+	// For PF composition, check if we want to add this to chi2
+	bool addChi2 = true;
+	bool isPF = (TString(name.c_str()).Contains("chf") ||
+		     TString(name.c_str()).Contains("nhf") ||
+		     TString(name.c_str()).Contains("nef"));
+	if (!_gf_fitPFcomp && isPF) addChi2 = false;
+	    
+	// For Z+jet HDM, check if we want to add this to chi2
+	if (!_gf_fitZjetHDM && name=="hdm_mpfchs1_zjet") addChi2 = false;
+	
 	// Calculate total shift caused by all nuisance parameters
 	double shifts = 0;
 	vector<fitSyst> &_vsrc = _msrc[name];
@@ -841,11 +977,18 @@ void jesFitter(Int_t& npar, Double_t* grad, Double_t& chi2, Double_t* par,
 	  int ipt = hsrc->FindBin(pt);
 	  shifts += ps[idx] * hsrc->GetBinContent(ipt);
 	}
+
 	
 	// Add chi2 from residual
 	double chi = (data + shifts - fit) / oplus(sigma,globalErrMin);
-	chi2 += chi * chi;
-	++Nk;
+	if (isPF) { // quick hack to de-emphasize PF composition a bit
+	  chi = max(fabs(data+shifts-fit)-_gf_fitPFcomp_minErr,0.)
+	    / oplus(sigma,oplus(globalErrMin,_gf_fitPFcomp_minErr));
+	}
+	if (addChi2) {
+	  chi2 += chi * chi;
+	  ++Nk;
+	}
 
 	// Store shifted data
 	assert(gout->GetN()==gin->GetN() && gout->GetX()[i]==pt);
