@@ -15,7 +15,8 @@
 #include <iostream>
 using namespace std;
 
-const int Nlayer = 15; // two f
+//const int Nlayer = 15; // two f, "model 1"
+const int Nlayer = 17; // two f, "model 2,3"
 double Elayer[Nlayer];
 const double khcal = 1;//1./0.9;
 //const double w[Nlayer+2] = 
@@ -23,8 +24,10 @@ const double khcal = 1;//1./0.9;
 //{1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1};
   //  {1,1, 0.76,0.81,0.82,0.79, 0.92,0.94,0.97,...} // slide13
 // For calculating energy fraction not in depth4
+//const double w[Nlayer+2] = 
+  //  {1,1, 1, 1,1,1, 1,1,1, 0,0,0,0, 1, 1,1,1}; // model of front layer radiation damage, "model 1"
 const double w[Nlayer+2] = 
-  {1,1, 1, 1,1,1, 1,1,1, 0,0,0,0, 1, 1,1,1}; // model of front layer radiation damage
+  {1,1, 1, 1,1,1, 1,1,1,1, 0,0,0,0,0,0,0,0,0}; // model of front layer radiation damage, "model 3"
 void propagate(double pn, double E, int layer) {
 
   // stop once going past last layer
@@ -132,12 +135,6 @@ void showerdepth() {
   TLine *l = new TLine();
   l->SetLineStyle(kDashed);
   l->DrawLine(0.5,0,0.5,0.35);
-  l->SetLineStyle(kDotted);
-  l->DrawLine(1.5,0,1.5,0.20); // depth #1 end (0.5 lambda, 1 layer)
-  l->DrawLine(4.5,0,4.5,0.22); // depth #2 end (1.5 lambda, 3 layers)
-  l->SetLineStyle(kSolid);
-  l->DrawLine(7.5,0,7.5,0.22); // depth #3 end (1.5 lambda, 3 layers)
-  l->DrawLine(11.5,0,11.5,0.22); // depth #4 end (2.0 lambda, 4 layers)
 
   TLatex *tex = new TLatex();
   tex->SetTextSize(0.035);
@@ -145,14 +142,52 @@ void showerdepth() {
   tex->DrawLatex(0.165,0.85,"ECAL");
   tex->DrawLatex(0.265,0.85,"HCAL");
   
-  tex->SetNDC(kFALSE);
-  tex->DrawLatex(0.75,0.20,"depth #1");
-  tex->DrawLatex(1.75,0.18,"depth #2");
-  tex->DrawLatex(4.75,0.20,"depth #3");
-  tex->DrawLatex(8.25,0.20,"depth #4");
-  tex->SetNDC();
-
-
+  if (false) { // "model 1"
+    l->SetLineStyle(kDotted);
+    l->DrawLine(1.5,0,1.5,0.20); // depth #1 end (0.5 lambda, 1 layer)
+    l->DrawLine(4.5,0,4.5,0.22); // depth #2 end (1.5 lambda, 3 layers)
+    l->SetLineStyle(kSolid);
+    l->DrawLine(7.5,0,7.5,0.22); // depth #3 end (1.5 lambda, 3 layers)
+    l->DrawLine(1.5,0,11.5,0.22); // depth #4 end (3.5 lambda, 7 layers)
+    
+    tex->SetNDC(kFALSE);
+    tex->DrawLatex(0.75,0.20,"depth #1");
+    tex->DrawLatex(1.75,0.18,"depth #2");
+    tex->DrawLatex(4.75,0.20,"depth #3");
+    tex->DrawLatex(8.25,0.20,"depth #4");
+    tex->SetNDC();
+  }
+  if (false) { // "model 2"
+    l->SetLineStyle(kDotted);
+    l->DrawLine(1.5,0,1.5,0.20); // depth #1 end (0.5 lambda, 1 layer)
+    l->DrawLine(5.5,0,5.5,0.22); // depth #2 end (2.0 lambda, 4 layers)
+    l->SetLineStyle(kSolid);
+    l->DrawLine(10.5,0,10.5,0.22); // depth #3 end (2.5 lambda, 5 layers)
+    l->DrawLine(17.5,0,17.5,0.22); // depth #4 end (3.5 lambda, 7 layers)
+    
+    tex->SetNDC(kFALSE);
+    tex->DrawLatex(0.75,0.20,"depth #1");
+    tex->DrawLatex(2.25,0.18,"depth #2");
+    tex->DrawLatex(6.75,0.20,"depth #3");
+    tex->DrawLatex(10.75,0.20,"depth #4");
+    tex->SetNDC();
+  }
+  if (true) { // "model 3"
+    l->SetLineStyle(kDotted);
+    l->DrawLine(1.5,0,1.5,0.20); // depth #1 end (0.5 lambda, 1 layer)
+    l->DrawLine(4.5,0,4.5,0.22); // depth #2 end (1.5 lambda, 3 layers)
+    l->SetLineStyle(kSolid);
+    l->DrawLine(7.5,0,7.5,0.22); // depth #3 end (2.0 lambda, 4 layers)
+    l->DrawLine(17.5,0,17.5,0.22); // depth #4 end (3.5 lambda, 7 layers)
+    
+    tex->SetNDC(kFALSE);
+    tex->DrawLatex(0.75,0.20,"depth #1");
+    tex->DrawLatex(2.25,0.18,"depth #2");
+    tex->DrawLatex(6.75,0.20,"depth #3");
+    tex->DrawLatex(10.75,0.20,"depth #4");
+    tex->SetNDC();
+  }
+    
   double ve[] = {3, 3.4, 4, 5, 6, 7, 8, 10, 12, 15, 18, 22, 26, 32, 38, 46, 55, 66, 79, 95, 115, 138, 165, 198, 238, 286, 343, 412, 494, 593, 712, 854, 1025};
   const int ne = sizeof(ve)/sizeof(ve[0]);
   TH1D *h = new TH1D("h",";p_{T} (GeV);Energy fraction",ne-1,ve);

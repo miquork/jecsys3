@@ -54,7 +54,8 @@ void fullSimShapes() {
   //fullSimShape("hw"); // Herwig++ HS1 vs Pythia8 CP5
 
   //fullSimShape("hhpfc"); // HcalPFcut in MC
-  fullSimShape("hhnoise"); // HB noise in data (RunC, RunG)
+  //fullSimShape("hhnoise"); // HB noise in data (RunC, RunG)
+  fullSimShape("hbtime"); // HB noise in data (RunC, RunG)
 
   /*
   Fullsimshape("hp3");
@@ -137,9 +138,11 @@ void fullSimShape(string mode) {
   //TFile *f = new TFile("rootfiles/FullSim_100k_variations_v15.root","READ");
   //TFile *f = new TFile("rootfiles/JME-RunIISummer19UL16_1M_variations.root","READ"); is1M = true; // Run2
   //TFile *f = new TFile("rootfiles/MC_Run3Summer22_PFCutVariation.root","READ");
-  //TFile *f = new TFile("rootfiles/DATA_Run2022C_HBnoise.root","READ");
-  //TFile *f = new TFile("rootfiles/DATA_Run2022GC_HBnoise.root","READ");
-  TFile *f = new TFile("rootfiles/DATA_Run2022Gfix_HBnoise.root","READ");
+  //TFile *f = new TFile("rootfiles/DATA_Run2022C_HBnoise.root","READ");//bad
+  //TFile *f = new TFile("rootfiles/DATA_Run2022GC_HBnoise.root","READ");//bad
+  //TFile *f = new TFile("rootfiles/DATA_Run2022Gfix_HBnoise.root","READ");//ok
+  //TFile *f = new TFile("rootfiles/HBtiming_v1.root","READ");
+  TFile *f = new TFile("rootfiles/HBtiming_v2.root","READ");
   assert(f && !f->IsZombie()); is1M = true;
 
   // Open input file for toyPF placeholders
@@ -256,10 +259,18 @@ void fullSimShape(string mode) {
 
   // Map systematics/observables to a function (shape) to be fitted
   // Code in initial guess with parameter representing difference to it
+  string slogpol1 = "[0]+log(x)*[1]";
+  const char *clogpol1 = slogpol1.c_str();
+  string slogpol1_fix15 = "log(x/15.)*[0]";
+  const char *clogpol1_fix15 = slogpol1_fix15.c_str();
   string slogpol2 = "[0]+log(x)*([1]+log(x)*[2])";
   const char *clogpol2 = slogpol2.c_str();
+  string slogpol2_fix15 = "log(x/15.)*([0]+log(x/15.)*[1])";
+  const char *clogpol2_fix15 = slogpol2_fix15.c_str();
   string slogpol3 = "[0]+log(x)*([1]+log(x)*([2]+log(x)*[3]))";
   const char *clogpol3 = slogpol3.c_str();
+  string slogpol3_fix15 = "log(x/15.)*([0]+log(x/15.)*([1]+log(x/15.)*[2]))";
+  const char *clogpol3_fix15 = slogpol3_fix15.c_str();
   string slogpol4 = "[0]+log(x)*([1]+log(x)*([2]+log(x)*([3]+log(x)*[4])))";
   const char *clogpol4 = slogpol4.c_str();
   string slogpol5 = "[0]+log(x)*([1]+log(x)*([2]+log(x)*([3]+log(x)*"
@@ -364,6 +375,7 @@ void fullSimShape(string mode) {
   //
   func["hhpfc"] = clogpol4;//6;
   func["hhnoise"] = clogpol6;
+  func["hbtime"] = clogpol6;//3_fix15;//6;
   //
   func["cmb"] = clogpol6;
   // observables
@@ -418,6 +430,7 @@ void fullSimShape(string mode) {
   //
   funcs["chf"]["hhpfc"] = clogpol3;//4;//6;
   funcs["chf"]["hhnoise"] = clogpol6;
+  funcs["chf"]["hbtime"] = clogpol6;//3_fix15;//6;
   //
   funcs["cmb"]["chf"] = clogpol6;
   //
@@ -464,6 +477,7 @@ void fullSimShape(string mode) {
   //
   funcs["nhf"]["hhpfc"] = clogpol4;//6;
   funcs["nhf"]["hhnoise"] = clogpol6;
+  funcs["nhf"]["hbtime"] = clogpol6;//3_fix15;//6;
   //
   funcs["cmb"]["nhf"] = clogpol6;
   //
@@ -510,6 +524,7 @@ void fullSimShape(string mode) {
   //
   funcs["nef"]["hhpfc"] = clogpol3;//5;//4;//3;//6;
   funcs["nef"]["hhnoise"] = clogpol6;
+  funcs["nef"]["hbtime"] = clogpol6;//3_fix15;//6;
   //
   funcs["cmb"]["nef"] = clogpol6;
 
@@ -556,6 +571,7 @@ void fullSimShape(string mode) {
   toyf["Rjet"]["hw"] = fhw; assert(fhw);
   toyf["Rjet"]["hhpfc"] = 0;
   toyf["Rjet"]["hhnoise"] = 0;
+  toyf["Rjet"]["hbnoise"] = 0;
   toyf["Rjet"]["cmb"] = 0;
 
   toyf["chf"]["hp3"] = 0;
@@ -577,6 +593,7 @@ void fullSimShape(string mode) {
   toyf["chf"]["hw"] = _mpf["chf"][5]; 
   toyf["chf"]["hhpfc"] = 0;
   toyf["chf"]["hhnoise"] = 0;
+  toyf["chf"]["hbtime"] = 0;
   toyf["chf"]["cmb"] = 0;
   //
   toyf["nhf"]["hp3"] = 0;
@@ -598,6 +615,7 @@ void fullSimShape(string mode) {
   toyf["nhf"]["hw"] = _mpf["nhf"][5]; 
   toyf["nhf"]["hhpfc"] = 0;
   toyf["nhf"]["hhnoise"] = 0;
+  toyf["nhf"]["hbtime"] = 0;
   toyf["nhf"]["cmb"] = 0;
   //
   toyf["nef"]["hp3"] = 0;
@@ -619,6 +637,7 @@ void fullSimShape(string mode) {
   toyf["nef"]["hw"] = _mpf["nef"][5]; 
   toyf["nef"]["hhpfc"] = 0;
   toyf["nef"]["hhnoise"] = 0;
+  toyf["nef"]["hbtime"] = 0;
   toyf["nef"]["cmb"] = 0;
 
   // Map new fullSimShapes
@@ -676,6 +695,8 @@ void fullSimShape(string mode) {
   //name["hhpfc"] = "hcalPFCutsUp";
   name["hhpfc"] = "Puppi_hcalPFCutsUp";
   name["hhnoise"] = "HBnoise";
+  //name["hbtime"] = "delayQIE5";
+  name["hbtime"] = "delayQIEfixm5";
   //
   name["cmb"] = "Combined";
   // observables
@@ -733,6 +754,7 @@ void fullSimShape(string mode) {
   //
   label["hhpfc"] = "HcalPFcut";
   label["hhnoise"] = "HBnoise";
+  label["hbtime"] = "HBtime";
   //
   label["cmb"] = "Combined";
   // observables
@@ -789,6 +811,7 @@ void fullSimShape(string mode) {
   //
   marker["hhpfc"] = kFullStar;
   marker["hhnoise"] = kOpenStar;
+  marker["hhnoise"] = kFullStar;
   //
   marker["cmb"] = kFullCircle;
   // observables
@@ -845,6 +868,7 @@ void fullSimShape(string mode) {
   //
   color["hhpfc"] = kRed+1;
   color["hhnoise"] = kRed+2;
+  color["hbtime"] = kMagenta+2;
   //
   color["cmb"] = kBlack;
   // observables
@@ -864,6 +888,7 @@ void fullSimShape(string mode) {
     string sys = csys;
 
     TH1D *hv = (TH1D*)f->Get(Form("%s_%s",cobs,csys));
+    if (!hv) hv = (TH1D*)f->Get(Form("%sPuppi_%s",cobs,csys));
     if (mode=="cmb") { // Combination mode
 
       assert(cmbs.size()!=0);
@@ -1008,6 +1033,23 @@ void fullSimShape(string mode) {
     else {
       hv->Scale(100.); scaleError(hv,0.1);
       if (obs=="nef") scaleError(hv,0.1);
+    }
+
+    // 5ns->1ns
+    if (mode=="hbtime") {
+      scaleError(hv,10.); // back to original
+      //hv->Scale(0.2);
+      // Approximation for 1-(depth #4) from minitools/showerdepth.C
+      TF1 *f4 = new TF1("f4","[0]+log(x)*([1]+log(x)*([2]+log(x)*[3]))",
+			15,3500);
+      f4->SetParameters(0.9855 ,0.007054 ,0.0001485 ,-0.0002748);
+      for (int i = 1; i!= hv->GetNbinsX()+1; ++i) {
+	double pt = hv->GetBinCenter(i);
+	double f = (1 - f4->Eval(pt));
+	double k = 2.; // scale 5ns -> 10ns effective shift
+	hv->SetBinContent(i, hv->GetBinContent(i)*f*k);
+	hv->SetBinError(i, hv->GetBinError(i)*f*k);
+      }
     }
 
     // Set 15-20 GeV to zero

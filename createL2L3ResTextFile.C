@@ -20,9 +20,9 @@ using namespace std;
 
 const bool debug = true;
 
-void createL2L3ResTextFiles(string set);
+void createL2L3ResTextFiles(string set, bool leg2=false);
 
-TLegend *_leg(0);
+TLegend *_leg(0), *_leg2(0);
 void createL2L3ResTextFile() {
 
   setTDRStyle();
@@ -44,6 +44,7 @@ void createL2L3ResTextFile() {
   l->DrawLine(ptmin,1,ptmax,1);
 
   _leg = tdrLeg(0.45,0.90,0.75,0.90);
+  _leg2 = tdrLeg(0.20,0.15,0.50,0.15);
 
   //createL2L3ResTextFiles("RunC"); // crash
   //createL2L3ResTextFiles("RunCD");
@@ -69,9 +70,11 @@ void createL2L3ResTextFile() {
   createL2L3ResTextFiles("Run22F-Prompt");
   createL2L3ResTextFiles("Run22G-Prompt");
   createL2L3ResTextFiles("Run23C123-Prompt");
-  createL2L3ResTextFiles("Run23C4D-Prompt");
+  createL2L3ResTextFiles("Run23C4-Prompt",true);
+  createL2L3ResTextFiles("Run23D-Prompt",true);
+  createL2L3ResTextFiles("Run23C4D-Prompt",true);
   c1->Update();
-  c1->SaveAs("pdf/createL2L3ResTextFile_Run22CDE-22Sep2023_22FG_23BC-Prompt.pdf");
+  c1->SaveAs("pdf/createL2L3ResTextFile_Run22CDE-22Sep2023_22FG_23CD-Prompt.pdf");
   
   //c1->SaveAs("pdf/createL2L3ResTextFile_2022C.pdf");
   //c1->SaveAs("pdf/createL2L3ResTextFile_Run22F.pdf");
@@ -94,7 +97,7 @@ void createL2L3ResTextFile() {
   */
 }
 
-void createL2L3ResTextFiles(string set) {
+void createL2L3ResTextFiles(string set, bool leg2) {
 
   //if (debug) 
   cout << "****************************************************************\n";
@@ -138,6 +141,12 @@ void createL2L3ResTextFiles(string set) {
   }
   else if (set=="Run23C123-Prompt") {
     f = new TFile("rootfiles/jecdataRun23C123.root","READ"); isRun3=true;
+  }
+  else if (set=="Run23C4-Prompt") {
+    f = new TFile("rootfiles/jecdataRun23C4.root","READ"); isRun3=true;
+  }
+  else if (set=="Run23D-Prompt") {
+    f = new TFile("rootfiles/jecdataRun23D.root","READ"); isRun3=true;
   }
   else if (set=="Run23C4D-Prompt") {
     f = new TFile("rootfiles/jecdataRun23C4D.root","READ"); isRun3=true;
@@ -232,7 +241,9 @@ void createL2L3ResTextFiles(string set) {
   color["Run22F-Prompt"] = kRed;
   color["Run22G-Prompt"] = kRed+2;
   color["Run23C123-Prompt"] = kOrange+1;
-  color["Run23C4D-Prompt"] = kBlue;//kGreen+2;
+  color["Run23C4D-Prompt"] = kMagenta+2;//kBlue;//kGreen+2;
+  color["Run23C4-Prompt"] = kBlue;//kMagenta;
+  color["Run23D-Prompt"] = kMagenta;//+2;
   
   h->Fit(f1,"QRN");
   h->Fit(f1,"QRNM");
@@ -242,9 +253,14 @@ void createL2L3ResTextFiles(string set) {
   f1->SetLineColor(color[set]);
   f1->Draw("SAME");
 
-  _leg->SetY1(_leg->GetY1()-0.05);
+  if (leg2)
+    _leg2->SetY2(_leg2->GetY2()+0.05);
+  else
+    _leg->SetY1(_leg->GetY1()-0.05);
   if (set=="Ref")
     _leg->AddEntry(h,"Old 22C (ref.)","FL");
+  else if (leg2)
+    _leg2->AddEntry(h,set.c_str(),"FL");
   else
     _leg->AddEntry(h,set.c_str(),"FL");
 
@@ -331,7 +347,8 @@ void createL2L3ResTextFiles(string set) {
   if (set=="Run22G-Prompt") {
     sin = "CondFormats/JetMETObjects/data/Summer22EEPrompt22_RunG_V2_L2Residual_AK4PFPuppi.txt"; isL2Res = true;
   }
-  if (set=="Run23C123-Prompt" || set=="Run23C4D-Prompt") {
+  if (set=="Run23C123-Prompt" || set=="Run23C4D-Prompt" ||
+      set=="Run23C4-Prompt" || set=="Run23D-Prompt") {
     sin = "CondFormats/JetMETObjects/data/Summer22EEPrompt22_RunG_V2_L2Residual_AK4PFPuppi.txt"; // Placeholder
     isL2Res = true;
   }

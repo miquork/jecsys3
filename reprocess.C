@@ -207,13 +207,13 @@ void reprocess(string epoch="") {
   if (epoch=="Run23C4") {
     //fz = new TFile(Form("%s/jme_bplusZ_2023C4_Zmm_sync_v53.root",cdz23),"READ");
     //fz = new TFile(Form("%s/jme_bplusZ_2023C4_Zmm_sync_v58.root",cdz58),"READ");
-    fz = new TFile(Form("%s/jme_bplusZ_2023C4_Zmm_sync_v58p1.root",cdz58p1),"READ");
-    assert(false); // use C4D
+    //fz = new TFile(Form("%s/jme_bplusZ_2023C4_Zmm_sync_v58p1.root",cdz58p1),"READ");
+    fz = new TFile("rootfiles/jme_bplusZ_2023C4_Zmm_sync_v61.root","READ");
   }
   if (epoch=="Run23D") {
     //fz = new TFile(Form("%s/jme_bplusZ_2023D_Zmm_sync_v58.root",cdz58),"READ");
-    fz = new TFile(Form("%s/jme_bplusZ_2023D_Zmm_sync_v58p1.root",cdz58p1),"READ");
-    assert(false); // use C4D
+    //fz = new TFile(Form("%s/jme_bplusZ_2023D_Zmm_sync_v58p1.root",cdz58p1),"READ");
+    fz = new TFile("rootfiles/jme_bplusZ_2023D_Zmm_sync_v61.root","READ");
   }
   if (epoch=="Run23C4D") {
     //fz = new TFile(Form("%s/jme_bplusZ_2023C4D_Zmm_sync_v58p1.root",cdz58p1),"READ"); // no jetvetomap
@@ -307,7 +307,7 @@ void reprocess(string epoch="") {
   mp["Run23BC123"] = "2023Cv123"; // clone below
   mp["Run23C123"] = "2023Cv123";
   mp["Run23C4"] = "2023Cv4";
-  //mp["Run23D"] = "2023D"; // missing
+  mp["Run23D"] = "2023D";
   mp["Run23C4D"] = "2023Cv4D";
   mp["Run3"] = "Run3";
   //TFile *fp = new TFile(Form("../gamjet/files/GamHistosRatio_%s_P8_v21.root",

@@ -532,7 +532,8 @@ void globalFitDraw(string run) {
     if (run=="Run3") lumi_136TeV = "Run3, 64 fb^{-1}";
     //TH1D *h = tdrHist("h","JES",0.982+1e-5,1.025-1e-5); // ratio (hdm)
     TH1D *h = tdrHist("h","JES",
-		      0.83+1e-5,1.15-1e-5,
+		      0.75+1e-5,1.20-1e-5,
+		      //0.83+1e-5,1.15-1e-5,
 		      //0.88+1e-5,1.15-1e-5,
 		      //0.88+1e-5,1.05-1e-5,
 		      "p_{T} (GeV)",15,4500); // ratio (hdm)
@@ -827,6 +828,8 @@ void globalFitDraw(string run) {
     if (run=="Run22E")  nhf_off = 2.0;
     if (run=="Run22FG")  nhf_off = 0.0;
     if (run=="Run23C123")  nhf_off = 1.0;
+    if (run=="Run23C4")  nhf_off = 4.5;
+    if (run=="Run23D")  nhf_off = 4.5;
     if (run=="Run23C4D")  nhf_off = 4.5;
     if (run=="Run3")  {
       nhf_off = ((5.1+3.0)*1.0 + 5.9*2.0 + (18.0+3.1)*0.0 +
