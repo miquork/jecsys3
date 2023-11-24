@@ -43,6 +43,6 @@
 
   // Run global fit
   /////////////////
-  globalFitEtaBin(0.0, 1.3, epoch);
+  globalFitEtaBin(0.0, 1.3, epoch, "v61z_v29g_v32d");
 
 }

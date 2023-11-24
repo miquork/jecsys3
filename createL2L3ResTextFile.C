@@ -69,12 +69,12 @@ void createL2L3ResTextFile() {
   //createL2L3ResTextFiles("Run22FG-Prompt");
   createL2L3ResTextFiles("Run22F-Prompt");
   createL2L3ResTextFiles("Run22G-Prompt");
-  createL2L3ResTextFiles("Run23C123-Prompt");
+  createL2L3ResTextFiles("Run23C123-Prompt",true);
   createL2L3ResTextFiles("Run23C4-Prompt",true);
   createL2L3ResTextFiles("Run23D-Prompt",true);
-  createL2L3ResTextFiles("Run23C4D-Prompt",true);
+  //createL2L3ResTextFiles("Run23C4D-Prompt",true);
   c1->Update();
-  c1->SaveAs("pdf/createL2L3ResTextFile_Run22CDE-22Sep2023_22FG_23CD-Prompt.pdf");
+  c1->SaveAs("pdf/createL2L3ResTextFile_Summer22_V3_Run22CDE-22Sep2023_22FG-Prompt_23CD-Prompt.pdf");
   
   //c1->SaveAs("pdf/createL2L3ResTextFile_2022C.pdf");
   //c1->SaveAs("pdf/createL2L3ResTextFile_Run22F.pdf");
@@ -276,7 +276,7 @@ void createL2L3ResTextFiles(string set, bool leg2) {
   //////////////////////////////////////////////////////////////
   const char *run = set.c_str();
 
-  string sin, sout;
+  string sin(""), sout("");
   if (set=="2016BCDEF") {
     sin = "CondFormats/JetMETObjects/data/Summer19UL16APV_RunBCDEF_V7_DATA_L2L3Residual_AK4PFchs.txt";
   }
@@ -308,9 +308,9 @@ void createL2L3ResTextFiles(string set, bool leg2) {
   }
   if (set=="2016BCDEF" || set=="2016GH" || set=="2017BCDEF" || set=="2018ABCD")
    sout = Form("textfiles/%s_DATA_L2L3Residual_AK4PFchs.txt",run);
-  else   
+  //else   
     //sout = Form("textfiles/Sami_20230630/%s_DATA_L2L3Residual_AK4PFPuppi.txt",run);
-    sout = Form("textfiles/Run3partial/%s_DATA_L2L3Residual_AK4PFPuppi.txt",run);
+    //sout = Form("textfiles/Run3partial/%s_DATA_L2L3Residual_AK4PFPuppi.txt",run);
   /*
   if (set=="Run22F") {
     sin = "../JERCProtoLab/textFiles/Summer22EERun3_RunF_V2_DATA/Summer22EERun3_RunF_V2_DATA_L2Residual_AK4PFPuppi.txt"; // For V2 L2L3Res
@@ -332,27 +332,42 @@ void createL2L3ResTextFiles(string set, bool leg2) {
 
   bool isL2Res(false);
   if (set=="Run22CD-22Sep2023") {
-    sin = "CondFormats/JetMETObjects/data/Summer22_RunCD_V2_MPF_L2Residual_AK4PFPuppi.txt"; isL2Res = true;
+    //sin = "CondFormats/JetMETObjects/data/Summer22_RunCD_V2_MPF_L2Residual_AK4PFPuppi.txt"; isL2Res = true;
+    sin = "textFiles/Run3_22Sep2023_v3/Summer22-22Sep2023_Run2022CD_V3_DATA_L2Residual_AK4PFPuppi.txt"; isL2Res = true;
+    sout = "textFiles/Run3_22Sep2023_v3/Summer22-22Sep2023_Run2022CD_V3_DATA_L2L3Residual_AK4PFPuppi.txt";
   }
   if (set=="Run22E-22Sep2023") {
-    sin = "CondFormats/JetMETObjects/data/Summer22EE_RunE_V2_MPF_L2Residual_AK4PFPuppi.txt"; isL2Res = true;
-  }
-  if (set=="Run22FG-Prompt") {
-    sin = "CondFormats/JetMETObjects/data/Summer22EEPrompt22_RunFG_V2_L2Residual_AK4PFPuppi.txt"; isL2Res = true;
-    assert(false); // 22FG_L2Res not yet available
+    //sin = "CondFormats/JetMETObjects/data/Summer22EE_RunE_V2_MPF_L2Residual_AK4PFPuppi.txt"; isL2Res = true;
+    sin = "textFiles/Run3_22Sep2023_v3/Summer22EE-22Sep2023_Run2022E_V3_DATA_L2Residual_AK4PFPuppi.txt"; isL2Res = true;
+    sout = "textFiles/Run3_22Sep2023_v3/Summer22EE-22Sep2023_Run2022E_V3_DATA_L2L3Residual_AK4PFPuppi.txt";
   }
   if (set=="Run22F-Prompt") {
-    sin = "CondFormats/JetMETObjects/data/Summer22EEPrompt22_RunF_V2_L2Residual_AK4PFPuppi.txt"; isL2Res = true;
+    //sin = "CondFormats/JetMETObjects/data/Summer22EEPrompt22_RunF_V2_L2Residual_AK4PFPuppi.txt"; isL2Res = true;
+    sin = "textFiles/Run3_22Sep2023_v3/Summer22EEPrompt22_Run2022F_V3_DATA_L2Residual_AK4PFPuppi.txt"; isL2Res = true;
+    sout = "textFiles/Run3_22Sep2023_v3/Summer22EEPrompt22_Run2022F_V3_DATA_L2L3Residual_AK4PFPuppi.txt";
   }
   if (set=="Run22G-Prompt") {
-    sin = "CondFormats/JetMETObjects/data/Summer22EEPrompt22_RunG_V2_L2Residual_AK4PFPuppi.txt"; isL2Res = true;
+    //sin = "CondFormats/JetMETObjects/data/Summer22EEPrompt22_RunG_V2_L2Residual_AK4PFPuppi.txt"; isL2Res = true;
+    sin = "textFiles/Run3_22Sep2023_v3/Summer22EEPrompt22_Run2022G_V3_DATA_L2Residual_AK4PFPuppi.txt";  isL2Res = true;
+    sout = "textFiles/Run3_22Sep2023_v3/Summer22EEPrompt22_Run2022G_V3_DATA_L2L3Residual_AK4PFPuppi.txt";
   }
-  if (set=="Run23C123-Prompt" || set=="Run23C4D-Prompt" ||
-      set=="Run23C4-Prompt" || set=="Run23D-Prompt") {
-    sin = "CondFormats/JetMETObjects/data/Summer22EEPrompt22_RunG_V2_L2Residual_AK4PFPuppi.txt"; // Placeholder
-    isL2Res = true;
+  if (set=="Run23C123-Prompt") {
+    sin = "textFiles/Run3_22Sep2023_v3/Summer22Prompt23_Run2023Cv123_V3_DATA_L2Residual_AK4PFPUPPI.txt"; isL2Res = true;
+    sout = "textFiles/Run3_22Sep2023_v3/Summer22Prompt23_Run2023Cv123_V3_DATA_L2L3Residual_AK4PFPUPPI.txt";
+  }
+  if (set=="Run23C4-Prompt") {
+    sin = "textFiles/Run3_22Sep2023_v3/Summer22Prompt23_Run2023Cv4_V3_DATA_L2Residual_AK4PFPUPPI.txt"; isL2Res = true;
+    sout = "textFiles/Run3_22Sep2023_v3/Summer22Prompt23_Run2023Cv4_V3_DATA_L2L3Residual_AK4PFPUPPI.txt";
+  }
+  if (set=="Run23D-Prompt") {
+    sin = "textFiles/Run3_22Sep2023_v3/Summer22Prompt23_Run2023D_V3_DATA_L2Residual_AK4PFPUPPI.txt"; isL2Res = true;
+    sout = "textFiles/Run3_22Sep2023_v3/Summer22Prompt23_Run2023D_V3_DATA_L2L3Residual_AK4PFPUPPI.txt";
   }
 
+  assert(sin!="");
+  assert(sout!="");
+  assert(sout!=sin);
+						       
   cout << "Reading in L2Residual file:" << endl
        << "   " << sin << endl << flush;  
   ifstream fin(sin.c_str());
@@ -414,12 +429,22 @@ void createL2L3ResTextFiles(string set, bool leg2) {
     }
 
     if (isRun3) {
+      if (isL2Res) {
+	// patch L2L3Res files
+	if (etamin > etamax) {
+	  assert(etamin<=0);
+	  assert(etamax<0);
+	  cout << "Swap sign of " << etamin << " and " << etamax << endl;
+	  etamin *= -1;
+	  etamax *= -1;
+	}
+      }
       int nparnew = 18;//17;
       if (cnt<cntmax && debug)
 	cout << Form("  %9.6f %9.6f   %d   %d %d"
 		     "   %d   %d"
 		     "   %8.6f %8.6f %8.6f %8.6f %8.6f %8.6f"
-		     "   %5.4f %5.4f %5.5f %5.5f %5.2f %5.4f %5.5f %5.5f",
+		     "   %5.4f %5.4f %5.5f %5.5f %5.2f %5.4f %5.5f %5.8f",
 		     etamin, etamax, nparnew, xmin, xmax,
 		     ptmin0, ptmax1,
 		     p2, p3, p4, p5, p6, p7,
@@ -428,7 +453,7 @@ void createL2L3ResTextFiles(string set, bool leg2) {
       fout << Form("  %9.6f %9.6f   %d   %d %d"
 		   "   %d   %d"
 		   "   %8.6f %8.6f %8.6f %8.6f %8.6f %8.6f"
-		   "   %5.4f %5.4f %5.5f %5.5f %5.2f %5.4f %5.5f %5.5f",
+		   "   %5.4f %5.4f %5.5f %5.5f %5.2f %5.4f %5.5f %5.8f",
 		   etamin, etamax, nparnew, xmin, xmax,
 		   ptmin0, ptmax1,
 		   p2, p3, p4, p5, p6, p7,

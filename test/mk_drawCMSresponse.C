@@ -1,0 +1,36 @@
+{
+  gROOT->ProcessLine(".L CondFormats/JetMETObjects/src/Utilities.cc+");
+  gROOT->ProcessLine(".L CondFormats/JetMETObjects/src/JetCorrectorParameters.cc+");
+  gROOT->ProcessLine(".L CondFormats/JetMETObjects/src/SimpleJetCorrector.cc+");
+  gROOT->ProcessLine(".L CondFormats/JetMETObjects/src/FactorizedJetCorrector.cc+");
+
+  gROOT->ProcessLine(".L test/drawCMSresponse.C+");
+
+  //drawCMSresponse();
+  
+  drawCMSresponse("Summer22-22Sep2023_Run2022CD_V3","22CD-22Sep2023_V3",false);
+  drawCMSresponse("Summer22-22Sep2023_Run2022CD_V3","22CD-22Sep2023_V3",true);
+  drawCMSresponse("Summer22EE-22Sep2023_Run2022E_V3","22E-22Sep2023_V3",false);
+  drawCMSresponse("Summer22EE-22Sep2023_Run2022E_V3","22E-22Sep2023_V3",true);
+  drawCMSresponse("Summer22EEPrompt22_Run2022F_V3","22F-Prompt_V3",false);
+  drawCMSresponse("Summer22EEPrompt22_Run2022F_V3","22F-Prompt_V3",true);
+  drawCMSresponse("Summer22EEPrompt22_Run2022G_V3","22G-Prompt_V3",false);
+  drawCMSresponse("Summer22EEPrompt22_Run2022G_V3","22G-Prompt_V3",true);
+  drawCMSresponse("Summer22Prompt23_Run2023Cv123_V3","23C123-Prompt_V3",false);
+  drawCMSresponse("Summer22Prompt23_Run2023Cv123_V3","23C123-Prompt_V3",true);
+  drawCMSresponse("Summer22Prompt23_Run2023Cv4_V3","23C4-Prompt_V3",false);
+  drawCMSresponse("Summer22Prompt23_Run2023Cv4_V3","23C4-Prompt_V3",true);
+  drawCMSresponse("Summer22Prompt23_Run2023D_V3","23D-Prompt_V3",false);
+  drawCMSresponse("Summer22Prompt23_Run2023D_V3","23D-Prompt_V3",true);
+  
+  /*
+  drawCMSresponse("Run22CD-22Sep2023_DATA","22CD-22Sep2023");
+  drawCMSresponse("Run22E-22Sep2023_DATA","22E-22Sep2023");
+  drawCMSresponse("Run22F-Prompt_DATA","22F-Prompt");
+  drawCMSresponse("Run22G-Prompt_DATA","22G-Prompt");
+  drawCMSresponse("Run23C123-Prompt_DATA","23C123-Prompt");
+  drawCMSresponse("Run23C4-Prompt_DATA","23C4-Prompt");
+  drawCMSresponse("Run23D-Prompt_DATA","23D-Prompt");
+  drawCMSresponse("Run23C4D-Prompt_DATA","23C4D-Prompt");
+  */
+}

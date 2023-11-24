@@ -54,7 +54,7 @@ double getResp(double ptgen, double eta, double jeta, double mu) {
   return resp;
 }
 
-void drawCMSresponse(string era, string id="") {
+void drawCMSresponse(string era, string id="", bool isl2 = false) {
 
   const char *cera = era.c_str();
   
@@ -74,7 +74,9 @@ void drawCMSresponse(string era, string id="") {
 
     //const char *sd = "textFiles";
     //const char *sd = "textFiles/Run3_22Sep2023";
-    const char *sd = "textFiles/Run3partial";
+    //const char *sd = "textFiles/Run3partial";
+    //const char *sd = path.c_str();
+    const char *sd = "textFiles/Run3_22Sep2023_v3";
     //const char *st = "2017BCDEF_DATA";
     const char *st = era.c_str();
     const char *s;
@@ -83,7 +85,9 @@ void drawCMSresponse(string era, string id="") {
     //s = Form("%s/%s_L2Relative_AK4PFchs.txt",sd,st); cout << s << endl;
     //s = Form("%s/%s_L3Absolute_AK4PFchs.txt",sd,st); cout << s << endl;
     //s = Form("%s/%s_L2L3Residual_AK4PFchs.txt",sd,st); cout << s << endl;
-    s = Form("%s/%s_L2L3Residual_AK4PFPuppi.txt",sd,st); cout << s << endl;
+    if (isl2) s = Form("%s/%s_DATA_L2Residual_AK4PFPuppi.txt",sd,st);
+    else      s = Form("%s/%s_DATA_L2L3Residual_AK4PFPuppi.txt",sd,st);
+    cout << s << endl;
     JetCorrectorParameters *l2l3 = new JetCorrectorParameters(s);
 
     vector<JetCorrectorParameters> v;
@@ -155,8 +159,8 @@ void drawCMSresponse(string era, string id="") {
   //TH1D *h = new TH1D("h",";Jet |#eta|;Data response+offset",40,0,4.8);
   //h->SetMaximum(1.25);
   //h->SetMinimum(0.5);
-  h->SetMaximum(1.20);
-  h->SetMinimum(0.65);
+  h->SetMaximum(1.30);//1.20);
+  h->SetMinimum(0.55);//0.65);
   //extraText = "Simulation";
   //extraText = "Simulation Preliminary";
   //extraText = "Preliminary";
@@ -181,7 +185,7 @@ void drawCMSresponse(string era, string id="") {
   TLegend *leg7 = tdrLeg(0.15,0.30,0.45,0.35);
   TLegend *legs[npt] = {leg1, leg2, leg3, leg4, leg5, leg6, leg7};
 
-  int colors[] = {kGray+2, kGreen+2, kBlack, kOrange+1, kBlue, kRed+1, kBlack};
+  int colors[] = {kGreen+2, kGreen+2, kBlack, kOrange+1, kBlue, kRed+1, kRed+1};
   int markers[] = {kOpenDiamond, kFullCircle, kOpenCircle, kFullSquare,
 		   kOpenSquare, kFullTriangleUp, kOpenDiamond};
 
@@ -262,7 +266,10 @@ void drawCMSresponse(string era, string id="") {
 
   c1->RedrawAxis();
   //c1->SaveAs("pdf/test/drawCMSresponse.pdf");
-  c1->SaveAs(Form("pdf/test/drawCMSresponse_%s.pdf",cera));
+  if (isl2)
+    c1->SaveAs(Form("pdf/test/drawCMSresponse_%s_L2Res.pdf",cera));
+  else
+    c1->SaveAs(Form("pdf/test/drawCMSresponse_%s_L2L3Res.pdf",cera));
 
   delete _jec; _jec = 0;
 } // drawCMSresponse

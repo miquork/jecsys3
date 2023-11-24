@@ -45,8 +45,8 @@ Double_t jesFit(Double_t *x, Double_t *p);
 void jesFitter(Int_t& npar, Double_t* grad, Double_t& chi2, Double_t* par,
 	       Int_t flag);
 void cleanGraph(TGraphErrors *g);
-void globalFitEtaBin(double etamin, double etamax, string run);
-void globalFitDraw(string run);
+void globalFitEtaBin(double etamin, double etamax, string run, string version);
+void globalFitDraw(string run, string version);
 
 // Define global variables used in fitError
 TF1 *_fitError_func(0);                 // fitError uncertainty function and
@@ -98,12 +98,12 @@ void shiftHist(TH1D* h, double dy) {
 } // shiftHist
 
 // Call global fit for each eta bin separately
-void globalFit(string run = "All") {
+void globalFit(string run = "All", string version = "vX") {
 
-  globalFitEtaBin(0.0, 1.3, run.c_str());
+  globalFitEtaBin(0.0, 1.3, run, version);
 } // globalFit
 
-void globalFitEtaBin(double etamin, double etamax, string run) {
+void globalFitEtaBin(double etamin, double etamax, string run, string version) {
 
   // Set fancy plotting style (CMS TDR style)
   setTDRStyle();
@@ -118,6 +118,7 @@ void globalFitEtaBin(double etamin, double etamax, string run) {
 
   // Open file created by minitools/runAllIOVs.py and recombine.C
   const char *crun = run.c_str();
+  const char *cv = version.c_str();
   TFile *f = new TFile(Form("rootfiles/jecdata%s.root",crun),"UPDATE");
   assert(f && !f->IsZombie());
 
@@ -495,18 +496,19 @@ void globalFitEtaBin(double etamin, double etamax, string run) {
   f->Close();
   curdir->cd();
 
-  globalFitDraw(run);
+  globalFitDraw(run, version);
   if (debug) cout << "Finishing code" << endl << flush;
 } // globalFit
 
 // Separate drawing to factorize code and enable direct redrawing from file
-void globalFitDraw(string run) {
+void globalFitDraw(string run, string version) {
   
   setTDRStyle();
   TDirectory *curdir = gDirectory;
 
   // Load globalFit fit results
   const char *crun = run.c_str();
+  const char *cv = version.c_str();
   TFile *f = new TFile(Form("rootfiles/jecdata%s.root",run.c_str()),"READ");
   assert(f && !f->IsZombie());
 
@@ -811,11 +813,11 @@ void globalFitDraw(string run) {
 
     if (debug) cout << "Draw plots" << endl << flush;
    
-    c1->SaveAs(Form("pdf/globalFit/globalFit_%s_rjet.pdf",crun));
-    c1c->SaveAs(Form("pdf/globalFit/globalFit_%s_pf.pdf",crun));
-    if (usingMu) c1l->SaveAs(Form("pdf/globalFit/globalFit_%s_mu.pdf",crun));
+    c1->SaveAs(Form("pdf/globalFit/globalFit_%s_%s_rjet.pdf",crun,cv));
+    c1c->SaveAs(Form("pdf/globalFit/globalFit_%s_%s_pf.pdf",crun,cv));
+    if (usingMu) c1l->SaveAs(Form("pdf/globalFit/globalFit_%s_%s_mu.pdf",crun,cv));
     //
-    if (saveROOT) c1->SaveAs(Form("pdf/globalFit/globalFit_%s_rjet.root",crun));
+    if (saveROOT) c1->SaveAs(Form("pdf/globalFit/globalFit_%s_%s_rjet.root",crun,cv));
 
     // Test
     c1->cd();
@@ -865,9 +867,9 @@ void globalFitDraw(string run) {
     }
 
     if (string(crun)=="Run3")
-    c1->SaveAs(Form("pdf/globalFit/globalFit_%s_rjet_wNHF.pdf",crun));
+      c1->SaveAs(Form("pdf/globalFit/globalFit_%s_%s_rjet_wNHF.pdf",crun,cv));
     else
-    c1->SaveAs(Form("pdf/globalFit/globalFit_%s_rjet.pdf",crun));
+      c1->SaveAs(Form("pdf/globalFit/globalFit_%s_%s_rjet.pdf",crun,cv));
   } // drawResults
 } // globalFitEtaBin
 

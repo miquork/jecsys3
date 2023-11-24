@@ -55,11 +55,11 @@ string CorLevel = "L1L2L3Res"; // Closure test for L2L3Res
 
 // Z+jet
 double fzptmin(15);//30);//15.);//30);//(15.);//40.);   // Z+jet pTmin
-double fzptmax(600.);//700.);//1300.);  // Z+jet pTmax
+double fzptmax(700.);//1300.);  // Z+jet pTmax
 double fzmpfptmin(15); // Z+jet MPF pTmin
-double fzmpfptmax(600.);///700.);//1300);// Z+jet MPF pTmax
+double fzmpfptmax(700.);//1300);// Z+jet MPF pTmax
 double fzbalptmin(15); // Z+jet DB pTmin
-double fzbalptmax(600.);//700.);//1300);// Z+jet DB pTmax
+double fzbalptmax(700.);//1300);// Z+jet DB pTmax
 double fzbptmax(300.); // Z+b pTmax
 
 // Photon+jet, pT bins: 700, 850, 1000, 1200, 1450, 1750, 2100, 2500, 3000
@@ -72,9 +72,9 @@ double fgptmax(2100.);//1200.);//1450.);//1750.); // extend 1750 when can (v22 u
 //    2640, 2787, 2941, 3103, 3273, 3450, 3637, 3832, 4037, 4252, 4477, 4713,
 //    4961, 5220, 5492, 5777, 6076, 6389, 6717, 7000
 
-// Multijet, pT bins
+// Multijet, pT bins (800-2500 GeV for V1)
 bool rebinMultijet = true;
-double fmjptmin(800);//100.);//700);//1000.);//500);//196);   // Multijet pTmin
+double fmjptmin(196.);//800);//100.);//700);//1000.);//500);//196);   // Multijet pTmin
 double fmjptmax(2500.);//1800.);//2400.);//2785.);//3500.);//2000.);//2785.); // Multijet pTmax
 
 // PF composition (incjet)
@@ -222,7 +222,7 @@ void reprocess(string epoch="") {
     fz = new TFile("rootfiles/jme_bplusZ_2023C4D_Zmm_sync_v61.root","READ");
   }
 
-  if (epoch=="Run3") {
+  if (epoch=="Run3" && false) {
     fz = new TFile(Form("%s/jme_bplusZ_Run3_Zmm_sync_v59.root",cdz58p1),"READ");
   }
   if (epoch=="Run3" && true) { // manual combo
