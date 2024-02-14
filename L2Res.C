@@ -72,7 +72,8 @@ void L2Res() {
   
   string vrun[] = {"2023Cv123","2023Cv4","2023D"};
   const int nrun = sizeof(vrun)/sizeof(vrun[0]);
-  string vmc[] = {"Summer22","Summer22","Summer22"};
+  //string vmc[] = {"Summer22","Summer22","Summer22"};
+  string vmc[] = {"Summer23","Summer23","Summer23BPIX"};
   const int nmc = sizeof(vmc)/sizeof(vmc[0]);
   assert(nmc==nrun);
   for (int irun = 0; irun != nrun; ++irun) {
@@ -85,7 +86,8 @@ void L2Res() {
   /*
   // Mikko's code to create L2Res.root file
   // Load Z+jet
-  TFile *fz = new TFile(Form("rootfiles/jme_bplusZ_%s_Zmm_sync_v66.root",cr),"READ");
+  //TFile *fz = new TFile(Form("rootfiles/jme_bplusZ_%s_Zmm_sync_v66.root",cr),"READ"); // Summer22
+    TFile *fz = new TFile(Form("rootfiles/Winter23_noL2L3Res/jme_bplusZ_%s_Zmm_sync_v67.root",cr),"READ"); // Winter23
   assert(fz && !fz->IsZombie());
   fz->cd("data/l2res");
   TDirectory *dz = gDirectory;
@@ -93,23 +95,27 @@ void L2Res() {
   TDirectory *dzm = gDirectory;
 
   // Load G+jet
-  TFile *fg = new TFile(Form("../gamjet/rootfiles/GamHistosFill_data_%s_v32.root",cr),"READ");
+  //TFile *fg = new TFile(Form("../gamjet/rootfiles/GamHistosFill_data_%s_v32.root",cr),"READ"); // Summer22
+  TFile *fg = new TFile(Form("rootfiles/Winter23_noL2L3Res/GamHistosFill_data_%s_w1.root",cr),"READ"); // Winter23
   assert(fg && !fg->IsZombie());
   fg->cd("Gamjet2");
   TDirectory *dg = gDirectory;
   //
-  TFile *fgm = new TFile("../gamjet/rootfiles/GamHistosFill_mc_2022P8_v32.root","READ");
+  //TFile *fgm = new TFile("../gamjet/rootfiles/GamHistosFill_mc_2022P8_v32.root","READ");
+  TFile *fgm = new TFile(run=="2023D" ? "rootfiles/Winter23_noL2L3Res/GamHistosFill_mc_2023P8-BPix_w1.root" : "rootfiles/Winter23_noL2L3Res/GamHistosFill_mc_2023P8_w1.root","READ");
   assert(fgm && !fgm->IsZombie());
   fgm->cd("Gamjet2");
   TDirectory *dgm = gDirectory;
 
   // Load dijet
-  TFile *fd = new TFile(Form("../dijet/rootfiles/jmenano_data_cmb_%s_JME_v35a.root",cr),"READ");
+  //TFile *fd = new TFile(Form("../dijet/rootfiles/jmenano_data_cmb_%s_JME_v35a.root",cr),"READ"); // Summer22
+  TFile *fd = new TFile(Form("rootfiles/Winter23_noL2L3Res/jmenano_data_cmb_%s_JME_v36_Summer23DT_NoL2L3Res.root",cr),"READ"); // Winter23
   assert(fd && !fd->IsZombie());
   fd->cd("Dijet2");
   TDirectory *dd = gDirectory;
   //
-  TFile *fdm = new TFile("../dijet/rootfiles/jmenano_mc_cmb_Summer22MG_v35a.root","READ");
+  //TFile *fdm = new TFile("../dijet/rootfiles/jmenano_mc_cmb_Summer22MG_v35a.root","READ"); // Summer22
+  TFile *fdm = new TFile(run=="2023D" ? "rootfiles/Winter23_noL2L3Res/jmenano_mc_cmb_Summer23MGBPix_v36_Summer23DT_NoL2L3Res.root" : "rootfiles/Winter23_noL2L3Res/jmenano_mc_cmb_Summer23MG_v36_Summer23DT_NoL2L3Res.root","READ"); // Winter23
   assert(fdm && !fdm->IsZombie());
   fdm->cd("Dijet2");
   TDirectory *ddm = gDirectory;
@@ -134,7 +140,7 @@ void L2Res() {
   */
 
   // Use common file instead
-  TFile *f = new TFile("rootfiles/L2Res_2023_Summer22.root","READ");
+  TFile *f = new TFile("rootfiles/L2Res_2023_Winter23.root","READ");
   assert(f && !f->IsZombie());
 
   TProfile2D *p2z, *p2zm, *p2g, *p2gm;
@@ -150,6 +156,7 @@ void L2Res() {
   p2pm = (TProfile2D*)f->Get(Form("p2m0pf_dijet_mc_%s",cm)); assert(p2pm);
   p2d = (TProfile2D*)f->Get(Form("p2m0ab_dijet_data_%s",cr)); assert(p2d);
   p2dm = (TProfile2D*)f->Get(Form("p2m0ab_dijet_mc_%s",cm)); assert(p2dm);  
+
     
   // Loop over gamjet pT bins for plotting
   for (int ipt = 1; ipt != p2g->GetNbinsY()+1; ++ipt) {
@@ -164,7 +171,7 @@ void L2Res() {
   TH1D *h1 = tdrHist("h1","JES",0.65,1.45,"|#eta|",0,5.2);
   lumi_136TeV = Form("%s - %s",cr,cm);
   extraText = "Private";
-  TCanvas *c1 = tdrCanvas("c1",h1,8,0,kSquare);
+  TCanvas *c1 = tdrCanvas("c1",h1,8,33,kSquare);
 
   TLine *l = new TLine();
   l->SetLineStyle(kDashed);
@@ -199,7 +206,7 @@ void L2Res() {
 
   // Step 2. Project profile to histogram, normalize by |eta|<1.3
   TH1D *h2 = tdrHist("h2","Rel. JES",0.75,1.35,"|#eta|",0,5.2);
-  TCanvas *c2 = tdrCanvas("c2",h2,8,0,kSquare);
+  TCanvas *c2 = tdrCanvas("c2",h2,8,33,kSquare);
 
   l->DrawLine(0,1,5.2,1);
 
@@ -225,7 +232,7 @@ void L2Res() {
   
   // Step 3. Draw data/MC ratio before normalization
   TH1D *h3 = tdrHist("h3","JES Data/MC",0.80,1.15,"|#eta|",0,5.2);
-  TCanvas *c3 = tdrCanvas("c3",h3,8,0,kSquare);
+  TCanvas *c3 = tdrCanvas("c3",h3,8,33,kSquare);
 
   l->DrawLine(0,1,5.2,1);
 
@@ -244,7 +251,7 @@ void L2Res() {
   
   // Step 4. Draw data/MC ratio of normalized JES
   TH1D *h4 = tdrHist("h4","Rel. JES Data/MC",0.80,1.15,"|#eta|",0,5.2);
-  TCanvas *c4 = tdrCanvas("c4",h4,8,0,kSquare);
+  TCanvas *c4 = tdrCanvas("c4",h4,8,33,kSquare);
 
   l->DrawLine(0,1,5.2,1);
 
