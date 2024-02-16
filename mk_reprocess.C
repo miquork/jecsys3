@@ -16,6 +16,7 @@
   gROOT->ProcessLine(".L tools.C+g");
   gROOT->ProcessLine(".L Flavor.C+g");
   gROOT->ProcessLine(".L reprocess.C+g");
+  gROOT->ProcessLine(".L scaleJES.C+g");
   gROOT->ProcessLine(".L softrad3.C+g");
   //gROOT->ProcessLine(".L globalFitSyst.C+g");
   //gROOT->ProcessLine(".L globalFitRenormPF.C+g");
@@ -34,6 +35,15 @@
   // Read in files from different groups and merge them in jecdata[epoch].root
   reprocess(epoch); // Comment out if using archived jecdata[epoch].root
 
+  // Scale Z+jet, gamma+jet (and multijet) from 22Sep2023 to 19Dec2023
+  if (epoch!="Run3" && epoch!="Run22FG") { // Run3,22FG inputs already scaled
+    scaleJES(epoch, "zjet");
+  }
+  if (epoch!="Run22FG") { // Run22FG inputs already scaled (19Dec)
+    scaleJES(epoch, "gamjet");
+  }
+  scaleJES(epoch, "multijet"); // 19Dec no scaling needed
+  
   // HDM method: use HT decomposition (lead, soft jets, unclustered) for FSR
   softrad3(0.0,1.3,epoch); // 3-point FSR
 
@@ -43,6 +53,9 @@
 
   // Run global fit
   /////////////////
-  globalFitEtaBin(0.0, 1.3, epoch, "v61z_v29g_v32d");
-
+  //globalFitEtaBin(0.0, 1.3, epoch, "22Sep2023reV3");
+  //globalFitEtaBin(0.0, 1.3, epoch, "19Dec2023");
+  globalFitEtaBin(0.0, 1.3, epoch, "Summer23");
+  
+  exit(0); // Avoid page full of THastList::Delete errors
 }

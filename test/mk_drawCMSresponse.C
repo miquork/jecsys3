@@ -7,7 +7,7 @@
   gROOT->ProcessLine(".L test/drawCMSresponse.C+");
 
   //drawCMSresponse();
-  
+  /*
   drawCMSresponse("Summer22-22Sep2023_Run2022CD_V3","22CD-22Sep2023_V3",false);
   drawCMSresponse("Summer22-22Sep2023_Run2022CD_V3","22CD-22Sep2023_V3",true);
   drawCMSresponse("Summer22EE-22Sep2023_Run2022E_V3","22E-22Sep2023_V3",false);
@@ -22,7 +22,7 @@
   drawCMSresponse("Summer22Prompt23_Run2023Cv4_V3","23C4-Prompt_V3",true);
   drawCMSresponse("Summer22Prompt23_Run2023D_V3","23D-Prompt_V3",false);
   drawCMSresponse("Summer22Prompt23_Run2023D_V3","23D-Prompt_V3",true);
-  
+  */
   /*
   drawCMSresponse("Run22CD-22Sep2023_DATA","22CD-22Sep2023");
   drawCMSresponse("Run22E-22Sep2023_DATA","22E-22Sep2023");
@@ -33,4 +33,12 @@
   drawCMSresponse("Run23D-Prompt_DATA","23D-Prompt");
   drawCMSresponse("Run23C4D-Prompt_DATA","23C4D-Prompt");
   */
+
+  drawCMSresponse("Summer23Prompt23_Run2023Cv123_V1","23C123-Summer23_V1",true);
+  drawCMSresponse("Summer23Prompt23_Run2023Cv4_V1","23C4-Summer23_V1",true);
+  drawCMSresponse("Summer23Prompt23_Run2023D_V1","23D-Summer23_V1",true);
+
+  drawCMSresponse("Summer23Prompt23_Run2023Cv123_V1","23C123-Summer23_V1",false);
+  drawCMSresponse("Summer23Prompt23_Run2023Cv4_V1","23C4-Summer23_V1",false);
+  drawCMSresponse("Summer23Prompt23_Run2023D_V1","23D-Summer23_V1",false);
 }

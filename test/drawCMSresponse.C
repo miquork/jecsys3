@@ -76,7 +76,8 @@ void drawCMSresponse(string era, string id="", bool isl2 = false) {
     //const char *sd = "textFiles/Run3_22Sep2023";
     //const char *sd = "textFiles/Run3partial";
     //const char *sd = path.c_str();
-    const char *sd = "textFiles/Run3_22Sep2023_v3";
+    //const char *sd = "textFiles/Run3_22Sep2023_v3";
+    const char *sd = "textFiles/Summer23_noL2L3Res";
     //const char *st = "2017BCDEF_DATA";
     const char *st = era.c_str();
     const char *s;

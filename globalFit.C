@@ -457,7 +457,8 @@ void globalFitEtaBin(double etamin, double etamax, string run, string version) {
   for (int i = 0; i != nobs; ++i) {
 
     _obs = obs[i];
-    TH1D *h = new TH1D("hFit",Form(";p_{T} (GeV);%s",_obs.c_str()),nx,vx);
+    TH1D *h = new TH1D(Form("hFit_%s",_obs.c_str()),
+		       Form(";p_{T} (GeV);%s",_obs.c_str()),nx,vx);
     _fitError_func = _jesFit;
     _fitError_emat = &emat;
     double k = 1;
@@ -498,6 +499,7 @@ void globalFitEtaBin(double etamin, double etamax, string run, string version) {
 
   globalFitDraw(run, version);
   if (debug) cout << "Finishing code" << endl << flush;
+  exit(0); // avoid pageful of THashList::Delete errors
 } // globalFit
 
 // Separate drawing to factorize code and enable direct redrawing from file
@@ -534,7 +536,8 @@ void globalFitDraw(string run, string version) {
     if (run=="Run3") lumi_136TeV = "Run3, 64 fb^{-1}";
     //TH1D *h = tdrHist("h","JES",0.982+1e-5,1.025-1e-5); // ratio (hdm)
     TH1D *h = tdrHist("h","JES",
-		      0.75+1e-5,1.20-1e-5,
+		      0.75+1e-5,1.20-1e-5, // Summer23
+		      //0.75+1e-5,1.20-1e-5, // Summer22
 		      //0.83+1e-5,1.15-1e-5,
 		      //0.88+1e-5,1.15-1e-5,
 		      //0.88+1e-5,1.05-1e-5,
@@ -700,7 +703,7 @@ void globalFitDraw(string run, string version) {
 	tdrDraw(gr,"Pz",
 		(_gf_marker[name+"2"] ? _gf_marker[name+"2"] : kFullCircle),
 		(_gf_color[name+"2"] ? _gf_color[name+"2"] : kBlack));
-	if (_gf_label[name+"2"]!="X") {
+	if (string(_gf_label[name+"2"])!="X") {
 	  legc->AddEntry(gr,_gf_label[name+"2"],"PLE");
 	  legc->SetY1NDC(legc->GetY1NDC()-0.05);
 	}
@@ -825,7 +828,12 @@ void globalFitDraw(string run, string version) {
     TGraphErrors *gnhf0 = (TGraphErrors*)f->Get("ratio/eta00-13/nhf_incjet_a100");
     assert(gnhf0);
     gnhf0 = (TGraphErrors*)gnhf0->Clone("gnhf0");
+    TGraphErrors *gnhf0z = (TGraphErrors*)f->Get("ratio/eta00-13/nhf_zjet_a100");
+    assert(gnhf0z);
+    gnhf0z = (TGraphErrors*)gnhf0z->Clone("gnhf0z");
     double nhf_off(1);
+    /*
+    // 22Sep2023
     if (run=="Run22CD") nhf_off = 1.0;
     if (run=="Run22E")  nhf_off = 2.0;
     if (run=="Run22FG")  nhf_off = 0.0;
@@ -838,6 +846,21 @@ void globalFitDraw(string run, string version) {
 		 8.7*1.0 + (9.8+9.5)*4.5) /
 	((5.1+3.0) + 5.9 + (18.0+3.1) + 8.7 + (9.8+9.5));
     }
+    */
+    // 22Sep2023
+    if (run=="Run22CD") nhf_off = 2.0;
+    if (run=="Run22E")  nhf_off = 2.5;
+    if (run=="Run22FG")  nhf_off = 3.0;
+    if (run=="Run23C123")  nhf_off = -1.0;//1.0;
+    if (run=="Run23C4")  nhf_off = 7.0;//4.0;
+    if (run=="Run23D")  nhf_off = 9.0;//4.5;
+    if (run=="Run3")  {
+      nhf_off = ((5.1+3.0)*2.0 + 5.9*3.0 + (18.0+3.1)*3.0 +
+		 //8.7*1.0 + 9.8*4.0 + 9.5*4.5) / //Summer22
+		 8.7*-1.0 + 9.8*7.0 + 9.5*9.0) /  //Summer23
+	((5.1+3.0) + 5.9 + (18.0+3.1) + 8.7 + (9.8+9.5));
+    }
+    
     for (int i = 0; i != gnhf0->GetN(); ++i) {
       double x = gnhf0->GetX()[i];
       //double ex = gnhf0->GetEX()[i];
@@ -847,12 +870,21 @@ void globalFitDraw(string run, string version) {
       gnhf0->SetPoint(i, x, (1+y)-nhf_off*0.01); // small offset
       //gnhf0->SetPointError(i, ex, ey);
     }
+    for (int i = gnhf0z->GetN()-1; i != -1; --i) {
+      double x = gnhf0z->GetX()[i];
+      double y = gnhf0z->GetY()[i];
+      gnhf0z->SetPoint(i, x, (1+y)-nhf_off*0.01); // small offset
+      if (x>50.) gnhf0z->RemovePoint(i); // only range with no incjet
+    }
+    
     //leg->AddEntry(gnhf0,"Not fit: Dijet NHF","PLE");
     //leg->AddEntry(gnhf0,"Not fit: Incjet NHF-1%","PLE");
-    leg->AddEntry(gnhf0,Form("Not fit: jet NHF-%1.1f%%",nhf_off),"PLE");
+    //leg->AddEntry(gnhf0,Form("Not fit: jet NHF-%1.1f%%",nhf_off),"PLE");
+      leg->AddEntry(gnhf0,Form("Not fit: NHF%+1.1f%%",nhf_off),"PLE");
     leg->SetY1NDC(leg->GetY1NDC()-0.05);
     //tdrDraw(gnhf0,"Pz",kFullSquare,kGreen+2);
     tdrDraw(gnhf0,"Pz",kOpenSquare,kGreen+2);
+    tdrDraw(gnhf0z,"Pz",kOpenSquare,kGreen+3);
 
     // Add average JEC also on the plot
     if (run=="Run3") {
