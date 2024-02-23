@@ -365,8 +365,8 @@ void createL2L3ResTextFiles(string set, bool leg2) {
     if (isRun3 && isNewL2Res) {
 
       int nparnew = 2 + 3 + 8; // 13
-      string s = Form(" %6.3f %6.3f  %2d  %2d %4d "
-		      "%7.4f %7.4f %7.4f  "
+      string s = Form("  %6.3f %6.3f %2d  %2d %4d   "
+		      "%7.4f %7.4f %7.4f   "
 		      "%5.4f %5.4f %5.5f %5.5f %5.2f %5.4f %5.5f %5.8f",
 		      etamin, etamax, nparnew, xmin, xmax,
 		      p0, p1, p2,
@@ -376,8 +376,7 @@ void createL2L3ResTextFiles(string set, bool leg2) {
       fout << s << endl;
       ++cnt;
     }
-    
-    if (isRun3 && !isNewL2Res) {
+    else if (isRun3) {
       if (isL2Res) {
 	// patch L2L3Res files
 	if (etamin > etamax) {
