@@ -2,8 +2,14 @@
 //          combine multiple channels, start from TProfile2D *p2m0
 #include "TFile.h"
 #include "TProfile2D.h"
+#include "TF1.h"
+#include "TFitResultPtr.h"
 
 #include "tdrstyle_mod22.C"
+#include "tools.C"
+
+
+bool plotEtaBins = true; // lots of plots
 
 
 // Calculate JER with MPFX. If JER13 not given, calculate it
@@ -76,8 +82,52 @@ TH1D *getJER(TProfile2D *p2s, TProfile2D *p2x, TH1D *hjer13,
   return hjer;
 } // getJER
 
+// Calculate JER with MPFX for Z+jet. JER13 not needed
+TH1D *getJERZ(TProfile2D *p2s, TProfile2D *p2x, 
+	      double etamin, double etamax, const char *name = 0) {
+  assert(p2s);
+  assert(p2x);
+
+  // Calculate JER with MPFX
+  int ieta1 = p2s->GetXaxis()->FindBin(etamin);
+  int ieta2 = p2s->GetXaxis()->FindBin(etamax);
+  TProfile *ps, *px;
+  ps = p2s->ProfileY("ps",ieta1,ieta2,"S");
+  px = p2x->ProfileY("px",ieta2,ieta2,"S");
+  TH1D *hjer = ps->ProjectionX(name!=0 ? name : "hjer_");
+  for (int i = 1; i != hjer->GetNbinsX()+1; ++i) {
+    double s = ps->GetBinError(i);
+    double x = px->GetBinError(i);
+    double jer = sqrt(max(s*s - x*x,0.));
+    hjer->SetBinContent(i, jer);
+    //hjer->SetBinError(i, 0.); // do properly later
+
+    // Error propagation
+    // y = sqrt(a^2 + b^2)
+    // => dy = 2*a*0.5/y (oplus) 2*b*0.5/y
+    double ns = ps->GetBinEffectiveEntries(i);
+    double nx = px->GetBinEffectiveEntries(i);
+    double es = (ns>0 ? max(s,0.05)/sqrt(ns) : 0);
+    double ex = (nx>0 ? max(x,0.05)/sqrt(nx) : 0);
+    double ejer = (jer>0 ? sqrt(pow(s*es,2) + pow(x*ex,2)) / jer : 0);
+    //ejer = max(ejer,0.005); // Minimum error
+    hjer->SetBinError(i, ejer);
+
+    // Cleanup for bad data or MC
+    if (jer<0.025) {
+      hjer->SetBinContent(i, 0.);
+      hjer->SetBinError(i, 0.);
+    }
+  }
+  delete ps;
+  delete px;
+
+  return hjer;
+} // getJERZ
+
 TF1 *fitJER(TH1D *hjer, double ptmin, double ptmax, double eta,
-	    const char *name, int color = kBlack, TF1 *f1ref = 0) {
+	    const char *name, int color = kBlack, TF1 *f1ref = 0,
+	    TFitResultPtr *f1ptr = 0) {
 
   TF1 *f1 = new TF1(name,"sqrt([0]*fabs([0])/(x*x)+[1]*[1]/x+[2]*[2])",
 		    ptmin,ptmax);
@@ -105,7 +155,8 @@ TF1 *fitJER(TH1D *hjer, double ptmin, double ptmax, double eta,
     f1->SetParLimits(2, C,0.25); // Constant
 
   }
-  hjer->Fit(f1,"QRN");
+  if (f1ptr) (*f1ptr) = hjer->Fit(f1,"QRNS");
+  else                  hjer->Fit(f1,"QRN");
   //f1->SetRange(15,3500);
   f1->SetLineColor(color);
   
@@ -136,20 +187,48 @@ TH1D *drawH2JERSF(TH2D *h2, double pt, string draw, int marker, int color) {
 
 void JERSF() {
 
+  // Set graphical styles
   setTDRStyle();
   TDirectory *curdir = gDirectory;
 
-  string run = "2023D";
-  const char *cr = run.c_str();
-  string mc = "Summer23MGBPix";
-  const char *cm = mc.c_str();
+  // Set output directory;
+  TFile *fout = new TFile("rootfiles/JERSF.root","RECREATE");
+
+  string vrun[] = {"2023Cv123","2023Cv4","2023D"};//,"2023Cv4D"};
+  //string vrun[] = {"2023D"};
+  const int nrun = sizeof(vrun)/sizeof(vrun[0]);
+  string vmc[] = {"Summer23","Summer23","Summer23BPIX"};//,"Summer23BPIX"};
+  //string vmc[] = {"Summer23BPIX"};
+  const int nmc = sizeof(vmc)/sizeof(vmc[0]);
+  assert(nmc==nrun);
+  for (int irun = 0; irun != nrun; ++irun) {
+    string run = vrun[irun];
+    const char *cr = run.c_str();
+    string mc = vmc[irun];
+    const char *cm = mc.c_str();
+  // (No indent here for the resf of the loop, maybe function call later)
+    
+  //string run = "2023D";
+  //const char *cr = run.c_str();
+  //string mc = "Summer23MGBPix";
+  //const char *cm = mc.c_str();
     
   TFile *f = new TFile(Form("rootfiles/Summer23_noL2L3Res/jmenano_data_cmb_%s_JME_v36_Summer23.root",cr),"READ");
   assert(f && !f->IsZombie());
 
-  TFile *fm = new TFile(Form("rootfiles/Summer23_noL2L3Res/jmenano_mc_cmb_%s_v36_Summer23.root",cm),"READ");
+  //TFile *fm = new TFile(Form("rootfiles/Summer23_noL2L3Res/jmenano_mc_cmb_%s_v36_Summer23.root",cm),"READ");
+  TFile *fm = new TFile(Form("rootfiles/Summer23_noL2L3Res/jmenano_mc_cmb_%s_v36_Summer23.root","Summer23MGBPix"),"READ"); // Summer23 patch
   assert(fm && !fm->IsZombie());
-  
+
+  TFile *fz = new TFile(Form("rootfiles/Summer23_noL2L3Res/jme_bplusZ_%s_Zmm_sync_v69.root",cr),"READ");
+  assert(fz && !fz->IsZombie());
+
+  TFile *fg = new TFile(Form("rootfiles/Summer23_noL2L3Res/GamHistosFill_data_%s_w2.root",cr),"READ"); // Summer23 (w3->w2)
+  //TFile *fg = new TFile(Form("../gamjet/rootfiles/GamHistosFill_data_%s_w4.root",cr),"READ"); // Summer23 with L2Res
+  assert(fg && !fg->IsZombie());
+  //
+  TFile *fgm = new TFile(run=="2023D" ? "rootfiles/Summer23_noL2L3Res/GamHistosFill_mc_2023P8-BPix_w2.root" : "rootfiles/Summer23_noL2L3Res/GamHistosFill_mc_2023P8_w2.root","READ"); // Summer23 (w3->w2)
+  assert(fgm && !fgm->IsZombie());
 
   curdir->cd();
 
@@ -159,6 +238,18 @@ void JERSF() {
   p2sm = (TProfile2D*)fm->Get("Dijet2/p2m0");  assert(p2sm);
   p2xm = (TProfile2D*)fm->Get("Dijet2/p2m0x"); assert(p2xm);
 
+  TProfile2D *p2zs, *p2zx, *p2zsm, *p2zxm;
+  p2zs = (TProfile2D*)fz->Get("data/l2res/p2m0");  assert(p2zs);
+  p2zx = (TProfile2D*)fz->Get("data/l2res/p2m0x"); assert(p2zx);
+  p2zsm = (TProfile2D*)fz->Get("mc/l2res/p2m0");  assert(p2zsm);
+  p2zxm = (TProfile2D*)fz->Get("mc/l2res/p2m0x"); assert(p2zxm);
+
+  TProfile2D *p2gs, *p2gx, *p2gsm, *p2gxm;
+  p2gs = (TProfile2D*)fg->Get("Gamjet2/p2m0");  assert(p2gs);
+  p2gx = (TProfile2D*)fg->Get("Gamjet2/p2m0x"); assert(p2gx);
+  p2gsm = (TProfile2D*)fgm->Get("Gamjet2/p2m0");  assert(p2gsm);
+  p2gxm = (TProfile2D*)fgm->Get("Gamjet2/p2m0x"); assert(p2gxm);
+  
   TH1D *hjer13  = getJER(p2s, p2x, 0, 0,1.3,Form("hjer13_%s",cr));
   TH1D *hjer13m = getJER(p2sm,p2xm,0, 0,1.3,Form("hjer13m_%s",cr));
   TH1D *hsf13 = (TH1D*)hjer13->Clone(Form("hsf13_%s",cr));
@@ -178,6 +269,7 @@ void JERSF() {
   
   // Loop over the ieta bins
   vector<TF1*> vf1(p2s->GetNbinsX()+1);
+  TH1D *hchi2 = p2s->ProjectionX(Form("hchi2_%s",cr)); hchi2->Reset();
   TH1D *hmin = p2s->ProjectionX(Form("hmin_%s",cr)); hmin->Reset();
   TH1D *hmax = p2s->ProjectionX(Form("hmax_%s",cr)); hmax->Reset();
   for (int ieta = 1; ieta != p2s->GetNbinsX()+1; ++ieta) {
@@ -195,15 +287,33 @@ void JERSF() {
   TH1D *hsf = (TH1D*)hjer->Clone(Form("hsf_%d_%s",ieta,cr));
   hsf->Divide(hjerm);
 
+  TH1D *hjerz  = getJERZ(p2zs,p2zx,etamin,etamax,Form("hjerz_%d_%s",ieta,cr));
+  TH1D *hjerzm = getJERZ(p2zsm,p2zxm,etamin,etamax,Form("hjerzm_%d_%s",ieta,cr));
+  TH1D *hsfz = (TH1D*)hjerz->Clone(Form("hsfz_%d_%s",ieta,cr));
+  hsfz->Divide(hjerzm);
+
+  TH1D *hjerg  = getJERZ(p2gs,p2gx,etamin,etamax,Form("hjerg_%d_%s",ieta,cr));
+  TH1D *hjergm = getJERZ(p2gsm,p2gxm,etamin,etamax,Form("hjergm_%d_%s",ieta,cr));
+  TH1D *hsfg = (TH1D*)hjerg->Clone(Form("hsfg_%d_%s",ieta,cr));
+  hsfg->Divide(hjergm);
+  
   double ptmin = 50;
   //double ptmax = 1500./cosh(eta1);
   double ptmax = min(1500.,4890./cosh(eta1));
-  TF1 *f1m = fitJER(hjerm,ptmin,ptmax,eta,Form("f1m_%d_%s",ieta,cr),kGray+1);
-  TF1 *f1  = fitJER(hjer, ptmin,ptmax,eta,Form("f1_%d_%s",ieta,cr),kBlack,f1m);
+  // Clean up some high chi2 bins
+  if (eta>2.964 && eta<3.139) ptmax = 302;
+  if (eta>3.139 && eta<3.314) ptmax = 236;
+
+  TFitResultPtr f1mptr, f1ptr;
+  TF1 *f1m = fitJER(hjerm,ptmin,ptmax,eta,Form("f1m_%d_%s",ieta,cr),kGray+1,
+		    0, &f1mptr);
+  TF1 *f1  = fitJER(hjer, ptmin,ptmax,eta,Form("f1_%d_%s",ieta,cr),kBlack,
+		    f1m, &f1ptr);
   TF1 *f1r = ratioJER(f1,f1m,Form("f1r_%d_%s",ieta,cr),kBlack);
   TF1 *f1rb = ratioJER(f1,f1m,Form("f1rb_%d_%s",ieta,cr),kBlack);
   f1rb->SetRange(f1->GetXmin(),f1->GetXmax());
-  f1rb->SetLineWidth(2);
+  f1rb->SetLineWidth(3);//2);
+  vf1[ieta-1] = f1r; // save for printout
   
   TH1D *h = tdrHist(Form("h_%d_%s",ieta,cr),"JER",0,0.45);
   TH1D *hd = tdrHist(Form("hd_%d_%s",ieta,cr),"Data/MC",0.5,2.5);
@@ -219,10 +329,17 @@ void JERSF() {
 
   tex->DrawLatex(0.35,0.85,Form("[%1.3f,%1.3f]",eta1,eta2));
 
+  tdrDraw(hjerzm,"HISTE",kNone,kRed,kSolid,-1,kNone);
+  tdrDraw(hjerz,"Pz",kOpenCircle,kRed);
+
+  tdrDraw(hjergm,"HISTE",kNone,kBlue,kSolid,-1,kNone);
+  tdrDraw(hjerg,"Pz",kOpenDiamond,kBlue);
+
   //tdrDraw(hjer13m,"HISTE",kNone,kBlue-9,kSolid,-1,kNone);
   //tdrDraw(hjer13,"Pz",kOpenCircle,kBlue);
   tdrDraw(hjerm,"HISTE",kNone,kBlack,kSolid,-1,kNone);
   tdrDraw(hjer,"Pz",kFullCircle,kBlack);
+
 
   //f13->Draw("SAME");
   //f13m->Draw("SAME");
@@ -242,6 +359,9 @@ void JERSF() {
   gPad->SetLogx();
 
   l->DrawLine(15,1,3500,1);
+
+  tdrDraw(hsfz,"Pz",kOpenCircle,kRed);
+  tdrDraw(hsfg,"Pz",kOpenDiamond,kBlue);
   
   //tdrDraw(hsf13,"Pz",kOpenCircle,kBlue);
   tdrDraw(hsf,"Pz",kFullCircle,kBlack);
@@ -250,9 +370,9 @@ void JERSF() {
   f1r->Draw("SAME");
   f1rb->Draw("SAME");
   
-  
-  c1->SaveAs(Form("pdf/JERSF/vsEta/JERSF_eta_%04d_%04d.pdf",
-		  int(1000.*eta1),int(1000.*eta2)));
+  if (plotEtaBins)
+    c1->SaveAs(Form("pdf/JERSF/vsEta/JERSF_eta_%04d_%04d_%s.pdf",
+		    int(1000.*eta1),int(1000.*eta2),cr));
 
   // Also draw final results into a giant canvas
   cx->cd(ieta);
@@ -284,8 +404,14 @@ void JERSF() {
     double pt1 = h2jersf->GetYaxis()->GetBinLowEdge(ipt);
     double emax1 = pt1*cosh(eta1);
     double jersf = f1r->Eval(pt);
-    double ejersf = 0.; // do properly later
-
+    //double ejersf = 0.; // do properly later
+    double d = f1->Eval(pt);
+    double ed = tools::getFitErr(f1, f1ptr, pt);
+    double m = f1m->Eval(pt);
+    double em = tools::getFitErr(f1m, f1mptr, pt);
+    // r = d/m => dr = dd/m (+) d*dm/m^2 => dr = d/m*(dd/d (+) dm/m)
+    double ejersf = jersf * sqrt(pow(ed/d,2) + pow(em/m,2));
+    
     if (emax1 < 13600.*0.5) {
       h2jersf->SetBinContent(ieta, ipt, jersf);
       h2jersf->SetBinError(ieta, ipt, ejersf); 
@@ -293,7 +419,10 @@ void JERSF() {
   }
   hmin->SetBinContent(ieta, f1r->Eval(10.));
   hmax->SetBinContent(ieta, f1r->Eval(6800./cosh(eta1)));
-  
+
+  hchi2->SetBinContent(ieta, f1->GetChisquare()/max(1,f1->GetNDF()));
+  hchi2->SetBinError(ieta, 1./sqrt(max(1,f1->GetNDF())));
+
   } // for ieta
 
   cx->SaveAs(Form("pdf/JERSF/JERSF_AllEta_%s.pdf",cr));
@@ -341,5 +470,59 @@ void JERSF() {
   
   cy->SaveAs(Form("pdf/JERSF/JERSF_Summary_%s.pdf",cr));
   cy->SetName(Form("cy_%s",cr));
+
   
+  // Draw chi2 to have quick control of fit quality
+  TH1D *hz = tdrHist("hz","Fit #chi^{2} / NDF",0,10,"|#eta|",0,5.2);
+  TCanvas *cz = tdrCanvas("cz",hz,8,33,kSquare);
+
+  l->SetLineStyle(kDashed);
+  l->DrawLine(0,1,5.2,1);
+  
+  tdrDraw(hchi2,"HPz",kFullCircle,kBlack,kSolid,1,kNone);
+  
+  cz->SaveAs(Form("pdf/JERSF/JERSF_Chi2_%s.pdf",cr));
+
+
+  // Produce output text file (FactorizedJetCorrecter Style
+  ofstream txt(Form("pdf/JERSF/Summer23_%s_JRV1_MC_SF_AK4PFPuppi.txt",cr));
+  txt << "{1 JetEta 1 JetPt "
+      << "sqrt([0]*fabs([0])/(x*x)+[1]*[1]/x+[2]*[2])/"
+      << "sqrt([3]*fabs([3])/(x*x)+[4]*[4]/x+[5]*[5])"
+      << " Correction L2Relative}" << endl; // awkward name, but runs
+  // Run2 reference header:
+  //txt << "{1 JetEta 2 JetPt Rho  "
+  //  << "sqrt(([0]*[0]*[3]*[3]*y/[6])/(x*x)+[1]*[1]*[4]*[4]/x+[2]*[2]*[5]*[5])"
+  //  << "/sqrt(([0]*[0]*y/[6])/(x*x)+[1]*[1]/x+[2]*[2])"
+  //  << " Correction L2Relative}" << endl; // test: runs
+
+  int neta = p2s->GetNbinsX();
+  for (int i = neta-1; i != -1; --i) {
+    TF1 *f1 = vf1[i];
+    double abseta1 = p2s->GetXaxis()->GetBinLowEdge((i+1));
+    double abseta2 = p2s->GetXaxis()->GetBinLowEdge((i+1)+1);
+    txt << Form("%5.3f %5.3f %3d %4d %4d %8.3f %6.4f %7.5f %8.3f %6.4f %7.5f\n",
+		-abseta2, -abseta1,
+		2+6, 15, int(6800. / cosh(abseta1)),
+		f1->GetParameter(0),f1->GetParameter(1),f1->GetParameter(2),
+		f1->GetParameter(3),f1->GetParameter(4),f1->GetParameter(5));
+    // Run2 reference header: 
+    //JER &jer = vjer[i];
+    //txt << Form("%5.3f %6.3f %2d %2d %4d %2d %2d %5.2f %5.3f %6.4f "
+    //		" %5.3f %5.3f %5.3f %5.2f\n",
+    //		-jer.eta-jer.deta, -jer.eta+jer.deta, 11, 8, 4000, 0, 70,
+    //		  jer.n, jer.s, jer.c, jer.kn, jer.ks, jer.kc, rho);
+  } // for i in -neta
+  for (int i = 0; i != neta; ++i) {
+    TF1 *f1 = vf1[i];
+    double abseta1 = p2s->GetXaxis()->GetBinLowEdge((i+1));
+    double abseta2 = p2s->GetXaxis()->GetBinLowEdge((i+1)+1);
+    txt << Form("%5.3f %5.3f %3d %4d %4d %8.3f %6.4f %7.5f %8.3f %6.4f %7.5f\n",
+		abseta1, abseta2,
+		2+6, 15, int(6800. / cosh(abseta1)),
+		f1->GetParameter(0),f1->GetParameter(1),f1->GetParameter(2),
+		f1->GetParameter(3),f1->GetParameter(4),f1->GetParameter(5));
+  } // for i in +neta
+
+  } // for irunx
 } // JERSF
