@@ -36,6 +36,7 @@ using namespace std;
 const bool rp_debug = true; // verbose messages
 bool correctZMass = false; // pT with Run 2 Z+jet mass (def:true)
 double scaleEM = 1;//0.98; // scale EM+jet in data in absence of QCD bkg
+bool scaleEMperEra = true;
 
 // PS weight variations, 0,1,2,3 and "" for reference
 string sPSWgtZ = ""; // use 'PSWeight[X]/' variant of Z+jet MC (def:"") [PSWeight0 has very poor effective statistics]
@@ -44,8 +45,8 @@ string sPSWgtZ = ""; // use 'PSWeight[X]/' variant of Z+jet MC (def:"") [PSWeigh
 //"L1L2Res": MCTruth + L2Res applied
 //"L1L2L3Res": MCTruth + L2L3Res applied; reference JES central values set to 1.0 (affects plotting as well)
 //string CorLevel = "L1L2";    // Rarely used
-//string CorLevel = "L1L2Res"; // Input to (L2)L3Res
-string CorLevel = "L1L2L3Res"; // Closure test for L2L3Res
+string CorLevel = "L1L2Res"; // Input to (L2)L3Res
+//string CorLevel = "L1L2L3Res"; // Closure test for L2L3Res
 
 
 // Settings for cleaned up global fit
@@ -53,18 +54,22 @@ string CorLevel = "L1L2L3Res"; // Closure test for L2L3Res
 
 // Clean L3Res: Z [30,400], photon [230,1200], multijet [800,1800], PF [15,2450]
 
+// jet+Z
+double fjzptmin(20);//15);
+double fjzptmax(70);//700.);
+
 // Z+jet
-double fzptmin(15);//30);//15.);//30);//(15.);//40.);   // Z+jet pTmin
-double fzptmax(700.);//1300.);  // Z+jet pTmax
-double fzmpfptmin(15); // Z+jet MPF pTmin
-double fzmpfptmax(700.);//1300);// Z+jet MPF pTmax
-double fzbalptmin(15); // Z+jet DB pTmin
-double fzbalptmax(700.);//1300);// Z+jet DB pTmax
-double fzbptmax(300.); // Z+b pTmax
+double fzptmin(70);//15);//30);//15.);//30);//(15.);//40.);   // Z+jet pTmin
+double fzptmax(400);//700.);//1300.);  // Z+jet pTmax
+//double fzmpfptmin(15); // Z+jet MPF pTmin
+//double fzmpfptmax(700.);//1300);// Z+jet MPF pTmax
+//double fzbalptmin(15); // Z+jet DB pTmin
+//double fzbalptmax(700.);//1300);// Z+jet DB pTmax
+//double fzbptmax(300.); // Z+b pTmax
 
 // Photon+jet, pT bins: 700, 850, 1000, 1200, 1450, 1750, 2100, 2500, 3000
-double fgptmin(110);//35);//60);//35);//110);//230);//30.);//110.);//50.);
-double fgptmax(2100.);//1200.);//1450.);//1750.); // extend 1750 when can (v22 up to 3000)
+double fgptmin(175);//110);//60);//35);//60);//175);//110);//35);//60);//35);//110);//230);//30.);//110.);//50.);
+double fgptmax(1000.);//2100.);//1200.);//1450.);//1750.); // extend 1750 when can (v22 up to 3000)
 
 
 // Multijet and incjet pT bins (to-do: widen multijet high pT bins?)
@@ -74,7 +79,7 @@ double fgptmax(2100.);//1200.);//1450.);//1750.); // extend 1750 when can (v22 u
 
 // Multijet, pT bins (800-2500 GeV for V1)
 bool rebinMultijet = true;
-double fmjptmin(1000.);//196.);//800);//100.);//700);//1000.);//500);//196);   // Multijet pTmin
+double fmjptmin(49);//97);//196.);//800);//100.);//700);//1000.);//500);//196);   // Multijet pTmin
 double fmjptmax(2500.);//1800.);//2400.);//2785.);//3500.);//2000.);//2785.); // Multijet pTmax
 
 // PF composition (incjet)
@@ -136,15 +141,18 @@ void reprocess(string epoch="") {
   }
   if (epoch=="Run23C123") {
     //fz = new TFile("rootfiles/jme_bplusZ_2023C123_Zmm_sync_v66.root","READ");
-    fz = new TFile("rootfiles/Summer23_noL2L3Res/jme_bplusZ_2023Cv123_Zmm_sync_v69.root","READ"); // Summer23
+    //fz = new TFile("rootfiles/Summer23_noL2L3Res/jme_bplusZ_2023Cv123_Zmm_sync_v69.root","READ"); // Summer23
+    fz = new TFile("rootfiles/Summer23_L2ResOnly/jme_bplusZ_2023Cv123_Zmm_sync_v70.root","READ"); // Summer23 L2Res_V1
   }
   if (epoch=="Run23C4") {
     //fz = new TFile("rootfiles/jme_bplusZ_2023C4_Zmm_sync_v66.root","READ");
-    fz = new TFile("rootfiles/Summer23_noL2L3Res/jme_bplusZ_2023Cv4_Zmm_sync_v69.root","READ");
+    //fz = new TFile("rootfiles/Summer23_noL2L3Res/jme_bplusZ_2023Cv4_Zmm_sync_v69.root","READ");
+    fz = new TFile("rootfiles/Summer23_L2ResOnly/jme_bplusZ_2023Cv4_Zmm_sync_v70.root","READ"); // Summer23 L2Res_V1
   }
   if (epoch=="Run23D") {
-      //fz = new TFile("rootfiles/jme_bplusZ_2023D_Zmm_sync_v66.root","READ");
-    fz = new TFile("rootfiles/Summer23_noL2L3Res/jme_bplusZ_2023D_Zmm_sync_v69.root","READ");
+    //fz = new TFile("rootfiles/jme_bplusZ_2023D_Zmm_sync_v66.root","READ");
+    //fz = new TFile("rootfiles/Summer23_noL2L3Res/jme_bplusZ_2023D_Zmm_sync_v69.root","READ");
+    fz = new TFile("rootfiles/Summer23_L2ResOnly/jme_bplusZ_2023D_Zmm_sync_v70.root","READ"); // Summer23 L2Res_V1
   }
   if (epoch=="Run3") {
     //fz = new TFile(Form("%s/jme_bplusZ_Run3_Zmm_sync_v59.root",cdz58p1),"READ"); // Sami's combo
@@ -246,7 +254,10 @@ void reprocess(string epoch="") {
     assert(false);
   }
   else if (epoch=="Run23C123" || epoch=="Run23C4" || epoch=="Run23D") {
-    fp = new TFile(Form("rootfiles/Summer23_noL2L3Res/GamHistosRatio_%s_P8_w2.root",mp[epoch]),"READ"); // Summer23 no QCD
+    //fp = new TFile(Form("rootfiles/Summer23_noL2L3Res/GamHistosRatio_%s_P8_w2.root",mp[epoch]),"READ"); // Summer23 no QCD
+    //fp = new TFile(Form("../gamjet/rootfiles/GamHistosRatio_%s_P8QCD_w4.root",mp[epoch]),"READ"); // Summer23 no QCD with L2Res
+    //fp = new TFile(Form("rootfiles/Summer23_L2ResOnly/GamHistosRatio_%s_P8%s-noQCD_w4.root",mp[epoch],epoch=="Run23D" ? "BPix" : ""),"READ"); // Summer23 L2Res_V1 (noQCD)
+    fp = new TFile(Form("rootfiles/Summer23_L2ResOnly/GamHistosRatio_%s_P8%sQCD_w6.root",mp[epoch],epoch=="Run23D" ? "BPix" : ""),"READ"); // Summer23 L2Res_V1 (withQCD)
   }
   else {
     fp = new TFile(Form("../gamjet/rootfiles/GamHistosRatio_%s_P8QCD_v32.root",mp[epoch]),"READ"); // L2L3Res_V3
@@ -327,18 +338,21 @@ void reprocess(string epoch="") {
   mmjm["Run22G"] = "Summer22EEMG";
   mmjm["Run22FG"] = "Summer22EEMG";
   mmjm["Run23BC123"] = "Summer22MG";
-  mmjm["Run23C123"] = "Summer23MGBPix";//"Summer22MG";
-  mmjm["Run23C4"] = "Summer23MGBPix";//"Summer22MG";
+  mmjm["Run23C123"] = "Summer23MG";//GBPix";//"Summer22MG";
+  mmjm["Run23C4"] = "Summer23MG";//BPix";//"Summer22MG";
   mmjm["Run23D"] = "Summer23MGBPix";//"Summer22MG";
-  mmjm["Run23C4D"] = "Summer22MG";
+  mmjm["Run23C4D"] = "Summer23MGBPix";//22MG";
   mmjm["Run3"] = "Summer22MG";
   //TFile *fmjd = new TFile(Form("../dijet/rootfiles/jmenano_data_cmb_%s_JME_v32.root",mmjd[epoch]),"READ"); // no L2L3Res (L2Res for 2022 only)
   //assert(fmjd && !fmjd->IsZombie());
   //TFile *fmjm = new TFile(Form("../dijet/rootfiles/jmenano_mc_out_%s_v32.root",mmjm[epoch]),"READ"); // no L2L3Res (L2Res for 2022 only)
 
   // 22Sep2023_V3 used v35a files
-  TFile *fmjd = new TFile(Form("rootfiles/Summer23_noL2L3Res/jmenano_data_cmb_%s_JME_v36_Summer23.root",mmjd[epoch]),"READ"); // Summer23_V1
-  TFile *fmjm = new TFile(Form("rootfiles/Summer23_noL2L3Res/jmenano_mc_cmb_%s_v36_Summer23.root",mmjm[epoch]),"READ"); // Summer23_V1
+  //TFile *fmjd = new TFile(Form("rootfiles/Summer23_noL2L3Res/jmenano_data_cmb_%s_JME_v36_Summer23.root",mmjd[epoch]),"READ"); // Summer23_V1
+  //TFile *fmjm = new TFile(Form("rootfiles/Summer23_noL2L3Res/jmenano_mc_cmb_%s_v36_Summer23.root",mmjm[epoch]),"READ"); // Summer23_V1
+  TFile *fmjd = new TFile(Form("rootfiles/Summer23_L2ResOnly/jmenano_data_cmb_%s_JME_v39_noRwPU_noSmearJets_25Feb2024_L2Res_v1.root",mmjd[epoch]),"READ"); // Summer23_V1
+  TFile *fmjm = new TFile(Form("rootfiles/Summer23_L2ResOnly/jmenano_mc_cmb_%s_v39_noRwPU_noSmearJets_25Feb2024_L2Res_v1.root",mmjm[epoch]),"READ"); // Summer23 L2Res_V1
+  //
   //TFile *fmjd = new TFile(Form("../dijet/rootfiles/jmenano_data_cmb_%s_JME_v35a.root",mmjd[epoch]),"READ"); // L2L3Res_V3
   //TFile *fmjm = new TFile(Form("../dijet/rootfiles/jmenano_mc_out_%s_v35a.root",mmjm[epoch]),"READ"); // L2L3Res_V3
   // 19Dec2023 special JetMET re-reco (v35 not working for multijet balance)
@@ -369,6 +383,7 @@ void reprocess(string epoch="") {
 
   // Store pointers to all files in a map for easy handling later
   map<string, TFile*> files;
+  files["jetz"] = fz;
   files["zjet"] = fz;
   files["gamjet"] = fp;
   files["multijet_data"] = fmjd;
@@ -469,6 +484,15 @@ void reprocess(string epoch="") {
   // color and style codes
   map<string, map<string, int> > style;
 
+  style["jetz"]["mpfchs1"] = kFullDiamond;
+  style["jetz"]["ptchs"] = kOpenDiamond;
+  style["jetz"]["mpf1"] = kFullTriangleUp;
+  style["jetz"]["mpfn"] = kFullTriangleUp;
+  style["jetz"]["mpfu"] = kFullTriangleDown;
+  style["jetz_mc"]["mpf1"] = kOpenTriangleUp;
+  style["jetz_mc"]["mpfn"] = kOpenTriangleUp;
+  style["jetz_mc"]["mpfu"] = kOpenTriangleDown;
+  
   style["zjet"]["mpfchs1"] = kFullDiamond;
   style["zjet"]["ptchs"] = kOpenDiamond;
   style["zjet"]["chf"] = kFullCircle;
@@ -527,6 +551,11 @@ void reprocess(string epoch="") {
   style["multijet_mc"]["npv"] = kOpenTriangleDown;
 
   map<string, int> color;
+  color["jetz"] = kRed+1;
+  color["jetz_mpf1"] = kRed;
+  color["jetz_mpfn"] = kGreen+2;
+  color["jetz_mpfu"] = kBlue;
+  
   color["zjet"] = kRed+1;
   color["zjet_muf"] = kMagenta+1;
   color["zjet_mpf1"] = kRed;
@@ -651,6 +680,7 @@ void reprocess(string epoch="") {
   }
 
   vector<string> sets;
+  sets.push_back("jetz");
   sets.push_back("zjet");
   sets.push_back("gamjet");
   sets.push_back("multijet");
@@ -784,6 +814,10 @@ void reprocess(string epoch="") {
 	  if ((t=="rjet" || t=="gjet") && s=="multijet") continue;
 	  if ((t=="rjet" || t=="gjet") && s=="gamjet") continue;
 
+	  // jetz only for HDM inputs
+	  if (s=="jetz" && !(t=="mpfchs1" || t=="ptchs" || ismpfc ||
+			     t=="counts")) continue;
+
 	  double alpha = 1.00;
 	  eta1 = etas[ieta].first; // reset to avoid trouble with below
 	  eta2 = etas[ieta].second; // reset to avoid trouble with below
@@ -791,6 +825,11 @@ void reprocess(string epoch="") {
 	  // Reconstruct naming scheme used in each of the files
 	  // If non-conventional naming schemes, patch here
 	  const char *c(0);
+	  if (s=="jetz") {
+	    c = Form("%s/eta_%02.0f_%02.0f/%s_jetpt_a%1.0f",
+		     rename["zjet"][d],10*eta1,10*eta2,
+		     rename["zjet"][t],100.*alpha);
+	  } // "jetz"
 	  if (s=="zjet") {
 	    if (tepoch.Contains("UL") ||
 		epoch=="RunCD" ||
@@ -842,18 +881,18 @@ void reprocess(string epoch="") {
 	  } // gamjet
 	  if (s=="multijet") {
 	    // Override file selection from files[s]
-            if (d=="data") f = fmjd;
-            if (d=="mc") f = fmjm;
-            if (d=="ratio") f = fmjd; // patch
+            //if (d=="data") f = fmjd;
+            //if (d=="mc") f = fmjm;
+            //if (d=="ratio") f = fmjd; // patch
 	    c = Form("Multijet/%s",rename[s][t]);
 	    //if (d=="mc") // patch 22Sep2023, not 19Dec2023
 	    //c = Form("HLT_MC/Multijet/%s",rename[s][t]);
 	  }
 	  if (s=="incjet") {
 	    // Override file selection from files[s]
-            if (d=="data") f = fijd;
-            if (d=="mc") f = fijm;
-            if (d=="ratio") f = fijd; // patch
+            //if (d=="data") f = fijd;
+            //if (d=="mc") f = fijm;
+            //if (d=="ratio") f = fijd; // patch
 	    c = Form("Incjet/PFcomposition/p%s13",tt);//rename[s][t]);
 	    //if (d=="mc") // patch 22Sep2023, not 19Dec2023
 	    //c = Form("HLT_MC/Incjet/PFcomposition/p%s13",tt);//rename[s][t]);
@@ -870,7 +909,7 @@ void reprocess(string epoch="") {
 	  if (t=="counts" && !obj) obj = hcounts;
 	  
 	  // Calculate data/MC ratio
-	  if ((s=="zjet" || sp=="zjet" || s=="multijet") &&
+	  if ((s=="jetz" || s=="zjet" || sp=="zjet" || s=="multijet") &&
 	      d=="ratio" && (t=="mpfchs1"||t=="ptchs")) {
 	    TGraphErrors *gd = grs["data"][t][s][ieta];
 	    TGraphErrors *gm = grs["mc"][t][s][ieta];
@@ -880,7 +919,8 @@ void reprocess(string epoch="") {
 	    TGraphErrors *g = tools::ratioGraphs(gd, gm);
 	    obj = (TObject*)g;
 	  }
-	  if ((s=="zjet" || s=="multijet" || s=="incjet") && d=="ratio" &&
+	  if ((s=="jetz" || s=="zjet" || s=="multijet" || s=="incjet") &&
+	      d=="ratio" &&
 	      // bug: 20231114...
 	      //(isfrac || t=="rmpf1" || t=="rmpfn" || t=="rpmfu")) {
 	      (isfrac || ismpfc)) {
@@ -933,7 +973,7 @@ void reprocess(string epoch="") {
 	    if (obj->InheritsFrom("TProfile")) {
 	      obj = ((TProfile*)obj)->Rebin(nx,Form("%s_%s_%s",ss,dd,tt),&vx[0]);
 	    }
-	  }
+	  } // rebinMultijet
 	    
 	  // If data stored in TH2D instead of TGrapherrors, patch here
 	  // Patch for zjet that has PF fractions in TH2D (v24)
@@ -951,7 +991,6 @@ void reprocess(string epoch="") {
 	  // Patch for pfjet file that has TProfiles's instead of graphs
 	  // Patch for zjet file that has TProfiles instead of graphs
 	  if (obj->InheritsFrom("TProfile")) {
-	    
 	    obj = new TGraphErrors(((TProfile*)obj)->ProjectionX());
 	  }
 
@@ -977,7 +1016,10 @@ void reprocess(string epoch="") {
 	    //if (g->GetEY()[i]>0.2 && !isflavormc)  g->RemovePoint(i);
 	    // Clean out point outside good ranges
 	    //else
-	    if (s=="zjet" &&
+	    if (s=="jetz" &&
+		(g->GetX()[i]<fjzptmin || g->GetX()[i]>fjzptmax))
+	      g->RemovePoint(i);
+	    else if (s=="zjet" &&
 		     (g->GetX()[i]<fzptmin || g->GetX()[i]>fzptmax))
 	      g->RemovePoint(i);
 	    else if (s=="gamjet" &&
@@ -992,8 +1034,10 @@ void reprocess(string epoch="") {
 	  } // for i
 	  
 	  // Mass corrections for Z+jet
-	  if (correctZMass && s=="zjet" && (d=="data" || d=="ratio") &&
-	      (ismpfc || t=="ptchs"))  {
+	  if (correctZMass && (s=="jetz" || s=="zjet") &&
+	      (d=="data" || d=="ratio") &&
+	      (ismpfc || t=="ptchs" || t=="mpfchs1"))  { // 20240227 add mpfchs1
+	    assert(false); // should not do this for mpu, mpfn?
 	    for (int i = 0; i != g->GetN(); ++i) {
 	      double pt = g->GetX()[i];
 	      //double ek = f1ez->Eval(pt);
@@ -1007,23 +1051,29 @@ void reprocess(string epoch="") {
 
 	  // PATCH EM scale corrections for gamma+jet in absence of QCD bkg
 	  if (s=="gamjet" && (d=="data" || d=="ratio") &&
-	      (ismpfc || t=="ptchs"))  {
+	      (ismpfc || t=="ptchs" || t=="mpfchs1"))  { // 20240227 add mpfchs1
 	    for (int i = 0; i != g->GetN(); ++i) {
 	      double pt = g->GetX()[i];
+	      if (scaleEMperEra) {
+		scaleEM = 1;
+		if (epoch=="Run23C123") scaleEM = 0.996;//0.998;
+		if (epoch=="Run23C4")   scaleEM = 0.994;
+		if (epoch=="Run23D")    scaleEM = 0.990;
+	      }
 	      g->SetPoint(i, g->GetX()[i], g->GetY()[i]*scaleEM);
 	    }
 	  }
 	  // PATCH
 
 	  // Temporary PATCH for multijet crecoil
-	  if (s=="multijet" && t=="crecoil") {
-	    for (int i = 0; i != g->GetN(); ++i) {
-	      double c = g->GetY()[i];
-	      if (fabs(c-1)<0.01) {
-		g->SetPoint(i, g->GetX()[i], 0.40);
-	      }
-	    }
-	  }
+	  //if (s=="multijet" && t=="crecoil") {
+	  //for (int i = 0; i != g->GetN(); ++i) {
+	  //  double c = g->GetY()[i];
+	  //  if (fabs(c-1)<0.01) {
+	  //	g->SetPoint(i, g->GetX()[i], 0.40);
+	  //  }
+	  //}
+	  //}
 	  // Temporary PATCH
 
 	  dout->cd("orig");
@@ -1138,18 +1188,30 @@ void reprocess(string epoch="") {
     }
     if (epoch=="Run22EFG") { assert(false); exit(0); }
     if (epoch=="Run23B" || epoch=="Run23BC123" || epoch=="Run23C123") {
+      /*
       jec = getFJC("","","Summer22Prompt23_Run2023Cv123_V3_DATA_L2L3Residual");
       mcjec = getFJC("","Summer22Run3_V1_MC_L2Relative");
+      */
+      jec = getFJC("","","Summer22Prompt23_Run2023Cv123_V3_DATA_L2L3Residual");
+      mcjec = getFJC("","Summer23Run3_V1_MC_L2Relative_AK4PUPPI");
     }
     //epoch=="Run23C" ||
     //epoch=="Run23C1" || epoch=="Run23C2" || epoch=="Run23C3" ||
     if (epoch=="Run23C4") {
+      /*
       jec = getFJC("","","Summer22Prompt23_Run2023Cv4_V3_DATA_L2L3Residual");
       mcjec = getFJC("","Summer22Run3_V1_MC_L2Relative");
+      */
+      jec = getFJC("","","Summer22Prompt23_Run2023Cv4_V3_DATA_L2L3Residual");
+      mcjec = getFJC("","Summer23Run3_V1_MC_L2Relative_AK4PUPPI");
     }
     if (epoch=="Run23D") {
+      /*
       jec = getFJC("","","Summer22Prompt23_Run2023D_V3_DATA_L2L3Residual");
       mcjec = getFJC("","Summer22Run3_V1_MC_L2Relative");
+      */
+      jec = getFJC("","","Summer22Prompt23_Run2023D_V3_DATA_L2L3Residual");
+      mcjec = getFJC("","Summer23BPixRun3_V3_MC_L2Relative_AK4PUPPI");
     }
     if (epoch=="Run23C4D") { assert(false); exit(0); }
     if (epoch=="Run3") {

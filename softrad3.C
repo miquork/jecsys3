@@ -122,6 +122,7 @@ void softrad3(double etamin=0.0, double etamax=1.3, string epoch="") {
   samples.push_back("gamjet");
   //samples.push_back("zeejet");
   //samples.push_back("zmmjet");
+  samples.push_back("jetz");
   samples.push_back("zjet");
   samples.push_back("multijet");
 

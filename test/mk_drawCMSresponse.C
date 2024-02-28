@@ -34,11 +34,11 @@
   drawCMSresponse("Run23C4D-Prompt_DATA","23C4D-Prompt");
   */
 
-  drawCMSresponse("Summer23Prompt23_Run2023Cv123_V1","23C123-Summer23_V1",true);
-  drawCMSresponse("Summer23Prompt23_Run2023Cv4_V1","23C4-Summer23_V1",true);
-  drawCMSresponse("Summer23Prompt23_Run2023D_V1","23D-Summer23_V1",true);
+  drawCMSresponse("Summer23Prompt23_Run2023Cv123_V1","23C123-Summer23_V2",true);
+  drawCMSresponse("Summer23Prompt23_Run2023Cv4_V1","23C4-Summer23_V2",true);
+  drawCMSresponse("Summer23Prompt23_Run2023D_V1","23D-Summer23_V2",true);
 
-  drawCMSresponse("Summer23Prompt23_Run2023Cv123_V1","23C123-Summer23_V1",false);
-  drawCMSresponse("Summer23Prompt23_Run2023Cv4_V1","23C4-Summer23_V1",false);
-  drawCMSresponse("Summer23Prompt23_Run2023D_V1","23D-Summer23_V1",false);
+  drawCMSresponse("Summer23Prompt23_Run2023Cv123_V2","23C123-Summer23_V2",false);
+  drawCMSresponse("Summer23Prompt23_Run2023Cv4_V2","23C4-Summer23_V2",false);
+  drawCMSresponse("Summer23Prompt23_Run2023D_V2","23D-Summer23_V2",false);
 }

@@ -11,6 +11,11 @@
 #include "tdrstyle_mod22.C"
 
 TLegend *_leg(0);
+bool fitZ = true; // Z+jet
+bool fitG = true; // gamma+jet
+bool fitD = true; // Dijet (pT,ave)
+bool fitP = true; // Dijet (pT,probe)
+bool fitJ = true; // Dijet (pT,tag)
 
 // Step 1. Slice 1D profile out of 2D in given range and draw it
 TProfile* drawEta(TProfile2D *p2, double ptmin, double ptmax,
@@ -211,12 +216,18 @@ void L2Res() {
   // Set output directory;
   TFile *fout = new TFile("rootfiles/L2Res.root","RECREATE");
 
-  string vrun[] = {"2023Cv123","2023Cv4","2023D"};
+  // Make sure graphics output directories exists
+  gROOT->ProcessLine(".! mkdir pdf");
+  gROOT->ProcessLine(".! mkdir pdf/L2Res");
+  gROOT->ProcessLine(".! mkdir pdf/L2Res/vsEta");
+  gROOT->ProcessLine(".! mkdir pdf/L2Res/vsPt");
+
+  string vrun[] = {"2023Cv123","2023Cv4","2023D"};//,"2023Cv4D"};
   //string vrun[] = {"2023D"};
   const int nrun = sizeof(vrun)/sizeof(vrun[0]);
   //string vmc[] = {"Summer22","Summer22","Summer22"};
   //string vmc[] = {"Summer22"};
-  string vmc[] = {"Summer23","Summer23","Summer23BPIX"};
+  string vmc[] = {"Summer23","Summer23","Summer23BPIX"};//,"Summer23BPIX"};
   //string vmc[] = {"Summer23BPIX"};
   const int nmc = sizeof(vmc)/sizeof(vmc[0]);
   assert(nmc==nrun);
@@ -232,7 +243,8 @@ void L2Res() {
   // Load Z+jet
   //TFile *fz = new TFile(Form("rootfiles/jme_bplusZ_%s_Zmm_sync_v66.root",cr),"READ"); // Summer22
   //TFile *fz = new TFile(Form("rootfiles/Winter23_noL2L3Res/jme_bplusZ_%s_Zmm_sync_v67.root",cr),"READ"); // Winter23
-    TFile *fz = new TFile(Form("rootfiles/Summer23_noL2L3Res/jme_bplusZ_%s_Zmm_sync_v69.root",cr),"READ"); // Summer23
+  //TFile *fz = new TFile(Form("rootfiles/Summer23_noL2L3Res/jme_bplusZ_%s_Zmm_sync_v69.root",cr),"READ"); // Summer23
+  TFile *fz = new TFile(Form("rootfiles/Summer23_L2ResOnly/jme_bplusZ_%s_Zmm_sync_v70.root",cr),"READ"); // Summer23 L2Res_V1
   assert(fz && !fz->IsZombie());
   fz->cd("data/l2res");
   TDirectory *dz = gDirectory;
@@ -242,14 +254,16 @@ void L2Res() {
   // Load G+jet
   //TFile *fg = new TFile(Form("../gamjet/rootfiles/GamHistosFill_data_%s_v32.root",cr),"READ"); // Summer22
   //TFile *fg = new TFile(Form("rootfiles/Winter23_noL2L3Res/GamHistosFill_data_%s_w1.root",cr),"READ"); // Winter23
-  TFile *fg = new TFile(Form("rootfiles/Summer23_noL2L3Res/GamHistosFill_data_%s_w2.root",cr),"READ"); // Summer23 (w3->w2)
+  //TFile *fg = new TFile(Form("rootfiles/Summer23_noL2L3Res/GamHistosFill_data_%s_w2.root",cr),"READ"); // Summer23 (w3->w2)
+  TFile *fg = new TFile(Form("rootfiles/Summer23_L2ResOnly/gamjet_all/GamHistosFill_data_%s_w4.root",cr),"READ"); // Summer23 with L2Res
   assert(fg && !fg->IsZombie());
   fg->cd("Gamjet2");
   TDirectory *dg = gDirectory;
   //
   //TFile *fgm = new TFile("../gamjet/rootfiles/GamHistosFill_mc_2022P8_v32.root","READ"); // Summer22
   //TFile *fgm = new TFile(run=="2023D" ? "rootfiles/Winter23_noL2L3Res/GamHistosFill_mc_2023P8-BPix_w1.root" : "rootfiles/Winter23_noL2L3Res/GamHistosFill_mc_2023P8_w1.root","READ"); // Winter23
-  TFile *fgm = new TFile(run=="2023D" ? "rootfiles/Summer23_noL2L3Res/GamHistosFill_mc_2023P8-BPix_w2.root" : "rootfiles/Summer23_noL2L3Res/GamHistosFill_mc_2023P8_w2.root","READ"); // Summer23 (w3->w2)
+  //TFile *fgm = new TFile(run=="2023D" ? "rootfiles/Summer23_noL2L3Res/GamHistosFill_mc_2023P8-BPix_w2.root" : "rootfiles/Summer23_noL2L3Res/GamHistosFill_mc_2023P8_w2.root","READ"); // Summer23 (w3->w2)
+  TFile *fgm = new TFile(run=="2023D" ? "rootfiles/Summer23_L2ResOnly/gamjet_all/GamHistosFill_mc_2023P8-BPix_w4.root" : "rootfiles/Summer23_L2ResOnly/gamjet_all/GamHistosFill_mc_2023P8_w4.root","READ"); // Summer23 L2Res_V1
   assert(fgm && !fgm->IsZombie());
   fgm->cd("Gamjet2");
   TDirectory *dgm = gDirectory;
@@ -257,7 +271,8 @@ void L2Res() {
   // Load dijet
   //TFile *fd = new TFile(Form("../dijet/rootfiles/jmenano_data_cmb_%s_JME_v35a.root",cr),"READ"); // Summer22
   //TFile *fd = new TFile(Form("rootfiles/Winter23_noL2L3Res/jmenano_data_cmb_%s_JME_v36_Summer23DT_NoL2L3Res.root",cr),"READ"); // Winter23
-  TFile *fd = new TFile(Form("rootfiles/Summer23_noL2L3Res/jmenano_data_cmb_%s_JME_v36_Summer23.root",cr),"READ"); // Summer23
+  //TFile *fd = new TFile(Form("rootfiles/Summer23_noL2L3Res/jmenano_data_cmb_%s_JME_v36_Summer23.root",cr),"READ"); // Summer23
+  TFile *fd = new TFile(Form("rootfiles/Summer23_L2ResOnly/jmenano_data_cmb_%s_JME_v39_noRwPU_noSmearJets_25Feb2024_L2Res_v1.root",cr),"READ"); // Summer23 L2Res_V1
   assert(fd && !fd->IsZombie());
   fd->cd("Dijet2");
   TDirectory *dd = gDirectory;
@@ -265,7 +280,8 @@ void L2Res() {
   //TFile *fdm = new TFile("../dijet/rootfiles/jmenano_mc_cmb_Summer22MG_v35a.root","READ"); // Summer22
   //TFile *fdm = new TFile(run=="2023D" ? "rootfiles/Winter23_noL2L3Res/jmenano_mc_cmb_Summer23MGBPix_v36_Summer23DT_NoL2L3Res.root" : "rootfiles/Winter23_noL2L3Res/jmenano_mc_cmb_Summer23MG_v36_Summer23DT_NoL2L3Res.root","READ"); // Winter23
   //TFile *fdm = new TFile(run=="2023D" ? "rootfiles/Summer23_noL2L3Res/jmenano_mc_cmb_Summer23MGBPix_v36_Summer23.root" : "rootfiles/Summer23_noL2L3Res/jmenano_mc_cmb_Summer23MG_v36_Summer23.root","READ"); // Summer23
-  TFile *fdm = new TFile("rootfiles/Summer23_noL2L3Res/jmenano_mc_cmb_Summer23MGBPix_v36_Summer23.root","READ"); // Summer23 patch
+  //TFile *fdm = new TFile("rootfiles/Summer23_noL2L3Res/jmenano_mc_cmb_Summer23MGBPix_v36_Summer23.root","READ"); // Summer23 patch
+  TFile *fdm = new TFile(Form("rootfiles/Summer23_L2ResOnly/jmenano_mc_cmb_Summer23MG%s_v39_noRwPU_noSmearJets_25Feb2024_L2Res_v1.root",run=="2023D" ? "BPix" : ""),"READ");
   assert(fdm && !fdm->IsZombie());
   fdm->cd("Dijet2");
   TDirectory *ddm = gDirectory;
@@ -513,11 +529,11 @@ void L2Res() {
   hdrf = drawCleaned(hdrn,eta,"D","Pz",kFullDiamond,kBlack);
 
   TMultiGraph *mg = new TMultiGraph();
-  mg->Add(cleanGraph(new TGraphErrors(hzrf)),"SAMEP");
-  mg->Add(cleanGraph(new TGraphErrors(hgrf)),"SAMEP");
-  mg->Add(cleanGraph(new TGraphErrors(hdrf)),"SAMEP");
-  mg->Add(cleanGraph(new TGraphErrors(hprf)),"SAMEP");
-  mg->Add(cleanGraph(new TGraphErrors(hjrf)),"SAMEP");
+  if (fitZ) mg->Add(cleanGraph(new TGraphErrors(hzrf)),"SAMEP");
+  if (fitG) mg->Add(cleanGraph(new TGraphErrors(hgrf)),"SAMEP");
+  if (fitD) mg->Add(cleanGraph(new TGraphErrors(hdrf)),"SAMEP");
+  if (fitP) mg->Add(cleanGraph(new TGraphErrors(hprf)),"SAMEP");
+  if (fitJ) mg->Add(cleanGraph(new TGraphErrors(hjrf)),"SAMEP");
   mg->Draw();//"SAME Pz");
 
   TF1 *f0 = new TF1(Form("f0_%d_%s",ieta,cr),"[0]",15.,3500.);
@@ -698,7 +714,7 @@ void L2Res() {
   cy->SetName(Form("cy_%s",cr));
 
   // Step 8. Print out text files
-  ofstream ftxt(Form("textfiles/Summer23_noL2L3Res/Summer23Prompt23_Run%s_V1_DATA_L2Residual_AK4PFPuppi.txt",cr));
+  ofstream ftxt(Form("textfiles/Summer23_L2ResClosure/Summer23Prompt23_Run%s_V1_DATA_L2Residual_AK4PFPuppi.txt",cr));
   ftxt << Form("{ 1 JetEta 1 JetPt 1./(%s) Correction L2Relative}",
 	       vf1[0]->GetExpFormula().Data()) << endl;
   for (int ieta = p2d->GetNbinsX(); ieta != 0; --ieta) {

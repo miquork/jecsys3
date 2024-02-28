@@ -38,6 +38,7 @@
 using namespace std;
 const bool debug = true;
 const bool saveROOT = false;
+const bool plotPF = false; // plot PF composition
 
 // Helper functions to draw fit uncertainty band for arbitrary TF1 
 Double_t fitError(Double_t *x, Double_t *p);
@@ -218,6 +219,11 @@ void globalFitEtaBin(double etamin, double etamax, string run, string version) {
     data.input = (TGraphErrors*)g->Clone(Form("%s_in",name));
     data.output = (TGraphErrors*)g->Clone(Form("%s_out",name));
 
+    // Jet+Z special
+    if (TString(name).Contains("jetz")) {
+      scaleGraph(data.input, scaleJZ);
+    }
+    
     // Multijet special
     if (g2) { //string(name2)!="") {
       data.input2 = (TGraphErrors*)g2->Clone(Form("%s_in2",name2));
@@ -321,7 +327,7 @@ void globalFitEtaBin(double etamin, double etamax, string run, string version) {
 
   // Create function to plot for JES (or composition)
   double minpt = 15.;
-  double maxpt = 2000;//1500.;
+  double maxpt = 4500;//2000;//1500.;
   int njesFit = shapes.size();
   _jesFit = new TF1("jesFit",jesFit,minpt,maxpt,njesFit);
 
@@ -342,6 +348,9 @@ void globalFitEtaBin(double etamin, double etamax, string run, string version) {
   cout << endl;
 
   // Setup global chi2 fit (jesFitter is our function)
+  // Warning, legacy code and ROOT team recommends using
+  // ROOT::Fit::Fitter class for new long-term projects
+  // Example here: https://root.cern.ch/doc/master/exampleFit3D_8C.html
   TFitter *fitter = new TFitter(ntot);
   fitter->SetFCN(jesFitter);
 
@@ -352,8 +361,12 @@ void globalFitEtaBin(double etamin, double etamax, string run, string version) {
     fitter->SetParameter(i, parnames[i].c_str(), a[i], (i<npar ? 0.01 : 1),
 			 -100, 100);
 
+  // Suppress output
+  double printlevel = -1; // Suppress most output
+  fitter->ExecuteCommand("SET PRINT", &printlevel, 1);
+  
   // Run fitter (multiple times if needed)
-  const int nfit = 1;
+  const int nfit = 2;//1;
   cnt = 0;
   for (int i = 0; i != nfit; ++i)
     fitter->ExecuteCommand("MINI", 0, 0);
@@ -365,6 +378,7 @@ void globalFitEtaBin(double etamin, double etamax, string run, string version) {
   TVectorD vpar(ntot);
   TVectorD verr(ntot);
   Double_t chi2_gbl(0), chi2_src(0), chi2_par(0), chi2_data(0);
+  Double_t chi2_data_minerr(0);
   int npar_true(0), nsrc_true(0), ndt(0);
   Double_t grad[ntot];
   Int_t flag = 1;
@@ -393,19 +407,23 @@ void globalFitEtaBin(double etamin, double etamax, string run, string version) {
       double y = gout->GetY()[j];
       double ey = gout->GetEY()[j];
       chi2_data += pow((y - _jesFit->Eval(x)) / ey, 2);
+      double ey_minerr = sqrt(pow(ey,2) + pow(globalErrMin,2));
+      chi2_data_minerr += pow((y - _jesFit->Eval(x)) / ey_minerr, 2);
       ++ndt;
     }
   }
   
   cout << endl;
   cout << "Listing global fit results for " << run << endl;
-  cout << Form("Used %d data points, %d fit parameters and %d nuisances.\n"
-	       "Data chi2/NDF = %1.1f / %d [%1.0f,%1.0f]\n"
-	       "Nuisance chi2/Nsrc = %1.1f / %d\n"
-	       "Parameter chi2/Npar = %1.1f / %d\n"
+  cout << Form("  Used %d data points, %d fit parameters and %d nuisances.\n"
+	       "  Data chi2/NDF = %1.1f / %d [%1.0f,%1.0f]\n"
+	       "  Data chi2/NDF = %1.1f / %d (with minerr %1.2f%%)\n"
+	       "  Nuisance chi2/Nsrc = %1.1f / %d\n"
+	       "  Parameter chi2/Npar = %1.1f / %d\n"
 	       "Total chi2/NDF = %1.1f / %d\n",
-	       ndt, npar, nsrc_true, chi2_data, ndt - npar,
-	       _jesFit->GetXmin(), _jesFit->GetXmax(),
+	       ndt, npar, nsrc_true,
+	       chi2_data, ndt - npar, _jesFit->GetXmin(), _jesFit->GetXmax(),
+	       chi2_data_minerr, ndt - npar, 100.*globalErrMin,
 	       chi2_src, nsrc_true,
 	       chi2_par, npar_true,
 	       chi2_gbl, ndt - npar);
@@ -414,7 +432,7 @@ void globalFitEtaBin(double etamin, double etamax, string run, string version) {
   vector<fitShape> &v = _mshape["Rjet"];
   assert(int(v.size())==njesFit);
   for (unsigned int i = 0; i != v.size(); ++i) {
-    cout << Form("  %5s : %+5.2f +/- %5.2f", v[i].name.c_str(),
+    cout << Form("  %12s : %+5.2f +/- %5.2f", v[i].name.c_str(),
 		 vpar[v[i].idx], verr[v[i].idx]) << endl;
   } // for i in _mshape
 
@@ -422,7 +440,7 @@ void globalFitEtaBin(double etamin, double etamax, string run, string version) {
   map<string, vector<fitSyst> >::const_iterator it;
   for (it = _msrc.begin(); it != _msrc.end(); ++it) {
     string name = it->first;
-    cout << " for " << name << ": " << endl;
+    cout << "  for " << name << ": " << endl;
     vector<fitSyst> &vs = _msrc[name];
     //assert(int(vs.size())==sources.size());
     for (unsigned int i = 0; i != vs.size(); ++i) {
@@ -536,7 +554,8 @@ void globalFitDraw(string run, string version) {
     if (run=="Run3") lumi_136TeV = "Run3, 64 fb^{-1}";
     //TH1D *h = tdrHist("h","JES",0.982+1e-5,1.025-1e-5); // ratio (hdm)
     TH1D *h = tdrHist("h","JES",
-		      0.75+1e-5,1.20-1e-5, // Summer23
+		      0.75+1e-5,1.20-1e-5, // Summer23_V2
+		      //0.75+1e-5,1.20-1e-5, // Summer23_V1
 		      //0.75+1e-5,1.20-1e-5, // Summer22
 		      //0.83+1e-5,1.15-1e-5,
 		      //0.88+1e-5,1.15-1e-5,
@@ -619,7 +638,8 @@ void globalFitDraw(string run, string version) {
     //if (!TString(epoch).Contains("UL"))
     //leg2->AddEntry(l,"Run 3 avg.","L");
     //leg2->AddEntry(herr,"Total unc.","F");
-    leg2->AddEntry(herr,"Run2 total unc.","F");
+    //leg2->AddEntry(herr,"Run2 total unc.","F");
+    leg2->AddEntry(herr,"Summer22_V3","F"); // Summer23
     leg2->AddEntry(gre,"Fit unc.","FL");
 
     // Separate canvas for CHF, NHF, NEF
@@ -657,8 +677,10 @@ void globalFitDraw(string run, string version) {
 
       if (type=="Rjet") {
         c1->cd();
-	leg->AddEntry(go,_gf_label[name],"PLE");
-	leg->SetY1NDC(leg->GetY1NDC()-0.05);
+	if (string(_gf_label[name])!="X") {
+	  leg->AddEntry(go,_gf_label[name],"PLE");
+	  leg->SetY1NDC(leg->GetY1NDC()-0.05);
+	}
       }
       else if (type=="cef" || type=="muf") {
 	usingMu = true;
@@ -685,8 +707,24 @@ void globalFitDraw(string run, string version) {
       if (name=="hdm_mpfchs1_multijet" || name=="mpfchs1_multijet_a100" ||
 	  name=="ptchs_multijet_a100") {
 	//if (TString(name.c_str()).Contains("multijet")) {
-	tdrDraw(gi,"Pz",kOpenTriangleUp,_gf_color[name]);
+	tdrDraw(gi,"Pz",kOpenTriangleUp,kGray+1);//_gf_color[name]);
+
+	TGraphErrors *go2 = (TGraphErrors*)_vdt[i].output2->Clone(Form("go2_%d",i));
+	// Remove overlapping range from up and down extrapolations
+	double ptsplit = 175;
+	double crecoil = 1;//0.4;
+	for (int i = go->GetN()-1; i != -1; --i) {
+	  if (go->GetX()[i]<ptsplit/sqrt(crecoil)) go->RemovePoint(i);
+	}
+	for (int i = go2->GetN()-1; i != -1; --i) {
+	  if (go2->GetX()[i]>ptsplit*sqrt(crecoil)) go2->RemovePoint(i);
+	}
+	
+	tdrDraw(go2,"Pz",kFullTriangleDown,kGray+2);
+	go2->SetMarkerSize(0.8);
+	go->SetMarkerSize(0.8);
       }
+      
       //if (name=="hdm_cmb_mj" || (run=="2017H" && name=="hdm_cmb")) {
       if (name=="mpfchs1_zjet_a100" || name=="hdm_mpfchs1_zjet" ||
 	  name=="ptchs_zjet_a100" || //) {
@@ -817,7 +855,7 @@ void globalFitDraw(string run, string version) {
     if (debug) cout << "Draw plots" << endl << flush;
    
     c1->SaveAs(Form("pdf/globalFit/globalFit_%s_%s_rjet.pdf",crun,cv));
-    c1c->SaveAs(Form("pdf/globalFit/globalFit_%s_%s_pf.pdf",crun,cv));
+    if (plotPF) c1c->SaveAs(Form("pdf/globalFit/globalFit_%s_%s_pf.pdf",crun,cv));
     if (usingMu) c1l->SaveAs(Form("pdf/globalFit/globalFit_%s_%s_mu.pdf",crun,cv));
     //
     if (saveROOT) c1->SaveAs(Form("pdf/globalFit/globalFit_%s_%s_rjet.root",crun,cv));
@@ -851,13 +889,14 @@ void globalFitDraw(string run, string version) {
     if (run=="Run22CD") nhf_off = 2.0;
     if (run=="Run22E")  nhf_off = 2.5;
     if (run=="Run22FG")  nhf_off = 3.0;
-    if (run=="Run23C123")  nhf_off = -1.0;//1.0;
-    if (run=="Run23C4")  nhf_off = 7.0;//4.0;
-    if (run=="Run23D")  nhf_off = 9.0;//4.5;
+    if (run=="Run23C123")  nhf_off = -1.5;//1.0;//-1.0;//1.0;
+    if (run=="Run23C4")  nhf_off = 2.0;//2.0;//7.0;//4.0;
+    if (run=="Run23D")  nhf_off = 3.5;//2.0;//9.0;//4.5;
     if (run=="Run3")  {
       nhf_off = ((5.1+3.0)*2.0 + 5.9*3.0 + (18.0+3.1)*3.0 +
 		 //8.7*1.0 + 9.8*4.0 + 9.5*4.5) / //Summer22
-		 8.7*-1.0 + 9.8*7.0 + 9.5*9.0) /  //Summer23
+		 //8.7*-1.0 + 9.8*7.0 + 9.5*9.0) /  //Summer23 old 
+		 8.7*-1.5 + 9.8*2.0 + 9.5*3.5) /  //Summer23 new
 	((5.1+3.0) + 5.9 + (18.0+3.1) + 8.7 + (9.8+9.5));
     }
     
@@ -1040,7 +1079,7 @@ void jesFitter(Int_t& npar, Double_t* grad, Double_t& chi2, Double_t* par,
 	  // data = MJB*jesref => "jesref" = jes / MJB = jes * jesref/data
 	  // NB: double check the logic here
 	  gout2->SetPoint(i, ptref, jes * jesref / (data + shifts));
-	  gout2->SetPointError(i, gout->GetEX()[i], gout2->GetEY()[i]);
+	  gout2->SetPointError(i, gout->GetEX()[i]*ptref/pt, gout->GetEY()[i]);
 	} // multijet
       } // for ipt
     } // for ig

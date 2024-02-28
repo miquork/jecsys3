@@ -45,6 +45,7 @@ namespace tools {
   void Hadd(TH1 *h1, TH1 *h2, double ptmax=0, bool syserr = false);
 
   void drawErrBand(TF1 *f1, TFitResultPtr &fp, double xmin, double xmax);
+  double getFitErr(TF1 *f1, TFitResultPtr &fp, double x);
 } // namespace tools
 
 #endif

@@ -30,7 +30,8 @@ void createL2L3ResTextFile() {
   double ptmin = 15;
   double ptmax = 4500;
   TH1D *h = tdrHist("h","Absolute response at |#eta| < 1.3",
-		    0.90+1e-4,1.30-1e-4,"p_{T} (GeV)",ptmin,ptmax);
+		    0.75+1e-4,1.20-1e-4,"p_{T} (GeV)",ptmin,ptmax);
+		    //0.90+1e-4,1.30-1e-4,"p_{T} (GeV)",ptmin,ptmax);
 		    //0.88+1e-4,1.05-1e-4,"p_{T} (GeV)",ptmin,ptmax);
   lumi_136TeV = "Run3, 63 fb^{-1}"; // Not including 23B
  TCanvas *c1 = tdrCanvas("c1",h,8,11,kSquare);
@@ -46,7 +47,7 @@ void createL2L3ResTextFile() {
   _leg = tdrLeg(0.45,0.90,0.75,0.90);
   _leg2 = tdrLeg(0.20,0.15,0.50,0.15);
 
-  h->SetMinimum(0.70+1e-4);
+  //h->SetMinimum(0.70+1e-4); // Summer22
   /*
   createL2L3ResTextFiles("Run22CD-22Sep2023");
   createL2L3ResTextFiles("Run22E-22Sep2023");
@@ -66,7 +67,8 @@ void createL2L3ResTextFile() {
   createL2L3ResTextFiles("Run23C4-Summer23",true);
   createL2L3ResTextFiles("Run23D-Summer23",true);
   c1->Update();
-  c1->SaveAs("pdf/createL2L3ResTextFile_Summer23_V1.pdf");
+  //c1->SaveAs("pdf/createL2L3ResTextFile_Summer23_V1.pdf");
+  c1->SaveAs("pdf/createL2L3ResTextFile_Summer23_V2.pdf");
 
   
   /*
@@ -269,16 +271,16 @@ void createL2L3ResTextFiles(string set, bool leg2) {
   }
   */
   if (set=="Run23C123-Summer23") {
-    sin = "textFiles/Summer23_noL2L3Res/Summer23Prompt23_Run2023Cv123_V1_DATA_L2Residual_AK4PFPuppi.txt"; isNewL2Res = true;
-    sout = "textFiles/Summer23_noL2L3Res/Summer23Prompt23_Run2023Cv123_V1_DATA_L2L3Residual_AK4PFPuppi.txt";
+    sin = "textFiles/Summer23_L2ResOnly/Summer23Prompt23_Run2023Cv123_V1_DATA_L2Residual_AK4PFPuppi.txt"; isNewL2Res = true;
+    sout = "textFiles/Summer23_L2ResOnly/Summer23Prompt23_Run2023Cv123_V2_DATA_L2L3Residual_AK4PFPuppi.txt";
   }
   if (set=="Run23C4-Summer23") {
-    sin = "textFiles/Summer23_noL2L3Res/Summer23Prompt23_Run2023Cv4_V1_DATA_L2Residual_AK4PFPuppi.txt"; isNewL2Res = true;
-    sout = "textFiles/Summer23_noL2L3Res/Summer23Prompt23_Run2023Cv4_V1_DATA_L2L3Residual_AK4PFPuppi.txt";
+    sin = "textFiles/Summer23_L2ResOnly/Summer23Prompt23_Run2023Cv4_V1_DATA_L2Residual_AK4PFPuppi.txt"; isNewL2Res = true;
+    sout = "textFiles/Summer23_L2ResOnly/Summer23Prompt23_Run2023Cv4_V2_DATA_L2L3Residual_AK4PFPuppi.txt";
   }
   if (set=="Run23D-Summer23") {
-    sin = "textFiles/Summer23_noL2L3Res/Summer23Prompt23_Run2023D_V1_DATA_L2Residual_AK4PFPuppi.txt"; isNewL2Res = true;
-    sout = "textFiles/Summer23_noL2L3Res/Summer23Prompt23_Run2023D_V1_DATA_L2L3Residual_AK4PFPuppi.txt";
+    sin = "textFiles/Summer23_L2ResOnly/Summer23Prompt23_Run2023D_V1_DATA_L2Residual_AK4PFPuppi.txt"; isNewL2Res = true;
+    sout = "textFiles/Summer23_L2ResOnly/Summer23Prompt23_Run2023D_V2_DATA_L2L3Residual_AK4PFPuppi.txt";
   }
   
   if (set=="Run3-Combo") {

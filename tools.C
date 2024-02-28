@@ -419,4 +419,37 @@ void tools::drawErrBand(TF1 *f1, TFitResultPtr &fp, double xmin, double xmax) {
   ge_dw->Draw("SAMEL");
 
 } // drawErr
+
+
+double tools::getFitErr(TF1 *f1, TFitResultPtr &fp, double x) {
+
+  TMatrixDSym emat = fp->GetCovarianceMatrix();
+
+  //double y = f1->Eval(x);
+  vector<double> dfdp(f1->GetNpar());
+  for (int j = 0; j != f1->GetNpar(); ++j) {
+
+    double p = f1->GetParameter(j);
+    double ep = f1->GetParError(j);
+    double dp = 0.1*ep;
+    f1->SetParameter(j, p+0.1*ep);
+    double yup = f1->Eval(x);
+    f1->SetParameter(j, p-0.1*ep);
+    double ydw = f1->Eval(x);
+    f1->SetParameter(j, p);
+    dfdp[j] = (dp!=0 ? 0.5*(yup-ydw)/dp : 0);
+  } // for j
+    
+  double e2(0);
+  for (int j = 0; j != f1->GetNpar(); ++j) {
+    for (int k = 0; k != f1->GetNpar(); ++k) {
+      e2 += dfdp[j]*dfdp[k]*emat[j][k];
+    } // for k
+  } //  for j
+    
+  double err = sqrt(e2);
+
+  return err;
+} // getFitErr
+
 #endif

@@ -10,6 +10,7 @@ using std::map;
 
 // Global minimum (stat.) uncertainty for input data
 double globalErrMin = 0.003;//0.002559; // chi2/NDF=101.0/101
+double scaleJZ = 0.98;
 
 // Input data
 struct fitData {
@@ -59,6 +60,9 @@ bool _gf_undoJESref = false;//true;
 // How to use: comment out datasets that are not needed to switch them off
 const unsigned int ndt = 44;
 const array<array<string,3>,ndt> _gf_datasets = {{
+    {"ptchs_jetz_a100", "Rjet",""},
+    {"mpfchs1_jetz_a100", "Rjet",""},
+    {"hdm_mpfchs1_jetz", "Rjet",""},
     {"ptchs_zjet_a100", "Rjet",""},
     {"mpfchs1_zjet_a100", "Rjet",""},
     {"hdm_mpfchs1_zjet", "Rjet",""},
@@ -89,6 +93,7 @@ const array<array<string,3>,ndt> _gf_datasets = {{
 const array<string,29> _gf_datasets_whitelist = {
   //"ptchs_zjet_a100",
   //"mpfchs1_zjet_a100",
+  "hdm_mpfchs1_jetz",
   "hdm_mpfchs1_zjet",
   "chf_zjet_a100",
   "nhf_zjet_a100",
@@ -99,9 +104,9 @@ const array<string,29> _gf_datasets_whitelist = {
   "chf_gamjet_a100",
   "nhf_gamjet_a100",
   "nef_gamjet_a100",
-  //"ptchs_multijet_a100",
+  //"ptchs_multijet_a100", // use ptchs before v34d bug fixed
   //"mpfchs1_multijet_a100",
-  "hdm_mpfchs1_multijet",
+  "hdm_mpfchs1_multijet", // mpfchs->hdm botched before v34d
   //"chf_multijet_a100",
   //"nhf_multijet_a100",
   //"nef_multijet_a100",
@@ -121,12 +126,18 @@ const array<string,29> _gf_shapes_whitelist = {
   "hhpfc", // Run23
   "hhnoise", // Run22
   //"x0p5",
-  "x1",
+  //"x1", // 22Sep2023 V3, not 19Dec2023
+  "off", // Summer23
+  //"qie11"
   //"x1p5",
-  //"x2",
-  //"x3",
+  "x1v4", // Summer23 variant
+  "x1p5v4", // Summer23 high pT? just tad steeper than x1
+  //"x2v4", // Summer23 high pT? bit more conservative extrapolation?
+  //"x2p5", // Summer23 high pT? pretty good
+  //"x3", // Summer23 hight pT? Slightly too sharp?
   //"x4", // test TeV scale
-  "hbtime"
+  //"hbtime", // test adding for Summer23; did nothing really on top of x2p5
+  "hbsipm" // 22Sep2023 V3, not 19Dec2023
 };
 
 // Listing one-sided (positive-definite) sources
@@ -137,7 +148,7 @@ const array<string,npos> _gf_posdef =
    //"hhp3",
    //"hhpfc",
    "hhred103","hhred100","hhred097", "hhblue103","hhblue100","hhblue097",
-   /*"x2",*/ "hbtime"
+   /*"x2",*/ "hbtime"/*, "hbsipm"*/
   };
 
 // Listing source limits
@@ -174,14 +185,32 @@ const array<array<string,3>,nsrc> _gf_sources = {{
 const int nshp = 112;
 const array<array<string,3>, nshp> _gf_shapes = {{
 
+    // 400e3(max)/1300.(per GeV per channel)*4.(channels)/0.5(HCAL fraction)
+    // 1500e3(max)/1300.(per GeV per channel)/0.5(HCAL fraction)
+    //{"qie11","Rjet","-0.5*max(x-1150.,0.)/(3000.-1150.)"},
+    // R = (0.5*x+1150.)/x
+    //{"qie11","Rjet","-0.5*max(x-1150.,0.)/(3000.-1150.)"},
+    {"off","Rjet","1./x"},
     {"x0p5","Rjet","10.*pow(x/3000.,0.5)"},
     {"x1","Rjet","10.*pow(x/3000.,1)"},
+    {"x1v4","Rjet","10.*pow(x/4000.,1)"},
     {"x1p5","Rjet","10.*pow(x/3000.,1.5)"},
+    {"x1p5v4","Rjet","10.*pow(x/4000.,1.5)"},
     {"x2","Rjet","10.*pow(x/3000.,2)"},
+    {"x2v4","Rjet","10.*pow(x/4000.,2)"},
+    {"x2p5","Rjet","10.*pow(x/3000.,2.5)"},
+    {"x2p5cap","Rjet","10.*pow(min(x/3000.,1.),2.5)"},
     {"x3","Rjet","10.*pow(x/3000.,3)"},
     {"x4","Rjet","10.*pow(x/3000.,4)"},
     // Quick tests for 10% pT^2 and pT^3 uncertainty at 3 TeV
 
+    // Run3 wrong SiPM non-linearity corrections for data (1M variant)
+    {"hbsipm","Rjet","-17.81+log(x)*(15.9+log(x)*(-4.719+log(x)*(0.3464+log(x)*(0.08054+log(x)*(-0.01553+log(x)*0.0007183)))))"},
+    {"hbsipm","chf","7.678+log(x)*(-7.629+log(x)*(2.519+log(x)*(-0.2166+log(x)*(-0.04713+log(x)*(0.0104+log(x)*-0.0005435)))))"},
+    {"hbsipm","nef","-1.717+log(x)*(2.522+log(x)*(-1.163+log(x)*(0.1623+log(x)*(0.01883+log(x)*(-0.006616+log(x)*0.0004364)))))"},
+    {"hbsipm","nhf","-1.346+log(x)*(0.9761+log(x)*(-0.1417+log(x)*(-0.02259+log(x)*(0.003066+log(x)*(0.0009335+log(x)*-0.0001261)))))"},
+    // "hbsipm" checksum: 36dd66b29cf0d8aec0b2a4cb145728ea
+    
     {"hbtime","Rjet","0.1394+log(x)*(-0.08167+log(x)*(-0.001402+log(x)*(0.005871+log(x)*(0.0003952+log(x)*(-0.0003595+log(x)*2.291e-05)))))"},
     {"hbtime","chf","1.029+log(x)*(-0.9924+log(x)*(0.2604+log(x)*(0.03122+log(x)*(-0.02631+log(x)*(0.004353+log(x)*-0.0002299)))))"},
     {"hbtime","nef","-1.396+log(x)*(1.355+log(x)*(-0.3602+log(x)*(-0.04115+log(x)*(0.03584+log(x)*(-0.005978+log(x)*0.0003229)))))"},
