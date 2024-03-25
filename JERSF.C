@@ -191,13 +191,18 @@ void JERSF() {
   setTDRStyle();
   TDirectory *curdir = gDirectory;
 
+  gROOT->ProcessLine(".! mkdir pdf/JERSF/vsEta");
+  //gROOT->ProcessLine(".! mkdir pdf/JERSF/vsPt");
+  
   // Set output directory;
   TFile *fout = new TFile("rootfiles/JERSF.root","RECREATE");
 
   string vrun[] = {"2023Cv123","2023Cv4","2023D"};//,"2023Cv4D"};
   //string vrun[] = {"2023D"};
   const int nrun = sizeof(vrun)/sizeof(vrun[0]);
-  string vmc[] = {"Summer23","Summer23","Summer23BPIX"};//,"Summer23BPIX"};
+  //string vmc[] = {"Summer23","Summer23","Summer23BPIX"};//,"Summer23BPIX"};
+  string vmc[] = {"Summer23MG","Summer23MG","Summer23MGBPix"};
+  //string vmc[] = {"Summer23MG_Cv123","Summer23MG_Cv4","Summer23MGBPix_D"};
   //string vmc[] = {"Summer23BPIX"};
   const int nmc = sizeof(vmc)/sizeof(vmc[0]);
   assert(nmc==nrun);
@@ -213,11 +218,15 @@ void JERSF() {
   //string mc = "Summer23MGBPix";
   //const char *cm = mc.c_str();
     
-  TFile *f = new TFile(Form("rootfiles/Summer23_noL2L3Res/jmenano_data_cmb_%s_JME_v36_Summer23.root",cr),"READ");
+  //TFile *f = new TFile(Form("rootfiles/Summer23_noL2L3Res/jmenano_data_cmb_%s_JME_v36_Summer23.root",cr),"READ");
+    TFile *f = new TFile(Form("rootfiles/Summer23_L2ResOnly/jmenano_data_cmb_%s_JME_v39_noRwPU_noSmearJets_25Feb2024_L2Res_v1.root",cr),"READ");
+    //TFile *f = new TFile(Form("rootfiles/Summer23_L2L3Res/jmenano_data_cmb_%s_JME_v39_L2Rel_L2L3Res_v2_SF.root",cr),"READ");
   assert(f && !f->IsZombie());
 
   //TFile *fm = new TFile(Form("rootfiles/Summer23_noL2L3Res/jmenano_mc_cmb_%s_v36_Summer23.root",cm),"READ");
-  TFile *fm = new TFile(Form("rootfiles/Summer23_noL2L3Res/jmenano_mc_cmb_%s_v36_Summer23.root","Summer23MGBPix"),"READ"); // Summer23 patch
+  //TFile *fm = new TFile(Form("rootfiles/Summer23_noL2L3Res/jmenano_mc_cmb_%s_v36_Summer23.root","Summer23MGBPix"),"READ"); // Summer23 patch
+  TFile *fm = new TFile(Form("rootfiles/Summer23_L2ResOnly/jmenano_mc_cmb_%s_v39_noRwPU_noSmearJets_25Feb2024_L2Res_v1.root",cm),"READ");
+  //TFile *fm = new TFile(Form("rootfiles/Summer23_L2L3Res/jmenano_mc_cmb_%s_RwPU_v39_SmearJets_L2Res_v1_SF.root",cm),"READ");
   assert(fm && !fm->IsZombie());
 
   TFile *fz = new TFile(Form("rootfiles/Summer23_noL2L3Res/jme_bplusZ_%s_Zmm_sync_v69.root",cr),"READ");
@@ -266,6 +275,7 @@ void JERSF() {
   TCanvas *cx = new TCanvas("cx","cx",7*250,3*250);
   cx->Divide(7,3,0,0);
   TH2D *h2jersf = p2s->ProjectionXY(Form("h2jersf_%s",cr)); h2jersf->Reset();
+  TH2D *h2jersf0 = p2s->ProjectionXY(Form("h2jersf0_%s",cr)); h2jersf0->Reset();
   
   // Loop over the ieta bins
   vector<TF1*> vf1(p2s->GetNbinsX()+1);
@@ -416,6 +426,8 @@ void JERSF() {
       h2jersf->SetBinContent(ieta, ipt, jersf);
       h2jersf->SetBinError(ieta, ipt, ejersf); 
     }
+    h2jersf0->SetBinContent(ieta, ipt, hsf->GetBinContent(ipt));
+    h2jersf0->SetBinError(ieta, ipt, hsf->GetBinError(ipt));
   }
   hmin->SetBinContent(ieta, f1r->Eval(10.));
   hmax->SetBinContent(ieta, f1r->Eval(6800./cosh(eta1)));
@@ -524,5 +536,13 @@ void JERSF() {
 		f1->GetParameter(3),f1->GetParameter(4),f1->GetParameter(5));
   } // for i in +neta
 
+  // Store results to output file
+  fout->cd();
+  h2jersf->Write(Form("h2jersf_%s_%s",cr,cm),TObject::kOverwrite);
+  h2jersf0->Write(Form("h2jersfRaw_%s_%s",cr,cm),TObject::kOverwrite);
+  curdir->cd();
+
   } // for irunx
+
+  fout->Close();
 } // JERSF
