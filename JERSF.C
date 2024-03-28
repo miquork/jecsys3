@@ -196,6 +196,7 @@ void JERSF() {
   
   // Set output directory;
   TFile *fout = new TFile("rootfiles/JERSF.root","RECREATE");
+  fout->mkdir("Raw");
 
   string vrun[] = {"2023Cv123","2023Cv4","2023D"};//,"2023Cv4D"};
   //string vrun[] = {"2023D"};
@@ -276,6 +277,9 @@ void JERSF() {
   cx->Divide(7,3,0,0);
   TH2D *h2jersf = p2s->ProjectionXY(Form("h2jersf_%s",cr)); h2jersf->Reset();
   TH2D *h2jersf0 = p2s->ProjectionXY(Form("h2jersf0_%s",cr)); h2jersf0->Reset();
+  //
+  TH2D *h2jerdt = p2s->ProjectionXY(Form("h2jerdt_%s",cr)); h2jerdt->Reset();
+  TH2D *h2jermc = p2s->ProjectionXY(Form("h2jermc_%s",cr)); h2jermc->Reset();
   
   // Loop over the ieta bins
   vector<TF1*> vf1(p2s->GetNbinsX()+1);
@@ -424,10 +428,16 @@ void JERSF() {
     
     if (emax1 < 13600.*0.5) {
       h2jersf->SetBinContent(ieta, ipt, jersf);
-      h2jersf->SetBinError(ieta, ipt, ejersf); 
+      h2jersf->SetBinError(ieta, ipt, ejersf);
     }
     h2jersf0->SetBinContent(ieta, ipt, hsf->GetBinContent(ipt));
     h2jersf0->SetBinError(ieta, ipt, hsf->GetBinError(ipt));
+    //
+    h2jerdt->SetBinContent(ieta, ipt, hjer->GetBinContent(ipt));
+    h2jerdt->SetBinError(ieta, ipt, hjer->GetBinError(ipt));
+    h2jermc->SetBinContent(ieta, ipt, hjerm->GetBinContent(ipt));
+    h2jermc->SetBinError(ieta, ipt, hjerm->GetBinError(ipt)); 
+
   }
   hmin->SetBinContent(ieta, f1r->Eval(10.));
   hmax->SetBinContent(ieta, f1r->Eval(6800./cosh(eta1)));
@@ -540,6 +550,13 @@ void JERSF() {
   fout->cd();
   h2jersf->Write(Form("h2jersf_%s_%s",cr,cm),TObject::kOverwrite);
   h2jersf0->Write(Form("h2jersfRaw_%s_%s",cr,cm),TObject::kOverwrite);
+  h2jerdt->Write(Form("h2jerdtRaw_%s_%s",cr,cm),TObject::kOverwrite);
+  h2jermc->Write(Form("h2jermcRaw_%s_%s",cr,cm),TObject::kOverwrite);
+  fout->cd("Raw");
+  p2s->Write(Form("p2m0dt_%s_%s",cr,cm),TObject::kOverwrite);
+  p2sm->Write(Form("p2m0mc_%s_%s",cr,cm),TObject::kOverwrite);
+  p2x->Write(Form("p2m0xdt_%s_%s",cr,cm),TObject::kOverwrite);
+  p2xm->Write(Form("p2m0xmc_%s_%s",cr,cm),TObject::kOverwrite);
   curdir->cd();
 
   } // for irunx
