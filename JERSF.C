@@ -196,6 +196,9 @@ void JERSF() {
   
   // Set output directory;
   TFile *fout = new TFile("rootfiles/JERSF.root","RECREATE");
+  fout->mkdir("Fits");
+  fout->mkdir("Dijet");
+  fout->mkdir("Extras");
   fout->mkdir("Raw");
 
   string vrun[] = {"2023Cv123","2023Cv4","2023D"};//,"2023Cv4D"};
@@ -230,14 +233,17 @@ void JERSF() {
   //TFile *fm = new TFile(Form("rootfiles/Summer23_L2L3Res/jmenano_mc_cmb_%s_RwPU_v39_SmearJets_L2Res_v1_SF.root",cm),"READ");
   assert(fm && !fm->IsZombie());
 
-  TFile *fz = new TFile(Form("rootfiles/Summer23_noL2L3Res/jme_bplusZ_%s_Zmm_sync_v69.root",cr),"READ");
+  //TFile *fz = new TFile(Form("rootfiles/Summer23_noL2L3Res/jme_bplusZ_%s_Zmm_sync_v69.root",cr),"READ");
+  TFile *fz = new TFile(Form("rootfiles/Summer23_L2ResOnly/jme_bplusZ_%s_Zmm_sync_v70.root",cr),"READ");
   assert(fz && !fz->IsZombie());
 
-  TFile *fg = new TFile(Form("rootfiles/Summer23_noL2L3Res/GamHistosFill_data_%s_w2.root",cr),"READ"); // Summer23 (w3->w2)
+  //TFile *fg = new TFile(Form("rootfiles/Summer23_noL2L3Res/GamHistosFill_data_%s_w2.root",cr),"READ"); // Summer23 (w3->w2)
+  TFile *fg = new TFile(Form("rootfiles/Summer23_L2ResOnly/GamHistosFill_data_%s_w6.root",cr),"READ");
   //TFile *fg = new TFile(Form("../gamjet/rootfiles/GamHistosFill_data_%s_w4.root",cr),"READ"); // Summer23 with L2Res
   assert(fg && !fg->IsZombie());
   //
-  TFile *fgm = new TFile(run=="2023D" ? "rootfiles/Summer23_noL2L3Res/GamHistosFill_mc_2023P8-BPix_w2.root" : "rootfiles/Summer23_noL2L3Res/GamHistosFill_mc_2023P8_w2.root","READ"); // Summer23 (w3->w2)
+  //TFile *fgm = new TFile(run=="2023D" ? "rootfiles/Summer23_noL2L3Res/GamHistosFill_mc_2023P8-BPix_w2.root" : "rootfiles/Summer23_noL2L3Res/GamHistosFill_mc_2023P8_w2.root","READ"); // Summer23 (w3->w2)
+  TFile *fgm = new TFile(run=="2023D" ? "rootfiles/Summer23_L2ResOnly/GamHistosFill_mc_2023P8-BPix_w6.root" : "rootfiles/Summer23_L2ResOnly/GamHistosFill_mc_2023P8_w6.root","READ"); // Summer23 (w3->w2)
   assert(fgm && !fgm->IsZombie());
 
   curdir->cd();
@@ -280,6 +286,14 @@ void JERSF() {
   //
   TH2D *h2jerdt = p2s->ProjectionXY(Form("h2jerdt_%s",cr)); h2jerdt->Reset();
   TH2D *h2jermc = p2s->ProjectionXY(Form("h2jermc_%s",cr)); h2jermc->Reset();
+  //
+  TH2D *h2zjer = p2zs->ProjectionXY(Form("h2zjer_%s",cr)); h2zjer->Reset();
+  TH2D *h2zjerdt =p2zs->ProjectionXY(Form("h2zjerdt_%s",cr)); h2zjerdt->Reset();
+  TH2D *h2zjermc =p2zs->ProjectionXY(Form("h2zjermc_%s",cr)); h2zjermc->Reset();
+  //
+  TH2D *h2gjer = p2gs->ProjectionXY(Form("h2gjer_%s",cr)); h2gjer->Reset();
+  TH2D *h2gjerdt =p2gs->ProjectionXY(Form("h2gjerdt_%s",cr)); h2gjerdt->Reset();
+  TH2D *h2gjermc =p2gs->ProjectionXY(Form("h2gjermc_%s",cr)); h2gjermc->Reset();
   
   // Loop over the ieta bins
   vector<TF1*> vf1(p2s->GetNbinsX()+1);
@@ -439,6 +453,25 @@ void JERSF() {
     h2jermc->SetBinError(ieta, ipt, hjerm->GetBinError(ipt)); 
 
   }
+  // Store results with uncertainty to output histogram for Z/gamma+jet
+  for (int ipt = 1; ipt != h2zjer->GetNbinsY()+1; ++ipt) {
+    h2zjer->SetBinContent(ieta, ipt, hsfz->GetBinContent(ipt));
+    h2zjer->SetBinError(ieta, ipt, hsfz->GetBinError(ipt));
+    h2zjerdt->SetBinContent(ieta, ipt, hjerz->GetBinContent(ipt));
+    h2zjerdt->SetBinError(ieta, ipt, hjerz->GetBinError(ipt));
+    h2zjermc->SetBinContent(ieta, ipt, hjerzm->GetBinContent(ipt));
+    h2zjermc->SetBinError(ieta, ipt, hjerzm->GetBinError(ipt)); 
+  }
+  for (int ipt = 1; ipt != h2gjer->GetNbinsY()+1; ++ipt) {
+    h2gjer->SetBinContent(ieta, ipt, hsfg->GetBinContent(ipt));
+    h2gjer->SetBinError(ieta, ipt, hsfg->GetBinError(ipt));
+    h2gjerdt->SetBinContent(ieta, ipt, hjerg->GetBinContent(ipt));
+    h2gjerdt->SetBinError(ieta, ipt, hjerg->GetBinError(ipt));
+    h2gjermc->SetBinContent(ieta, ipt, hjergm->GetBinContent(ipt));
+    h2gjermc->SetBinError(ieta, ipt, hjergm->GetBinError(ipt)); 
+  }
+
+  
   hmin->SetBinContent(ieta, f1r->Eval(10.));
   hmax->SetBinContent(ieta, f1r->Eval(6800./cosh(eta1)));
 
@@ -548,15 +581,43 @@ void JERSF() {
 
   // Store results to output file
   fout->cd();
+
+  //if (!fout->FindObject("Fits")) fout->mkdir("Fits");
+  fout->cd("Fits");
   h2jersf->Write(Form("h2jersf_%s_%s",cr,cm),TObject::kOverwrite);
+
+  //if (!fout->FindObject("Dijet")) fout->mkdir("Dijet");
+  fout->cd("Dijet");
   h2jersf0->Write(Form("h2jersfRaw_%s_%s",cr,cm),TObject::kOverwrite);
   h2jerdt->Write(Form("h2jerdtRaw_%s_%s",cr,cm),TObject::kOverwrite);
   h2jermc->Write(Form("h2jermcRaw_%s_%s",cr,cm),TObject::kOverwrite);
+
+  //if (!fout->FindObject("Extras")) fout->mkdir("Extras");
+  fout->cd("Extras");
+  h2zjer->Write(Form("h2jersfZjet_%s_%s",cr,cm),TObject::kOverwrite);
+  h2zjerdt->Write(Form("h2jerdtZjet_%s_%s",cr,cm),TObject::kOverwrite);
+  h2zjermc->Write(Form("h2jermcZjet_%s_%s",cr,cm),TObject::kOverwrite);
+  //
+  h2gjer->Write(Form("h2jersfGamjet_%s_%s",cr,cm),TObject::kOverwrite);
+  h2gjerdt->Write(Form("h2jerdtGamjet_%s_%s",cr,cm),TObject::kOverwrite);
+  h2gjermc->Write(Form("h2jermcGamjet_%s_%s",cr,cm),TObject::kOverwrite);
+
+  //if (!fout->FindObject("Raw")) fout->mkdir("Raw");
   fout->cd("Raw");
   p2s->Write(Form("p2m0dt_%s_%s",cr,cm),TObject::kOverwrite);
   p2sm->Write(Form("p2m0mc_%s_%s",cr,cm),TObject::kOverwrite);
   p2x->Write(Form("p2m0xdt_%s_%s",cr,cm),TObject::kOverwrite);
   p2xm->Write(Form("p2m0xmc_%s_%s",cr,cm),TObject::kOverwrite);
+  //
+  p2zs->Write(Form("p2zm0dt_%s_%s",cr,cm),TObject::kOverwrite);
+  p2zsm->Write(Form("pzgm0mc_%s_%s",cr,cm),TObject::kOverwrite);
+  p2zx->Write(Form("p2zm0xdt_%s_%s",cr,cm),TObject::kOverwrite);
+  p2zxm->Write(Form("p2zm0xmc_%s_%s",cr,cm),TObject::kOverwrite);
+  //
+  p2gs->Write(Form("p2gm0dt_%s_%s",cr,cm),TObject::kOverwrite);
+  p2gsm->Write(Form("p2gm0mc_%s_%s",cr,cm),TObject::kOverwrite);
+  p2gx->Write(Form("p2gm0xdt_%s_%s",cr,cm),TObject::kOverwrite);
+  p2gxm->Write(Form("p2gm0xmc_%s_%s",cr,cm),TObject::kOverwrite);
   curdir->cd();
 
   } // for irunx
