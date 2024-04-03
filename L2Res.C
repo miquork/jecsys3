@@ -1,4 +1,7 @@
 // Purpose: derive L2Res from Z+jet, gamma+jet, dijet based on new TProfile2D
+// To-do: update to finer L2Relative bins to fully capture detector structure,
+//        especially |eta|=1.5 with EB-EE transition, but also HF slope
+
 #include "TFile.h"
 #include "TProfile2D.h"
 #include "TF1.h"
@@ -124,23 +127,19 @@ TH1D *drawCleaned(TH1D *h, double eta, string data, string draw,
     //{15, 21, 28, 37, 49, 59, 86, 110, 132, 170, 204, 236, 279, 302, 373, 460, 575, 638, 737, 846, 967, 1101, 1248, 1410, 1588, 1784, 2000, 2238, 2500, 2787, 3103};
     // L2Res eta binning
     //{0., 0.261, 0.522, 0.783, 1.044, 1.305, 1.479, 1.653, 1.93, 2.172, 2.322, 2.5, 2.65, 2.853, 2.964, 3.139, 3.314, 3.489, 3.839, 4.013, 4.583, 5.191};
+
     if (data=="Z") {
-      //if (ptmin>50. && ptmax<550 && emax<1550) keep = true; // Winter23
       // Summer23
       if      (ptmin>=15. && ptmax<550 && emax<1550. && eta<2.500) keep = true;
       else if (ptmin>=15. && ptmax<550 && emax<1550. && eta<2.964) keep = true;
       else if (ptmin>=59. && ptmax<200 && eta>2.964  && eta<3.839) keep = true;
     }
     if (data=="G") {
-      //if (ptmin>35. && ptmax<1300. && emax<3100.) keep = true; // Winter23
       // Summer23
-      //if      (ptmin>=110. && ptmax<1300. && emax<3100.) keep = true;
       if      (ptmin>=110. && ptmax<1300. && emax<2500.) keep = true;
       else if (ptmin>=110. && ptmax<200.  && emax<0.5*sqrts) keep = true;
     }
     if (data=="J") {
-      //if (ptmin>50. && ptmax<3250. && emax<7800.) keep = true; // Winter23
-      //if (ptmin>=28. && ptmax<3250. && emax<7800.) keep = true; // Summer23
       // Summer23_v2
       if       (ptmin>=15. && ptmax<2500. && eta<1.044) keep = true;
       else if  (ptmin>=15. && ptmax<2000. && eta<2.500) keep = true;
@@ -149,12 +148,10 @@ TH1D *drawCleaned(TH1D *h, double eta, string data, string draw,
       else if  (ptmin>=15. && ptmax<460.  && eta<5.191) keep = true;
     }
     if (data=="P") {
-      //if (ptmin>50. && ptmax<3250. && emax<3100.) keep = true; // Winter23
       // Summer23
       if (ptmin>=15. && ptmax<=110. && eta<2.322) keep = true;
     }
     if (data=="D") {
-      //if (ptmin>50. && ptmax<3250. && emax<3100.) keep = true; // Winter23
       // Summer23
       if (ptmin>=59. && ptmax<=110. && emax<3100. && eta<2.853) keep = true;
     }
@@ -222,69 +219,49 @@ void L2Res() {
   gROOT->ProcessLine(".! mkdir pdf/L2Res/vsEta");
   gROOT->ProcessLine(".! mkdir pdf/L2Res/vsPt");
 
-  string vrun[] = {"2023Cv123","2023Cv4","2023D"};//,"2023Cv4D"};
-  //string vrun[] = {"2023D"};
+  string vrun[] = {"2023Cv123","2023Cv4","2023D"};
   const int nrun = sizeof(vrun)/sizeof(vrun[0]);
-  //string vmc[] = {"Summer22","Summer22","Summer22"};
-  //string vmc[] = {"Summer22"};
-  string vmc[] = {"Summer23","Summer23","Summer23BPIX"};//,"Summer23BPIX"};
-  //string vmc[] = {"Summer23BPIX"};
+  string vmc[] = {"Summer23","Summer23","Summer23BPIX"};
   const int nmc = sizeof(vmc)/sizeof(vmc[0]);
   assert(nmc==nrun);
   for (int irun = 0; irun != nrun; ++irun) {
-    string run = vrun[irun];//"2023D";
+    string run = vrun[irun];
     const char *cr = run.c_str();
-    string mc = vmc[irun];//"Summer22";
+    string mc = vmc[irun];
     const char *cm = mc.c_str();
   // (No indent here for the resf of the loop, maybe function call later)
 
 
   // Mikko's temporary code to create L2Res.root file
   // Load Z+jet
-  //TFile *fz = new TFile(Form("rootfiles/jme_bplusZ_%s_Zmm_sync_v66.root",cr),"READ"); // Summer22
-  //TFile *fz = new TFile(Form("rootfiles/Winter23_noL2L3Res/jme_bplusZ_%s_Zmm_sync_v67.root",cr),"READ"); // Winter23
-  //TFile *fz = new TFile(Form("rootfiles/Summer23_noL2L3Res/jme_bplusZ_%s_Zmm_sync_v69.root",cr),"READ"); // Summer23
-  TFile *fz = new TFile(Form("rootfiles/Summer23_L2ResOnly/jme_bplusZ_%s_Zmm_sync_v70.root",cr),"READ"); // Summer23 L2Res_V1
+  TFile *fz(0);
+  fz = new TFile(Form("rootfiles/Summer23_L2ResOnly/jme_bplusZ_%s_Zmm_sync_v70.root",cr),"READ"); // Summer23 L2Res_V1
   assert(fz && !fz->IsZombie());
-  fz->cd("data/l2res");
-  TDirectory *dz = gDirectory;
-  fz->cd("mc/l2res");
-  TDirectory *dzm = gDirectory;
 
+  TDirectory *dz = fz->GetDirectory("data/l2res");
+  TDirectory *dzm = fz->GetDirectory("mc/l2res");
+  
   // Load G+jet
-  //TFile *fg = new TFile(Form("../gamjet/rootfiles/GamHistosFill_data_%s_v32.root",cr),"READ"); // Summer22
-  //TFile *fg = new TFile(Form("rootfiles/Winter23_noL2L3Res/GamHistosFill_data_%s_w1.root",cr),"READ"); // Winter23
-  //TFile *fg = new TFile(Form("rootfiles/Summer23_noL2L3Res/GamHistosFill_data_%s_w2.root",cr),"READ"); // Summer23 (w3->w2)
-  TFile *fg = new TFile(Form("rootfiles/Summer23_L2ResOnly/gamjet_all/GamHistosFill_data_%s_w4.root",cr),"READ"); // Summer23 with L2Res
+  TFile *fg(0), *fgm(0);
+  fg = new TFile(Form("rootfiles/Summer23_L2ResOnly/gamjet_all/GamHistosFill_data_%s_w4.root",cr),"READ"); // Summer23 with L2Res
   assert(fg && !fg->IsZombie());
-  fg->cd("Gamjet2");
-  TDirectory *dg = gDirectory;
   //
-  //TFile *fgm = new TFile("../gamjet/rootfiles/GamHistosFill_mc_2022P8_v32.root","READ"); // Summer22
-  //TFile *fgm = new TFile(run=="2023D" ? "rootfiles/Winter23_noL2L3Res/GamHistosFill_mc_2023P8-BPix_w1.root" : "rootfiles/Winter23_noL2L3Res/GamHistosFill_mc_2023P8_w1.root","READ"); // Winter23
-  //TFile *fgm = new TFile(run=="2023D" ? "rootfiles/Summer23_noL2L3Res/GamHistosFill_mc_2023P8-BPix_w2.root" : "rootfiles/Summer23_noL2L3Res/GamHistosFill_mc_2023P8_w2.root","READ"); // Summer23 (w3->w2)
-  TFile *fgm = new TFile(run=="2023D" ? "rootfiles/Summer23_L2ResOnly/gamjet_all/GamHistosFill_mc_2023P8-BPix_w4.root" : "rootfiles/Summer23_L2ResOnly/gamjet_all/GamHistosFill_mc_2023P8_w4.root","READ"); // Summer23 L2Res_V1
+  fgm = new TFile(run=="2023D" ? "rootfiles/Summer23_L2ResOnly/gamjet_all/GamHistosFill_mc_2023P8-BPix_w4.root" : "rootfiles/Summer23_L2ResOnly/gamjet_all/GamHistosFill_mc_2023P8_w4.root","READ"); // Summer23 L2Res_V1
   assert(fgm && !fgm->IsZombie());
-  fgm->cd("Gamjet2");
-  TDirectory *dgm = gDirectory;
+  
+  TDirectory *dg = fg->GetDirectory("Gamjet2");
+  TDirectory *dgm = fgm->GetDirectory("Gamjet2");
 
   // Load dijet
-  //TFile *fd = new TFile(Form("../dijet/rootfiles/jmenano_data_cmb_%s_JME_v35a.root",cr),"READ"); // Summer22
-  //TFile *fd = new TFile(Form("rootfiles/Winter23_noL2L3Res/jmenano_data_cmb_%s_JME_v36_Summer23DT_NoL2L3Res.root",cr),"READ"); // Winter23
-  //TFile *fd = new TFile(Form("rootfiles/Summer23_noL2L3Res/jmenano_data_cmb_%s_JME_v36_Summer23.root",cr),"READ"); // Summer23
-  TFile *fd = new TFile(Form("rootfiles/Summer23_L2ResOnly/jmenano_data_cmb_%s_JME_v39_noRwPU_noSmearJets_25Feb2024_L2Res_v1.root",cr),"READ"); // Summer23 L2Res_V1
+  TFile *fd(0), *fdm(0);
+  fd = new TFile(Form("rootfiles/Summer23_L2ResOnly/jmenano_data_cmb_%s_JME_v39_noRwPU_noSmearJets_25Feb2024_L2Res_v1.root",cr),"READ"); // Summer23 L2Res_V1
   assert(fd && !fd->IsZombie());
-  fd->cd("Dijet2");
-  TDirectory *dd = gDirectory;
   //
-  //TFile *fdm = new TFile("../dijet/rootfiles/jmenano_mc_cmb_Summer22MG_v35a.root","READ"); // Summer22
-  //TFile *fdm = new TFile(run=="2023D" ? "rootfiles/Winter23_noL2L3Res/jmenano_mc_cmb_Summer23MGBPix_v36_Summer23DT_NoL2L3Res.root" : "rootfiles/Winter23_noL2L3Res/jmenano_mc_cmb_Summer23MG_v36_Summer23DT_NoL2L3Res.root","READ"); // Winter23
-  //TFile *fdm = new TFile(run=="2023D" ? "rootfiles/Summer23_noL2L3Res/jmenano_mc_cmb_Summer23MGBPix_v36_Summer23.root" : "rootfiles/Summer23_noL2L3Res/jmenano_mc_cmb_Summer23MG_v36_Summer23.root","READ"); // Summer23
-  //TFile *fdm = new TFile("rootfiles/Summer23_noL2L3Res/jmenano_mc_cmb_Summer23MGBPix_v36_Summer23.root","READ"); // Summer23 patch
-  TFile *fdm = new TFile(Form("rootfiles/Summer23_L2ResOnly/jmenano_mc_cmb_Summer23MG%s_v39_noRwPU_noSmearJets_25Feb2024_L2Res_v1.root",run=="2023D" ? "BPix" : ""),"READ");
+  fdm = new TFile(Form("rootfiles/Summer23_L2ResOnly/jmenano_mc_cmb_Summer23MG%s_v39_noRwPU_noSmearJets_25Feb2024_L2Res_v1.root",run=="2023D" ? "BPix" : ""),"READ");
   assert(fdm && !fdm->IsZombie());
-  fdm->cd("Dijet2");
-  TDirectory *ddm = gDirectory;
+
+  TDirectory *dd = fd->GetDirectory("Dijet2");
+  TDirectory *ddm = fdm->GetDirectory("Dijet2");
   
   // Get the TProfile2D inputs. Z+jet, gam+jet, 3x dijet
   
@@ -367,14 +344,8 @@ void L2Res() {
   c13->SaveAs(Form("pdf/L2Res/vsPt/L2Res_vsPt_%04d_%04d_%s_%s.pdf",
 		  int(1000.*eta1),int(1000.*eta2),cr,"c13"));
   
-  // Create giant canvas for all eta bins
+  // Create giant canvas for all eta bins (7*3=21; more in the future)
   int nxy = p2d->GetNbinsX();
-  //int n0 = floor(sqrt(nxy/5.));
-  //int nx = 3*n0;
-  //int ny = 2*n0;
-  //if (nx*ny<
-  //TCanvas *cx = new TCanvas("cx","cx",1800,1200);
-  //cx->Divide(nx,ny,0,0);
   TCanvas *cx = new TCanvas("cx","cx",7*250,3*250);
   cx->Divide(7,3,0,0);
   TH2D *h2jes = p2d->ProjectionXY("h2jes"); h2jes->Reset();
@@ -391,7 +362,7 @@ void L2Res() {
     double eta2 = p2d->GetXaxis()->GetBinLowEdge(ieta+1);
   // (No indent here for the resf of the loop, maybe function call later)
     
-  TH1D *h1 = tdrHist("h1","JES",0.65,1.85);//0.65,1.45);
+  TH1D *h1 = tdrHist("h1","JES",0.65,1.85);
   lumi_136TeV = Form("%s - %s",cr,cm);
   extraText = "Private";
   TCanvas *c1 = tdrCanvas("c1",h1,8,33,kSquare);
@@ -426,7 +397,7 @@ void L2Res() {
 
   
   // Step 2. Project profile to histogram, normalize by |eta|<1.3
-  TH1D *h2 = tdrHist("h2","Rel. JES",0.65,1.85);//0.75,1.35);
+  TH1D *h2 = tdrHist("h2","Rel. JES",0.65,1.85);
   TCanvas *c2 = tdrCanvas("c2",h2,8,33,kSquare);
   c2->SetLogx();
 
@@ -475,8 +446,7 @@ void L2Res() {
 		  int(1000.*eta1),int(1000.*eta2),cr,"c3"));
 
   // Step 4. Draw data/MC ratio of normalized JES
-  //TH1D *h4 = tdrHist("h4","Rel. JES Data/MC",0.65,1.35);//0.80,1.1);
-  TH1D *h4 = tdrHist("h4","Rel. JES Data/MC",0.50,1.35);//0.80,1.1);
+  TH1D *h4 = tdrHist("h4","Rel. JES Data/MC",0.50,1.35);
   TCanvas *c4 = tdrCanvas("c4",h4,8,33,kSquare);
   c4->SetLogx();
 
@@ -499,12 +469,10 @@ void L2Res() {
 
   // Step 5. Curate data and do final fit of response
   // Options: flat, log-linear, quadratic, +1/x
-  //TH1D *h5 = tdrHist("h5","Rel. JES Data/MC",0.65,1.35);
   TH1D *h5 = tdrHist("h5","Rel. JES Data/MC",0.50,1.35);
   TCanvas *c5 = tdrCanvas("c5",h5,8,33,kSquare);
   c5->SetLogx();
 
-  //double eta = eta2;
   double eta = 0.5*(eta1+eta2);
   double ptmaxe = 0.5*13600./cosh(eta1);
   l->SetLineStyle(kDotted);
@@ -751,7 +719,6 @@ void L2Res() {
 
     
   // Step 1. Slice pT, draw response vs eta. No other manipulation yet
-  //TH1D *h1 = tdrHist("h1","JES",0.65,1.45,"|#eta|",0,5.2);
   TH1D *h1 = tdrHist("h1","JES",0.3,1.5,"|#eta|",0,5.2);
   lumi_136TeV = Form("%s - %s",cr,cm);
   extraText = "Private";
@@ -765,11 +732,6 @@ void L2Res() {
   TLegend *leg1 = tdrLeg(0.20,0.90,0.45,0.90);
   _leg = leg1;
   
-  //double ptmin(60), ptmax(80);
-  //double ptmin(80), ptmax(120);
-  //double ptmin(100), ptmax(100);
-  //double ptmin(120), ptmax(120); // photon max
-
   TProfile *pzm, *pgm, *pdm, *pjm, *ppm;
   pzm = drawEta(p2zm,ptmin,ptmax,"HISTE",kNone,kRed);
   pgm = drawEta(p2gm,ptmin,ptmax,"HISTE",kNone,kBlue);
@@ -789,7 +751,6 @@ void L2Res() {
     
 
   // Step 2. Project profile to histogram, normalize by |eta|<1.3
-  //TH1D *h2 = tdrHist("h2","Rel. JES",0.75,1.35,"|#eta|",0,5.2);
   TH1D *h2 = tdrHist("h2","Rel. JES",0.3,1.5,"|#eta|",0,5.2);
   TCanvas *c2 = tdrCanvas("c2",h2,8,33,kSquare);
 
@@ -816,7 +777,6 @@ void L2Res() {
     
   
   // Step 3. Draw data/MC ratio before normalization
-  //TH1D *h3 = tdrHist("h3","JES Data/MC",0.80,1.15,"|#eta|",0,5.2);
   TH1D *h3 = tdrHist("h3","JES Data/MC",0.3,1.5,"|#eta|",0,5.2);
   TCanvas *c3 = tdrCanvas("c3",h3,8,33,kSquare);
 
@@ -836,7 +796,6 @@ void L2Res() {
   
   
   // Step 4. Draw data/MC ratio of normalized JES
-  //TH1D *h4 = tdrHist("h4","Rel. JES Data/MC",0.80,1.15,"|#eta|",0,5.2);
   TH1D *h4 = tdrHist("h4","Rel. JES Data/MC",0.3,1.5,"|#eta|",0,5.2);
   TCanvas *c4 = tdrCanvas("c4",h4,8,33,kSquare);
 
