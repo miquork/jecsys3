@@ -540,7 +540,7 @@ void JERSF() {
 
 
   // Produce output text file (FactorizedJetCorrecter Style
-  ofstream txt(Form("pdf/JERSF/Summer23_%s_JRV1_MC_SF_AK4PFPuppi.txt",cr));
+  ofstream txt(Form("pdf/JERSF/Summer23_%s_JRV2_MC_SF_AK4PFPuppi.txt",cr));
   txt << "{1 JetEta 1 JetPt "
       << "sqrt([0]*fabs([0])/(x*x)+[1]*[1]/x+[2]*[2])/"
       << "sqrt([3]*fabs([3])/(x*x)+[4]*[4]/x+[5]*[5])"
