@@ -75,12 +75,14 @@ void drawHFscale() {
 
   TH1D *hf3 = new TH1D("hf3",";|#eta|;HF scale",nx,vx);
   TH1D *hf = new TH1D("hf",";|#eta|;HF scale",nx,vx);
+  TH1D *hf23e = new TH1D("hf23e",";|#eta|;HF scale",nx,vx);
+  TH1D *hf22e = new TH1D("hf22e",";|#eta|;HF scale",nx,vx);
   
   TH1D *hf22m = new TH1D("hf22m",";|#eta|;HF scale",nx,vx);
   TH1D *hf22p = new TH1D("hf22p",";|#eta|;HF scale",nx,vx);
   TH1D *hf22 = new TH1D("hf22",";|#eta|;HF scale",nx,vx);
 
-  double k22 = 1.17;
+  double k22 = 1;//1.17;
   for (int i = 0; i != n2022; ++i) {
     int ieta;
     float corr;
@@ -130,7 +132,7 @@ void drawHFscale() {
   tdrDraw(hf23,"Pz",kFullCircle,kRed);//kBlack);
   hf23->SetMarkerSize(0.8);
 
-  tdrDraw(hf3,"Pz",kFullDiamond,kGreen+2);
+  //tdrDraw(hf3,"Pz",kFullDiamond,kGreen+2);
 
   //TF1 *f22 = new TF1("f22","[0]*(1-[1]*cosh(x))",3.314,4.013);
   //TF1 *f22 = new TF1("f22","[0]*(1-[1]*log(cosh(x)))",3.314,4.013);
@@ -164,51 +166,83 @@ void drawHFscale() {
   cout << Form("2023: p0=%6.3f+/-%5.3f, p1=%6.3f+/-%5.3f",
 	       f23->GetParameter(0),f23->GetParError(0),
 	       f23->GetParameter(1),f23->GetParError(1)) << endl;
-
   TF1 *f1 = new TF1("f1","[0]*(1-[1]*log(cosh(x)))",3.139,4.013);
 
   f1->SetLineColor(kGreen+2);
   hf3->Fit(f1,"QRNW");
-  f1->DrawClone("SAME");
+  //f1->DrawClone("SAME");
   f1->SetRange(2.964,5.191);
   f1->SetLineStyle(kDashed);
-  f1->DrawClone("SAME");
+  //f1->DrawClone("SAME");
   f1->SetLineStyle(kSolid);
 
   cout << Form("Run3: p0=%6.3f+/-%5.3f, p1=%6.3f+/-%5.3f",
 	       f1->GetParameter(0),f1->GetParError(0),
-	       f1->GetParameter(1),f1->GetParError(1)) << endl;
+  	       f1->GetParameter(1),f1->GetParError(1)) << endl;
 
   TLegend *leg = tdrLeg(0.40,0.90-5*0.045,0.65,0.90);
   leg->AddEntry(hf23,"2023","PLE");
   leg->AddEntry(hf23m,"2023-","P");
   leg->AddEntry(hf23p,"2023+","P");
-  leg->AddEntry(hf3,Form("2023 + 2022#times%1.2f",k22),"P");
-  leg->AddEntry(f1,"p_{0}(1-p_{1}log(cosh(x)))","L");
+  //leg->AddEntry(hf3,Form("2023 + 2022#times%1.2f",k22),"P");
+  //leg->AddEntry(f1,"p_{0}(1-p_{1}log(cosh(x)))","L");
+  leg->AddEntry(f23,"2023: p_{0}(1-p_{1}log(cosh(x)))","L");
+  leg->AddEntry(f22,"2022: p_{0}(1-p_{1}log(cosh(x)))","L");
 
   TLegend *leg2 = tdrLeg(0.60,0.90-3*0.045,0.85,0.90);
-  leg2->AddEntry(hf22,Form("2022   #times %1.2f",k22),"PLE");
-  leg2->AddEntry(hf22m,Form("2022-  #times %1.2f",k22),"P");
-  leg2->AddEntry(hf22p,Form("2022+ #times %1.2f",k22),"P");
-
-  // Do combined HF scale 
+  if (k22!=1) {
+    leg2->AddEntry(hf22,Form("2022   #times %1.2f",k22),"PLE");
+    leg2->AddEntry(hf22m,Form("2022-  #times %1.2f",k22),"P");
+    leg2->AddEntry(hf22p,Form("2022+ #times %1.2f",k22),"P");
+  }
+  else {
+    leg2->AddEntry(hf22,"2022","PLE");
+    leg2->AddEntry(hf22m,"2022-","P");
+    leg2->AddEntry(hf22p,"2022+","P");
+  }
+    
+  // Do combined HF scales
+  cout << "2022+2023" << endl;
   for (int i = 1; i != hf->GetNbinsX()+1; ++i) {
     double scale(1);
     double x = hf->GetBinCenter(i);
     double xmin = hf->GetBinLowEdge(i);
-    if (i==1) scale = 1;
-    if (i==2) scale = f1->Eval(x);
-    if (i>=3 && i<=6) scale = hf3->GetBinContent(i);
+    //if (i==1) scale = 1;
+    //if (i==2) scale = f1->Eval(x);
+    //if (i>=3 && i<=6) scale = hf3->GetBinContent(i);
+    if (i<=6) scale = hf3->GetBinContent(i);
     if (i>6) scale = f1->Eval(x);
     hf->SetBinContent(i, scale);
 
     cout << Form("|ieta| %d: %1.4f",29+i,1./scale) << endl;
   } // for i
+  cout << "2023e:" << endl;
+  for (int i = 1; i != hf23e->GetNbinsX()+1; ++i) {
+    double scale(1);
+    double x = hf23e->GetBinCenter(i);
+    double xmin = hf23e->GetBinLowEdge(i);
+    if (i<=6) scale = hf23->GetBinContent(i);
+    if (i>6) scale = f23->Eval(x);
+    hf23e->SetBinContent(i, scale);
+    cout << Form("|ieta| %d: %1.4f",29+i,1./scale) << endl;
+  } // for i
+  cout << "2022e:" << endl;
+  for (int i = 1; i != hf22e->GetNbinsX()+1; ++i) {
+    double scale(1);
+    double x = hf22e->GetBinCenter(i);
+    double xmin = hf22e->GetBinLowEdge(i);
+    if (i<=6) scale = hf22->GetBinContent(i);
+    if (i>6) scale = f22->Eval(x);
+    hf22e->SetBinContent(i, scale);
+    cout << Form("|ieta| %d: %1.4f",29+i,1./scale) << endl;
+  } // for i
 
-  tdrDraw(hf,"Pz",kFullStar,kBlack);
+  //tdrDraw(hf,"Pz",kFullStar,kBlack);
+  tdrDraw(hf22e,"Pz",kFullStar,kBlue+4);
+  tdrDraw(hf23e,"Pz",kFullStar,kRed+4);
   
   TLegend *leg3 = tdrLeg(0.18,0.17,0.43,0.17+1*0.045);
-  leg3->AddEntry(hf,"2022+2023 combined estimate","PLE");
+  leg3->AddEntry(hf,"Combined estimates","PLE");
   
   gPad->RedrawAxis();
 
