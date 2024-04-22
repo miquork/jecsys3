@@ -82,7 +82,7 @@ void drawHFscale() {
   TH1D *hf22p = new TH1D("hf22p",";|#eta|;HF scale",nx,vx);
   TH1D *hf22 = new TH1D("hf22",";|#eta|;HF scale",nx,vx);
 
-  double k22 = 1;//1.17;
+  double k22 = 1.18;//1;//1.17;
   for (int i = 0; i != n2022; ++i) {
     int ieta;
     float corr;
@@ -122,6 +122,7 @@ void drawHFscale() {
   l->SetLineColor(kGray+2);
   l->DrawLine(2.964,1,5.191,1);
 
+  /*
   tdrDraw(hf22m,"Pz",kOpenSquare,kBlue);
   tdrDraw(hf22p,"Pz",kOpenSquare,kRed);
   tdrDraw(hf22,"Pz",kFullSquare,kBlue);//kBlack);
@@ -131,7 +132,19 @@ void drawHFscale() {
   tdrDraw(hf23p,"Pz",kOpenCircle,kRed);
   tdrDraw(hf23,"Pz",kFullCircle,kRed);//kBlack);
   hf23->SetMarkerSize(0.8);
+  */
 
+  tdrDraw(hf22m,"Pz",kOpenTriangleDown,kBlue);
+  tdrDraw(hf22p,"Pz",kOpenTriangleUp,kBlue);
+  tdrDraw(hf22,"Pz",kFullSquare,kBlue);
+  hf22->SetMarkerSize(0.8);
+
+  tdrDraw(hf23m,"Pz",kOpenTriangleDown,kRed);
+  tdrDraw(hf23p,"Pz",kOpenTriangleUp,kRed);
+  tdrDraw(hf23,"Pz",kFullCircle,kRed);
+  hf23->SetMarkerSize(0.8);
+
+  
   //tdrDraw(hf3,"Pz",kFullDiamond,kGreen+2);
 
   //TF1 *f22 = new TF1("f22","[0]*(1-[1]*cosh(x))",3.314,4.013);
@@ -191,8 +204,8 @@ void drawHFscale() {
 
   TLegend *leg2 = tdrLeg(0.60,0.90-3*0.045,0.85,0.90);
   if (k22!=1) {
-    leg2->AddEntry(hf22,Form("2022   #times %1.2f",k22),"PLE");
-    leg2->AddEntry(hf22m,Form("2022-  #times %1.2f",k22),"P");
+    leg2->AddEntry(hf22,Form("2022  #times %1.2f",k22),"PLE");
+    leg2->AddEntry(hf22m,Form("2022- #times %1.2f",k22),"P");
     leg2->AddEntry(hf22p,Form("2022+ #times %1.2f",k22),"P");
   }
   else {
@@ -238,13 +251,22 @@ void drawHFscale() {
   } // for i
 
   //tdrDraw(hf,"Pz",kFullStar,kBlack);
-  tdrDraw(hf22e,"Pz",kFullStar,kBlue+4);
-  tdrDraw(hf23e,"Pz",kFullStar,kRed+4);
+  tdrDraw(hf22e,"Pz",kFullStar,kBlue+2);
+  tdrDraw(hf23e,"Pz",kFullStar,kRed+2);
   
   TLegend *leg3 = tdrLeg(0.18,0.17,0.43,0.17+1*0.045);
-  leg3->AddEntry(hf,"Combined estimates","PLE");
+  hf->SetMarkerStyle(kFullStar);
+  //leg3->AddEntry(hf,"Combined estimates","PLE");
+  leg3->AddEntry(hf,"Extrapolated estimates","PLE");
   
   gPad->RedrawAxis();
 
   c1->SaveAs("pdf/drawHFscale.pdf");
+
+  TFile *fout = new TFile("rootfiles/drawHFscale.root","RECREATE");
+  hf22->Write("hf2022");
+  hf22e->Write("hf2022e");
+  hf23->Write("hf2023");
+  hf23e->Write("hf2023e");
+  fout->Close();
 } // drawHFscale
