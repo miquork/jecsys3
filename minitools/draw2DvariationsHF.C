@@ -55,32 +55,64 @@ void draw2DvariationsHF() {
   setTDRStyle();
   TDirectory *curdir = gDirectory;
 
-  TFile *f = new TFile("rootfiles/JME-Run3Summer22_1M_2Dvariations-HF.root","READ");
+  //TFile *f = new TFile("rootfiles/JME-Run3Summer22_1M_2Dvariations-HF.root","READ");
+  //TFile *f = new TFile("rootfiles/JME-Run3Summer22_1M_2Dvariations-HF2.root","READ");
+  //TFile *f = new TFile("rootfiles/JME-Run3Summer22_1M_2Dvariations-HF2-noRespCut.root","READ");
+  //TFile *f = new TFile("rootfiles/JME-Run3Summer22_1M_2Dvariations-HF3-noRespCut.root","READ");
+  TFile *f = new TFile("rootfiles/JME-Run3Summer22_1M_2Dvariations-HF4-noRespCut.root","READ");
   assert(f && !f->IsZombie());
 
-  TFile *f2 = new TFile("rootfiles/L2Res_Summer23.root","READ");
+  string year = "2022";//"2023"
+  const char *cy = year.c_str();
+  TFile *f2(0);
+  //if (year=="2022") f2 = new TFile("rootfiles/L2Res_Summer22.root","READ");
+  //if (year=="2022") f2 = new TFile("rootfiles/L2Res_Summer22_v1b.root","READ");
+  //if (year=="2022") f2 = new TFile("rootfiles/L2Res_Summer22_v2_ECMixup_flatHF.root","READ"); // Bad for EC but ok for HF
+  if (year=="2022") f2 = new TFile("rootfiles/L2Res_Summer22_v2_ECMixup_slopeHF.root","READ"); // Bad for EC but ok for HF
+  //if (year=="2023") f2 = new TFile("rootfiles/L2Res_Summer23.root","READ");
+  if (year=="2023") f2 = new TFile("rootfiles/L2Res_Summer23_v2.root","READ");
   assert(f2 && !f2->IsZombie());
 
   curdir->cd();
 
-  TH2D *hr(0), *hr_1(0), *hr_2(0), *hr_3(0);
-  hr_1 = (TH2D*)f2->Get("h2jes_2023Cv123"); assert(hr_1);
-  hr_2 = (TH2D*)f2->Get("h2jes_2023Cv4"); assert(hr_2);
-  hr_3 = (TH2D*)f2->Get("h2jes_2023D"); assert(hr_3);
-  hr = (TH2D*)hr_3->Clone("hr_2023");
-  hr->Add(hr_1,hr_2);
-  hr->Add(hr_3);
-  hr->Scale(1./3.);
+  TH2D *hr(0), *hr_1(0), *hr_2(0), *hr_3(0), *hr_4(0);
+  if (year=="2023") {
+    hr_1 = (TH2D*)f2->Get("h2jes_2023Cv123"); assert(hr_1);
+    hr_2 = (TH2D*)f2->Get("h2jes_2023Cv4"); assert(hr_2);
+    hr_3 = (TH2D*)f2->Get("h2jes_2023D"); assert(hr_3);
+    hr = (TH2D*)hr_3->Clone("hr_2023");
+    hr->Add(hr_1,hr_2);
+    hr->Add(hr_3);
+    hr->Scale(1./3.);
+  }
+  if (year=="2022") {
+    hr_1 = (TH2D*)f2->Get("h2jes_2022CD"); assert(hr_1);
+    hr_2 = (TH2D*)f2->Get("h2jes_2022E"); assert(hr_2);
+    hr_3 = (TH2D*)f2->Get("h2jes_2022F"); assert(hr_3);
+    hr_4 = (TH2D*)f2->Get("h2jes_2022G"); assert(hr_4);
+    hr = (TH2D*)hr_4->Clone("hr_2022"); hr->Reset();
+    hr->Add(hr_1,hr_2);
+    hr->Add(hr_3);
+    hr->Add(hr_4);
+    hr->Scale(1./4.);
+    //hr = (TH2D*)hr_1->Clone("hr_2022");
+  }
   
   TProfile2D *pr(0);
-  pr = (TProfile2D*)f->Get("RjetPuppi_HFCalib23"); assert(pr);
+  //pr = (TProfile2D*)f->Get("RjetPuppi_HFCalib23"); assert(pr);
+  //pr = (TProfile2D*)f->Get("RjetPuppi_HFCalibComb"); assert(pr);
+  if (year=="2023") pr = (TProfile2D*)f->Get("RjetPuppi_HFCalib23e");
+  //if (year=="2022") pr = (TProfile2D*)f->Get("RjetPuppi_HFCalib22e");//_v1
+  if (year=="2022") pr = (TProfile2D*)f->Get("RjetPuppi_HFCalib22e_v2");
+  assert(pr);
 
   int color[] =
     {kMagenta+2, kMagenta+1, kBlue, kCyan+1, kCyan+2, kGreen+2,
      kYellow+1, kYellow+2, kOrange+1, kOrange+2, kRed, kBlack, kGray+1};
   const int ncolor = sizeof(color)/sizeof(color[0]);
   
-  TH1D *h = tdrHist("h","HF response variation (%)",-40,15);//15);//-23,7);
+  //TH1D *h = tdrHist("h","HF response variation (%)",-48,18);//15);//-23,7);
+  TH1D *h = tdrHist("h","HF JES change (%)",-48,18);
   lumi_136TeV = "Run3, 2023";
   extraText = "Private";
   TCanvas *c1 = tdrCanvas("c1",h,8,11,kSquare);
@@ -126,14 +158,15 @@ void draw2DvariationsHF() {
   gPad->RedrawAxis();
   gPad->Update();
   
-  c1->SaveAs("pdf/draw2DvariationsHF/draw2DvariationsHF_vsPt.pdf");
+  c1->SaveAs(Form("pdf/draw2DvariationsHF/draw2DvariationsHF_vsPt_%s.pdf",cy));
 
   
   //TH1D  *h_2 = tdrHist("h_2","HF response variation (%)",-23,7,
   //		       "|#eta|",2.964,5.191);
-  TH1D *h_2 = new TH1D("h_2",";|#eta|;HF response variation (%);",
+  //TH1D *h_2 = new TH1D("h_2",";|#eta|;HF response variation (%);",
+  TH1D *h_2 = new TH1D("h_2",";|#eta|;HF JES change (%);",
 		       10*12,2.964,5.191);
-  h_2->GetYaxis()->SetRangeUser(-40,25);//-23,7);
+  h_2->GetYaxis()->SetRangeUser(-48,29.999);//-40,25);//-23,7);
   TCanvas *c2 = tdrCanvas("c2",h_2,8,11,kSquare);
 
   l->SetLineStyle(kDashed);
@@ -174,7 +207,8 @@ void draw2DvariationsHF() {
   gPad->RedrawAxis();
   gPad->Update();
   
-  c2->SaveAs("pdf/draw2DvariationsHF/draw2DvariationsHF_vsEta.pdf");
+  c2->SaveAs(Form("pdf/draw2DvariationsHF/draw2DvariationsHF_vsEta_%s.pdf",cy));
+  c2->SaveAs(Form("pdf/draw2DvariationsHF/draw2DvariationsHF_vsEta_%s.png",cy));
 
 } // draw2Dvariations
 
