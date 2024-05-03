@@ -20,16 +20,41 @@ bool fitD = true; // Dijet (pT,ave)
 bool fitP = true; // Dijet (pT,probe)
 bool fitJ = true; // Dijet (pT,tag)
 
+bool doClosure = false; // Do not undo L2L3Res for closure test
+
+bool flattenHF = false;//true; // Const vs pT for HF
+
+// Global variable for renaming histograms
+string _run;
+
+
 // Step 1. Slice 1D profile out of 2D in given range and draw it
 TProfile* drawEta(TProfile2D *p2, double ptmin, double ptmax,
-		  string draw, int marker, int color, string label="") {
+		  string draw, int marker, int color, string label="",
+		  TProfile2D *p2x = 0) {
   
   assert(p2);
   int iy1 = p2->GetYaxis()->FindBin(ptmin);
   int iy2 = p2->GetYaxis()->FindBin(ptmax);
   string id = Form("p%s_%1.0f_%1.0f_%s_%d_%d", p2->GetName(), ptmin, ptmax,
 		   draw.c_str(), marker, color);
-  TProfile *p = p2->ProfileX(Form("p%s",id.c_str()),iy1,iy2);
+  TProfile *p = p2->ProfileX(Form("p%s_%s",id.c_str(),_run.c_str()),iy1,iy2);
+
+  if (p2x) {
+    TProfile *px = p2x->ProfileX(Form("px%s",id.c_str()),iy1,iy2);
+    for (int i = 0; i != p->GetNbinsX()+1; ++i) {
+      int j = px->GetXaxis()->FindBin(p->GetBinCenter(i));
+      double mean_value = p->GetBinContent(i) * px->GetBinContent(j);
+      //if (label=="Z") // inconsistent definition of p2res
+      //mean_value = p->GetBinContent(i) / px->GetBinContent(j);
+      //double calculated_error = p->GetBinError(i) * px->GetBinContent(j);
+      double entries = p->GetBinEntries(i);
+      p->SetBinEntries(i, entries);
+      p->SetBinContent(i, entries * mean_value);
+      //p->SetBinError(i, calculated_error);
+    }
+  }
+
   tdrDraw(p,draw,marker,color,kSolid,-1,kNone);
 
   if (_leg && label!="") {
@@ -45,7 +70,8 @@ TProfile* drawEta(TProfile2D *p2, double ptmin, double ptmax,
   return p;
 } // drawEta
 TProfile* drawPt(TProfile2D *p2, double etamin, double etamax,
-		 string draw, int marker, int color, string label="") {
+		 string draw, int marker, int color, string label="",
+		 TProfile2D *p2x = 0) {
   
   assert(p2);
   int ix1 = p2->GetXaxis()->FindBin(etamin);
@@ -54,6 +80,22 @@ TProfile* drawPt(TProfile2D *p2, double etamin, double etamax,
 		   1000*etamin, 1000*etamax,
 		   draw.c_str(), marker, color);
   TProfile *p = p2->ProfileY(Form("p%s",id.c_str()),ix1,ix2);
+
+  if (p2x) {
+    TProfile *py = p2x->ProfileY(Form("px%s",id.c_str()),ix1,ix2);
+    for (int i = 0; i != p->GetNbinsX()+1; ++i) {
+      int j = py->GetXaxis()->FindBin(p->GetBinCenter(i));
+      double mean_value = p->GetBinContent(i) * py->GetBinContent(j);
+      //if (label=="Z") // inconsistent definition of p2res
+      //mean_value = p->GetBinContent(i) / py->GetBinContent(j);
+      //double calculated_error = p->GetBinError(i) * py->GetBinContent(j);
+      double entries = p->GetBinEntries(i);
+      p->SetBinEntries(i, entries);
+      p->SetBinContent(i, entries * mean_value);
+      //p->SetBinError(i, calculated_error);
+    }
+  }
+  
   tdrDraw(p,draw,marker,color,kSolid,-1,kNone);
 
   if (_leg && label!="") {
@@ -75,7 +117,7 @@ TH1D *drawNormEta(TProfile *p, string draw, int marker, int color) {
   assert(p);
   string id = Form("%s_%s_%d_%d",p->GetName(),draw.c_str(),marker,color);
   TH1D *h = p->ProjectionX(Form("h%s",id.c_str()));
-  TF1 *f1 = new TF1(Form("f1%s_",id.c_str()),"[0]",0,1.305);
+  TF1 *f1 = new TF1(Form("f1%s_%s",id.c_str(),_run.c_str()),"[0]",0,1.305);
   h->Fit(f1,"QRN");
   f1->SetRange(0,5.2);
   h->Divide(f1);
@@ -89,7 +131,7 @@ TH1D *drawNormPt(TProfile *p, TProfile *p13,
   assert(p);
   assert(p13);
   string id = Form("%s_%s_%d_%d",p->GetName(),draw.c_str(),marker,color);
-  TH1D *h = p->ProjectionX(Form("h%s",id.c_str()));
+  TH1D *h = p->ProjectionX(Form("h%s_%s",id.c_str(),_run.c_str()));
   h->Divide(p13);
   tdrDraw(h,draw,marker,color,kSolid,-1,kNone);
   
@@ -102,7 +144,7 @@ TH1D *drawRatio(TH1D *h, TH1D *hm, string draw, int marker, int color) {
   assert(hm);
   string id = Form("%s_%s_%s_%d_%d", h->GetName(), hm->GetName(),
 		   draw.c_str(), marker, color);
-  TH1D *hr = (TH1D*)h->Clone(Form("hr_%s",id.c_str()));
+  TH1D *hr = (TH1D*)h->Clone(Form("hr_%s_%s",id.c_str(),_run.c_str()));
   hr->Divide(hm);
 
   tdrDraw(hr,draw,marker,color,kSolid,-1,kNone);
@@ -114,7 +156,7 @@ TH1D *drawRatio(TH1D *h, TH1D *hm, string draw, int marker, int color) {
 TH1D *drawCleaned(TH1D *h, double eta, string data, string draw,
 		  int marker, int color) {
   assert(h);
-  TH1D *hc = (TH1D*)h->Clone(Form("hc_%s",h->GetName()));
+  TH1D *hc = (TH1D*)h->Clone(Form("hc_%s_%s",h->GetName(),_run.c_str()));
   for (int i = 1; i != hc->GetNbinsX()+1; ++i) {
     double pt = hc->GetBinCenter(i);
     double ptmin = hc->GetBinLowEdge(i);
@@ -127,20 +169,28 @@ TH1D *drawCleaned(TH1D *h, double eta, string data, string draw,
     //{15, 21, 28, 37, 49, 59, 86, 110, 132, 170, 204, 236, 279, 302, 373, 460, 575, 638, 737, 846, 967, 1101, 1248, 1410, 1588, 1784, 2000, 2238, 2500, 2787, 3103};
     // L2Res eta binning
     //{0., 0.261, 0.522, 0.783, 1.044, 1.305, 1.479, 1.653, 1.93, 2.172, 2.322, 2.5, 2.65, 2.853, 2.964, 3.139, 3.314, 3.489, 3.839, 4.013, 4.583, 5.191};
+    // New L2Res eta binning (same as L2Relative)
+    //{0, 0.087, 0.174, 0.261, 0.348, 0.435, 0.522, 0.609, 0.696, 0.783, 0.879, 0.957, 1.044, 1.131, 1.218, 1.305, 1.392, 1.479, 1.566, 1.653, 1.74, 1.83, 1.93, 2.043, 2.172, 2.322, 2.5, 2.65, 2.853, 2.964, 3.139, 3.314, 3.489, 3.664, 3.839, 4.013, 4.191, 4.363, 4.538, 4.716, 4.889, 5.191};
 
+    if (TString(_run).Contains("2024")) {
+	
+    // Prompt24
     if (data=="Z") {
-      // Summer23
       if      (ptmin>=15. && ptmax<550 && emax<1550. && eta<2.500) keep = true;
       else if (ptmin>=15. && ptmax<550 && emax<1550. && eta<2.964) keep = true;
-      else if (ptmin>=59. && ptmax<200 && eta>2.964  && eta<3.839) keep = true;
+      else if (ptmin>=30. && ptmax<300 && eta>2.964  && eta<3.489) keep = true;
+      else if (ptmin>=15. && ptmax<200 && eta>3.489  && eta<3.839) keep = true;
+      else if (ptmin>=15. && ptmax<100 && eta>3.839  && eta<5.191) keep = true;
+      // Additional veto
+      if (eta>2.322 && eta<3.139) keep = false;
     }
-    if (data=="G") {
-      // Summer23
-      if      (ptmin>=110. && ptmax<1300. && emax<2500.) keep = true;
-      else if (ptmin>=110. && ptmax<200.  && emax<0.5*sqrts) keep = true;
+    if (data=="G") { // HLT_Photon50EB_TightId_TightIso, HLT_Photon30EB...
+      if      (ptmin>=30. && ptmax<1300. && emax<2500.) keep = true;
+      else if (ptmin>=30. && ptmax<200.  && emax<0.5*sqrts) keep = true;
+      // Additional veto for 2024C 0.7/fb golden special
+      if (fabs(eta)>2.322 && eta<2.964 && ptmin<60) keep = false;
     }
     if (data=="J") {
-      // Summer23_v2
       if       (ptmin>=15. && ptmax<2500. && eta<1.044) keep = true;
       else if  (ptmin>=15. && ptmax<2000. && eta<2.500) keep = true;
       else if  (ptmin>=15. && ptmax<967.  && eta<2.964) keep = true;
@@ -148,13 +198,39 @@ TH1D *drawCleaned(TH1D *h, double eta, string data, string draw,
       else if  (ptmin>=15. && ptmax<460.  && eta<5.191) keep = true;
     }
     if (data=="P") {
-      // Summer23
       if (ptmin>=15. && ptmax<=110. && eta<2.322) keep = true;
     }
     if (data=="D") {
-      // Summer23
+      if (ptmin>=59. && ptmax<=110. && emax<3100. && eta<2.853) keep = true;
+      // Additional veto
+      if (eta>2.322) keep = false;
+    }
+    } // Prompt24
+    else {
+    // Summer23
+    if (data=="Z") {
+      if      (ptmin>=15. && ptmax<550 && emax<1550. && eta<2.500) keep = true;
+      else if (ptmin>=15. && ptmax<550 && emax<1550. && eta<2.964) keep = true;
+      else if (ptmin>=59. && ptmax<200 && eta>2.964  && eta<3.839) keep = true;
+    }
+    if (data=="G") {
+      if      (ptmin>=110. && ptmax<1300. && emax<2500.) keep = true;
+      else if (ptmin>=110. && ptmax<200.  && emax<0.5*sqrts) keep = true;
+    }
+    if (data=="J") {
+      if       (ptmin>=15. && ptmax<2500. && eta<1.044) keep = true;
+      else if  (ptmin>=15. && ptmax<2000. && eta<2.500) keep = true;
+      else if  (ptmin>=15. && ptmax<967.  && eta<2.964) keep = true;
+      else if  (ptmin>=15. && ptmax<846.  && eta<3.839) keep = true;
+      else if  (ptmin>=15. && ptmax<460.  && eta<5.191) keep = true;
+    }
+    if (data=="P") {
+      if (ptmin>=15. && ptmax<=110. && eta<2.322) keep = true;
+    }
+    if (data=="D") {
       if (ptmin>=59. && ptmax<=110. && emax<3100. && eta<2.853) keep = true;
     }
+    } // !Prompt24
     
     // Check that no points out of bound
     if (h->GetBinContent(i)>1.3 || h->GetBinContent(i)<0.3) {
@@ -216,71 +292,148 @@ void L2Res() {
   // Make sure graphics output directories exists
   gROOT->ProcessLine(".! mkdir pdf");
   gROOT->ProcessLine(".! mkdir pdf/L2Res");
-  gROOT->ProcessLine(".! mkdir pdf/L2Res/vsEta");
-  gROOT->ProcessLine(".! mkdir pdf/L2Res/vsPt");
+  //gROOT->ProcessLine(".! mkdir pdf/L2Res/vsEta");
+  //gROOT->ProcessLine(".! mkdir pdf/L2Res/vsPt");
 
-  string vrun[] = {"2023Cv123","2023Cv4","2023D"};
+  map<string, string> mlum;
+  mlum["2024B"] = "0.13 fb^{-1}";//"16 pb^{-1}";
+  mlum["2024C"] = "0.61 fb^{-1}";//"3.1 fb^{-1}";
+  mlum["2024BC"] = "0.74 fb^{1}";//"3.1 fb^{-1}";
+  
+  //string vrun[] = {"2023Cv123","2023Cv4","2023D"};
+  //string vrun[] = {"2022CD","2022E","2022F","2022G"};
+  //string vrun[] = {"2024B","2024C","2024BC"};
+  string vrun[] = {"2024BC"};
   const int nrun = sizeof(vrun)/sizeof(vrun[0]);
-  string vmc[] = {"Summer23","Summer23","Summer23BPIX"};
+  //string vmc[] = {"Summer23","Summer23","Summer23BPIX"};
+  //string vmc[] = {"Summer22","Summer22EE","Summer22EE","Summer22EE"};
+  //string vmc[] = {"Summer22","Summer22","Summer22","Summer22"}; // 22EE buggy?
+  //string vmc[] = {"Summer23BPix","Summer23BPix","Summer23BPix"};
+  string vmc[] = {"Summer23BPix"};
   const int nmc = sizeof(vmc)/sizeof(vmc[0]);
   assert(nmc==nrun);
+
+  string sc = (doClosure ? "_closure" : "");
+  const char *cc = sc.c_str();
+  
   for (int irun = 0; irun != nrun; ++irun) {
     string run = vrun[irun];
     const char *cr = run.c_str();
+    _run = run;
     string mc = vmc[irun];
     const char *cm = mc.c_str();
+    string lum = (mlum[run]!="" ? Form(", %s",mlum[run].c_str()) : "");
+    const char *cl = lum.c_str();
+    
+    gROOT->ProcessLine(Form(".! mkdir pdf/L2Res/%s",cr));
+    gROOT->ProcessLine(Form(".! mkdir pdf/L2Res/%s/vsEta",cr));
+    gROOT->ProcessLine(Form(".! mkdir pdf/L2Res/%s/vsPt",cr));
+
   // (No indent here for the resf of the loop, maybe function call later)
 
 
   // Mikko's temporary code to create L2Res.root file
   // Load Z+jet
   TFile *fz(0);
-  fz = new TFile(Form("rootfiles/Summer23_L2ResOnly/jme_bplusZ_%s_Zmm_sync_v70.root",cr),"READ"); // Summer23 L2Res_V1
+  if (TString(cr).Contains("2024")) {
+    //fz = new TFile(Form("rootfiles/Prompt2024/jme_bplusZ_%s_Zmm_sync_v78.root",cr),"READ"); // v77: Golden 2024B, DCSOnly 2024C
+    fz = new TFile(Form("rootfiles/Prompt2024/jme_bplusZ_%s_Zmm_sync_v78golden.root",cr),"READ");
+  }
+  else if (TString(cr).Contains("2023")) {
+    //fz = new TFile(Form("rootfiles/Summer23_L2ResOnly/jme_bplusZ_%s_Zmm_sync_v70.root",cr),"READ"); // Summer23 L2Res_V1
+    //fz = new TFile(Form("rootfiles/Summer23_L2L3Res/jme_bplusZ_%s_Zmm_sync_v72noPUrw.root",cr),"READ"); // MC botched?
+    //fz = new TFile(Form("rootfiles/Summer23_L2L3Res/jme_bplusZ_%s_Zmm_sync_v73smearoff.root",cr),"READ");
+    fz = new TFile(Form("rootfiles/Summer23_L2L3Res/jme_bplusZ_%s_Zmm_sync_v77.root",cr),"READ");
+  }
+  else if (TString(cr).Contains("2022")) {
+    //fz = new TFile(Form("rootfiles/jme_bplusZ_%s_Zmm_sync_v66.root",cr),"READ");
+    if (run=="2022F" || run=="2022G" || run=="2022FG")
+      fz = new TFile(Form("rootfiles/jme_bplusZ_%s_Zmm_sync_v78.root",cr),"READ"); // 22Sep2023 instead of 19Dec2023
+    else
+      fz = new TFile(Form("rootfiles/jme_bplusZ_%s_Zmm_sync_v76.root",cr),"READ");
+  }
   assert(fz && !fz->IsZombie());
 
-  TDirectory *dz = fz->GetDirectory("data/l2res");
-  TDirectory *dzm = fz->GetDirectory("mc/l2res");
+  TDirectory *dz = fz->GetDirectory("data/l2res"); assert(dz);
+  TDirectory *dzm = fz->GetDirectory("mc/l2res"); assert(dzm);
   
   // Load G+jet
   TFile *fg(0), *fgm(0);
-  fg = new TFile(Form("rootfiles/Summer23_L2ResOnly/gamjet_all/GamHistosFill_data_%s_w4.root",cr),"READ"); // Summer23 with L2Res
+  if (TString(cr).Contains("2024")) {
+    //fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w12.root",cr),"READ"); // DCSOnly
+    //fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w13.root",cr),"READ"); // DCSOnly
+    fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w14.root",cr),"READ"); // DCSOnly
+    fgm = new TFile("rootfiles/Prompt2024/GamHistosFill_mc_2023P8-BPix_w12.root","READ");
+  }
+  else if (TString(cr).Contains("2023")) {
+    fg = new TFile(Form("rootfiles/Summer23_L2L3Res/GamHistosFill_data_%s_w8.root",cr),"READ");
+    fgm = new TFile(run=="2023D" ? "rootfiles/Summer23_L2L3Res/GamHistosFill_mc_2023P8-BPix_w8.root" : "rootfiles/Summer23_L2L3Res/GamHistosFill_mc_2023P8_w8.root","READ");
+  }
+  else if (TString(cr).Contains("2022")) {
+    fg = new TFile(Form("../gamjet/rootfiles/GamHistosFill_data_%s_v32.root",cr),"READ");
+    const char *cmg = TString(cm).ReplaceAll("Summer","20").Data();
+    fgm = new TFile(Form("../gamjet/rootfiles/GamHistosFill_mc_%sP8_v32.root",cmg),"READ");
+  }
   assert(fg && !fg->IsZombie());
-  //
-  fgm = new TFile(run=="2023D" ? "rootfiles/Summer23_L2ResOnly/gamjet_all/GamHistosFill_mc_2023P8-BPix_w4.root" : "rootfiles/Summer23_L2ResOnly/gamjet_all/GamHistosFill_mc_2023P8_w4.root","READ"); // Summer23 L2Res_V1
   assert(fgm && !fgm->IsZombie());
   
-  TDirectory *dg = fg->GetDirectory("Gamjet2");
-  TDirectory *dgm = fgm->GetDirectory("Gamjet2");
+  TDirectory *dg = fg->GetDirectory("Gamjet2"); assert(dg);
+  TDirectory *dgm = fgm->GetDirectory("Gamjet2"); assert(dgm);
 
   // Load dijet
   TFile *fd(0), *fdm(0);
-  fd = new TFile(Form("rootfiles/Summer23_L2ResOnly/jmenano_data_cmb_%s_JME_v39_noRwPU_noSmearJets_25Feb2024_L2Res_v1.root",cr),"READ"); // Summer23 L2Res_V1
+  if (TString(cr).Contains("2024")) {
+    //fd = new TFile(Form("rootfiles/Prompt2024/v39_2024_Prompt_etabin_DCSOnly/jmenano_data_cmb_%s_v39_2024_Prompt_etabin_DCSOnly.root",cr),"READ");
+    fd = new TFile(Form("rootfiles/Prompt2024/jmenano_data_cmb_%s_JME_v39_2024_Prompt_Golden_29April.root",cr),"READ"); // golden
+    //if (run=="2024B")
+    //fd = new TFile(Form(" rootfiles/Prompt2024/v39_2024_Prompt_etabin_SFD_Golden/jmenano_data_cmb_%s_v39_2024_Prompt_etabin_SFD_Golden.root",cr),"READ");
+    fdm = new TFile("rootfiles/Prompt2024/v39_2024_Prompt_etabin_DCSOnly/jmenano_mc_out_Summer23MGBPix_v39_2023_etabin_SFv2.root","READ");
+  }
+  else if (TString(cr).Contains("2023")) {
+    fd = new TFile(Form("rootfiles/Summer23_L2L3ResJERSF/v39_2023_etabin_SFv2/jmenano_data_cmb_%s_JME_v39_2023_etabin_SFv2.root",cr),"READ");
+    fdm = new TFile(Form("rootfiles/Summer23_L2L3ResJERSF/v39_2023_etabin_SFv2/jmenano_mc_out_Summer23MG%s_v39_2023_etabin_SFv2.root",run=="2023D" ? "BPix" : "_Cv123"),"READ");
+  }
+  else if (TString(cr).Contains("2022")) {
+    //fd = new TFile(Form("rootfiles/Summer22_L2L3ResOnly/v39_2022_JV_noSJets_noRwPU/jmenano_data_cmb_%s_JME_v39_2022_JV_noSJets_noRwPU.root",cr),"READ");
+    //fdm = new TFile(Form("rootfiles/Summer22_L2L3ResOnly/v39_2022_JV_noSJets_noRwPU/jmenano_mc_out_%sMG_full_v39_2022_JV_noSJets_noRwPU.root",cm),"READ");
+    fd = new TFile(Form("rootfiles/Summer22_L2L3ResJERSF/v39_2022_etabin_SFv/jmenano_data_cmb_%s_JME_v39_2022_etabin_SFv.root",cr),"READ");
+    fdm = new TFile(Form("rootfiles/Summer22_L2L3ResJERSF/v39_2022_etabin_SFv/jmenano_mc_out_%sMG_full_v39_2022_etabin_SFv.root",cm),"READ");
+  }
   assert(fd && !fd->IsZombie());
-  //
-  fdm = new TFile(Form("rootfiles/Summer23_L2ResOnly/jmenano_mc_cmb_Summer23MG%s_v39_noRwPU_noSmearJets_25Feb2024_L2Res_v1.root",run=="2023D" ? "BPix" : ""),"READ");
   assert(fdm && !fdm->IsZombie());
 
-  TDirectory *dd = fd->GetDirectory("Dijet2");
-  TDirectory *ddm = fdm->GetDirectory("Dijet2");
+  TDirectory *dd = fd->GetDirectory("Dijet2"); assert(dd);
+  //TDirectory *ddm = fdm->GetDirectory("Dijet2");
+  TDirectory *ddm = fdm->GetDirectory("HLT_MC/Dijet2"); assert(ddm);
   
   // Get the TProfile2D inputs. Z+jet, gam+jet, 3x dijet
   
   // Z+jet: x:eta, y:pT,avp (others p2m0tc for pT,tag, p2m0pf for pT,probe )
   TProfile2D *p2z = (TProfile2D*)dz->Get("p2m0tc"); assert(p2z);
   TProfile2D *p2zm = (TProfile2D*)dzm->Get("p2m0tc"); assert(p2zm);
-
+  TProfile2D *p2zx = (TProfile2D*)dz->Get("p2restc"); assert(p2zx);
+  
   // G+jet: x:eta, y:pT,avp (no other variants yet)
   TProfile2D *p2g = (TProfile2D*)dg->Get("p2m0"); assert(p2g);
   TProfile2D *p2gm = (TProfile2D*)dgm->Get("p2m0"); assert(p2gm);
+  TProfile2D *p2gx = (TProfile2D*)dg->Get("p2res"); assert(p2gx);
 
   // Dijet: x:eta, y:pT,avp (others p2m0tc for pT,tag, p2m0pf for pT,probe )
   TProfile2D *p2j = (TProfile2D*)dd->Get("p2m0tc"); assert(p2j);
   TProfile2D *p2jm = (TProfile2D*)ddm->Get("p2m0tc"); assert(p2jm);
+  TProfile2D *p2jx = (TProfile2D*)dd->Get("p2restc"); assert(p2jx);
   TProfile2D *p2p = (TProfile2D*)dd->Get("p2m0pf"); assert(p2p);
   TProfile2D *p2pm = (TProfile2D*)ddm->Get("p2m0pf"); assert(p2pm);
+  TProfile2D *p2px = (TProfile2D*)dd->Get("p2respf"); assert(p2px);
   TProfile2D *p2d = (TProfile2D*)dd->Get("p2m0"); assert(p2d);
   TProfile2D *p2dm = (TProfile2D*)ddm->Get("p2m0"); assert(p2dm);
+  TProfile2D *p2dx = (TProfile2D*)dd->Get("p2res"); assert(p2dx);
 
+  // Reset L2L3Res to zero for closure tests so it's not undone later
+  if (doClosure) {
+    p2zx = p2gx = p2jx = p2px = p2dx = 0;
+  }
+  
   /*
   // Use common file instead
   TFile *f = new TFile("rootfiles/L2Res_2023_Summer22.root","READ");
@@ -306,7 +459,7 @@ void L2Res() {
   TProfile *p13z(0), *p13g(0), *p13d(0), *p13j(0), *p13p(0);
 
   TH1D *h13 = tdrHist("h13","JES",0.65,1.85);//0.65,1.45);
-  lumi_136TeV = Form("%s - %s",cr,cm);
+  lumi_136TeV = Form("%s - %s%s",cr,cm,cl);
   extraText = "Private";
   TCanvas *c13 = tdrCanvas("c13",h13,8,33,kSquare);
   c13->SetLogx();
@@ -333,27 +486,30 @@ void L2Res() {
   p13pm = drawPt(p2pm,etamin,etamax,"HISTE",kNone,kOrange+2);
   p13dm = drawPt(p2dm,etamin,etamax,"HISTE",kNone,kBlack);
   
-  p13z = drawPt(p2z,etamin,etamax,"Pz",kFullSquare,kRed,"Z");
-  p13g = drawPt(p2g,etamin,etamax,"Pz",kFullCircle,kBlue,"#gamma");
-  p13j = drawPt(p2j,etamin,etamax,"Pz",kFullDiamond,kGreen+2,"Tag");
-  p13p = drawPt(p2p,etamin,etamax,"Pz",kFullDiamond,kOrange+2,"Probe");
-  p13d = drawPt(p2d,etamin,etamax,"Pz",kOpenDiamond,kBlack,"Dijet");
+  p13z = drawPt(p2z,etamin,etamax,"Pz",kFullSquare,kRed,"Z",p2zx);
+  p13g = drawPt(p2g,etamin,etamax,"Pz",kFullCircle,kBlue,"#gamma",p2gx);
+  p13j = drawPt(p2j,etamin,etamax,"Pz",kFullDiamond,kGreen+2,"Tag",p2jx);
+  p13p = drawPt(p2p,etamin,etamax,"Pz",kFullDiamond,kOrange+2,"Probe",p2px);
+  p13d = drawPt(p2d,etamin,etamax,"Pz",kOpenDiamond,kBlack,"Dijet",p2dx);
 
   tex->DrawLatex(0.50,0.85,Form("[%1.3f,%1.3f]",eta1,eta2));
   
-  c13->SaveAs(Form("pdf/L2Res/vsPt/L2Res_vsPt_%04d_%04d_%s_%s.pdf",
-		  int(1000.*eta1),int(1000.*eta2),cr,"c13"));
+  c13->SaveAs(Form("pdf/L2Res/%s/vsPt/L2Res_vsPt_%04d_%04d_%s%s_%s.pdf",
+		   cr,int(1000.*eta1),int(1000.*eta2),cr,cc,"c13"));
   
   // Create giant canvas for all eta bins (7*3=21; more in the future)
   int nxy = p2d->GetNbinsX();
-  TCanvas *cx = new TCanvas("cx","cx",7*250,3*250);
-  cx->Divide(7,3,0,0);
-  TH2D *h2jes = p2d->ProjectionXY("h2jes"); h2jes->Reset();
+  //TCanvas *cx = new TCanvas("cx","cx",9*250,5*250);
+  //TCanvas *cx = new TCanvas("cx","cx",9*400,5*400);
+  TCanvas *cx = new TCanvas(Form("cx_%s",cr),"cx",9*300,5*300);
+  cx->Divide(9,5,0,0);
+  TH2D *h2jes = p2d->ProjectionXY(Form("h2jes_%s",cr)); h2jes->Reset();
   
   // Loop over the ieta bins
   vector<TF1*> vf1(p2d->GetNbinsX()+1);
   TH1D *hmin = p2d->ProjectionX(Form("hmin_%s",cr)); hmin->Reset();
   TH1D *hmax = p2d->ProjectionX(Form("hmax_%s",cr)); hmax->Reset();
+  TH1D *hchi2 = p2d->ProjectionX(Form("hchi2_%s",cr)); hchi2->Reset();
   for (int ieta = 1; ieta != p2d->GetNbinsX()+1; ++ieta) {
     //int ieta = p2d->GetXaxis()->FindBin(2.7);
     double etamin = p2d->GetXaxis()->GetBinCenter(ieta);
@@ -362,10 +518,10 @@ void L2Res() {
     double eta2 = p2d->GetXaxis()->GetBinLowEdge(ieta+1);
   // (No indent here for the resf of the loop, maybe function call later)
     
-  TH1D *h1 = tdrHist("h1","JES",0.65,1.85);
-  lumi_136TeV = Form("%s - %s",cr,cm);
+  TH1D *h1 = tdrHist(Form("h1_%s",cr),"JES",0.65,1.85);
+  lumi_136TeV = Form("%s - %s%s",cr,cm,cl);
   extraText = "Private";
-  TCanvas *c1 = tdrCanvas("c1",h1,8,33,kSquare);
+  TCanvas *c1 = tdrCanvas(Form("c1_%s",cr),h1,8,33,kSquare);
   c1->SetLogx();
 
   TLine *l = new TLine();
@@ -384,21 +540,21 @@ void L2Res() {
   pdm = drawPt(p2dm,etamin,etamax,"HISTE",kNone,kBlack);
 
   TProfile *pz, *pg, *pd, *pj, *pp;
-  pz = drawPt(p2z,etamin,etamax,"Pz",kFullSquare,kRed,"Z");
-  pg = drawPt(p2g,etamin,etamax,"Pz",kFullCircle,kBlue,"#gamma");
-  pj = drawPt(p2j,etamin,etamax,"Pz",kFullDiamond,kGreen+2,"Tag");
-  pp = drawPt(p2p,etamin,etamax,"Pz",kFullDiamond,kOrange+2,"Probe");
-  pd = drawPt(p2d,etamin,etamax,"Pz",kOpenDiamond,kBlack,"Dijet");
+  pz = drawPt(p2z,etamin,etamax,"Pz",kFullSquare,kRed,"Z",p2zx);
+  pg = drawPt(p2g,etamin,etamax,"Pz",kFullCircle,kBlue,"#gamma",p2gx);
+  pj = drawPt(p2j,etamin,etamax,"Pz",kFullDiamond,kGreen+2,"Tag",p2jx);
+  pp = drawPt(p2p,etamin,etamax,"Pz",kFullDiamond,kOrange+2,"Probe",p2px);
+  pd = drawPt(p2d,etamin,etamax,"Pz",kOpenDiamond,kBlack,"Dijet",p2dx);
 
   tex->DrawLatex(0.50,0.85,Form("[%1.3f,%1.3f]",eta1,eta2));
   
-  c1->SaveAs(Form("pdf/L2Res/vsPt/L2Res_vsPt_%04d_%04d_%s_%s.pdf",
-		  int(1000.*eta1),int(1000.*eta2),cr,"c1"));
+  c1->SaveAs(Form("pdf/L2Res/%s/vsPt/L2Res_vsPt_%04d_%04d_%s%s_%s.pdf",
+		  cr,int(1000.*eta1),int(1000.*eta2),cr,cc,"c1"));
 
   
   // Step 2. Project profile to histogram, normalize by |eta|<1.3
-  TH1D *h2 = tdrHist("h2","Rel. JES",0.65,1.85);
-  TCanvas *c2 = tdrCanvas("c2",h2,8,33,kSquare);
+  TH1D *h2 = tdrHist(Form("h2_%s",cr),"Rel. JES",0.65,1.85);
+  TCanvas *c2 = tdrCanvas(Form("c2_%s",cr),h2,8,33,kSquare);
   c2->SetLogx();
 
   l->DrawLine(15,1,3500,1);
@@ -421,12 +577,12 @@ void L2Res() {
 
   tex->DrawLatex(0.50,0.85,Form("[%1.3f,%1.3f]",eta1,eta2));
 
-  c2->SaveAs(Form("pdf/L2Res/vsPt/L2Res_vsPt_%04d_%04d_%s_%s.pdf",
-		  int(1000.*eta1),int(1000*eta2),cr,"c2"));
+  c2->SaveAs(Form("pdf/L2Res/%s/vsPt/L2Res_vsPt_%04d_%04d_%s%s_%s.pdf",
+		  cr,int(1000.*eta1),int(1000*eta2),cr,cc,"c2"));
 
   // Step 3. Draw data/MC ratio before normalization
-  TH1D *h3 = tdrHist("h3","JES Data/MC",0.5,1.3);//0.80,1.15);
-  TCanvas *c3 = tdrCanvas("c3",h3,8,33,kSquare);
+  TH1D *h3 = tdrHist(Form("h3_%s",cr),"JES Data/MC",0.5,1.3);//0.80,1.15);
+  TCanvas *c3 = tdrCanvas(Form("c3_%s",cr),h3,8,33,kSquare);
   c3->SetLogx();
 
   l->DrawLine(15,1,3500,1);
@@ -442,12 +598,12 @@ void L2Res() {
 
   tex->DrawLatex(0.50,0.85,Form("[%1.3f,%1.3f]",eta1,eta2));
   
-  c3->SaveAs(Form("pdf/L2Res/vsPt/L2Res_vsPt_%04d_%04d_%s_%s.pdf",
-		  int(1000.*eta1),int(1000.*eta2),cr,"c3"));
+  c3->SaveAs(Form("pdf/L2Res/%s/vsPt/L2Res_vsPt_%04d_%04d_%s%s_%s.pdf",
+		  cr,int(1000.*eta1),int(1000.*eta2),cr,cc,"c3"));
 
   // Step 4. Draw data/MC ratio of normalized JES
-  TH1D *h4 = tdrHist("h4","Rel. JES Data/MC",0.50,1.35);
-  TCanvas *c4 = tdrCanvas("c4",h4,8,33,kSquare);
+  TH1D *h4 = tdrHist(Form("h4_%s",cr),"Rel. JES Data/MC",0.50,1.35);
+  TCanvas *c4 = tdrCanvas(Form("c4_%s",cr),h4,8,33,kSquare);
   c4->SetLogx();
 
   l->DrawLine(15.,1,3500.,1);
@@ -463,14 +619,14 @@ void L2Res() {
 
   tex->DrawLatex(0.50,0.85,Form("[%1.3f,%1.3f]",eta1,eta2));
 
-  c4->SaveAs(Form("pdf/L2Res/vsPt/L2Res_vsPt_%04d_%04d_%s_%s.pdf",
-		  int(1000.*eta1),int(1000.*eta2),cr,"c4"));
+  c4->SaveAs(Form("pdf/L2Res/%s/vsPt/L2Res_vsPt_%04d_%04d_%s%s_%s.pdf",
+		  cr,int(1000.*eta1),int(1000.*eta2),cr,cc,"c4"));
 
 
   // Step 5. Curate data and do final fit of response
   // Options: flat, log-linear, quadratic, +1/x
-  TH1D *h5 = tdrHist("h5","Rel. JES Data/MC",0.50,1.35);
-  TCanvas *c5 = tdrCanvas("c5",h5,8,33,kSquare);
+  TH1D *h5 = tdrHist(Form("h5_%s",cr),"Rel. JES Data/MC",0.50,1.35);
+  TCanvas *c5 = tdrCanvas(Form("c5_%s",cr),h5,8,33,kSquare);
   c5->SetLogx();
 
   double eta = 0.5*(eta1+eta2);
@@ -496,13 +652,13 @@ void L2Res() {
   hprf = drawCleaned(hprn,eta,"P","Pz",kFullDiamond,kOrange+2);
   hdrf = drawCleaned(hdrn,eta,"D","Pz",kFullDiamond,kBlack);
 
-  TMultiGraph *mg = new TMultiGraph();
+  TMultiGraph *mg = new TMultiGraph(Form("mg_%s",cr),"mg");
   if (fitZ) mg->Add(cleanGraph(new TGraphErrors(hzrf)),"SAMEP");
   if (fitG) mg->Add(cleanGraph(new TGraphErrors(hgrf)),"SAMEP");
   if (fitD) mg->Add(cleanGraph(new TGraphErrors(hdrf)),"SAMEP");
   if (fitP) mg->Add(cleanGraph(new TGraphErrors(hprf)),"SAMEP");
   if (fitJ) mg->Add(cleanGraph(new TGraphErrors(hjrf)),"SAMEP");
-  mg->Draw();//"SAME Pz");
+  mg->Draw("Pz");//"SAME Pz");
 
   TF1 *f0 = new TF1(Form("f0_%d_%s",ieta,cr),"[0]",15.,3500.);
   TF1 *f1 = new TF1(Form("f1_%d_%s",ieta,cr),
@@ -514,7 +670,10 @@ void L2Res() {
   TF1 *f4 = new TF1(Form("f4_%d_%s",ieta,cr),
 		    "[0]+[1]*log10(0.01*x)+[2]*pow(log10(0.01*x),2)"
 		    "+[3]/(x/10.)",15.,3500.);
-
+  // Reference JES
+  TF1 *fref = new TF1(Form("fref_%d_%s",ieta,cr),
+		      "[0]+[1]*log10(0.01*x)+[2]/(x/10.)",15.,3500.);
+  
   // Sequential fitting with more and more parameters
   // Extra parameters are of size of expected prior uncertainty
   f0->SetParameter(0,1.000);
@@ -531,8 +690,28 @@ void L2Res() {
   f4->SetParLimits(2,-0.5,0.5); // offset no more than 50% at 10 GeV
   mg->Fit(f4,"QRN");
 
+  fref->SetParameters(f1->GetParameter(0),f1->GetParameter(1),+0.02);
+  fref->SetParLimits(2,-0.5,0.5); // offset no more than 50% at 10 GeV
+  if (eta>2.964 && flattenHF) {
+    fref->FixParameter(1,0.);
+    fref->FixParameter(2,0.);
+  }
+  mg->Fit(fref,"QRN");
+
   // Bonus: constrain barrel f2 fit to flat if not significant
   if (eta<1.3 && false) {
+    if (fabs(f2->GetParameter(1))<2.*f2->GetParError(1)) {
+      f2->FixParameter(1,0.);
+      mg->Fit(f2,"QRN");
+
+      if (fabs(f2->GetParameter(2))<2.*f2->GetParError(2)) {
+	f2->FixParameter(2,0.);
+	mg->Fit(f2,"QRN");
+      }
+    }
+  }
+  // Bonus2: constrain HF |eta|>4.013 to constant
+  if (eta>4 && false) {
     if (fabs(f2->GetParameter(1))<2.*f2->GetParError(1)) {
       f2->FixParameter(1,0.);
       mg->Fit(f2,"QRN");
@@ -547,24 +726,31 @@ void L2Res() {
   // Keep track of log-lin+1/x for text files
   vf1[ieta-1] = f2;
   
-  f0->Draw("SAME"); f0->SetLineColor(kMagenta+2); f0->SetLineStyle(kDashed);
+  f0->Draw("SAME"); f0->SetLineColor(kMagenta+2); //f0->SetLineStyle(kDashed);
   f1->Draw("SAME"); f1->SetLineColor(kBlue);
   f2->Draw("SAME"); f2->SetLineColor(kGreen+1);
   f3->Draw("SAME"); f3->SetLineColor(kOrange+2);
   f4->Draw("SAME"); f4->SetLineColor(kRed);
 
+  fref->Draw("SAME"); fref->SetLineColor(kBlack);
+
   tex->DrawLatex(0.50,0.85,Form("[%1.3f,%1.3f]",eta1,eta2));
   
-  c5->SaveAs(Form("pdf/L2Res/vsPt/L2Res_vsPt_%04d_%04d_%s_%s.pdf",
-		  int(1000.*eta1),int(1000.*eta2),cr,"c5"));
+  c5->SaveAs(Form("pdf/L2Res/%s/vsPt/L2Res_vsPt_%04d_%04d_%s%s_%s.pdf",
+		  cr,int(1000.*eta1),int(1000.*eta2),cr,cc,"c5"));
   
 
   // Step 6. Also draw final results into a giant canvas
   cx->cd(ieta);
-  TH1D *h6 = tdrHist("h6","Rel. JES Data/MC",0.65,1.35);
-  if      (eta<1.653) h6->GetYaxis()->SetRangeUser(0.8,1.2);
-  else if (eta<2.964) h6->GetYaxis()->SetRangeUser(0.7,1.3);
-  else if (eta<5.191) h6->GetYaxis()->SetRangeUser(0.3,1.3);
+  double eps = 1e-4;
+  TH1D *h6 = tdrHist(Form("h6_%s",cr),"Rel. JES Data/MC",0.65+eps,1.35-eps);
+  //if      (eta<1.653) h6->GetYaxis()->SetRangeUser(0.8+eps,1.2-eps);
+  //else if (eta<2.964) h6->GetYaxis()->SetRangeUser(0.7+eps,1.3-eps);
+  //else if (eta<5.191) h6->GetYaxis()->SetRangeUser(0.3+eps,1.3-eps);
+  if      (eta<1.466) h6->GetYaxis()->SetRangeUser(0.8+eps,1.2-eps);
+  else if (eta<2.650) h6->GetYaxis()->SetRangeUser(0.65+eps,1.3-eps);
+  else if (eta<4.013) h6->GetYaxis()->SetRangeUser(0.55+eps,1.35-eps);
+  else if (eta<5.191) h6->GetYaxis()->SetRangeUser(0.30+eps,1.35-eps);
   h6->Draw();
   gPad->SetLogx();
 
@@ -580,17 +766,30 @@ void L2Res() {
   tdrDraw(hprn,"Pz",kOpenDiamond,kOrange-9);
   tdrDraw(hjrn,"Pz",kOpenDiamond,kGreen-9);
 
-  //f0->Draw("SAME");
+  if (eta>2.964 && flattenHF) {
+    f0->Draw("SAME");
+  }
   f1->Draw("SAME");
-  //f2->Draw("SAME");
+  f2->Draw("SAME");
   f3->Draw("SAME");
   f4->Draw("SAME");
-  f2->Draw("SAME");
-  
-  mg->Draw();
+  //f2->Draw("SAME");
 
-  if (ieta==1 || ieta==nxy) leg1->Draw("SAME");
+  fref->Draw("SAME");
+  
+  mg->Draw("Pz");//"SAME Pz");
+
   tex->DrawLatex(0.50,0.85,Form("[%1.3f,%1.3f]",eta1,eta2));
+  //if (ieta==1) leg1->Draw("SAME");
+  //if (ieta==nxy) { cx->cd(ieta+1); leg1->Draw("SAME"); }
+  if (ieta==nxy) {
+    cx->cd(ieta+1);
+    leg1->SetTextSize(2.5*0.045);
+    leg1->SetY1NDC(leg1->GetY2NDC()-2.5*fabs(leg1->GetY2NDC()-leg1->GetY1NDC()));
+    leg1->Draw("SAME");
+    //leg1->SetTextSize(0.045);
+    //leg1->SetY2(leg1->GetY1()-0.5*fabs(leg1->GetY1()-leg1->GetY2()));
+  }
 
 
   // Store results with uncertainty to output histogram
@@ -601,19 +800,28 @@ void L2Res() {
     double jes4 = f4->Eval(pt); //quadlog+1/x
     double jes3 = f3->Eval(pt); //quadlog
     double jes2 = f2->Eval(pt); //loglin+1/x
-    double jes1 = f2->Eval(pt); //loglin
+    double jes1 = f1->Eval(pt); //loglin
+    double jes0 = f0->Eval(pt); //const
+    double jesref = fref->Eval(pt); //loglin+1/x, loglin or const (vs eta)
     //double jes = jes4; // quadlog+1/x
-    double jes = jes2; // loglin+1/x
+    //double jes = jes2; // loglin+1/x
+    double jes = jesref; // loglin+1/x
     double ejes = sqrt(pow(jes1-jes,2) + pow(jes2-jes,2) + 
 		       pow(jes3-jes,2) + pow(jes4-jes,2));
+    if (eta>2.964 && flattenHF) {
+      ejes = sqrt(pow(jes0-jes,2) + pow(jes1-jes,2));
+    }
     if (emax1 < 13600.*0.5) {
       h2jes->SetBinContent(ieta, ipt, jes);
       h2jes->SetBinError(ieta, ipt, ejes); 
     }
   }
-  hmin->SetBinContent(ieta, f2->Eval(10.));
-  hmax->SetBinContent(ieta, f2->Eval(6800./cosh(eta1)));
-
+  //hmin->SetBinContent(ieta, f2->Eval(10.));
+  //hmax->SetBinContent(ieta, f2->Eval(6800./cosh(eta1)));
+  hmin->SetBinContent(ieta, fref->Eval(10.));
+  hmax->SetBinContent(ieta, fref->Eval(6800./cosh(eta1)));
+  hchi2->SetBinContent(ieta, fref->GetChisquare() / max(fref->GetNDF(),1));
+  hchi2->SetBinError(ieta, 1. / sqrt(max(fref->GetNDF(),1)));
   
   // Rename to avoid loop leakage and errors
   h1->SetName(Form("h1pt_%s_%d",cr,ieta));
@@ -637,14 +845,14 @@ void L2Res() {
 
   } // for ieta
 
-  cx->SaveAs(Form("pdf/L2res/L2Res_AllEta_%s.pdf",cr));
+  cx->SaveAs(Form("pdf/L2res/L2Res_AllEta_%s%s.pdf",cr,cc));
   cx->SetName(Form("cx_%s",cr));
 
   // Step 7. Draw summary of final results in a single plot
-  TH1D *hy = tdrHist("hy","JES",0.6,1.35,"|#eta|",0,5.2);
-  lumi_136TeV = Form("%s - %s",cr,cm);
+  TH1D *hy = tdrHist(Form("hy_%s",cr),"JES",0.5,1.45,"|#eta|",0,5.2);
+  lumi_136TeV = Form("%s - %s%s",cr,cm,cl);
   extraText = "Private";
-  TCanvas *cy = tdrCanvas("cy",hy,8,33,kSquare);
+  TCanvas *cy = tdrCanvas(Form("cy_%s",cr),hy,8,33,kSquare);
 
   l->SetLineStyle(kDotted);
   l->DrawLine(1.3,0.6,1.3,1.1);
@@ -678,11 +886,32 @@ void L2Res() {
   legy->AddEntry(hy1000,"p_{T} = 1000 GeV","PLE");
   legy->AddEntry(hy3000,"p_{T} = 3000 GeV","PLE");
   
-  cy->SaveAs(Form("pdf/L2res/L2Res_Summary_%s.pdf",cr));
+  cy->SaveAs(Form("pdf/L2res/L2Res_Summary_%s%s.pdf",cr,cc));
   cy->SetName(Form("cy_%s",cr));
 
-  // Step 8. Print out text files
-  ofstream ftxt(Form("textfiles/Summer23_L2ResClosure/Summer23Prompt23_Run%s_V1_DATA_L2Residual_AK4PFPuppi.txt",cr));
+  // Step 8. Print out chi2/NDF vs eta
+  TH1D *hc = tdrHist(Form("hc_%s",cr),"#chi^{2} / NDF",0.,10.,"|#eta|",0,5.2);
+  lumi_136TeV = Form("%s - %s%s",cr,cm,cl);
+  extraText = "Private";
+  TCanvas *cchi2 = tdrCanvas(Form("cchi2_%s",cr),hc,8,33,kSquare);
+
+  l->SetLineColor(kGray+2);
+  l->SetLineStyle(kDotted);
+  l->DrawLine(1.3,0.,1.3,10);
+  l->DrawLine(2.5,0.,2.5,10);
+  l->DrawLine(2.964,0.,2.964,10);
+  l->SetLineStyle(kDashed);
+  l->DrawLine(0,1,5.2,1);
+
+  tdrDraw(hchi2,"HE",kNone,kBlack,kSolid,-1,kNone,0);
+
+  cchi2->SaveAs(Form("pdf/L2res/L2Res_Chi2_%s%s.pdf",cr,cc));
+  cchi2->SetName(Form("cc_%s",cr));
+  
+  
+  // Step 9. Print out text files
+  //ofstream ftxt(Form("textfiles/Summer23_L2ResClosure/Summer23Prompt23_Run%s_V1_DATA_L2Residual_AK4PFPuppi.txt",cr));
+  ofstream ftxt(Form("textfiles/Prompt24/Prompt24_Run%s_V1M_DATA_L2Residual_AK4PFPuppi.txt",cr));
   ftxt << Form("{ 1 JetEta 1 JetPt 1./(%s) Correction L2Relative}",
 	       vf1[0]->GetExpFormula().Data()) << endl;
   for (int ieta = p2d->GetNbinsX(); ieta != 0; --ieta) {
@@ -719,10 +948,10 @@ void L2Res() {
 
     
   // Step 1. Slice pT, draw response vs eta. No other manipulation yet
-  TH1D *h1 = tdrHist("h1","JES",0.3,1.5,"|#eta|",0,5.2);
-  lumi_136TeV = Form("%s - %s",cr,cm);
+  TH1D *h1 = tdrHist(Form("h1p_%s",cr),"JES",0.3,1.5,"|#eta|",0,5.2);
+  lumi_136TeV = Form("%s - %s%s",cr,cm,cl);
   extraText = "Private";
-  TCanvas *c1 = tdrCanvas("c1",h1,8,33,kSquare);
+  TCanvas *c1 = tdrCanvas(Form("c1p_%s",cr),h1,8,33,kSquare);
 
   TLine *l = new TLine();
   l->SetLineStyle(kDashed);
@@ -740,19 +969,19 @@ void L2Res() {
   pdm = drawEta(p2dm,ptmin,ptmax,"HISTE",kNone,kBlack);
 
   TProfile *pz, *pg, *pd, *pj, *pp;
-  pz = drawEta(p2z,ptmin,ptmax,"Pz",kFullSquare,kRed,"Z");
-  pg = drawEta(p2g,ptmin,ptmax,"Pz",kFullCircle,kBlue,"#gamma");
-  pj = drawEta(p2j,ptmin,ptmax,"Pz",kFullDiamond,kGreen+2,"Tag");
-  pp = drawEta(p2p,ptmin,ptmax,"Pz",kFullDiamond,kOrange+2,"Probe");
-  pd = drawEta(p2d,ptmin,ptmax,"Pz",kOpenDiamond,kBlack,"Dijet");
+  pz = drawEta(p2z,ptmin,ptmax,"Pz",kFullSquare,kRed,"Z",p2zx);
+  pg = drawEta(p2g,ptmin,ptmax,"Pz",kFullCircle,kBlue,"#gamma",p2gx);
+  pj = drawEta(p2j,ptmin,ptmax,"Pz",kFullDiamond,kGreen+2,"Tag",p2jx);
+  pp = drawEta(p2p,ptmin,ptmax,"Pz",kFullDiamond,kOrange+2,"Probe",p2px);
+  pd = drawEta(p2d,ptmin,ptmax,"Pz",kOpenDiamond,kBlack,"Dijet",p2dx);
 
-  c1->SaveAs(Form("pdf/L2Res/vsEta/L2Res_vsEta_%04d_%04d_%s_%s.pdf",
-		  int(pt1),int(pt2),cr,"c1"));
+  c1->SaveAs(Form("pdf/L2Res/%s/vsEta/L2Res_vsEta_%04d_%04d_%s%s_%s.pdf",
+		  cr,int(pt1),int(pt2),cr,cc,"c1"));
     
 
   // Step 2. Project profile to histogram, normalize by |eta|<1.3
-  TH1D *h2 = tdrHist("h2","Rel. JES",0.3,1.5,"|#eta|",0,5.2);
-  TCanvas *c2 = tdrCanvas("c2",h2,8,33,kSquare);
+  TH1D *h2 = tdrHist(Form("h2p_%s",cr),"Rel. JES",0.3,1.5,"|#eta|",0,5.2);
+  TCanvas *c2 = tdrCanvas(Form("c2p_%s",cr),h2,8,33,kSquare);
 
   l->DrawLine(0,1,5.2,1);
 
@@ -772,13 +1001,13 @@ void L2Res() {
   hp = drawNormEta(pp,"Pz",kFullDiamond,kOrange+2);
   hd = drawNormEta(pd,"Pz",kOpenDiamond,kBlack);
 
-  c2->SaveAs(Form("pdf/L2Res/vsEta/L2Res_vsEta_%04d_%04d_%s_%s.pdf",
-		  int(pt1),int(pt2),cr,"c2"));
+  c2->SaveAs(Form("pdf/L2Res/%s/vsEta/L2Res_vsEta_%04d_%04d_%s%s_%s.pdf",
+		  cr,int(pt1),int(pt2),cr,cc,"c2"));
     
   
   // Step 3. Draw data/MC ratio before normalization
-  TH1D *h3 = tdrHist("h3","JES Data/MC",0.3,1.5,"|#eta|",0,5.2);
-  TCanvas *c3 = tdrCanvas("c3",h3,8,33,kSquare);
+  TH1D *h3 = tdrHist(Form("h3p_%s",cr),"JES Data/MC",0.3,1.5,"|#eta|",0,5.2);
+  TCanvas *c3 = tdrCanvas(Form("c3p_%s",cr),h3,8,33,kSquare);
 
   l->DrawLine(0,1,5.2,1);
 
@@ -791,13 +1020,14 @@ void L2Res() {
   hpr = drawRatio(pp->ProjectionX(),ppm,"Pz",kFullDiamond,kOrange+2);
   hdr = drawRatio(pd->ProjectionX(),pdm,"Pz",kOpenDiamond,kBlack);
 
-  c3->SaveAs(Form("pdf/L2Res/vsEta/L2Res_vsEta_%04d_%04d_%s_%s.pdf",
-		  int(pt1),int(pt2),cr,"c3"));
+  c3->SaveAs(Form("pdf/L2Res/%s/vsEta/L2Res_vsEta_%04d_%04d_%s%s_%s.pdf",
+		  cr,int(pt1),int(pt2),cr,cc,"c3"));
   
   
   // Step 4. Draw data/MC ratio of normalized JES
-  TH1D *h4 = tdrHist("h4","Rel. JES Data/MC",0.3,1.5,"|#eta|",0,5.2);
-  TCanvas *c4 = tdrCanvas("c4",h4,8,33,kSquare);
+  TH1D *h4 = tdrHist(Form("h4p_%s",cr),"Rel. JES Data/MC",
+		     0.3,1.5,"|#eta|",0,5.2);
+  TCanvas *c4 = tdrCanvas(Form("c4p_%s",cr),h4,8,33,kSquare);
 
   l->DrawLine(0,1,5.2,1);
 
@@ -810,8 +1040,8 @@ void L2Res() {
   hprn = drawRatio(hp,hpm,"Pz",kFullDiamond,kOrange+2);
   hdrn = drawRatio(hd,hdm,"Pz",kOpenDiamond,kBlack);
 
-  c4->SaveAs(Form("pdf/L2Res/vsEta/L2Res_vsEta_%04d_%04d_%s_%s.pdf",
-		  int(pt1),int(pt2),cr,"c4"));
+  c4->SaveAs(Form("pdf/L2Res/%s/vsEta/L2Res_vsEta_%04d_%04d_%s%s_%s.pdf",
+		  cr,int(pt1),int(pt2),cr,cc,"c4"));
 
   // Rename to avoid loop leakage and errors
   h1->SetName(Form("h1_%s_%d",cr,ipt));
