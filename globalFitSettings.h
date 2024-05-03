@@ -9,8 +9,8 @@ using std::string;
 using std::map;
 
 // Global minimum (stat.) uncertainty for input data
-double globalErrMin = 0.003;//0.002559; // chi2/NDF=101.0/101
-double scaleJZ = 0.98;
+double globalErrMin = 0.005;//0.003;//0.002559; // chi2/NDF=101.0/101
+double scaleJZ = 0.98;  // default 0.98 for 2022-23
 
 // Input data
 struct fitData {
@@ -45,12 +45,12 @@ bool _gf_penalizeFitPars = true;
 // Downweight PF compositin data to get broad features
 double _gf_fitPFcomp_minErr = 0.001;
 // Do PFcomp, Z+jet HDM fit (will still plot these, if enabled)
-bool _gf_fitPFcomp = false;
+bool _gf_fitPFcomp = false;//true;//false;
 bool _gf_fitZjetHDM = true;//false;
 // Permit baseline shift for JES with L2L3Res inputs. Needed for PFcomp fit
 bool _gf_useJESref = false;//true;//false;
 // Alternatively, undo JES completely to show pre-closure plots
-bool _gf_undoJESref = false;//true;
+bool _gf_undoJESref = true;
 
 // Listing of all available 'datasets'
 // {name, type, name2}
@@ -130,14 +130,15 @@ const array<string,29> _gf_shapes_whitelist = {
   "off", // Summer23
   //"qie11"
   //"x1p5",
-  "x1v4", // Summer23 variant
-  "x1p5v4", // Summer23 high pT? just tad steeper than x1
+  // "x1v4", // Summer23 variant
+  // "x1p5v4", // Summer23 high pT? just tad steeper than x1
   //"x2v4", // Summer23 high pT? bit more conservative extrapolation?
   //"x2p5", // Summer23 high pT? pretty good
   //"x3", // Summer23 hight pT? Slightly too sharp?
   //"x4", // test TeV scale
-  //"hbtime", // test adding for Summer23; did nothing really on top of x2p5
+  "hbtime", // test adding for Summer23; did nothing really on top of x2p5
   "hbsipm" // 22Sep2023 V3, not 19Dec2023
+  "hhblue103"
 };
 
 // Listing one-sided (positive-definite) sources
@@ -147,8 +148,8 @@ const array<string,npos> _gf_posdef =
    "tv3n1","tv300pn",
    //"hhp3",
    //"hhpfc",
-   "hhred103","hhred100","hhred097", "hhblue103","hhblue100","hhblue097",
-   /*"x2",*/ "hbtime"/*, "hbsipm"*/
+   /*"hhred103","hhred100","hhred097", "hhblue103","hhblue100","hhblue097",*/
+   /*"x2",*/ /*"hbtime"*/ /*, "hbsipm"*/
   };
 
 // Listing source limits
@@ -290,13 +291,14 @@ const array<array<string,3>, nshp> _gf_shapes = {{
     {"hhp18","nhf","(7.178+log(x)*(-6.88+log(x)*(2.246+log(x)*(-0.1991+log(x)*(-0.03391+log(x)*(0.007537+log(x)*-0.0003856))))))*6"},
     // custom variant
     */
-    /*
+
+    // Add back for Prompt24
     {"hhblue103","Rjet","-52.44+log(max(55.,x))*(36.13+log(max(55.,x))*(-7.941+log(max(55.,x))*(0.2816+log(max(55.,x))*(0.116+log(max(55.,x))*(-0.01448+log(max(55.,x))*0.0004894)))))"},
     {"hhblue103","chf","6.354+log(max(55.,x))*(-3.394+log(max(55.,x))*(0.3485+log(max(55.,x))*(0.06261+log(max(55.,x))*(-0.004791+log(max(55.,x))*(-0.001639+log(max(55.,x))*0.0001499)))))"},
     {"hhblue103","nef","-0.5177+log(max(55.,x))*(0.4554+log(max(55.,x))*(-0.07566+log(max(55.,x))*(-0.008602+log(max(55.,x))*(0.001275+log(max(55.,x))*(0.0002701+log(max(55.,x))*-3.214e-05)))))"},
     {"hhblue103","nhf","-5.249+log(max(55.,x))*(2.559+log(max(55.,x))*(-0.1941+log(max(55.,x))*(-0.05668+log(max(55.,x))*(0.002404+log(max(55.,x))*(0.001512+log(max(55.,x))*-0.0001229)))))"},
     // "hhblue103" checksum: b4332baa28b900ace3c09361eee1850e
-    */
+
   }};
 
 #endif

@@ -146,7 +146,7 @@ TGraphErrors *tools::diffGraphs(TGraphErrors *g1, TGraphErrors *g2,
   } // for i, j
 
   return g;
-} // ratioGraphs
+} // diffGraphs
 TGraphErrors *tools::ratioGraphs(TGraphErrors *g1, TGraphErrors *g2,
 				 double erry) {
 
@@ -368,7 +368,8 @@ void tools::Hadd(TH1 *h1, TH1 *h2, double ptmax, bool syserr) {
 
 
 // Generic error calculation using differentials
-void tools::drawErrBand(TF1 *f1, TFitResultPtr &fp, double xmin, double xmax) {
+void tools::drawErrBand(TF1 *f1, TFitResultPtr &fp, double xmin, double xmax,
+			double scale) {
 
   TMatrixDSym emat = fp->GetCovarianceMatrix();
 
@@ -404,6 +405,8 @@ void tools::drawErrBand(TF1 *f1, TFitResultPtr &fp, double xmin, double xmax) {
     } //  for j
     
     double err = sqrt(e2);
+    if (scale <0) err *= sqrt(f1->GetChisquare()/f1->GetNDF());
+    if (scale!=0) err *= fabs(scale);
     ge->SetPoint(i, x, y);
     ge->SetPointError(i, 0, err);
     ge_up->SetPoint(i, x, y+err);

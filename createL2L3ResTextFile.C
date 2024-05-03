@@ -63,13 +63,21 @@ void createL2L3ResTextFile() {
   c1->SaveAs("pdf/createL2L3ResTextFile_Summer22_reV3_Run22CDE-22Sep2023_22FG-Prompt_23CD-Prompt_Run3-Combo.pdf");
   */
 
+  /*
   createL2L3ResTextFiles("Run23C123-Summer23",true);
   createL2L3ResTextFiles("Run23C4-Summer23",true);
   createL2L3ResTextFiles("Run23D-Summer23",true);
   c1->Update();
   //c1->SaveAs("pdf/createL2L3ResTextFile_Summer23_V1.pdf");
   c1->SaveAs("pdf/createL2L3ResTextFile_Summer23_V2.pdf");
+  */
 
+  //createL2L3ResTextFiles("Run23C123-Summer23",true);
+  //createL2L3ResTextFiles("Run23D-Summer23",true);
+  createL2L3ResTextFiles("Run24BC-Prompt",true);
+  c1->Update();
+  c1->SaveAs("pdf/createL2L3ResTextFile_Prompt24.pdf");
+  //c1->SaveAs("pdf/createL2L3ResTextFile_Prompt24_V1M_Summer23_V2.pdf");
   
   /*
   // Produce Run2 year-averages for reprocess.C reference (jec, jecold)
@@ -142,6 +150,9 @@ void createL2L3ResTextFiles(string set, bool leg2) {
   else if (set=="Run23C4D-Summer23") {
     f = new TFile("rootfiles/jecdataRun23C4D.root","READ"); isRun3=true;
   }
+  else if (set=="Run24BC-Prompt") {
+    f = new TFile("rootfiles/jecdataRun24BC.root","READ"); isRun3=true;
+  }
   else if (set=="Run3-Combo") {
     // use input to the global fit for pre-fit average JEC
     f = new TFile("rootfiles/jecdataRun3Data.root","READ"); isRun3=true;
@@ -185,6 +196,7 @@ void createL2L3ResTextFiles(string set, bool leg2) {
   //color["Run23C4D-Prompt"] = kMagenta+2;
   color["Run23C4-Prompt"] = kBlue;
   color["Run23D-Prompt"] = kMagenta;
+  color["Run24BC-Prompt"] = kGreen+2;
   color["Run3-Combo"] = kYellow+2;
 
   color["Run23C123-Summer23"] = kOrange+1;
@@ -281,6 +293,10 @@ void createL2L3ResTextFiles(string set, bool leg2) {
   if (set=="Run23D-Summer23") {
     sin = "textFiles/Summer23_L2ResOnly/Summer23Prompt23_Run2023D_V1_DATA_L2Residual_AK4PFPuppi.txt"; isNewL2Res = true;
     sout = "textFiles/Summer23_L2ResOnly/Summer23Prompt23_Run2023D_V2_DATA_L2L3Residual_AK4PFPuppi.txt";
+  }
+  if (set=="Run24BC-Prompt") {
+    sin = "textFiles/Prompt24/Prompt24_Run2024BC_V1M_DATA_L2Residual_AK4PFPuppi.txt"; isNewL2Res = true;
+    sout = "textFiles/Prompt24/Prompt24_Run2024BC_V1M_DATA_L2L3Residual_AK4PFPuppi.txt";
   }
   
   if (set=="Run3-Combo") {

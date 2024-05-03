@@ -45,8 +45,8 @@ string sPSWgtZ = ""; // use 'PSWeight[X]/' variant of Z+jet MC (def:"") [PSWeigh
 //"L1L2Res": MCTruth + L2Res applied
 //"L1L2L3Res": MCTruth + L2L3Res applied; reference JES central values set to 1.0 (affects plotting as well)
 //string CorLevel = "L1L2";    // Rarely used
-string CorLevel = "L1L2Res"; // Input to (L2)L3Res
-//string CorLevel = "L1L2L3Res"; // Closure test for L2L3Res
+//string CorLevel = "L1L2Res"; // Input to (L2)L3Res
+string CorLevel = "L1L2L3Res"; // Closure test for L2L3Res
 
 
 // Settings for cleaned up global fit
@@ -54,13 +54,17 @@ string CorLevel = "L1L2Res"; // Input to (L2)L3Res
 
 // Clean L3Res: Z [30,400], photon [230,1200], multijet [800,1800], PF [15,2450]
 
+// Override settings below to use full range (latest true applies)
+const bool useFullRange(false);
+const bool usePrompt24Range(true);
+
 // jet+Z
-double fjzptmin(20);//15);
-double fjzptmax(70);//700.);
+double fjzptmin(20);//15);//20);//15);
+double fjzptmax(70);//700);//70);//700.);
 
 // Z+jet
-double fzptmin(70);//15);//30);//15.);//30);//(15.);//40.);   // Z+jet pTmin
-double fzptmax(400);//700.);//1300.);  // Z+jet pTmax
+double fzptmin(70);//15);//70);//15);//30);//15.);//30);//(15.);//40.);   // Z+jet pTmin
+double fzptmax(400);//700);//400);//700.);//1300.);  // Z+jet pTmax
 //double fzmpfptmin(15); // Z+jet MPF pTmin
 //double fzmpfptmax(700.);//1300);// Z+jet MPF pTmax
 //double fzbalptmin(15); // Z+jet DB pTmin
@@ -68,7 +72,7 @@ double fzptmax(400);//700.);//1300.);  // Z+jet pTmax
 //double fzbptmax(300.); // Z+b pTmax
 
 // Photon+jet, pT bins: 700, 850, 1000, 1200, 1450, 1750, 2100, 2500, 3000
-double fgptmin(175);//110);//60);//35);//60);//175);//110);//35);//60);//35);//110);//230);//30.);//110.);//50.);
+double fgptmin(175);//35);//175);//110);//60);//35);//60);//175);//110);//35);//60);//35);//110);//230);//30.);//110.);//50.);
 double fgptmax(1000.);//2100.);//1200.);//1450.);//1750.); // extend 1750 when can (v22 up to 3000)
 
 
@@ -79,8 +83,8 @@ double fgptmax(1000.);//2100.);//1200.);//1450.);//1750.); // extend 1750 when c
 
 // Multijet, pT bins (800-2500 GeV for V1)
 bool rebinMultijet = true;
-double fmjptmin(49);//97);//196.);//800);//100.);//700);//1000.);//500);//196);   // Multijet pTmin
-double fmjptmax(2500.);//1800.);//2400.);//2785.);//3500.);//2000.);//2785.); // Multijet pTmax
+double fmjptmin(49);//30);//49);//97);//196.);//800);//100.);//700);//1000.);//500);//196);   // Multijet pTmin
+double fmjptmax(2500);//2787);//2500.);//1800.);//2400.);//2785.);//3500.);//2000.);//2785.); // Multijet pTmax
 
 // PF composition (incjet)
 double fijptmin(15);//50);//97);
@@ -106,7 +110,27 @@ void reprocess(string epoch="") {
   
   // Set TDR style to have correct graphical settings when storing graphs
   setTDRStyle();
- 
+
+  // override range settings to check full range
+  if (useFullRange) {
+    fjzptmin = 15; fjzptmax = 700;
+    fzptmin  = 15; fzptmax  = 700;
+    fgptmin =  35; fgptmax = 2100;
+    fmjptmin = 30; fmjptmax = 2000;//2787;
+    fijptmin = 15; fijptmax = 2800;//3103;
+  }
+  if (usePrompt24Range) {
+    //fjzptmin = 15; //fjzptmax = 300;
+    fjzptmin = 15; fjzptmax = 85;
+    //fzptmin  = 40; fzptmax  = 700;
+    fzptmin  = 85; fzptmax  = 400;
+    //fgptmin =  35; fgptmax = 1000;
+    fgptmin =  230; fgptmax = 1000;
+    //fmjptmin = 30; fmjptmax = 2787;
+    fmjptmin = 114; fmjptmax = 2000.;
+    fijptmin = 15; fijptmax = 3103;
+  }
+  
   TDirectory *curdir = gDirectory;
 
   const char *cep = epoch.c_str();
@@ -116,6 +140,11 @@ void reprocess(string epoch="") {
   // Z+jet                  //
   ////////////////////////////
 
+  map<string,const char*> mz;
+  mz["Run24B"] = "2024B";
+  mz["Run24C"] = "2024C";
+  mz["Run24BC"] = "2024BC";
+  
   TFile *fz(0), *fzjes(0);
   TH1D *hzjes(0);
   //const char *cdz = "../JERCProtoLab/Winter22Run3/L3Residual_Z";
@@ -142,17 +171,25 @@ void reprocess(string epoch="") {
   if (epoch=="Run23C123") {
     //fz = new TFile("rootfiles/jme_bplusZ_2023C123_Zmm_sync_v66.root","READ");
     //fz = new TFile("rootfiles/Summer23_noL2L3Res/jme_bplusZ_2023Cv123_Zmm_sync_v69.root","READ"); // Summer23
-    fz = new TFile("rootfiles/Summer23_L2ResOnly/jme_bplusZ_2023Cv123_Zmm_sync_v70.root","READ"); // Summer23 L2Res_V1
+    //fz = new TFile("rootfiles/Summer23_L2ResOnly/jme_bplusZ_2023Cv123_Zmm_sync_v70.root","READ"); // Summer23 L2Res_V1
+    fz = new TFile("rootfiles/Summer23_L2L3Res/jme_bplusZ_2023Cv123_Zmm_sync_v73smearoff.root","READ"); // Summer23 L2L3Res_V2
   }
   if (epoch=="Run23C4") {
     //fz = new TFile("rootfiles/jme_bplusZ_2023C4_Zmm_sync_v66.root","READ");
     //fz = new TFile("rootfiles/Summer23_noL2L3Res/jme_bplusZ_2023Cv4_Zmm_sync_v69.root","READ");
-    fz = new TFile("rootfiles/Summer23_L2ResOnly/jme_bplusZ_2023Cv4_Zmm_sync_v70.root","READ"); // Summer23 L2Res_V1
+    //fz = new TFile("rootfiles/Summer23_L2ResOnly/jme_bplusZ_2023Cv4_Zmm_sync_v70.root","READ"); // Summer23 L2Res_V1
+    fz = new TFile("rootfiles/Summer23_L2L3Res/jme_bplusZ_2023Cv4_Zmm_sync_v73smearoff.root","READ"); // Summer23 L2L3Res_V2
   }
   if (epoch=="Run23D") {
     //fz = new TFile("rootfiles/jme_bplusZ_2023D_Zmm_sync_v66.root","READ");
     //fz = new TFile("rootfiles/Summer23_noL2L3Res/jme_bplusZ_2023D_Zmm_sync_v69.root","READ");
-    fz = new TFile("rootfiles/Summer23_L2ResOnly/jme_bplusZ_2023D_Zmm_sync_v70.root","READ"); // Summer23 L2Res_V1
+    //fz = new TFile("rootfiles/Summer23_L2ResOnly/jme_bplusZ_2023D_Zmm_sync_v70.root","READ"); // Summer23 L2Res_V1
+    fz = new TFile("rootfiles/Summer23_L2L3Res/jme_bplusZ_2023D_Zmm_sync_v73smearoff.root","READ"); // Summer23 L2L3Res_V2
+  }
+  if (epoch=="Run24B" || epoch=="Run24C" || epoch=="Run24BC") {
+  //fz = new TFile(Form("rootfiles/Prompt2024/jme_bplusZ_%s_Zmm_sync_v78.root",
+    fz = new TFile(Form("rootfiles/Prompt2024/jme_bplusZ_%s_Zmm_sync_v78golden.root",
+			mz[epoch]),"READ");
   }
   if (epoch=="Run3") {
     //fz = new TFile(Form("%s/jme_bplusZ_Run3_Zmm_sync_v59.root",cdz58p1),"READ"); // Sami's combo
@@ -179,6 +216,7 @@ void reprocess(string epoch="") {
       //epoch=="Run23C" ||
       //epoch=="Run23C1" ||epoch=="Run23C2" || epoch=="Run23C3" ||
       epoch=="Run23C4" || epoch=="Run23D" || epoch=="Run23C4D" ||
+      epoch=="Run24B" || epoch=="Run24C" || epoch=="Run24BC" ||
       (epoch=="Run3" && false)
       ) {
     TH2D *hmz_dt2 = (TH2D*)fmz->Get(Form("data/%s/h_Zpt_mZ_alpha100",cr));
@@ -239,6 +277,9 @@ void reprocess(string epoch="") {
   mp["Run23C4"] = "2023Cv4";
   mp["Run23D"] = "2023D";
   mp["Run23C4D"] = "2023Cv4D";
+  mp["Run24B"] = "2024B";
+  mp["Run24C"] = "2024C";
+  mp["Run24BC"] = "2024BC";
   mp["Run3"] = "Run3";
   //TFile *fp = new TFile(Form("../gamjet/files/GamHistosRatio_%s_P8_v21.root",
   //TFile *fp = new TFile(Form("../gamjet/rootfiles/GamHistosRatio_%s_P8_v24.root",mp[epoch]),"READ");
@@ -257,7 +298,15 @@ void reprocess(string epoch="") {
     //fp = new TFile(Form("rootfiles/Summer23_noL2L3Res/GamHistosRatio_%s_P8_w2.root",mp[epoch]),"READ"); // Summer23 no QCD
     //fp = new TFile(Form("../gamjet/rootfiles/GamHistosRatio_%s_P8QCD_w4.root",mp[epoch]),"READ"); // Summer23 no QCD with L2Res
     //fp = new TFile(Form("rootfiles/Summer23_L2ResOnly/GamHistosRatio_%s_P8%s-noQCD_w4.root",mp[epoch],epoch=="Run23D" ? "BPix" : ""),"READ"); // Summer23 L2Res_V1 (noQCD)
-    fp = new TFile(Form("rootfiles/Summer23_L2ResOnly/GamHistosRatio_%s_P8%sQCD_w6.root",mp[epoch],epoch=="Run23D" ? "BPix" : ""),"READ"); // Summer23 L2Res_V1 (withQCD)
+    //fp = new TFile(Form("rootfiles/Summer23_L2ResOnly/GamHistosRatio_%s_P8%sQCD_w6.root",mp[epoch],epoch=="Run23D" ? "BPix" : ""),"READ"); // Summer23 L2Res_V1 (withQCD)
+    fp = new TFile(Form("rootfiles/Summer23_L2L3Res/GamHistosRatio_%s_P8%sQCD_w8.root",mp[epoch],epoch=="Run23D" ? "BPix" : ""),"READ"); // Summer23 L2L3Res_V2 (withQCD)
+  }
+  else if (epoch=="Run24B" || epoch=="Run24C" || epoch=="Run24BC") {
+    //fp = new TFile(Form("rootfiles/Prompt2024/GamHistosRatio_%s_P8BPixQCD_w12.root",mp[epoch]),"READ");
+    //fp = new TFile(Form("rootfiles/Prompt2024/GamHistosRatio_%s_P8BPixQCD_w13.root",mp[epoch]),"READ"); // DCSOnly JSON
+    //fp = new TFile(Form("rootfiles/Prompt2024/GamHistosRatio_%s_P8BPixQCD_w14.root",mp[epoch]),"READ"); // golden JSON
+    fp = new TFile(Form("rootfiles/Prompt2024/GamHistosRatio_%s_P8BPix-noQCD_w14.root",mp[epoch]),"READ"); // golden JSON
+    //fp = new TFile(Form("rootfiles/Prompt2024/GamHistosRatio_%s_P8BPix-noQCD_w12.root",mp[epoch]),"READ");
   }
   else {
     fp = new TFile(Form("../gamjet/rootfiles/GamHistosRatio_%s_P8QCD_v32.root",mp[epoch]),"READ"); // L2L3Res_V3
@@ -327,6 +376,9 @@ void reprocess(string epoch="") {
   //mmjd["Run23C4"] = "2023BCv123"; //19Dec patch
   mmjd["Run23D"] = "2023D";
   mmjd["Run23C4D"] = "2023Cv4D";
+  mmjd["Run24B"] = "2024B";
+  mmjd["Run24C"] = "2024C";
+  mmjd["Run24BC"] = "2024BC";
   mmjd["Run3"] = "Run3";
   map<string,const char*> mmjm;
   mmjm["Run22C"] = "Summer22MG";
@@ -338,20 +390,32 @@ void reprocess(string epoch="") {
   mmjm["Run22G"] = "Summer22EEMG";
   mmjm["Run22FG"] = "Summer22EEMG";
   mmjm["Run23BC123"] = "Summer22MG";
-  mmjm["Run23C123"] = "Summer23MG";//GBPix";//"Summer22MG";
-  mmjm["Run23C4"] = "Summer23MG";//BPix";//"Summer22MG";
-  mmjm["Run23D"] = "Summer23MGBPix";//"Summer22MG";
+  mmjm["Run23C123"] = "Summer23MG_Cv123";//GBPix";//"Summer22MG";
+  mmjm["Run23C4"] = "Summer23MG_Cv4";//BPix";//"Summer22MG";
+  mmjm["Run23D"] = "Summer23MGBPix_D";//"Summer22MG";
   mmjm["Run23C4D"] = "Summer23MGBPix";//22MG";
+  mmjm["Run24B"] = "Summer23MGBPix";
+  mmjm["Run24C"] = "Summer23MGBPix";
+  mmjm["Run24BC"] = "Summer23MGBPix";
   mmjm["Run3"] = "Summer22MG";
   //TFile *fmjd = new TFile(Form("../dijet/rootfiles/jmenano_data_cmb_%s_JME_v32.root",mmjd[epoch]),"READ"); // no L2L3Res (L2Res for 2022 only)
   //assert(fmjd && !fmjd->IsZombie());
   //TFile *fmjm = new TFile(Form("../dijet/rootfiles/jmenano_mc_out_%s_v32.root",mmjm[epoch]),"READ"); // no L2L3Res (L2Res for 2022 only)
 
+  TFile *fmjd(0), *fmjm(0);
+  if (TString(epoch.c_str()).Contains("Run24")) {
+    //fmjd = new TFile(Form("rootfiles/Prompt2024/v39_2024_Prompt_etabin_DCSOnly/jmenano_data_cmb_%s_v39_2024_Prompt_etabin_DCSOnly.root",mmjd[epoch]),"READ");
+    fmjd = new TFile(Form("rootfiles/Prompt2024/jmenano_data_cmb_%s_JME_v39_2024_Prompt_Golden_29April.root",mmjd[epoch]),"READ");
+    fmjm = new TFile(Form("rootfiles/Prompt2024/v39_2024_Prompt_etabin_DCSOnly/jmenano_mc_cmb_%s_v39_2023_etabin_SFv2.root",mmjm[epoch]),"READ");
+  }
+  else {
   // 22Sep2023_V3 used v35a files
   //TFile *fmjd = new TFile(Form("rootfiles/Summer23_noL2L3Res/jmenano_data_cmb_%s_JME_v36_Summer23.root",mmjd[epoch]),"READ"); // Summer23_V1
   //TFile *fmjm = new TFile(Form("rootfiles/Summer23_noL2L3Res/jmenano_mc_cmb_%s_v36_Summer23.root",mmjm[epoch]),"READ"); // Summer23_V1
-  TFile *fmjd = new TFile(Form("rootfiles/Summer23_L2ResOnly/jmenano_data_cmb_%s_JME_v39_noRwPU_noSmearJets_25Feb2024_L2Res_v1.root",mmjd[epoch]),"READ"); // Summer23_V1
-  TFile *fmjm = new TFile(Form("rootfiles/Summer23_L2ResOnly/jmenano_mc_cmb_%s_v39_noRwPU_noSmearJets_25Feb2024_L2Res_v1.root",mmjm[epoch]),"READ"); // Summer23 L2Res_V1
+  //TFile *fmjd = new TFile(Form("rootfiles/Summer23_L2ResOnly/jmenano_data_cmb_%s_JME_v39_noRwPU_noSmearJets_25Feb2024_L2Res_v1.root",mmjd[epoch]),"READ"); // Summer23_V1
+  //TFile *fmjm = new TFile(Form("rootfiles/Summer23_L2ResOnly/jmenano_mc_cmb_%s_v39_noRwPU_noSmearJets_25Feb2024_L2Res_v1.root",mmjm[epoch]),"READ"); // Summer23 L2Res_V1
+  fmjd = new TFile(Form("rootfiles/Summer23_L2L3Res/jmenano_data_cmb_%s_JME_v39_L2Rel_L2L3Res_v2_SF.root",mmjd[epoch]),"READ"); // Summer23 L2L3Res_V2
+  fmjm = new TFile(Form("rootfiles/Summer23_L2L3Res/jmenano_mc_cmb_%s_RwPU_v39_SmearJets_L2Res_v1_SF.root",mmjm[epoch]),"READ"); // Summer23 L2L3Res_V2
   //
   //TFile *fmjd = new TFile(Form("../dijet/rootfiles/jmenano_data_cmb_%s_JME_v35a.root",mmjd[epoch]),"READ"); // L2L3Res_V3
   //TFile *fmjm = new TFile(Form("../dijet/rootfiles/jmenano_mc_out_%s_v35a.root",mmjm[epoch]),"READ"); // L2L3Res_V3
@@ -359,7 +423,7 @@ void reprocess(string epoch="") {
   //TFile *fmjd = new TFile(Form("../dijet/rootfiles/jmenano_data_cmb_%s_JME_v35_19Dec2023.root",mmjd[epoch]),"READ"); // 19Dec2023
   //TFile *fmjm = new TFile(Form("../dijet/rootfiles/jmenano_mc_cmb_%s_v35_19Dec2023.root",mmjm[epoch]),"READ"); // 19Dec2023 bugged
   //TFile *fmjm = new TFile(Form("../dijet/rootfiles/jmenano_mc_out_%s_v35a.root",mmjm[epoch]),"READ"); // 19Dec2023 using 22Sep2023
-  
+  }
   assert(fmjd && !fmjd->IsZombie());
   assert(fmjm && !fmjm->IsZombie());
 
@@ -406,6 +470,7 @@ void reprocess(string epoch="") {
       //epoch=="Run23C" ||
       //epoch=="Run23C1" || epoch=="Run23C2" || epoch=="Run23C3" ||
       epoch=="Run23C4" || epoch=="Run23D" || epoch=="Run23C4D" ||
+      epoch=="Run24B" || epoch=="Run24C" || epoch=="Run24BC" ||
       epoch=="Run3"
       ) {
     rename["zjet"]["ratio"] = "data"; // missing => PATCH
@@ -638,6 +703,7 @@ void reprocess(string epoch="") {
       //epoch=="Run23C" ||
       //epoch=="Run23C1" || epoch=="Run23C2" || epoch=="Run23C3" ||
       epoch=="Run23C4" || epoch=="Run23D" || epoch=="Run23C4D" ||
+      epoch=="Run24B" || epoch=="Run24C" || epoch=="Run24BC" ||
       epoch=="Run3") {
     types.push_back("chf");
     types.push_back("nef");
@@ -659,6 +725,7 @@ void reprocess(string epoch="") {
       //epoch=="Run23C" ||
       //epoch=="Run23C1" || epoch=="Run23C2" || epoch=="Run23C3" ||
       epoch=="Run23C4" || epoch=="Run23D" || epoch=="Run23C4D" ||
+      epoch=="Run24B" || epoch=="Run24C" || epoch=="Run24BC" ||
       epoch=="Run3") {
     types.push_back("rho");
   }
@@ -674,6 +741,7 @@ void reprocess(string epoch="") {
       //epoch=="Run23C" ||
       //epoch=="Run23C1" || epoch=="Run23C2" || epoch=="Run23C3" ||
       epoch=="Run23C4" || epoch=="Run23D" || epoch=="Run23C4D" ||
+      epoch=="Run24B" || epoch=="Run24C" || epoch=="Run24BC" ||
       epoch=="Run3") {
     types.push_back("rjet");
     types.push_back("gjet");
@@ -840,6 +908,7 @@ void reprocess(string epoch="") {
 		//epoch=="Run23C" ||
 		//epoch=="Run23C1" || epoch=="Run23C2" || epoch=="Run23C3" ||
 		epoch=="Run23C4" || epoch=="Run23D" || epoch=="Run23C4D" ||
+		epoch=="Run24B" || epoch=="Run24C" || epoch=="Run24BC" ||
 		epoch=="Run3"
 		) {
 	      c = Form("%s/eta_%02.0f_%02.0f/%s%s_zmmjet_a%1.0f",
@@ -1192,7 +1261,8 @@ void reprocess(string epoch="") {
       jec = getFJC("","","Summer22Prompt23_Run2023Cv123_V3_DATA_L2L3Residual");
       mcjec = getFJC("","Summer22Run3_V1_MC_L2Relative");
       */
-      jec = getFJC("","","Summer22Prompt23_Run2023Cv123_V3_DATA_L2L3Residual");
+    //jec = getFJC("","","Summer22Prompt23_Run2023Cv123_V3_DATA_L2L3Residual");
+      jec = getFJC("","","Summer23Prompt23_Run2023Cv123_V2_DATA_L2L3Residual");
       mcjec = getFJC("","Summer23Run3_V1_MC_L2Relative_AK4PUPPI");
     }
     //epoch=="Run23C" ||
@@ -1202,15 +1272,18 @@ void reprocess(string epoch="") {
       jec = getFJC("","","Summer22Prompt23_Run2023Cv4_V3_DATA_L2L3Residual");
       mcjec = getFJC("","Summer22Run3_V1_MC_L2Relative");
       */
-      jec = getFJC("","","Summer22Prompt23_Run2023Cv4_V3_DATA_L2L3Residual");
+      //jec = getFJC("","","Summer22Prompt23_Run2023Cv4_V3_DATA_L2L3Residual");
+      jec = getFJC("","","Summer23Prompt23_Run2023Cv4_V2_DATA_L2L3Residual");
       mcjec = getFJC("","Summer23Run3_V1_MC_L2Relative_AK4PUPPI");
     }
-    if (epoch=="Run23D") {
+    if (epoch=="Run23D" ||
+	epoch=="Run24B" || epoch=="Run24C" || epoch=="Run24BC") {
       /*
       jec = getFJC("","","Summer22Prompt23_Run2023D_V3_DATA_L2L3Residual");
       mcjec = getFJC("","Summer22Run3_V1_MC_L2Relative");
       */
-      jec = getFJC("","","Summer22Prompt23_Run2023D_V3_DATA_L2L3Residual");
+      //jec = getFJC("","","Summer22Prompt23_Run2023D_V3_DATA_L2L3Residual");
+      jec = getFJC("","","Summer23Prompt23_Run2023D_V2_DATA_L2L3Residual");
       mcjec = getFJC("","Summer23BPixRun3_V3_MC_L2Relative_AK4PUPPI");
     }
     if (epoch=="Run23C4D") { assert(false); exit(0); }
@@ -1273,13 +1346,17 @@ void reprocess(string epoch="") {
       jecold = getFJC("","","Summer22EEPrompt22_Run2022G_V3_DATA_L2L3Residual");
     }
     if (epoch=="Run23B" || epoch=="Run23BC123" || epoch=="Run23C123") {
-      jecold = getFJC("","","Summer22Prompt23_Run2023Cv123_V3_DATA_L2L3Residual");
+      //jecold = getFJC("","","Summer22Prompt23_Run2023Cv123_V3_DATA_L2L3Residual");
+      jecold = getFJC("","","Summer23Prompt23_Run2023Cv123_V2_DATA_L2L3Residual");
     }
     if (epoch=="Run23C4") {
-      jecold = getFJC("","","Summer22Prompt23_Run2023Cv4_V3_DATA_L2L3Residual");
+      //jecold = getFJC("","","Summer22Prompt23_Run2023Cv4_V3_DATA_L2L3Residual");
+      jecold = getFJC("","","Summer23Prompt23_Run2023Cv4_V2_DATA_L2L3Residual");
     }
-    if (epoch=="Run23D") {
-      jecold = getFJC("","","Summer22Prompt23_Run2023D_V3_DATA_L2L3Residual");
+    if (epoch=="Run23D" ||
+	epoch=="Run24B" || epoch=="Run24C" || epoch=="Run24BC") {
+      //jecold = getFJC("","","Summer22Prompt23_Run2023D_V3_DATA_L2L3Residual");
+      jecold = getFJC("","","Summer23Prompt23_Run2023D_V2_DATA_L2L3Residual");
     }
     if (epoch=="Run3") {
       // Combo done with jecdataRun3Data.root and createL2L3ResTextFile.C
@@ -1835,6 +1912,7 @@ void setEtaPtRho(FactorizedJetCorrector *jec, double eta, double pt,
   jec->setJetPt(pt);
   jec->setRho(rho);
   jec->setJetA(0.50265);
+  jec->setJetPhi(0.); // Summer23 addition
 
   return;
 }

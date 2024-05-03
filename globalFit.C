@@ -38,7 +38,7 @@
 using namespace std;
 const bool debug = true;
 const bool saveROOT = false;
-const bool plotPF = false; // plot PF composition
+const bool plotPF = true; // plot PF composition
 
 // Helper functions to draw fit uncertainty band for arbitrary TF1 
 Double_t fitError(Double_t *x, Double_t *p);
@@ -366,7 +366,7 @@ void globalFitEtaBin(double etamin, double etamax, string run, string version) {
   fitter->ExecuteCommand("SET PRINT", &printlevel, 1);
   
   // Run fitter (multiple times if needed)
-  const int nfit = 2;//1;
+  const int nfit = 5;//2;//1;
   cnt = 0;
   for (int i = 0; i != nfit; ++i)
     fitter->ExecuteCommand("MINI", 0, 0);
@@ -402,19 +402,32 @@ void globalFitEtaBin(double etamin, double etamax, string run, string version) {
   for (unsigned int i = 0; i != _vdt.size(); ++i) {
     TGraphErrors *gout = _vdt[i].output;
     _obs = _vdt[i].type; // for _jesFit
+    string name = _vdt[i].name; // for _jesFit
     for (int j = 0; j != gout->GetN(); ++j) {
       double x = gout->GetX()[j];
       double y = gout->GetY()[j];
       double ey = gout->GetEY()[j];
-      chi2_data += pow((y - _jesFit->Eval(x)) / ey, 2);
-      double ey_minerr = sqrt(pow(ey,2) + pow(globalErrMin,2));
-      chi2_data_minerr += pow((y - _jesFit->Eval(x)) / ey_minerr, 2);
-      ++ndt;
+
+      // For PF composition, check if we want to add this to chi2
+      bool addChi2 = true;
+      bool isPF = (TString(name.c_str()).Contains("chf") ||
+		   TString(name.c_str()).Contains("nhf") ||
+		   TString(name.c_str()).Contains("nef"));
+      if (!_gf_fitPFcomp && isPF) addChi2 = false;
+
+      if (addChi2) {
+	chi2_data += pow((y - _jesFit->Eval(x)) / ey, 2);
+	double ey_minerr = sqrt(pow(ey,2) + pow(globalErrMin,2));
+	chi2_data_minerr += pow((y - _jesFit->Eval(x)) / ey_minerr, 2);
+	++ndt;
+      }
     }
   }
   
-  cout << endl;
+  cout << endl << endl;
+  cout << "================================================" << endl;
   cout << "Listing global fit results for " << run << endl;
+  cout << (_gf_fitPFcomp ? "  Using " : "  Not using") << " PF composition";
   cout << Form("  Used %d data points, %d fit parameters and %d nuisances.\n"
 	       "  Data chi2/NDF = %1.1f / %d [%1.0f,%1.0f]\n"
 	       "  Data chi2/NDF = %1.1f / %d (with minerr %1.2f%%)\n"
@@ -448,7 +461,9 @@ void globalFitEtaBin(double etamin, double etamax, string run, string version) {
 		   vpar[vs[i].idx], verr[vs[i].idx]) << endl;
     }
   } // for it in _msrc
-  
+
+  cout << "================================================" << endl;
+
 
   // 5. Save results
   //////////////////
@@ -571,6 +586,10 @@ void globalFitDraw(string run, string version) {
     //h->SetMaximum(1.15-1e-5);
     //h->SetMinimum(0.91+1e-5);
     //}
+    if (epoch=="Run24B" || epoch=="Run24C" || epoch=="Run24BC") {
+      h->SetMaximum(1.20-1e-5);
+      h->SetMinimum(0.90+1e-5);
+    }
     TCanvas *c1 = tdrCanvas("c1",h,8,11,kSquare);
     gPad->SetLogx();
 
@@ -892,6 +911,7 @@ void globalFitDraw(string run, string version) {
     if (run=="Run23C123")  nhf_off = -1.5;//1.0;//-1.0;//1.0;
     if (run=="Run23C4")  nhf_off = 2.0;//2.0;//7.0;//4.0;
     if (run=="Run23D")  nhf_off = 3.5;//2.0;//9.0;//4.5;
+    if (run=="Run24B" || run=="Run24C" || run=="Run24BC")  nhf_off = 0.0;
     if (run=="Run3")  {
       nhf_off = ((5.1+3.0)*2.0 + 5.9*3.0 + (18.0+3.1)*3.0 +
 		 //8.7*1.0 + 9.8*4.0 + 9.5*4.5) / //Summer22
@@ -919,6 +939,9 @@ void globalFitDraw(string run, string version) {
     //leg->AddEntry(gnhf0,"Not fit: Dijet NHF","PLE");
     //leg->AddEntry(gnhf0,"Not fit: Incjet NHF-1%","PLE");
     //leg->AddEntry(gnhf0,Form("Not fit: jet NHF-%1.1f%%",nhf_off),"PLE");
+    if (nhf_off==0)
+      leg->AddEntry(gnhf0,"Not fit: NHF","PLE");
+    else
       leg->AddEntry(gnhf0,Form("Not fit: NHF%+1.1f%%",nhf_off),"PLE");
     leg->SetY1NDC(leg->GetY1NDC()-0.05);
     //tdrDraw(gnhf0,"Pz",kFullSquare,kGreen+2);
