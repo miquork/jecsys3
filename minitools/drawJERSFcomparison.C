@@ -69,9 +69,36 @@ void drawJERSFcomparison() {
   //TH1D *h1c4r = h2c4r->ProjectionY("h1c4r",1,3); h1c4r->Scale(1./3.);
   TH1D *h1c4 = profileY("h1c4",h2c4,1,3);
   TH1D *h1c4r = profileY("h1c4r",h2c4r,1,3);
+
   
-  TH1D *h = tdrHist("h","JER SF",0.9,1.4);
-  lumi_136TeV = "2023Cv123+2023D";
+  TFile *f24 = new TFile("rootfiles/JERSF.root","READ");
+  assert(f24 && !f24->IsZombie());
+
+  TH2D *h224bc(0), *h224bcr(0);
+  h224bc = (TH2D*)f24->Get(Form("Fits/h2jersf_%s_%s","2024BC","Summer23MGBPix"));
+  h224bcr = (TH2D*)f24->Get(Form("Dijet/h2jersfRaw_%s_%s","2024BC","Summer23MGBPix"));
+  assert(h224bc);
+  assert(h224bcr);
+  /*
+  TH2D *h224c(0), *h224cr(0);
+  h224c = (TH2D*)f24->Get(Form("Fits/h2jersf_%s_%s","2024C","Summer23MGBPix"));
+  h224cr = (TH2D*)f24->Get(Form("Dijet/h2jersfRaw_%s_%s","2024C","Summer23MGBPix"));
+  assert(h224c);
+  assert(h224cr);
+  */
+  int ix2 = h224bc->GetXaxis()->FindBin(h2d->GetXaxis()->GetBinLowEdge(3+1))-1;
+  TH1D *h124bc = profileY("h124bc",h224bc,1,ix2);
+  TH1D *h124bcr = profileY("h124bcr",h224bcr,1,ix2);
+  /*
+  int ix2 = h224c->GetXaxis()->FindBin(h2d->GetXaxis()->GetBinLowEdge(3+1))-1;
+  TH1D *h124c = profileY("h124c",h224c,1,ix2);
+  TH1D *h124cr = profileY("h124cr",h224cr,1,ix2);
+  */
+  
+  //TH1D *h = tdrHist("h","JER SF",0.9,1.4);
+  TH1D *h = tdrHist("h","JER SF",0.5,3.0);
+  //lumi_136TeV = "2023Cv123+2023D";
+  lumi_136TeV = "2023-24";
   extraText = "Private";
   TCanvas *c1 = tdrCanvas("c1",h,8,11,kSquare);
   gPad->SetLogx();
@@ -85,40 +112,54 @@ void drawJERSFcomparison() {
   tdrDraw(new TGraph(h1c),"L",kNone,kBlue,kSolid,-1);
   h1c->SetFillColorAlpha(kBlue-9,0.70);
 
-  tdrDraw(h1c4,"E3",kNone,kMagenta,kSolid,-1,1001,kMagenta-9);
-  tdrDraw(new TGraph(h1c4),"L",kNone,kMagenta+2,kSolid,-1);
-  h1c4->SetFillColorAlpha(kMagenta-9,0.70);
+  //tdrDraw(h1c4,"E3",kNone,kMagenta,kSolid,-1,1001,kMagenta-9);
+  //tdrDraw(new TGraph(h1c4),"L",kNone,kMagenta+2,kSolid,-1);
+  //h1c4->SetFillColorAlpha(kMagenta-9,0.70);
 
   tdrDraw(h1d,"E3",kNone,kBlue,kSolid,-1,1001,kRed-9);
   tdrDraw(new TGraph(h1d),"L",kNone,kRed,kSolid,-1);
   h1d->SetFillColorAlpha(kRed-9,0.70);
 
+  tdrDraw(h124bc,"E3",kNone,kGray+2,kSolid,-1,1001,kGray);
+  tdrDraw(new TGraph(h124bc),"L",kNone,kBlack,kSolid,-1);
+  h124bc->SetFillColorAlpha(kGray,0.70);
+  /*
+  tdrDraw(h124c,"E3",kNone,kGray+2,kSolid,-1,1001,kGray);
+  tdrDraw(new TGraph(h124c),"L",kNone,kBlack,kSolid,-1);
+  h124c->SetFillColorAlpha(kGray,0.70);
+  */
   tdrDraw(h1cr,"Pz",kFullSquare,kBlue,kSolid,-1,1001,kBlue-9);
-  tdrDraw(h1c4r,"Pz",kOpenSquare,kMagenta+2,kSolid,-1,1001,kMagenta-9);
+  //tdrDraw(h1c4r,"Pz",kOpenSquare,kMagenta+2,kSolid,-1,1001,kMagenta-9);
   tdrDraw(h1dr,"Pz",kFullCircle,kRed,kSolid,-1,1001,kRed-9);
+  tdrDraw(h124bcr,"Pz",kFullDiamond,kBlack,kSolid,-1,1001,kGray);
+  //tdrDraw(h124cr,"Pz",kFullDiamond,kBlack,kSolid,-1,1001,kGray);
 
   TLegend *leg = tdrLeg(0.35,0.90-4*0.05,0.60,0.90);
   leg->SetHeader(Form("|#eta| < %1.3f",h2d->GetXaxis()->GetBinLowEdge(3+1)));
+  leg->AddEntry(h124bcr,"2024BC (per-depth)","PLEF");
+  //leg->AddEntry(h124cr,"2024C (per-depth)","PLEF");
   leg->AddEntry(h1dr,"2023D (per-depth)","PLEF");
-  leg->AddEntry(h1c4r,"2023Cv4 (per-depth)","PLEF");
+  //leg->AddEntry(h1c4r,"2023Cv4 (per-depth)","PLEF");
   leg->AddEntry(h1cr,"2023Cv123","PLEF");
   
   gPad->RedrawAxis();
 
-  c1->SaveAs("pdf/drawJERSFcomparison/drawJERSFcomparison.pdf");
+  c1->SaveAs("pdf/drawJERSFcomparison/drawJERSFcomparison24BC.pdf");
+  c1->SaveAs("pdf/drawJERSFcomparison/drawJERSFcomparison24BC.png");
 
-
+  /*
   TFile *fa = new TFile("rootfiles/dijet_balance_jer_Summer23BPixPrompt23_AK4Puppi.root","READ");
   assert(fa && !fa->IsZombie());
 
   TGraphErrors *gd1(0), *gd2(0), *gd3(0), *gm1(0), *gm2(0), *gm3(0);
   TGraphErrors *gd(0), *gm(0), *gr(0), *gr1(0);
-  gd1 = (TGraphErrors*)fa->Get("dijet_balance_jer_Data_0p0_0p261_SM_nominal");
-  gd2 = (TGraphErrors*)fa->Get("dijet_balance_jer_Data_0p261_0p522_SM_nominal");
-  gd3 = (TGraphErrors*)fa->Get("dijet_balance_jer_Data_0p522_0p783_SM_nominal");
-  gm1 = (TGraphErrors*)fa->Get("dijet_balance_jer_MC_0p0_0p261_SM_nominal");
-  gm2 = (TGraphErrors*)fa->Get("dijet_balance_jer_MC_0p261_0p522_SM_nominal");
-  gm3 = (TGraphErrors*)fa->Get("dijet_balance_jer_MC_0p522_0p783_SM_nominal");
+  // SM or FE?
+  gd1 = (TGraphErrors*)fa->Get("dijet_balance_jer_Data_0p0_0p261_FE_nominal");
+  gd2 = (TGraphErrors*)fa->Get("dijet_balance_jer_Data_0p261_0p522_FE_nominal");
+  gd3 = (TGraphErrors*)fa->Get("dijet_balance_jer_Data_0p522_0p783_FE_nominal");
+  gm1 = (TGraphErrors*)fa->Get("dijet_balance_jer_MC_0p0_0p261_FE_nominal");
+  gm2 = (TGraphErrors*)fa->Get("dijet_balance_jer_MC_0p261_0p522_FE_nominal");
+  gm3 = (TGraphErrors*)fa->Get("dijet_balance_jer_MC_0p522_0p783_FE_nominal");
   assert(gd1);
   assert(gd2);
   assert(gd3);
@@ -161,6 +202,6 @@ void drawJERSFcomparison() {
   f3->SetRange(15.,3500.);
   f3->Draw("SAME");
   
-  c1->SaveAs("pdf/drawJERSFcomparison/drawJERSFcomparison_withDB.pdf");
-  
+  c1->SaveAs("pdf/drawJERSFcomparison/drawJERSFcomparison24_withDB.pdf");
+  */
 } // void drawJERSFcomparison

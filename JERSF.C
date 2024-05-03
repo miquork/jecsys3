@@ -157,6 +157,9 @@ TF1 *fitJER(TH1D *hjer, double ptmin, double ptmax, double eta,
   }
   if (f1ptr) (*f1ptr) = hjer->Fit(f1,"QRNS");
   else                  hjer->Fit(f1,"QRN");
+  // If fit was empty, disregard f1ptr
+  if (f1->GetNDF()<=0 && f1ptr) (*f1ptr) = 0;
+  
   //f1->SetRange(15,3500);
   f1->SetLineColor(color);
   
@@ -191,6 +194,7 @@ void JERSF() {
   setTDRStyle();
   TDirectory *curdir = gDirectory;
 
+  //gROOT->ProcessLine(".! mkdir pdf/JERSF");
   gROOT->ProcessLine(".! mkdir pdf/JERSF/vsEta");
   //gROOT->ProcessLine(".! mkdir pdf/JERSF/vsPt");
   
@@ -201,11 +205,16 @@ void JERSF() {
   fout->mkdir("Extras");
   fout->mkdir("Raw");
 
-  string vrun[] = {"2023Cv123","2023Cv4","2023D"};//,"2023Cv4D"};
+  //string vrun[] = {"2023Cv123","2023Cv4","2023D"};//,"2023Cv4D"};
+  //string vrun[] = {"2024B","2024C"};
+  string vrun[] = {"2024BC"};
+  //string vrun[] = {"2024C"};
   //string vrun[] = {"2023D"};
   const int nrun = sizeof(vrun)/sizeof(vrun[0]);
   //string vmc[] = {"Summer23","Summer23","Summer23BPIX"};//,"Summer23BPIX"};
-  string vmc[] = {"Summer23MG","Summer23MG","Summer23MGBPix"};
+  //string vmc[] = {"Summer23MG","Summer23MG","Summer23MGBPix"};
+  //string vmc[] = {"Summer23MGBPix","Summer23MGBPix"};
+  string vmc[] = {"Summer23MGBPix"};
   //string vmc[] = {"Summer23MG_Cv123","Summer23MG_Cv4","Summer23MGBPix_D"};
   //string vmc[] = {"Summer23BPIX"};
   const int nmc = sizeof(vmc)/sizeof(vmc[0]);
@@ -215,35 +224,46 @@ void JERSF() {
     const char *cr = run.c_str();
     string mc = vmc[irun];
     const char *cm = mc.c_str();
+    
+    //gROOT->ProcessLine(Form(".! mkdir pdf/JERSF/%s/vsEta",cr));
   // (No indent here for the resf of the loop, maybe function call later)
     
   //string run = "2023D";
   //const char *cr = run.c_str();
   //string mc = "Summer23MGBPix";
   //const char *cm = mc.c_str();
-    
-  //TFile *f = new TFile(Form("rootfiles/Summer23_noL2L3Res/jmenano_data_cmb_%s_JME_v36_Summer23.root",cr),"READ");
-    TFile *f = new TFile(Form("rootfiles/Summer23_L2ResOnly/jmenano_data_cmb_%s_JME_v39_noRwPU_noSmearJets_25Feb2024_L2Res_v1.root",cr),"READ");
-    //TFile *f = new TFile(Form("rootfiles/Summer23_L2L3Res/jmenano_data_cmb_%s_JME_v39_L2Rel_L2L3Res_v2_SF.root",cr),"READ");
+
+    TFile *f(0), *fm(0), *fz(0), *fg(0), *fgm(0);
+  if (TString(cr).Contains("2024")) {
+    //f = new TFile(Form("rootfiles/Prompt2024/v39_2024_Prompt_etabin_DCSOnly/jmenano_data_cmb_%s_v39_2024_Prompt_etabin_DCSOnly.root",cr),"READ");
+    //f = new TFile(Form("rootfiles/Prompt2024/v39_2024_Prompt_etabin_DCSOnly/jmenano_data_cmb_%s_JME_v39_2024_Prompt_etabin_DCSOnly.root",cr),"READ"); // no ZB
+    //f = new TFile(Form("rootfiles/Prompt2024/v39_2024_Prompt_eta_SFD_DCSOnly_Filter_HLT_MPF/jmenano_data_cmb_%s_JME_v39_2024_Prompt_eta_SFD_DCSOnly_Filter_HLT_MPF.root",cr),"READ"); // MET/sumET<0.3
+    f = new TFile(Form("rootfiles/Prompt2024/jmenano_data_cmb_%s_JME_v39_2024_Prompt_Golden_29April.root",cr),"READ");
+    //fm = new TFile("rootfiles/Prompt2024/v39_2024_Prompt_etabin_DCSOnly/jmenano_mc_cmb_Summer23MGBPix_v39_2023_etabin_SFv2.root","READ"); // with JER SF?
+    fm = new TFile("rootfiles/Summer23_L2ResOnly/jmenano_mc_cmb_Summer23MGBPix_v39_noRwPU_noSmearJets_25Feb2024_L2Res_v1.root","READ"); // no JER SF
+    //
+    //fz = new TFile(Form("rootfiles/Prompt2024/jme_bplusZ_%s_Zmm_sync_v78.root",cr),"READ"); // v77: Golden 2024B, DCSOnly 2024C
+    fz = new TFile("rootfiles/Prompt2024/jme_bplusZ_2024BC_Zmm_sync_v78golden.root","READ"); // BC only
+    //fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w12.root",cr),"READ"); // DCSOnly
+    //fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w13.root",cr),"READ"); // DCSOnly
+    fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w14.root",cr),"READ"); // Golden
+    fgm = new TFile("rootfiles/Prompt2024/GamHistosFill_mc_2023P8-BPix_w12.root","READ");    
+  }
+  else if (TString(cr).Contains("2023")) {
+    f = new TFile(Form("rootfiles/Summer23_L2ResOnly/jmenano_data_cmb_%s_JME_v39_noRwPU_noSmearJets_25Feb2024_L2Res_v1.root",cr),"READ");
+    fm = new TFile(Form("rootfiles/Summer23_L2ResOnly/jmenano_mc_cmb_%s_v39_noRwPU_noSmearJets_25Feb2024_L2Res_v1.root",cm),"READ");
+    //
+    fz = new TFile(Form("rootfiles/Summer23_L2ResOnly/jme_bplusZ_%s_Zmm_sync_v70.root",cr),"READ");
+    fg = new TFile(Form("rootfiles/Summer23_L2ResOnly/GamHistosFill_data_%s_w6.root",cr),"READ");
+    fgm = new TFile(run=="2023D" ? "rootfiles/Summer23_L2ResOnly/GamHistosFill_mc_2023P8-BPix_w6.root" : "rootfiles/Summer23_L2ResOnly/GamHistosFill_mc_2023P8_w6.root","READ"); // Summer23 (w3->w2)
+  }
+  else if (TString(cr).Contains("2023")) {
+
+  }
   assert(f && !f->IsZombie());
-
-  //TFile *fm = new TFile(Form("rootfiles/Summer23_noL2L3Res/jmenano_mc_cmb_%s_v36_Summer23.root",cm),"READ");
-  //TFile *fm = new TFile(Form("rootfiles/Summer23_noL2L3Res/jmenano_mc_cmb_%s_v36_Summer23.root","Summer23MGBPix"),"READ"); // Summer23 patch
-  TFile *fm = new TFile(Form("rootfiles/Summer23_L2ResOnly/jmenano_mc_cmb_%s_v39_noRwPU_noSmearJets_25Feb2024_L2Res_v1.root",cm),"READ");
-  //TFile *fm = new TFile(Form("rootfiles/Summer23_L2L3Res/jmenano_mc_cmb_%s_RwPU_v39_SmearJets_L2Res_v1_SF.root",cm),"READ");
   assert(fm && !fm->IsZombie());
-
-  //TFile *fz = new TFile(Form("rootfiles/Summer23_noL2L3Res/jme_bplusZ_%s_Zmm_sync_v69.root",cr),"READ");
-  TFile *fz = new TFile(Form("rootfiles/Summer23_L2ResOnly/jme_bplusZ_%s_Zmm_sync_v70.root",cr),"READ");
   assert(fz && !fz->IsZombie());
-
-  //TFile *fg = new TFile(Form("rootfiles/Summer23_noL2L3Res/GamHistosFill_data_%s_w2.root",cr),"READ"); // Summer23 (w3->w2)
-  TFile *fg = new TFile(Form("rootfiles/Summer23_L2ResOnly/GamHistosFill_data_%s_w6.root",cr),"READ");
-  //TFile *fg = new TFile(Form("../gamjet/rootfiles/GamHistosFill_data_%s_w4.root",cr),"READ"); // Summer23 with L2Res
   assert(fg && !fg->IsZombie());
-  //
-  //TFile *fgm = new TFile(run=="2023D" ? "rootfiles/Summer23_noL2L3Res/GamHistosFill_mc_2023P8-BPix_w2.root" : "rootfiles/Summer23_noL2L3Res/GamHistosFill_mc_2023P8_w2.root","READ"); // Summer23 (w3->w2)
-  TFile *fgm = new TFile(run=="2023D" ? "rootfiles/Summer23_L2ResOnly/GamHistosFill_mc_2023P8-BPix_w6.root" : "rootfiles/Summer23_L2ResOnly/GamHistosFill_mc_2023P8_w6.root","READ"); // Summer23 (w3->w2)
   assert(fgm && !fgm->IsZombie());
 
   curdir->cd();
@@ -263,8 +283,7 @@ void JERSF() {
   TProfile2D *p2gs, *p2gx, *p2gsm, *p2gxm;
   p2gs = (TProfile2D*)fg->Get("Gamjet2/p2m0");  assert(p2gs);
   p2gx = (TProfile2D*)fg->Get("Gamjet2/p2m0x"); assert(p2gx);
-  p2gsm = (TProfile2D*)fgm->Get("Gamjet2/p2m0");  assert(p2gsm);
-  p2gxm = (TProfile2D*)fgm->Get("Gamjet2/p2m0x"); assert(p2gxm);
+  p2gsm = (TProfile2D*)fgm->Get("Gamjet2/p2m0");  assert(p2gsm);  p2gxm = (TProfile2D*)fgm->Get("Gamjet2/p2m0x"); assert(p2gxm);
   
   TH1D *hjer13  = getJER(p2s, p2x, 0, 0,1.3,Form("hjer13_%s",cr));
   TH1D *hjer13m = getJER(p2sm,p2xm,0, 0,1.3,Form("hjer13m_%s",cr));
@@ -278,9 +297,45 @@ void JERSF() {
   TLine *l = new TLine();
   l->SetLineColor(kGray+1);
   l->SetLineStyle(kDashed);
+
+  TLatex *tex = new TLatex();
+  tex->SetNDC(); tex->SetTextSize(0.045);
   
-  TCanvas *cx = new TCanvas("cx","cx",7*250,3*250);
-  cx->Divide(7,3,0,0);
+  // Draw reference region JER
+  double eps = 1e-4;
+  TH1D *h0 = tdrHist("h0","JER",0.+eps,0.3-eps);
+  TH1D *h0d = tdrHist("h0d","JER SF",0.5+eps,3.0-eps);
+  lumi_136TeV = Form("%s - %s",cr,cm);
+  extraText = "Private";
+  TCanvas *c0 = tdrDiCanvas(Form("c13_%s",cr),h0,h0d,8,11);
+
+  c0->cd(1);
+  gPad->SetLogx();
+
+  tex->DrawLatex(0.40,0.85,"|#eta| < 1.3");
+
+  tdrDraw(hjer13m,"HIST",kNone,kBlack,kSolid,-1,kNone,0);
+  f13m->SetLineColor(kBlack);
+  f13m->SetLineStyle(kDashed);
+  f13m->Draw("SAME");
+  tdrDraw(hjer13,"Pz",kFullCircle,kBlack);
+  f13->SetLineColor(kBlack);
+  f13->Draw("SAME");
+
+  c0->cd(2);
+  gPad->SetLogx();
+  l->DrawLine(15,1,3500,1);
+  
+  tdrDraw(hsf13,"Pz",kFullCircle,kBlack);
+  f13r->SetLineColor(kBlack);
+  f13r->Draw("SAME");
+
+  c0->SaveAs(Form("pdf/JERSF/JERSF_Eta13_%s.pdf",cr));
+  
+  //TCanvas *cx = new TCanvas("cx","cx",7*250,3*250);
+  //cx->Divide(7,3,0,0);
+  TCanvas *cx = new TCanvas(Form("cx_%s",cr),"cx",9*300,5*300);
+  cx->Divide(9,5,0,0);
   TH2D *h2jersf = p2s->ProjectionXY(Form("h2jersf_%s",cr)); h2jersf->Reset();
   TH2D *h2jersf0 = p2s->ProjectionXY(Form("h2jersf0_%s",cr)); h2jersf0->Reset();
   //
@@ -332,6 +387,9 @@ void JERSF() {
   if (eta>2.964 && eta<3.139) ptmax = 302;
   if (eta>3.139 && eta<3.314) ptmax = 236;
 
+  // Skip before empty bins give invalid TFitResultPtr
+  //if (hjer->Integral()==0) continue;
+  
   TFitResultPtr f1mptr, f1ptr;
   TF1 *f1m = fitJER(hjerm,ptmin,ptmax,eta,Form("f1m_%d_%s",ieta,cr),kGray+1,
 		    0, &f1mptr);
@@ -349,9 +407,6 @@ void JERSF() {
   extraText = "Private";
   TCanvas *c1 = tdrDiCanvas(Form("c11_%d_%s",ieta,cr),h,hd,8,33);
 
-  TLatex *tex = new TLatex();
-  tex->SetNDC(); tex->SetTextSize(0.045);
-  
   c1->cd(1);
   gPad->SetLogx();
 
@@ -401,6 +456,8 @@ void JERSF() {
   if (plotEtaBins)
     c1->SaveAs(Form("pdf/JERSF/vsEta/JERSF_eta_%04d_%04d_%s.pdf",
 		    int(1000.*eta1),int(1000.*eta2),cr));
+  //c1->SaveAs(Form("pdf/JERSF/%s/vsEta/JERSF_eta_%04d_%04d_%s.pdf",
+  //		    cr,int(1000.*eta1),int(1000.*eta2),cr));
 
   // Also draw final results into a giant canvas
   cx->cd(ieta);
@@ -434,9 +491,9 @@ void JERSF() {
     double jersf = f1r->Eval(pt);
     //double ejersf = 0.; // do properly later
     double d = f1->Eval(pt);
-    double ed = tools::getFitErr(f1, f1ptr, pt);
+    double ed = (f1ptr ? tools::getFitErr(f1, f1ptr, pt) : 0);
     double m = f1m->Eval(pt);
-    double em = tools::getFitErr(f1m, f1mptr, pt);
+    double em = (f1mptr ? tools::getFitErr(f1m, f1mptr, pt) : 0);
     // r = d/m => dr = dd/m (+) d*dm/m^2 => dr = d/m*(dd/d (+) dm/m)
     double ejersf = jersf * sqrt(pow(ed/d,2) + pow(em/m,2));
     
@@ -524,6 +581,7 @@ void JERSF() {
   legy->AddEntry(hy3000,"p_{T} = 3000 GeV","PLE");
   
   cy->SaveAs(Form("pdf/JERSF/JERSF_Summary_%s.pdf",cr));
+  //cy->SaveAs(Form("pdf/JERSF/JERSF_Summary_%s.png",cr));
   cy->SetName(Form("cy_%s",cr));
 
   
@@ -539,8 +597,9 @@ void JERSF() {
   cz->SaveAs(Form("pdf/JERSF/JERSF_Chi2_%s.pdf",cr));
 
 
-  // Produce output text file (FactorizedJetCorrecter Style
-  ofstream txt(Form("pdf/JERSF/Summer23_%s_JRV2_MC_SF_AK4PFPuppi.txt",cr));
+  // Produce output text file (FactorizedJetCorrecter style)
+  //ofstream txt(Form("pdf/JERSF/Summer23_%s_JRV2_MC_SF_AK4PFPuppi.txt",cr));
+  ofstream txt(Form("textFiles/Prompt24/Prompt24_%s_JRV1M_MC_SF_AK4PFPuppi.txt",cr));
   txt << "{1 JetEta 1 JetPt "
       << "sqrt([0]*fabs([0])/(x*x)+[1]*[1]/x+[2]*[2])/"
       << "sqrt([3]*fabs([3])/(x*x)+[4]*[4]/x+[5]*[5])"
