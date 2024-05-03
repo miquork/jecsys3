@@ -12,6 +12,11 @@
 
 #include "../tdrstyle_mod22.C"
 
+// Threshold for veto maps
+double pullThreshold = 70;
+int nMinTowers = 70;
+double pullThresholdHF45 = 70;
+
 // use pulls instead of relative changes
 bool doPull = true;
 bool plotJetVeto = true;
@@ -37,7 +42,7 @@ void doJetVetoV2s(string run);
 void doJetVetoV2(string run = "") {
 
   if (run!="") { doJetVetoV2s(run); exit(0); }
-
+  /*
   doJetVetoV2s("2022C");
   doJetVetoV2s("2022D");
     doJetVetoV2s("2022CD");
@@ -51,6 +56,9 @@ void doJetVetoV2(string run = "") {
   doJetVetoV2s("2023Cv4");
     doJetVetoV2s("2023BC");
   doJetVetoV2s("2023D");
+  */
+  
+  doJetVetoV2s("2024BC");
 }
 
 void doJetVetoV2s(string run) {
@@ -113,6 +121,14 @@ void doJetVetoV2s(string run) {
     lumi_136TeV = "Run2023D, 9.5 fb^{-1}";
     f = new TFile("rootfiles/Iita_20230814/nano_data_out_2023D_v1.root","READ");
   }
+  if (run=="2024BC") {
+    lumi_136TeV = "Run2024BC, 0.74 fb^{-1}";//3.1 fb^{-1}";
+    //f = new TFile("rootfiles/Prompt2024/v39_2024_Prompt_etabin_DCSOnly/jmenano_data_out_2024BC_JME_v39_2024_Prompt_etabin_DCSOnly.root","READ");
+    f = new TFile("rootfiles/Prompt2024/jmenano_data_cmb_2024BC_JME_v39_2024_Prompt_Golden_29April.root","READ"); // golden
+    pullThreshold = 85;//100;//70;//50;
+    pullThresholdHF45 = 300;
+    nMinTowers = 50;
+  }
 
   assert(f && !f->IsZombie());
 
@@ -130,6 +146,7 @@ void doJetVetoV2s(string run) {
   vtrg.push_back("HLT_PFJet500");
   //vtrg.push_back("HLT_PFJet550");
 
+  if (run!="2024BC") {
   vtrg.push_back("HLT_PFJetFwd40");
   vtrg.push_back("HLT_PFJetFwd60");
   vtrg.push_back("HLT_PFJetFwd80");
@@ -141,7 +158,11 @@ void doJetVetoV2s(string run) {
   vtrg.push_back("HLT_PFJetFwd400");
   vtrg.push_back("HLT_PFJetFwd450");
   vtrg.push_back("HLT_PFJetFwd500");
-
+  } 
+  else { // 2024BC
+    vtrg.push_back("HLT_ZeroBias");
+  }
+  
   // Add dijet average triggers for better h2jes
   vtrg.push_back("HLT_DiPFJetAve40");
   vtrg.push_back("HLT_DiPFJetAve60");
@@ -192,8 +213,12 @@ void doJetVetoV2s(string run) {
       //string trg = "HLT_ZeroBias";
       //string hname = "p2nef";
       //isProfile2D = (hname[0]='p' && hname[1]='2');
-      
-      TObject *obj = f->Get(Form("%s/Jetveto/%s",trg.c_str(),hname.c_str()));
+
+      string objname = Form("%s/Jetveto/%s",trg.c_str(),hname.c_str());
+      TObject *obj = f->Get(objname.c_str());
+      if (!obj) {
+	cout << "Missing " << objname << endl << flush;
+      }
       assert(obj);
       assert(obj->InheritsFrom("TH2D"));
       bool isProf2D = obj->InheritsFrom("TProfile2D");
@@ -252,7 +277,7 @@ void doJetVetoV2s(string run) {
 	
 	// If not enough entries, clear column and continue
 	//if (htmp->GetEntries()<70. || htmp->Integral()!=0) {
-	if (n<70) {
+	if (n<nMinTowers) {
 	  for (int j = 1; j != ny+1; ++j) {
 	    h2->SetBinContent(i, j, 0.);
 	    h2->SetBinError(i, j, 0.);
@@ -425,6 +450,7 @@ void doJetVetoV2s(string run) {
   TH2D *h2veto = (TH2D*)h2nomsums->Clone("jetvetomap"); // default map
   TH2D *h2hot = (TH2D*)h2nomsums->Clone("jetvetomap_hot");
   TH2D *h2cold = (TH2D*)h2nomsums->Clone("jetvetomap_cold");
+  TH2D *h2old = (TH2D*)h2nomsums->Clone("jetvetomap_old");
   TH2D *h2hotandcold = (TH2D*)h2nomsums->Clone("jetvetomap_hotandcold");
   TH2D *h2eep = (TH2D*)h2nomsums->Clone("jetvetomap_eep");
   TH2D *h2bpix = (TH2D*)h2nomsums->Clone("jetvetomap_bpix");
@@ -432,6 +458,7 @@ void doJetVetoV2s(string run) {
   h2veto->Reset();
   h2hot->Reset();
   h2cold->Reset();
+  h2old->Reset();
   h2hotandcold->Reset();
   h2eep->Reset();
   h2bpix->Reset();
@@ -440,9 +467,10 @@ void doJetVetoV2s(string run) {
   h2veto->SetTitle("JME recommended map, used for JEC. Hot+Cold");
   h2hot ->SetTitle("Hot zones. Use for steep jet pT spectra and MET tails");
   h2cold->SetTitle("Cold zones. Mostly ECAL holes. Use for MET tails");
+  h2old->SetTitle("Old zones. Already in previous map.");
   h2hotandcold->SetTitle("Union of hot and cold zone maps");
   h2eep->SetTitle("EE+ water leak region. Complete loss of ECAL energy in 2022EFG");
-  h2bpix->SetTitle("Barrel pixel failure. Reduction of tracking efficiency in 2023D");
+  h2bpix->SetTitle("Barrel pixel failure. Reduction of tracking efficiency in 2023D and later");
   h2all->SetTitle("Union of hot and cold maps");
   if (run=="2022E" || run=="2022F" || run=="2022G" ||
       run=="2022EF" || run=="2022EFG") {
@@ -453,6 +481,10 @@ void doJetVetoV2s(string run) {
     h2veto->SetTitle("JME recommended map, used for JEC. Hot+Cold+BPIX");
     h2all->SetTitle("Union of hot, cold and BPIX maps");
   }
+  if (run=="2024BC") {
+    h2veto->SetTitle("JME recommended map, used for JEC. Hot+Cold(+not BPIX)");
+    h2all->SetTitle("Union of hot, cold (and not BPIX) maps");
+  }
   h2nomsums->SetTitle("Raw nominal pull map. NomPull=(x_i-mu)/sigma. Summed over triggers");
   h2abssums->SetTitle("Raw absolute pull map. AbsPull=|(x_i-mu)/sigma|-1. Summed over triggers");
 
@@ -462,7 +494,8 @@ void doJetVetoV2s(string run) {
       double phi = h2nomsums->GetYaxis()->GetBinCenter(j);
 
       // Match positive asymmetry with hot region
-      if (h2abssums->GetBinContent(i,j)>70 &&
+      if ((h2abssums->GetBinContent(i,j)>pullThreshold && fabs(eta)<4.5 ||
+	   h2abssums->GetBinContent(i,j)>pullThresholdHF45 && fabs(eta)>4.5) &&
 	  (!h2nomrefsum || h2nomrefsum->GetBinContent(i,j)>0)) {
 	h2veto->SetBinContent(i,j,100);
 	h2hotandcold->SetBinContent(i,j,100);
@@ -471,12 +504,23 @@ void doJetVetoV2s(string run) {
       }
 
       // Match negative asymmetry with cold region
-      if (h2abssums->GetBinContent(i,j)>70 &&
+      if ((h2abssums->GetBinContent(i,j)>pullThreshold && fabs(eta)<4.5 ||
+	   h2abssums->GetBinContent(i,j)>pullThresholdHF45 && fabs(eta)>4.5) &&
 	  (h2nomrefsum && h2nomrefsum->GetBinContent(i,j)<0)) {
 	h2veto->SetBinContent(i,j,100);
 	h2hotandcold->SetBinContent(i,j,100);
 	h2all->SetBinContent(i,j,100);
 	h2cold->SetBinContent(i,j,-100);
+      }
+
+      // Match zero asymmetry with old region (probably had p2asymm masked)
+      if ((h2abssums->GetBinContent(i,j)>pullThreshold && fabs(eta)<4.5 ||
+	   h2abssums->GetBinContent(i,j)>pullThresholdHF45 && fabs(eta)>4.5) &&
+	  (h2nomrefsum && h2nomrefsum->GetBinContent(i,j)==0)) {
+	h2veto->SetBinContent(i,j,100);
+	h2hotandcold->SetBinContent(i,j,100);
+	h2all->SetBinContent(i,j,100);
+	h2old->SetBinContent(i,j,-100);
       }
 
       // Extra manual margin for EE+ water leak region (2022E,F,G)
@@ -491,13 +535,18 @@ void doJetVetoV2s(string run) {
 	}
       } // EEP
 
-      // BPIX reference region (2023D)
+      // BPIX reference region (2023D and later)
       if (eta>-1.5 && phi>-1.22 &&
 	  eta<0.1 && phi<-0.87) {
-	if (run=="2023D") {
+	if (run=="2023D") { // Remove BPix
 	  h2veto->SetBinContent(i,j,100);
 	  h2bpix->SetBinContent(i,j,100);
 	  h2all->SetBinContent(i,j,100);
+	}
+	if (run=="2024BC") { // Keep BPix
+	  h2veto->SetBinContent(i,j,0);
+	  h2bpix->SetBinContent(i,j,100);
+	  h2all->SetBinContent(i,j,0);
 	}
       } // BPIX
 
@@ -592,6 +641,7 @@ void doJetVetoV2s(string run) {
   h2veto->Write("jetvetomap");
   h2hot->Write("jetvetomap_hot");
   h2cold->Write("jetvetomap_cold");
+  h2old->Write("jetvetomap_old");
   h2hotandcold->Write("jetvetomap_hotandcold");
   if (h2eep->Integral()!=0) h2eep->Write("jetvetomap_eep");
   if (h2bpix->Integral()!=0) h2bpix->Write("jetvetomap_bpix");
@@ -600,6 +650,7 @@ void doJetVetoV2s(string run) {
   if (h2jesnorm) h2jesnorm->Write("jetasymmetrymap_norm");
   h2nomsums->Write("jetpullsummap_nom");
   h2abssums->Write("jetpullsummap_abs");
+  if (h2nomrefsum) h2nomrefsum->Write("jetpullsummap_ref");
   fout->Write();
   fout->Close();
 } // doJetveto
