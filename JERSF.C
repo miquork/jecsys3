@@ -238,15 +238,18 @@ void JERSF() {
     //f = new TFile(Form("rootfiles/Prompt2024/v39_2024_Prompt_etabin_DCSOnly/jmenano_data_cmb_%s_v39_2024_Prompt_etabin_DCSOnly.root",cr),"READ");
     //f = new TFile(Form("rootfiles/Prompt2024/v39_2024_Prompt_etabin_DCSOnly/jmenano_data_cmb_%s_JME_v39_2024_Prompt_etabin_DCSOnly.root",cr),"READ"); // no ZB
     //f = new TFile(Form("rootfiles/Prompt2024/v39_2024_Prompt_eta_SFD_DCSOnly_Filter_HLT_MPF/jmenano_data_cmb_%s_JME_v39_2024_Prompt_eta_SFD_DCSOnly_Filter_HLT_MPF.root",cr),"READ"); // MET/sumET<0.3
-    f = new TFile(Form("rootfiles/Prompt2024/jmenano_data_cmb_%s_JME_v39_2024_Prompt_Golden_29April.root",cr),"READ");
+    //f = new TFile(Form("rootfiles/Prompt2024/jmenano_data_cmb_%s_JME_v39_2024_Prompt_Golden_29April.root",cr),"READ"); // 0.74/fb
+    f = new TFile(Form("rootfiles/Prompt2024/v41_2024_Golden/jmenano_data_cmb_%s_JME_v41_2024_Golden.root",cr),"READ"); // 3/fb
     //fm = new TFile("rootfiles/Prompt2024/v39_2024_Prompt_etabin_DCSOnly/jmenano_mc_cmb_Summer23MGBPix_v39_2023_etabin_SFv2.root","READ"); // with JER SF?
     fm = new TFile("rootfiles/Summer23_L2ResOnly/jmenano_mc_cmb_Summer23MGBPix_v39_noRwPU_noSmearJets_25Feb2024_L2Res_v1.root","READ"); // no JER SF
     //
     //fz = new TFile(Form("rootfiles/Prompt2024/jme_bplusZ_%s_Zmm_sync_v78.root",cr),"READ"); // v77: Golden 2024B, DCSOnly 2024C
-    fz = new TFile("rootfiles/Prompt2024/jme_bplusZ_2024BC_Zmm_sync_v78golden.root","READ"); // BC only
+    //fz = new TFile("rootfiles/Prompt2024/jme_bplusZ_2024BC_Zmm_sync_v78golden.root","READ"); // 0.74/fb
+    fz = new TFile("rootfiles/Prompt2024/jme_bplusZ_2024BC_Zmm_sync_v79golden.root","READ"); // 3/fb
     //fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w12.root",cr),"READ"); // DCSOnly
     //fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w13.root",cr),"READ"); // DCSOnly
-    fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w14.root",cr),"READ"); // Golden
+    //fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w14.root",cr),"READ"); // 0.74/fb
+    fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w16.root",cr),"READ"); // 3/fb
     fgm = new TFile("rootfiles/Prompt2024/GamHistosFill_mc_2023P8-BPix_w12.root","READ");    
   }
   else if (TString(cr).Contains("2023")) {
@@ -599,7 +602,8 @@ void JERSF() {
 
   // Produce output text file (FactorizedJetCorrecter style)
   //ofstream txt(Form("pdf/JERSF/Summer23_%s_JRV2_MC_SF_AK4PFPuppi.txt",cr));
-  ofstream txt(Form("textFiles/Prompt24/Prompt24_%s_JRV1M_MC_SF_AK4PFPuppi.txt",cr));
+  //ofstream txt(Form("textFiles/Prompt24/Prompt24_%s_JRV1M_MC_SF_AK4PFPuppi.txt",cr));
+  ofstream txt(Form("textFiles/Prompt24/Prompt24_%s_JRV2M_MC_SF_AK4PFPuppi.txt",cr));
   txt << "{1 JetEta 1 JetPt "
       << "sqrt([0]*fabs([0])/(x*x)+[1]*[1]/x+[2]*[2])/"
       << "sqrt([3]*fabs([3])/(x*x)+[4]*[4]/x+[5]*[5])"

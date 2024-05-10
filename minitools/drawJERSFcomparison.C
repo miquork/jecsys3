@@ -94,6 +94,25 @@ void drawJERSFcomparison() {
   TH1D *h124c = profileY("h124c",h224c,1,ix2);
   TH1D *h124cr = profileY("h124cr",h224cr,1,ix2);
   */
+
+  // Produce estimate for 2023D based on 2023Cv123 (+) 5% constant factor
+  TH1D *h1d_est = (TH1D*)h1c->Clone("h1d_est");
+  TH2D *h2_mc = (TH2D*)f24->Get("Dijet/h2jermcRaw_2024BC_Summer23MGBPix"); assert(h2_mc);
+  int i2 = h2_mc->GetXaxis()->FindBin(0.783-0.05);
+  TH1D *h1_mc = profileY("h1c_mc",h2_mc,1,i2);
+  for (int i = 1; i != h1c->GetNbinsX()+1; ++i) {
+    double pt = h1c->GetBinCenter(i);
+    double sf = h1c->GetBinContent(i);
+    double esf = h1c->GetBinError(i);
+    double j = h1_mc->GetXaxis()->FindBin(pt);
+    double jer = h1_mc->GetBinContent(j);
+    //double c = 0.05*min(max(log(pt)/log(1800.)-log(555)/log(1800.),0.),0.);
+    double pt2 = 1300.;
+    double pt1 = 50.;
+    double c = 0.028*min(max((log(pt)/log(pt2)-log(pt1)/log(pt2))/(1-log(pt1)/log(pt2)),-1.),1.);
+    h1d_est->SetBinContent(i, jer>0 ? sqrt(pow(sf,2)+c*fabs(c)/(jer*jer)) : 0.);
+    h1d_est->SetBinError(i, jer>0 ? esf : 0);
+  } // for i
   
   //TH1D *h = tdrHist("h","JER SF",0.9,1.4);
   TH1D *h = tdrHist("h","JER SF",0.5,3.0);
@@ -120,6 +139,10 @@ void drawJERSFcomparison() {
   tdrDraw(new TGraph(h1d),"L",kNone,kRed,kSolid,-1);
   h1d->SetFillColorAlpha(kRed-9,0.70);
 
+  tdrDraw(h1d_est,"E3",kNone,kMagenta+2,kSolid,-1,1001,kMagenta-9);
+  tdrDraw(new TGraph(h1d_est),"L",kNone,kMagenta+2,kSolid,-1);
+  h1d_est->SetFillColorAlpha(kMagenta-9,0.70);
+
   tdrDraw(h124bc,"E3",kNone,kGray+2,kSolid,-1,1001,kGray);
   tdrDraw(new TGraph(h124bc),"L",kNone,kBlack,kSolid,-1);
   h124bc->SetFillColorAlpha(kGray,0.70);
@@ -134,13 +157,14 @@ void drawJERSFcomparison() {
   tdrDraw(h124bcr,"Pz",kFullDiamond,kBlack,kSolid,-1,1001,kGray);
   //tdrDraw(h124cr,"Pz",kFullDiamond,kBlack,kSolid,-1,1001,kGray);
 
-  TLegend *leg = tdrLeg(0.35,0.90-4*0.05,0.60,0.90);
+  TLegend *leg = tdrLeg(0.35,0.90-5*0.05,0.60,0.90);
   leg->SetHeader(Form("|#eta| < %1.3f",h2d->GetXaxis()->GetBinLowEdge(3+1)));
   leg->AddEntry(h124bcr,"2024BC (per-depth)","PLEF");
   //leg->AddEntry(h124cr,"2024C (per-depth)","PLEF");
   leg->AddEntry(h1dr,"2023D (per-depth)","PLEF");
   //leg->AddEntry(h1c4r,"2023Cv4 (per-depth)","PLEF");
   leg->AddEntry(h1cr,"2023Cv123","PLEF");
+  leg->AddEntry(h1d_est,"2023Cv123 #oplus c_{depth}","LF");
   
   gPad->RedrawAxis();
 

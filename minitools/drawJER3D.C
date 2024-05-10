@@ -13,7 +13,8 @@ void drawJER3D() {
   //TFile *f = new TFile("~/Downloads/jmenano_data_out_2024C_v39_2024_Prompt_eta_SFD_DCSOnly_Filter_HLT_MPF.root","READ");
   //TFile *f = new TFile("rootfiles/Prompt2024/v39_2024_Prompt_eta_SFD_DCSOnly_Filter_HLT_MPF/jmenano_data_out_2024C_v39_2024_Prompt_eta_SFD_DCSOnly_Filter_HLT_MPF.root");
   //TFile *f = new TFile("rootfiles/Prompt2024/jmenano_data_out_2024C_JME_v39_2024_Prompt_Golden_29April.root","READ");
-  TFile *f = new TFile("rootfiles/Prompt2024/jmenano_data_out_2024BC_JME_v39_2024_Prompt_Golden_29April.root","READ");
+  //TFile *f = new TFile("rootfiles/Prompt2024/jmenano_data_out_2024BC_JME_v39_2024_Prompt_Golden_29April.root","READ"); // golden 0.74/fb
+  TFile *f = new TFile("rootfiles/Prompt2024/v41_2024_Golden/jmenano_data_out_2024BC_JME_v41_2024_Golden.root","READ"); // golden 3/fb
   assert(f && !f->IsZombie());
 
   curdir->cd();
