@@ -122,10 +122,12 @@ void doJetVetoV2s(string run) {
     f = new TFile("rootfiles/Iita_20230814/nano_data_out_2023D_v1.root","READ");
   }
   if (run=="2024BC") {
-    lumi_136TeV = "Run2024BC, 0.74 fb^{-1}";//3.1 fb^{-1}";
+    //lumi_136TeV = "Run2024BC, 0.74 fb^{-1}";
+    lumi_136TeV = "Run2024BC, 3.3 fb^{-1}";
     //f = new TFile("rootfiles/Prompt2024/v39_2024_Prompt_etabin_DCSOnly/jmenano_data_out_2024BC_JME_v39_2024_Prompt_etabin_DCSOnly.root","READ");
-    f = new TFile("rootfiles/Prompt2024/jmenano_data_cmb_2024BC_JME_v39_2024_Prompt_Golden_29April.root","READ"); // golden
-    pullThreshold = 85;//100;//70;//50;
+    //f = new TFile("rootfiles/Prompt2024/jmenano_data_cmb_2024BC_JME_v39_2024_Prompt_Golden_29April.root","READ"); // golden 0.74/fb
+    f = new TFile("rootfiles/Prompt2024/v41_2024_Golden/jmenano_data_cmb_2024BC_JME_v41_2024_Golden.root","READ"); // golden 3/fb
+    pullThreshold = 150;//100;//85;//100;//70;//50;
     pullThresholdHF45 = 300;
     nMinTowers = 50;
   }

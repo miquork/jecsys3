@@ -46,7 +46,8 @@ void hotjetsRun3() {
   h->SetMaximum(+TMath::Pi());
   h->SetMinimum(-TMath::Pi());
 
-  lumi_13TeV = "Run2024BC, 0.74 fb^{-1}";
+  //lumi_13TeV = "Run2024BC, 0.74 fb^{-1}";
+  lumi_13TeV = "Run2024BC, 3.3 fb^{-1}";
   TCanvas *c1 = tdrCanvas("c1",h,4,0,kRectangular);
 
   TLine *l = new TLine();
