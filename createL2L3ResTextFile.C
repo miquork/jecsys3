@@ -76,8 +76,9 @@ void createL2L3ResTextFile() {
   //createL2L3ResTextFiles("Run23D-Summer23",true);
   createL2L3ResTextFiles("Run24BC-Prompt",true);
   c1->Update();
-  c1->SaveAs("pdf/createL2L3ResTextFile_Prompt24.pdf");
+  //c1->SaveAs("pdf/createL2L3ResTextFile_Prompt24.pdf");
   //c1->SaveAs("pdf/createL2L3ResTextFile_Prompt24_V1M_Summer23_V2.pdf");
+  c1->SaveAs("pdf/createL2L3ResTextFile_Prompt24_V2M.pdf");
   
   /*
   // Produce Run2 year-averages for reprocess.C reference (jec, jecold)
@@ -295,8 +296,10 @@ void createL2L3ResTextFiles(string set, bool leg2) {
     sout = "textFiles/Summer23_L2ResOnly/Summer23Prompt23_Run2023D_V2_DATA_L2L3Residual_AK4PFPuppi.txt";
   }
   if (set=="Run24BC-Prompt") {
-    sin = "textFiles/Prompt24/Prompt24_Run2024BC_V1M_DATA_L2Residual_AK4PFPuppi.txt"; isNewL2Res = true;
-    sout = "textFiles/Prompt24/Prompt24_Run2024BC_V1M_DATA_L2L3Residual_AK4PFPuppi.txt";
+    //sin = "textFiles/Prompt24/Prompt24_Run2024BC_V1M_DATA_L2Residual_AK4PFPuppi.txt"; isNewL2Res = true;
+    //sout = "textFiles/Prompt24/Prompt24_Run2024BC_V1M_DATA_L2L3Residual_AK4PFPuppi.txt";
+    sin = "textFiles/Prompt24/Prompt24_Run2024BC_V2M_DATA_L2Residual_AK4PFPuppi.txt"; isNewL2Res = true;
+    sout = "textFiles/Prompt24/Prompt24_Run2024BC_V2M_DATA_L2L3Residual_AK4PFPuppi.txt";
   }
   
   if (set=="Run3-Combo") {

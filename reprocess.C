@@ -188,7 +188,8 @@ void reprocess(string epoch="") {
   }
   if (epoch=="Run24B" || epoch=="Run24C" || epoch=="Run24BC") {
   //fz = new TFile(Form("rootfiles/Prompt2024/jme_bplusZ_%s_Zmm_sync_v78.root",
-    fz = new TFile(Form("rootfiles/Prompt2024/jme_bplusZ_%s_Zmm_sync_v78golden.root",
+  //fz = new TFile(Form("rootfiles/Prompt2024/jme_bplusZ_%s_Zmm_sync_v78golden.root",
+    fz = new TFile(Form("rootfiles/Prompt2024/jme_bplusZ_%s_Zmm_sync_v79golden.root",
 			mz[epoch]),"READ");
   }
   if (epoch=="Run3") {
@@ -305,7 +306,8 @@ void reprocess(string epoch="") {
     //fp = new TFile(Form("rootfiles/Prompt2024/GamHistosRatio_%s_P8BPixQCD_w12.root",mp[epoch]),"READ");
     //fp = new TFile(Form("rootfiles/Prompt2024/GamHistosRatio_%s_P8BPixQCD_w13.root",mp[epoch]),"READ"); // DCSOnly JSON
     //fp = new TFile(Form("rootfiles/Prompt2024/GamHistosRatio_%s_P8BPixQCD_w14.root",mp[epoch]),"READ"); // golden JSON
-    fp = new TFile(Form("rootfiles/Prompt2024/GamHistosRatio_%s_P8BPix-noQCD_w14.root",mp[epoch]),"READ"); // golden JSON
+    //fp = new TFile(Form("rootfiles/Prompt2024/GamHistosRatio_%s_P8BPix-noQCD_w14.root",mp[epoch]),"READ"); // golden JSON 0.74/fb
+    fp = new TFile(Form("rootfiles/Prompt2024/GamHistosRatio_%s_P8BPix-noQCD_w16.root",mp[epoch]),"READ"); // golden JSON 3/bf
     //fp = new TFile(Form("rootfiles/Prompt2024/GamHistosRatio_%s_P8BPix-noQCD_w12.root",mp[epoch]),"READ");
   }
   else {
@@ -405,7 +407,8 @@ void reprocess(string epoch="") {
   TFile *fmjd(0), *fmjm(0);
   if (TString(epoch.c_str()).Contains("Run24")) {
     //fmjd = new TFile(Form("rootfiles/Prompt2024/v39_2024_Prompt_etabin_DCSOnly/jmenano_data_cmb_%s_v39_2024_Prompt_etabin_DCSOnly.root",mmjd[epoch]),"READ");
-    fmjd = new TFile(Form("rootfiles/Prompt2024/jmenano_data_cmb_%s_JME_v39_2024_Prompt_Golden_29April.root",mmjd[epoch]),"READ");
+    //fmjd = new TFile(Form("rootfiles/Prompt2024/jmenano_data_cmb_%s_JME_v39_2024_Prompt_Golden_29April.root",mmjd[epoch]),"READ"); // golde 0.74/fb
+    fmjd = new TFile(Form("rootfiles/Prompt2024/v41_2024_Golden/jmenano_data_cmb_%s_JME_v41_2024_Golden.root",mmjd[epoch]),"READ"); // golden 3/fb
     fmjm = new TFile(Form("rootfiles/Prompt2024/v39_2024_Prompt_etabin_DCSOnly/jmenano_mc_cmb_%s_v39_2023_etabin_SFv2.root",mmjm[epoch]),"READ");
   }
   else {
@@ -1276,15 +1279,19 @@ void reprocess(string epoch="") {
       jec = getFJC("","","Summer23Prompt23_Run2023Cv4_V2_DATA_L2L3Residual");
       mcjec = getFJC("","Summer23Run3_V1_MC_L2Relative_AK4PUPPI");
     }
-    if (epoch=="Run23D" ||
-	epoch=="Run24B" || epoch=="Run24C" || epoch=="Run24BC") {
+    if (epoch=="Run23D") {
       /*
       jec = getFJC("","","Summer22Prompt23_Run2023D_V3_DATA_L2L3Residual");
       mcjec = getFJC("","Summer22Run3_V1_MC_L2Relative");
       */
       //jec = getFJC("","","Summer22Prompt23_Run2023D_V3_DATA_L2L3Residual");
+      // also 2024BC_V1M
       jec = getFJC("","","Summer23Prompt23_Run2023D_V2_DATA_L2L3Residual");
       mcjec = getFJC("","Summer23BPixRun3_V3_MC_L2Relative_AK4PUPPI");
+    }
+    if (epoch=="Run24B" || epoch=="Run24C" || epoch=="Run24BC") { // V2M
+      jec = getFJC("","","Prompt24_Run2024BC_V1M_DATA_L2L3Residual_AK4PFPuppi");
+      mcjec = getFJC("","Winter24Run3_V1_MC_L2Relative_AK4PUPPI");
     }
     if (epoch=="Run23C4D") { assert(false); exit(0); }
     if (epoch=="Run3") {
@@ -1353,10 +1360,13 @@ void reprocess(string epoch="") {
       //jecold = getFJC("","","Summer22Prompt23_Run2023Cv4_V3_DATA_L2L3Residual");
       jecold = getFJC("","","Summer23Prompt23_Run2023Cv4_V2_DATA_L2L3Residual");
     }
-    if (epoch=="Run23D" ||
-	epoch=="Run24B" || epoch=="Run24C" || epoch=="Run24BC") {
+    if (epoch=="Run23D") {
+      // also 2023BC_V1M
       //jecold = getFJC("","","Summer22Prompt23_Run2023D_V3_DATA_L2L3Residual");
       jecold = getFJC("","","Summer23Prompt23_Run2023D_V2_DATA_L2L3Residual");
+    }
+    if (epoch=="Run24B" || epoch=="Run24C" || epoch=="Run24BC") {
+      jecold = getFJC("","","Prompt24_Run2024BC_V1M_DATA_L2L3Residual_AK4PFPuppi");
     }
     if (epoch=="Run3") {
       // Combo done with jecdataRun3Data.root and createL2L3ResTextFile.C
