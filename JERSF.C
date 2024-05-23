@@ -11,6 +11,8 @@
 
 bool plotEtaBins = true; // lots of plots
 
+bool skipZ = false;
+bool skipG = false;
 
 // Calculate JER with MPFX. If JER13 not given, calculate it
 TH1D *getJER(TProfile2D *p2s, TProfile2D *p2x, TH1D *hjer13,
@@ -207,14 +209,46 @@ void JERSF() {
 
   //string vrun[] = {"2023Cv123","2023Cv4","2023D"};//,"2023Cv4D"};
   //string vrun[] = {"2024B","2024C"};
-  string vrun[] = {"2024BC"};
+  //string vrun[] = {"2024BC"};
+  /*
+  string vrun[] = {"2022C_Prompt2022","2022D_Prompt2022", //Pr22
+                   "2022C_22Sep2023","2022D_22Sep2023","2022E_22Sep2023",//22Sep
+		   "2022F_22Sep2023","2022G_22Sep2023", //22Sep
+		   "2023Cv123_Prompt2023","2023Cv4_Prompt2023", //Pr23
+		   "2023D_Prompt2023", //Pr23
+		   "2022C_19Dec2023","2022D_19Dec2023","2022E_19Dec2023",//19Dec
+		   "2022F_19Dec2023","2022G_19Dec2023", //19Dec
+		   "2023Cv123_19Dec2023","2023Cv4_19Dec2023", //19Dec
+		   "2023D_19Dec2023", //19Dec
+		   "2024BC"}; //Pr24
+  */
+  //string vrun[] = {"2024C","2024D","2024CD"};
+  //string vrun[] = {"2023Cv123","2023D","2024CD"};
+  string vrun[] = {"2024B","2024C","2024D","2024BCD"};
   //string vrun[] = {"2024C"};
   //string vrun[] = {"2023D"};
   const int nrun = sizeof(vrun)/sizeof(vrun[0]);
   //string vmc[] = {"Summer23","Summer23","Summer23BPIX"};//,"Summer23BPIX"};
   //string vmc[] = {"Summer23MG","Summer23MG","Summer23MGBPix"};
   //string vmc[] = {"Summer23MGBPix","Summer23MGBPix"};
-  string vmc[] = {"Summer23MGBPix"};
+  //string vmc[] = {"Summer23MGBPix"};
+  /*
+  string vmc[] = {"Summer23MGBPix","Summer23MGBPix", //Pr22
+		  "Summer23MGBPix","Summer23MGBPix","Summer23MGBPix", //22Sep
+		  "Summer23MGBPix","Summer23MGBPix", //22Sep
+		  "Summer23MGBPix","Summer23MGBPix", //Pr23
+		  "Summer23MGBPix", //Pr23
+		  "Summer23MGBPix","Summer23MGBPix","Summer23MGBPix", //19Dec
+		  "Summer23MGBPix","Summer23MGBPix", //19Dec
+		  "Summer23MGBPix","Summer23MGBPix", //19Dec
+		  "Summer23MGBPix", //19Dec
+		  "Summer23MGBPix"}; //Pr24
+  */
+  //string vmc[] = {"Summer23MGBPix","Summer23MGBPix","Summer23MGBPix"};
+  //string vmc[] = {"Summer23MGBPix","Summer23MGBPix","Summer23MGBPix"};
+  string vmc[] = {"Summer23MGBPix","Summer23MGBPix","Summer23MGBPix",
+		  "Summer23MGBPix"};
+  //"Winter24MCFlat"};
   //string vmc[] = {"Summer23MG_Cv123","Summer23MG_Cv4","Summer23MGBPix_D"};
   //string vmc[] = {"Summer23BPIX"};
   const int nmc = sizeof(vmc)/sizeof(vmc[0]);
@@ -234,23 +268,68 @@ void JERSF() {
   //const char *cm = mc.c_str();
 
     TFile *f(0), *fm(0), *fz(0), *fg(0), *fgm(0);
-  if (TString(cr).Contains("2024")) {
+  if (TString(cr).Contains("Prompt2022")) {
+    string run2 = TString(cr).ReplaceAll("_Prompt2022","").Data();
+    const char *cr2 = run2.c_str();
+    f = new TFile(Form("rootfiles/Prompt2022CD/v42_2022_Prompt/jmenano_data_cmb_%s_JME_v42_2022_Prompt.root",cr2),"READ");
+    // Placeholder MC for all options
+    fm = new TFile("rootfiles/Summer23_L2ResOnly/jmenano_mc_cmb_Summer23MGBPix_v39_noRwPU_noSmearJets_25Feb2024_L2Res_v1.root","READ"); // no JER SF
+  }
+  else if (TString(cr).Contains("Prompt2023")) {
+    string run2 = TString(cr).ReplaceAll("_Prompt2023","").Data();
+    const char *cr2 = run2.c_str();
+    //f = new TFile(Form("rootfiles/Summer23_L2ResOnly/jmenano_data_cmb_%s_JME_v39_noRwPU_noSmearJets_25Feb2024_L2Res_v1.root",cr2),"READ");
+    f = new TFile(Form("rootfiles/Summer23_L2L3ResJERSF/v39_2023_etabin_SFv2/jmenano_data_cmb_%s_JME_v39_2023_etabin_SFv2.root",cr2),"READ");
+    // Placeholder MC for all options
+    fm = new TFile("rootfiles/Summer23_L2ResOnly/jmenano_mc_cmb_Summer23MGBPix_v39_noRwPU_noSmearJets_25Feb2024_L2Res_v1.root","READ"); // no JER SF
+  }
+  else if (TString(cr).Contains("22Sep2023")) {
+    string run2 = TString(cr).ReplaceAll("_22Sep2023","").Data();
+    const char *cr2 = run2.c_str();
+    f = new TFile(Form("rootfiles/jmenano_data_cmb_%s_JME_v39_2022_etabin_SFv.root",cr2),"READ");
+    // Placeholder MC for all options
+    fm = new TFile("rootfiles/Summer23_L2ResOnly/jmenano_mc_cmb_Summer23MGBPix_v39_noRwPU_noSmearJets_25Feb2024_L2Res_v1.root","READ"); // no JER SF
+  }
+  else if (TString(cr).Contains("19Dec2023")) {
+    string run2 = TString(cr).ReplaceAll("_19Dec2023","").Data();
+    const char *cr2 = run2.c_str();
+    cout << "Reading in " << cr2 << endl << flush;
+    f = new TFile(Form("rootfiles/19Dec2023/jmenano_data_cmb_%s_v39_eta_METcut_19Dec2023.root",cr2),"READ");
+    // Placeholder MC for all options
+    fm = new TFile("rootfiles/Summer23_L2ResOnly/jmenano_mc_cmb_Summer23MGBPix_v39_noRwPU_noSmearJets_25Feb2024_L2Res_v1.root","READ"); // no JER SF
+  }
+  else if (TString(cr).Contains("2024")) {
     //f = new TFile(Form("rootfiles/Prompt2024/v39_2024_Prompt_etabin_DCSOnly/jmenano_data_cmb_%s_v39_2024_Prompt_etabin_DCSOnly.root",cr),"READ");
     //f = new TFile(Form("rootfiles/Prompt2024/v39_2024_Prompt_etabin_DCSOnly/jmenano_data_cmb_%s_JME_v39_2024_Prompt_etabin_DCSOnly.root",cr),"READ"); // no ZB
     //f = new TFile(Form("rootfiles/Prompt2024/v39_2024_Prompt_eta_SFD_DCSOnly_Filter_HLT_MPF/jmenano_data_cmb_%s_JME_v39_2024_Prompt_eta_SFD_DCSOnly_Filter_HLT_MPF.root",cr),"READ"); // MET/sumET<0.3
     //f = new TFile(Form("rootfiles/Prompt2024/jmenano_data_cmb_%s_JME_v39_2024_Prompt_Golden_29April.root",cr),"READ"); // 0.74/fb
-    f = new TFile(Form("rootfiles/Prompt2024/v41_2024_Golden/jmenano_data_cmb_%s_JME_v41_2024_Golden.root",cr),"READ"); // 3/fb
+    //f = new TFile(Form("rootfiles/Prompt2024/v41_2024_Golden/jmenano_data_cmb_%s_JME_v41_2024_Golden.root",cr),"READ"); // 3/fb
+    //f = new TFile(Form("rootfiles/Prompt2024/v43_2024_Golden/jmenano_data_cmb_%s_JME_v43_2024_Golden.root",cr),"READ"); // 3/fb closure
+    //f = new TFile(Form("rootfiles/Prompt2024/v50_1_2024_DCSOnly/jmenano_data_cmb_%s_JME_v50_1_2024_DCSOnly.root",cr),"READ"); // May 16 DCSOnly
+    f = new TFile(Form("rootfiles/Prompt2024/v50_2024/jmenano_data_cmb_%s_JME_v50_2024.root",cr),"READ"); // May 16 golden, 12.3/fb
     //fm = new TFile("rootfiles/Prompt2024/v39_2024_Prompt_etabin_DCSOnly/jmenano_mc_cmb_Summer23MGBPix_v39_2023_etabin_SFv2.root","READ"); // with JER SF?
     fm = new TFile("rootfiles/Summer23_L2ResOnly/jmenano_mc_cmb_Summer23MGBPix_v39_noRwPU_noSmearJets_25Feb2024_L2Res_v1.root","READ"); // no JER SF
+    //if (run=="2024BCD") {
+    //fm = new TFile("rootfiles/Prompt2024//v51_2024_Golden/jmenano_mc_cmb_Winter24MCFlat_v51_2024_Golden.root","READ");
+    //}
     //
     //fz = new TFile(Form("rootfiles/Prompt2024/jme_bplusZ_%s_Zmm_sync_v78.root",cr),"READ"); // v77: Golden 2024B, DCSOnly 2024C
     //fz = new TFile("rootfiles/Prompt2024/jme_bplusZ_2024BC_Zmm_sync_v78golden.root","READ"); // 0.74/fb
-    fz = new TFile("rootfiles/Prompt2024/jme_bplusZ_2024BC_Zmm_sync_v79golden.root","READ"); // 3/fb
+    //fz = new TFile("rootfiles/Prompt2024/jme_bplusZ_2024BC_Zmm_sync_v79golden.root","READ"); // 3/fb
+    //fz = new TFile("rootfiles/Prompt2024/jme_bplusZ_2024BC_Zmm_sync_v80DCSOnly.root","READ"); // 3/fb DCSOnly
+    fz = new TFile(Form("rootfiles/Prompt2024/jme_bplusZ_%s_Zmm_sync_v81.root",cr),"READ"); // May 16 golden, 12.3/fb
+    //fz = new TFile("rootfiles/Prompt2024/jme_bplusZ_2024BC_Zmm_sync_v80golden.root","READ"); // 3/fb closure
     //fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w12.root",cr),"READ"); // DCSOnly
     //fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w13.root",cr),"READ"); // DCSOnly
     //fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w14.root",cr),"READ"); // 0.74/fb
-    fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w16.root",cr),"READ"); // 3/fb
-    fgm = new TFile("rootfiles/Prompt2024/GamHistosFill_mc_2023P8-BPix_w12.root","READ");    
+    //fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w16.root",cr),"READ"); // 3/fb
+    //fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w17.root",cr),"READ");//string(cr)=="2024CD"? "2024C" : cr),"READ"); // DCSOnly
+    //fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w21.root",cr),"READ");//string(cr)=="2024CD"? "2024C" : cr),"READ"); // DCSOnly
+    fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w22.root",cr),"READ"); // May 16 golden, 12.3/fb
+    //fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w18.root",cr),"READ"); // 3/fb closure
+    //fgm = new TFile("rootfiles/Prompt2024/GamHistosFill_mc_2023P8-BPix_w12.root","READ");
+    //fgm = new TFile("rootfiles/Prompt2024/GamHistosFill_mc_2023QCD-BPix_w12.root","READ");
+    fgm = new TFile("rootfiles/Prompt2024/GamHistosFill_mc_2023P8-BPix_w16.root","READ");
   }
   else if (TString(cr).Contains("2023")) {
     f = new TFile(Form("rootfiles/Summer23_L2ResOnly/jmenano_data_cmb_%s_JME_v39_noRwPU_noSmearJets_25Feb2024_L2Res_v1.root",cr),"READ");
@@ -258,16 +337,17 @@ void JERSF() {
     //
     fz = new TFile(Form("rootfiles/Summer23_L2ResOnly/jme_bplusZ_%s_Zmm_sync_v70.root",cr),"READ");
     fg = new TFile(Form("rootfiles/Summer23_L2ResOnly/GamHistosFill_data_%s_w6.root",cr),"READ");
-    fgm = new TFile(run=="2023D" ? "rootfiles/Summer23_L2ResOnly/GamHistosFill_mc_2023P8-BPix_w6.root" : "rootfiles/Summer23_L2ResOnly/GamHistosFill_mc_2023P8_w6.root","READ"); // Summer23 (w3->w2)
+    //fgm = new TFile(run=="2023D" ? "rootfiles/Summer23_L2ResOnly/GamHistosFill_mc_2023P8-BPix_w6.root" : "rootfiles/Summer23_L2ResOnly/GamHistosFill_mc_2023P8_w6.root","READ"); // Summer23 (w3->w2)
+    fgm = new TFile(run=="2023D" ? "rootfiles/Prompt2024/GamHistosFill_mc_2023QCD-BPix_w12.root" : "rootfiles/Summer23_L2ResOnly/GamHistosFill_mc_2023P8_w6.root","READ"); // Summer23 (w3->w2)
   }
-  else if (TString(cr).Contains("2023")) {
-
+  else if (TString(cr).Contains("2022")) {
+    assert(false);
   }
   assert(f && !f->IsZombie());
   assert(fm && !fm->IsZombie());
-  assert(fz && !fz->IsZombie());
-  assert(fg && !fg->IsZombie());
-  assert(fgm && !fgm->IsZombie());
+  assert(fz && !fz->IsZombie() || skipZ);
+  assert(fg && !fg->IsZombie() || skipG);
+  assert(fgm && !fgm->IsZombie() || skipG);
 
   curdir->cd();
 
@@ -277,21 +357,42 @@ void JERSF() {
   p2sm = (TProfile2D*)fm->Get("Dijet2/p2m0");  assert(p2sm);
   p2xm = (TProfile2D*)fm->Get("Dijet2/p2m0x"); assert(p2xm);
 
-  TProfile2D *p2zs, *p2zx, *p2zsm, *p2zxm;
-  p2zs = (TProfile2D*)fz->Get("data/l2res/p2m0");  assert(p2zs);
-  p2zx = (TProfile2D*)fz->Get("data/l2res/p2m0x"); assert(p2zx);
-  p2zsm = (TProfile2D*)fz->Get("mc/l2res/p2m0");  assert(p2zsm);
-  p2zxm = (TProfile2D*)fz->Get("mc/l2res/p2m0x"); assert(p2zxm);
-
-  TProfile2D *p2gs, *p2gx, *p2gsm, *p2gxm;
-  p2gs = (TProfile2D*)fg->Get("Gamjet2/p2m0");  assert(p2gs);
-  p2gx = (TProfile2D*)fg->Get("Gamjet2/p2m0x"); assert(p2gx);
-  p2gsm = (TProfile2D*)fgm->Get("Gamjet2/p2m0");  assert(p2gsm);  p2gxm = (TProfile2D*)fgm->Get("Gamjet2/p2m0x"); assert(p2gxm);
+  TProfile2D *p2zs(0), *p2zx(0), *p2zsm(0), *p2zxm(0);
+  if (!skipZ) {
+    p2zs = (TProfile2D*)fz->Get("data/l2res/p2m0");  assert(p2zs);
+    p2zx = (TProfile2D*)fz->Get("data/l2res/p2m0x"); assert(p2zx);
+    p2zsm = (TProfile2D*)fz->Get("mc/l2res/p2m0");  assert(p2zsm);
+    p2zxm = (TProfile2D*)fz->Get("mc/l2res/p2m0x"); assert(p2zxm);
+  }
+  
+  TProfile2D *p2gs(0), *p2gx(0), *p2gsm(0), *p2gxm(0);
+  if (!skipG) {
+    p2gs = (TProfile2D*)fg->Get("Gamjet2/p2m0");  assert(p2gs);
+    p2gx = (TProfile2D*)fg->Get("Gamjet2/p2m0x"); assert(p2gx);
+    p2gsm = (TProfile2D*)fgm->Get("Gamjet2/p2m0");  assert(p2gsm);
+    p2gxm = (TProfile2D*)fgm->Get("Gamjet2/p2m0x"); assert(p2gxm);
+  }
   
   TH1D *hjer13  = getJER(p2s, p2x, 0, 0,1.3,Form("hjer13_%s",cr));
   TH1D *hjer13m = getJER(p2sm,p2xm,0, 0,1.3,Form("hjer13m_%s",cr));
   TH1D *hsf13 = (TH1D*)hjer13->Clone(Form("hsf13_%s",cr));
   hsf13->Divide(hjer13m);
+
+  TH1D *hjer13g(0), *hjer13gm(0), *hsf13g(0);
+  if (!skipG) {
+    hjer13g  = getJERZ(p2gs, p2gx,  0,1.3,Form("hjer13g_%s",cr));
+    hjer13gm = getJERZ(p2gsm,p2gxm, 0,1.3,Form("hjer13gm_%s",cr));
+    hsf13g = (TH1D*)hjer13g->Clone(Form("hsf13g_%s",cr));
+    hsf13g->Divide(hjer13gm);
+  }
+
+  TH1D *hjer13z(0), *hjer13zm(0), *hsf13z(0);
+  if (!skipZ) {
+    hjer13z  = getJERZ(p2zs, p2zx,  0,1.3,Form("hjer13z_%s",cr));
+    hjer13zm = getJERZ(p2zsm,p2zxm, 0,1.3,Form("hjer13zm_%s",cr));
+    hsf13z = (TH1D*)hjer13z->Clone(Form("hsf13z_%s",cr));
+    hsf13z->Divide(hjer13zm);
+  }
 
   TF1 *f13m = fitJER(hjer13m,50,1500,0,Form("f13m_%s",cr),kBlue-9);
   TF1 *f13  = fitJER(hjer13, 50,1500,0,Form("f13_%s",cr),kBlue,f13m);
@@ -325,6 +426,26 @@ void JERSF() {
   f13->SetLineColor(kBlack);
   f13->Draw("SAME");
 
+  if (!skipG) {
+    tdrDraw(hjer13gm,"HISTE",kNone,kBlue,kSolid,-1,kNone,0);
+    tdrDraw(hjer13g,"Pz",kOpenCircle,kBlue);
+
+    TLegend *leg0 = tdrLeg(0.65,0.90-(skipZ ? 3 : 4)*0.05,0.90,0.90);
+
+    if (!skipZ) {
+      //tdrDraw(hjer13zm,"HISTE",kNone,kRed,kSolid,-1,kNone,0);
+      //tdrDraw(hjer13z,"Pz",kOpenDiamond,kRed,kSolid,-1,kNone,0);
+      //leg0->AddEntry(hjer13z,"Z(#mu#mu) + jet", "PLE");
+      c0->cd(2);
+      tdrDraw(hsf13z,"Pz",kOpenDiamond,kRed);
+      leg0->AddEntry(hsf13z,"Z(#mu#mu) + jet", "PLE");
+    }
+    leg0->AddEntry(hjer13g,"#gamma + jet", "PLE");
+    leg0->AddEntry(hjer13,"Dijet", "PLE");
+    leg0->AddEntry(hjer13m,"MC", "L");
+
+  }
+
   c0->cd(2);
   gPad->SetLogx();
   l->DrawLine(15,1,3500,1);
@@ -333,7 +454,16 @@ void JERSF() {
   f13r->SetLineColor(kBlack);
   f13r->Draw("SAME");
 
+  if (!skipG) {
+    tdrDraw(hsf13g,"Pz",kOpenCircle,kBlue);
+
+    //if (!skipZ) {
+    //tdrDraw(hsf13z,"Pz",kOpenDiamond,kRed);
+    //}
+  }
+
   c0->SaveAs(Form("pdf/JERSF/JERSF_Eta13_%s.pdf",cr));
+  if (run=="2024BCD") c0->SaveAs(Form("pdf/JERSF/JERSF_Eta13_%s.png",cr));
   
   //TCanvas *cx = new TCanvas("cx","cx",7*250,3*250);
   //cx->Divide(7,3,0,0);
@@ -345,13 +475,19 @@ void JERSF() {
   TH2D *h2jerdt = p2s->ProjectionXY(Form("h2jerdt_%s",cr)); h2jerdt->Reset();
   TH2D *h2jermc = p2s->ProjectionXY(Form("h2jermc_%s",cr)); h2jermc->Reset();
   //
-  TH2D *h2zjer = p2zs->ProjectionXY(Form("h2zjer_%s",cr)); h2zjer->Reset();
-  TH2D *h2zjerdt =p2zs->ProjectionXY(Form("h2zjerdt_%s",cr)); h2zjerdt->Reset();
-  TH2D *h2zjermc =p2zs->ProjectionXY(Form("h2zjermc_%s",cr)); h2zjermc->Reset();
+  TH2D *h2zjer(0), *h2zjerdt(0), *h2zjermc(0);
+  if (!skipZ) {
+    h2zjer = p2zs->ProjectionXY(Form("h2zjer_%s",cr)); h2zjer->Reset();
+    h2zjerdt =p2zs->ProjectionXY(Form("h2zjerdt_%s",cr)); h2zjerdt->Reset();
+    h2zjermc =p2zs->ProjectionXY(Form("h2zjermc_%s",cr)); h2zjermc->Reset();
+  }
   //
-  TH2D *h2gjer = p2gs->ProjectionXY(Form("h2gjer_%s",cr)); h2gjer->Reset();
-  TH2D *h2gjerdt =p2gs->ProjectionXY(Form("h2gjerdt_%s",cr)); h2gjerdt->Reset();
-  TH2D *h2gjermc =p2gs->ProjectionXY(Form("h2gjermc_%s",cr)); h2gjermc->Reset();
+  TH2D *h2gjer(0), *h2gjerdt(0), *h2gjermc(0);
+  if (!skipG) {
+    h2gjer = p2gs->ProjectionXY(Form("h2gjer_%s",cr)); h2gjer->Reset();
+    h2gjerdt =p2gs->ProjectionXY(Form("h2gjerdt_%s",cr)); h2gjerdt->Reset();
+    h2gjermc =p2gs->ProjectionXY(Form("h2gjermc_%s",cr)); h2gjermc->Reset();
+  }
   
   // Loop over the ieta bins
   vector<TF1*> vf1(p2s->GetNbinsX()+1);
@@ -373,15 +509,21 @@ void JERSF() {
   TH1D *hsf = (TH1D*)hjer->Clone(Form("hsf_%d_%s",ieta,cr));
   hsf->Divide(hjerm);
 
-  TH1D *hjerz  = getJERZ(p2zs,p2zx,etamin,etamax,Form("hjerz_%d_%s",ieta,cr));
-  TH1D *hjerzm = getJERZ(p2zsm,p2zxm,etamin,etamax,Form("hjerzm_%d_%s",ieta,cr));
-  TH1D *hsfz = (TH1D*)hjerz->Clone(Form("hsfz_%d_%s",ieta,cr));
-  hsfz->Divide(hjerzm);
+  TH1D *hjerz(0), *hjerzm(0), *hsfz(0);
+  if (!skipZ) {
+    hjerz  = getJERZ(p2zs,p2zx,etamin,etamax,Form("hjerz_%d_%s",ieta,cr));
+    hjerzm = getJERZ(p2zsm,p2zxm,etamin,etamax,Form("hjerzm_%d_%s",ieta,cr));
+    hsfz = (TH1D*)hjerz->Clone(Form("hsfz_%d_%s",ieta,cr));
+    hsfz->Divide(hjerzm);
+  }
 
-  TH1D *hjerg  = getJERZ(p2gs,p2gx,etamin,etamax,Form("hjerg_%d_%s",ieta,cr));
-  TH1D *hjergm = getJERZ(p2gsm,p2gxm,etamin,etamax,Form("hjergm_%d_%s",ieta,cr));
-  TH1D *hsfg = (TH1D*)hjerg->Clone(Form("hsfg_%d_%s",ieta,cr));
-  hsfg->Divide(hjergm);
+  TH1D *hjerg(0), *hjergm(0), *hsfg(0);
+  if (!skipG) {
+    hjerg  = getJERZ(p2gs,p2gx,etamin,etamax,Form("hjerg_%d_%s",ieta,cr));
+    hjergm = getJERZ(p2gsm,p2gxm,etamin,etamax,Form("hjergm_%d_%s",ieta,cr));
+    hsfg = (TH1D*)hjerg->Clone(Form("hsfg_%d_%s",ieta,cr));
+    hsfg->Divide(hjergm);
+  }
   
   double ptmin = 50;
   //double ptmax = 1500./cosh(eta1);
@@ -415,11 +557,15 @@ void JERSF() {
 
   tex->DrawLatex(0.35,0.85,Form("[%1.3f,%1.3f]",eta1,eta2));
 
-  tdrDraw(hjerzm,"HISTE",kNone,kRed,kSolid,-1,kNone);
-  tdrDraw(hjerz,"Pz",kOpenCircle,kRed);
+  if (!skipZ) {
+    tdrDraw(hjerzm,"HISTE",kNone,kRed,kSolid,-1,kNone);
+    tdrDraw(hjerz,"Pz",kOpenCircle,kRed);
+  }
 
-  tdrDraw(hjergm,"HISTE",kNone,kBlue,kSolid,-1,kNone);
-  tdrDraw(hjerg,"Pz",kOpenDiamond,kBlue);
+  if (!skipG) {
+    tdrDraw(hjergm,"HISTE",kNone,kBlue,kSolid,-1,kNone);
+    tdrDraw(hjerg,"Pz",kOpenDiamond,kBlue);
+  }
 
   //tdrDraw(hjer13m,"HISTE",kNone,kBlue-9,kSolid,-1,kNone);
   //tdrDraw(hjer13,"Pz",kOpenCircle,kBlue);
@@ -514,21 +660,25 @@ void JERSF() {
 
   }
   // Store results with uncertainty to output histogram for Z/gamma+jet
-  for (int ipt = 1; ipt != h2zjer->GetNbinsY()+1; ++ipt) {
-    h2zjer->SetBinContent(ieta, ipt, hsfz->GetBinContent(ipt));
-    h2zjer->SetBinError(ieta, ipt, hsfz->GetBinError(ipt));
-    h2zjerdt->SetBinContent(ieta, ipt, hjerz->GetBinContent(ipt));
-    h2zjerdt->SetBinError(ieta, ipt, hjerz->GetBinError(ipt));
-    h2zjermc->SetBinContent(ieta, ipt, hjerzm->GetBinContent(ipt));
-    h2zjermc->SetBinError(ieta, ipt, hjerzm->GetBinError(ipt)); 
+  if (!skipZ) {
+    for (int ipt = 1; ipt != h2zjer->GetNbinsY()+1; ++ipt) {
+      h2zjer->SetBinContent(ieta, ipt, hsfz->GetBinContent(ipt));
+      h2zjer->SetBinError(ieta, ipt, hsfz->GetBinError(ipt));
+      h2zjerdt->SetBinContent(ieta, ipt, hjerz->GetBinContent(ipt));
+      h2zjerdt->SetBinError(ieta, ipt, hjerz->GetBinError(ipt));
+      h2zjermc->SetBinContent(ieta, ipt, hjerzm->GetBinContent(ipt));
+      h2zjermc->SetBinError(ieta, ipt, hjerzm->GetBinError(ipt)); 
+    }
   }
-  for (int ipt = 1; ipt != h2gjer->GetNbinsY()+1; ++ipt) {
-    h2gjer->SetBinContent(ieta, ipt, hsfg->GetBinContent(ipt));
-    h2gjer->SetBinError(ieta, ipt, hsfg->GetBinError(ipt));
-    h2gjerdt->SetBinContent(ieta, ipt, hjerg->GetBinContent(ipt));
-    h2gjerdt->SetBinError(ieta, ipt, hjerg->GetBinError(ipt));
-    h2gjermc->SetBinContent(ieta, ipt, hjergm->GetBinContent(ipt));
-    h2gjermc->SetBinError(ieta, ipt, hjergm->GetBinError(ipt)); 
+  if (!skipG) {
+    for (int ipt = 1; ipt != h2gjer->GetNbinsY()+1; ++ipt) {
+      h2gjer->SetBinContent(ieta, ipt, hsfg->GetBinContent(ipt));
+      h2gjer->SetBinError(ieta, ipt, hsfg->GetBinError(ipt));
+      h2gjerdt->SetBinContent(ieta, ipt, hjerg->GetBinContent(ipt));
+      h2gjerdt->SetBinError(ieta, ipt, hjerg->GetBinError(ipt));
+      h2gjermc->SetBinContent(ieta, ipt, hjergm->GetBinContent(ipt));
+      h2gjermc->SetBinError(ieta, ipt, hjergm->GetBinError(ipt)); 
+    }
   }
 
   
@@ -603,7 +753,8 @@ void JERSF() {
   // Produce output text file (FactorizedJetCorrecter style)
   //ofstream txt(Form("pdf/JERSF/Summer23_%s_JRV2_MC_SF_AK4PFPuppi.txt",cr));
   //ofstream txt(Form("textFiles/Prompt24/Prompt24_%s_JRV1M_MC_SF_AK4PFPuppi.txt",cr));
-  ofstream txt(Form("textFiles/Prompt24/Prompt24_%s_JRV2M_MC_SF_AK4PFPuppi.txt",cr));
+  //ofstream txt(Form("textFiles/Prompt24/Prompt24_%s_JRV2M_MC_SF_AK4PFPuppi.txt",cr));
+  ofstream txt(Form("textFiles/Prompt24/Prompt24_%s_JRV3M_MC_SF_AK4PFPuppi.txt",cr));
   txt << "{1 JetEta 1 JetPt "
       << "sqrt([0]*fabs([0])/(x*x)+[1]*[1]/x+[2]*[2])/"
       << "sqrt([3]*fabs([3])/(x*x)+[4]*[4]/x+[5]*[5])"
@@ -657,13 +808,17 @@ void JERSF() {
 
   //if (!fout->FindObject("Extras")) fout->mkdir("Extras");
   fout->cd("Extras");
-  h2zjer->Write(Form("h2jersfZjet_%s_%s",cr,cm),TObject::kOverwrite);
-  h2zjerdt->Write(Form("h2jerdtZjet_%s_%s",cr,cm),TObject::kOverwrite);
-  h2zjermc->Write(Form("h2jermcZjet_%s_%s",cr,cm),TObject::kOverwrite);
+  if (!skipZ) {
+    h2zjer->Write(Form("h2jersfZjet_%s_%s",cr,cm),TObject::kOverwrite);
+    h2zjerdt->Write(Form("h2jerdtZjet_%s_%s",cr,cm),TObject::kOverwrite);
+    h2zjermc->Write(Form("h2jermcZjet_%s_%s",cr,cm),TObject::kOverwrite);
+  }
   //
-  h2gjer->Write(Form("h2jersfGamjet_%s_%s",cr,cm),TObject::kOverwrite);
-  h2gjerdt->Write(Form("h2jerdtGamjet_%s_%s",cr,cm),TObject::kOverwrite);
-  h2gjermc->Write(Form("h2jermcGamjet_%s_%s",cr,cm),TObject::kOverwrite);
+  if (!skipG) {
+    h2gjer->Write(Form("h2jersfGamjet_%s_%s",cr,cm),TObject::kOverwrite);
+    h2gjerdt->Write(Form("h2jerdtGamjet_%s_%s",cr,cm),TObject::kOverwrite);
+    h2gjermc->Write(Form("h2jermcGamjet_%s_%s",cr,cm),TObject::kOverwrite);
+  }
 
   //if (!fout->FindObject("Raw")) fout->mkdir("Raw");
   fout->cd("Raw");
@@ -672,15 +827,19 @@ void JERSF() {
   p2x->Write(Form("p2m0xdt_%s_%s",cr,cm),TObject::kOverwrite);
   p2xm->Write(Form("p2m0xmc_%s_%s",cr,cm),TObject::kOverwrite);
   //
-  p2zs->Write(Form("p2zm0dt_%s_%s",cr,cm),TObject::kOverwrite);
-  p2zsm->Write(Form("pzgm0mc_%s_%s",cr,cm),TObject::kOverwrite);
-  p2zx->Write(Form("p2zm0xdt_%s_%s",cr,cm),TObject::kOverwrite);
-  p2zxm->Write(Form("p2zm0xmc_%s_%s",cr,cm),TObject::kOverwrite);
+  if (!skipZ) {
+    p2zs->Write(Form("p2zm0dt_%s_%s",cr,cm),TObject::kOverwrite);
+    p2zsm->Write(Form("pzgm0mc_%s_%s",cr,cm),TObject::kOverwrite);
+    p2zx->Write(Form("p2zm0xdt_%s_%s",cr,cm),TObject::kOverwrite);
+    p2zxm->Write(Form("p2zm0xmc_%s_%s",cr,cm),TObject::kOverwrite);
+  }
   //
-  p2gs->Write(Form("p2gm0dt_%s_%s",cr,cm),TObject::kOverwrite);
-  p2gsm->Write(Form("p2gm0mc_%s_%s",cr,cm),TObject::kOverwrite);
-  p2gx->Write(Form("p2gm0xdt_%s_%s",cr,cm),TObject::kOverwrite);
-  p2gxm->Write(Form("p2gm0xmc_%s_%s",cr,cm),TObject::kOverwrite);
+  if (!skipG) {
+    p2gs->Write(Form("p2gm0dt_%s_%s",cr,cm),TObject::kOverwrite);
+    p2gsm->Write(Form("p2gm0mc_%s_%s",cr,cm),TObject::kOverwrite);
+    p2gx->Write(Form("p2gm0xdt_%s_%s",cr,cm),TObject::kOverwrite);
+    p2gxm->Write(Form("p2gm0xmc_%s_%s",cr,cm),TObject::kOverwrite);
+  }
   curdir->cd();
 
   } // for irunx
