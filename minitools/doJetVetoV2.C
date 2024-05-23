@@ -58,7 +58,7 @@ void doJetVetoV2(string run = "") {
   doJetVetoV2s("2023D");
   */
   
-  doJetVetoV2s("2024BC");
+  doJetVetoV2s("2024BCD");
 }
 
 void doJetVetoV2s(string run) {
@@ -121,13 +121,15 @@ void doJetVetoV2s(string run) {
     lumi_136TeV = "Run2023D, 9.5 fb^{-1}";
     f = new TFile("rootfiles/Iita_20230814/nano_data_out_2023D_v1.root","READ");
   }
-  if (run=="2024BC") {
+  if (run=="2024BCD") {
     //lumi_136TeV = "Run2024BC, 0.74 fb^{-1}";
-    lumi_136TeV = "Run2024BC, 3.3 fb^{-1}";
+    //lumi_136TeV = "Run2024BC, 3.3 fb^{-1}";
+    lumi_136TeV = "Run2024BCD, 12.3 fb^{-1}";
     //f = new TFile("rootfiles/Prompt2024/v39_2024_Prompt_etabin_DCSOnly/jmenano_data_out_2024BC_JME_v39_2024_Prompt_etabin_DCSOnly.root","READ");
     //f = new TFile("rootfiles/Prompt2024/jmenano_data_cmb_2024BC_JME_v39_2024_Prompt_Golden_29April.root","READ"); // golden 0.74/fb
-    f = new TFile("rootfiles/Prompt2024/v41_2024_Golden/jmenano_data_cmb_2024BC_JME_v41_2024_Golden.root","READ"); // golden 3/fb
-    pullThreshold = 150;//100;//85;//100;//70;//50;
+    //f = new TFile("rootfiles/Prompt2024/v41_2024_Golden/jmenano_data_cmb_2024BC_JME_v41_2024_Golden.root","READ"); // golden 3/fb
+    f = new TFile("rootfiles/Prompt2024/v50_2024/jmenano_data_cmb_2024BCD_JME_v50_2024.root","READ"); // May 16 golden, 12.3/fb
+    pullThreshold = 250;//200;//150;//100;//85;//100;//70;//50;
     pullThresholdHF45 = 300;
     nMinTowers = 50;
   }
@@ -148,7 +150,7 @@ void doJetVetoV2s(string run) {
   vtrg.push_back("HLT_PFJet500");
   //vtrg.push_back("HLT_PFJet550");
 
-  if (run!="2024BC") {
+  //if (run!="2024BC") {
   vtrg.push_back("HLT_PFJetFwd40");
   vtrg.push_back("HLT_PFJetFwd60");
   vtrg.push_back("HLT_PFJetFwd80");
@@ -160,10 +162,10 @@ void doJetVetoV2s(string run) {
   vtrg.push_back("HLT_PFJetFwd400");
   vtrg.push_back("HLT_PFJetFwd450");
   vtrg.push_back("HLT_PFJetFwd500");
-  } 
-  else { // 2024BC
-    vtrg.push_back("HLT_ZeroBias");
-  }
+  //} 
+  //else { // 2024BCD
+  vtrg.push_back("HLT_ZeroBias");
+  //}
   
   // Add dijet average triggers for better h2jes
   vtrg.push_back("HLT_DiPFJetAve40");
@@ -226,6 +228,7 @@ void doJetVetoV2s(string run) {
       bool isProf2D = obj->InheritsFrom("TProfile2D");
       
       TH2D *h2 = (isProf2D ? ((TProfile2D*)obj)->ProjectionXY() : (TH2D*)obj);
+      h2->UseCurrentStyle();
       TH2D *h2nom = (TH2D*)h2->Clone(Form("h2nom_%s",hname.c_str()));
       TH2D *h2abs = (TH2D*)h2->Clone(Form("h2abs_%s",hname.c_str()));
       
@@ -423,6 +426,10 @@ void doJetVetoV2s(string run) {
   if (doPull) {
     h1nom->GetZaxis()->SetRangeUser(-100,100);
     h1abs->GetZaxis()->SetRangeUser(0,100);
+    if (run=="2024BCD") {
+      h1nom->GetZaxis()->SetRangeUser(-150,150);
+      h1abs->GetZaxis()->SetRangeUser(0,150);
+    }
   }
   else {
     h1nom->GetZaxis()->SetRangeUser(-0.50,0.50);
@@ -441,6 +448,10 @@ void doJetVetoV2s(string run) {
     h2nomsums->GetZaxis()->SetRangeUser(-100,100);
     h2abssums->GetZaxis()->SetRangeUser(-100,100);
     //h2abssums->GetZaxis()->SetRangeUser(0,100);
+    if (run=="2024BCD") {
+      h2nomsums->GetZaxis()->SetRangeUser(-150,150);
+      h2abssums->GetZaxis()->SetRangeUser(-150,150);
+    }
   }
   else {
     h2nomsums->GetZaxis()->SetRangeUser(-0.50,0.50);
@@ -483,9 +494,9 @@ void doJetVetoV2s(string run) {
     h2veto->SetTitle("JME recommended map, used for JEC. Hot+Cold+BPIX");
     h2all->SetTitle("Union of hot, cold and BPIX maps");
   }
-  if (run=="2024BC") {
-    h2veto->SetTitle("JME recommended map, used for JEC. Hot+Cold(+not BPIX)");
-    h2all->SetTitle("Union of hot, cold (and not BPIX) maps");
+  if (run=="2024BCD") {
+    h2veto->SetTitle("JME recommended map. Hot+Cold(+not BPIX)");
+    h2all->SetTitle("Union of all maps, used for JEC. Hot+cold+BPIX");
   }
   h2nomsums->SetTitle("Raw nominal pull map. NomPull=(x_i-mu)/sigma. Summed over triggers");
   h2abssums->SetTitle("Raw absolute pull map. AbsPull=|(x_i-mu)/sigma|-1. Summed over triggers");
@@ -545,10 +556,10 @@ void doJetVetoV2s(string run) {
 	  h2bpix->SetBinContent(i,j,100);
 	  h2all->SetBinContent(i,j,100);
 	}
-	if (run=="2024BC") { // Keep BPix
+	if (run=="2024BCD") { // Keep BPix for recommended, drop for JEC
 	  h2veto->SetBinContent(i,j,0);
 	  h2bpix->SetBinContent(i,j,100);
-	  h2all->SetBinContent(i,j,0);
+	  h2all->SetBinContent(i,j,100);
 	}
       } // BPIX
 

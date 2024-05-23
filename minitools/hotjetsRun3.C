@@ -25,7 +25,7 @@ void hotjetsRun3() {
   setTDRStyle();
   TDirectory *curdir = gDirectory;
 
-  string eras[] = {"22CD", "22EFG", "23BC", "23D", "24BC"};
+  string eras[] = {"22CD", "22EFG", "23BC", "23D", "24BCD"};
   const int nera = sizeof(eras)/sizeof(eras[0]);
 
   map<string, const char*> mera;
@@ -33,21 +33,22 @@ void hotjetsRun3() {
   mera["22EFG"] = "22EE";
   mera["23BC"] = "23";
   mera["23D"] = "23BPix";
-  mera["24BC"] = "24";
+  mera["24BCD"] = "24";
 
   map<string, int> mcolor;
   mcolor["22CD"] = kGreen+2;
   mcolor["22EFG"] = kBlue;
   mcolor["23BC"] = kOrange;
   mcolor["23D"] = kCyan+2;
-  mcolor["24BC"] = kRed;
+  mcolor["24BCD"] = kRed;
 
   TH1D *h = new TH1D("h",";#eta_{jet};#phi_{jet}",100,-4.7,4.7);
   h->SetMaximum(+TMath::Pi());
   h->SetMinimum(-TMath::Pi());
 
   //lumi_13TeV = "Run2024BC, 0.74 fb^{-1}";
-  lumi_13TeV = "Run2024BC, 3.3 fb^{-1}";
+  //lumi_13TeV = "Run2024BC, 3.3 fb^{-1}";
+  lumi_13TeV = "Run2024BCD, 12.3 fb^{-1}";
   TCanvas *c1 = tdrCanvas("c1",h,4,0,kRectangular);
 
   TLine *l = new TLine();
@@ -89,7 +90,7 @@ void hotjetsRun3() {
     h2->SetFillColorAlpha(mcolor[era]-9, 0.35); // 65% transparent
     h2->Draw("SAMEBOX");
 
-    if (era=="24BC")
+    if (era=="24BCD")
       h2->SetFillColorAlpha(mcolor[era], 0.60); // 40% transparent
     
     leg->AddEntry(h2,mera[era],"F");
