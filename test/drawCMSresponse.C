@@ -80,6 +80,7 @@ void drawCMSresponse(string era, string id="", bool isl2 = false) {
     //const char *sd = "textFiles/Summer23_noL2L3Res";
     //const char *sd = "textFiles/Summer23_L2ResOnly";
     const char *sd = "textFiles/Prompt24";
+    //const char *sd = "textFiles/HFscale";
     //const char *st = "2017BCDEF_DATA";
     const char *st = era.c_str();
     const char *s;

@@ -11,6 +11,7 @@ using std::map;
 // Global minimum (stat.) uncertainty for input data
 double globalErrMin = 0.005;//0.003;//0.002559; // chi2/NDF=101.0/101
 double scaleJZ = 0.98;  // default 0.98 for 2022-23
+double scaleJZA = 0.99;  
 
 // Input data
 struct fitData {
@@ -63,6 +64,9 @@ const array<array<string,3>,ndt> _gf_datasets = {{
     {"ptchs_jetz_a100", "Rjet",""},
     {"mpfchs1_jetz_a100", "Rjet",""},
     {"hdm_mpfchs1_jetz", "Rjet",""},
+    {"ptchs_zjav_a100", "Rjet",""},
+    {"mpfchs1_zjav_a100", "Rjet",""},
+    {"hdm_mpfchs1_zjav", "Rjet",""},
     {"ptchs_zjet_a100", "Rjet",""},
     {"mpfchs1_zjet_a100", "Rjet",""},
     {"hdm_mpfchs1_zjet", "Rjet",""},
@@ -94,6 +98,7 @@ const array<string,29> _gf_datasets_whitelist = {
   //"ptchs_zjet_a100",
   //"mpfchs1_zjet_a100",
   "hdm_mpfchs1_jetz",
+  "hdm_mpfchs1_zjav",
   "hdm_mpfchs1_zjet",
   "chf_zjet_a100",
   "nhf_zjet_a100",
@@ -127,11 +132,19 @@ const array<string,29> _gf_shapes_whitelist = {
   "hhnoise", // Run22
   //"x0p5",
   //"x1", // 22Sep2023 V3, not 19Dec2023
+  //"g1", // NEF drop above 610 GeV
+  //"p5log", // log^5
+  //"p4log", // log^4
+  //"p3log", // log^3
+  //"quadlog", // log^2
+  //"loglin", // log^1
+  //"const", // log^0 constant scale factor
   "off", // Summer23
+  //"ecalcc", // ECAL cc timing for 2024BCD, not 2024CR
   //"qie11"
   //"x1p5",
-  // "x1v4", // Summer23 variant
-  // "x1p5v4", // Summer23 high pT? just tad steeper than x1
+  //"x1v4", // Summer23 variant
+  //"x1p5v4", // Summer23 high pT? just tad steeper than x1
   //"x2v4", // Summer23 high pT? bit more conservative extrapolation?
   //"x2p5", // Summer23 high pT? pretty good
   //"x3", // Summer23 hight pT? Slightly too sharp?
@@ -192,6 +205,13 @@ const array<array<string,3>, nshp> _gf_shapes = {{
     // R = (0.5*x+1150.)/x
     //{"qie11","Rjet","-0.5*max(x-1150.,0.)/(3000.-1150.)"},
     {"off","Rjet","1./x"},
+    {"g1","Rjet","-6.5*max(log(x/610.),0.)"},
+    {"p5log","Rjet","1.0*pow(log(x/300.),5)"},
+    {"p4log","Rjet","1.0*pow(log(x/300.),4)"},
+    {"p3log","Rjet","1.0*pow(log(x/300.),3)"},
+    {"quadlog","Rjet","1.0*pow(log(x/300.),2)"},
+    {"loglin","Rjet","1.0*log(x/300.)"},
+    {"const","Rjet","1.0"},
     {"x0p5","Rjet","10.*pow(x/3000.,0.5)"},
     {"x1","Rjet","10.*pow(x/3000.,1)"},
     {"x1v4","Rjet","10.*pow(x/4000.,1)"},
@@ -205,6 +225,13 @@ const array<array<string,3>, nshp> _gf_shapes = {{
     {"x4","Rjet","10.*pow(x/3000.,4)"},
     // Quick tests for 10% pT^2 and pT^3 uncertainty at 3 TeV
 
+    // ECAL cc timing, dijet/drawCompareLite_Promp24_vs_ECALRATIO_TnP_2024B.pdf
+    // Maximum drop put in by hand, now -9%:
+    // 1) photon xsec max drop 75%: 18.75% scale if pT^-4,
+    // 2) this impacts at most all ECAL energy or 60% of jet pT => 11.25% (10%)
+    //{"ecalcc","Rjet","max(-1.59-6.68*(-0.798-0.5798*pow(x/396.1,1.412)/(1+pow(x/396.1,1.412))*(1-pow(x/396.1,-1.412)))-31.2*x/3000.,-11.25)"}, // 2024B
+    {"ecalcc","Rjet","max(-0.77-4.58*(-0.798-0.5798*pow(x/396.1,1.412)/(1+pow(x/396.1,1.412))*(1-pow(x/396.1,-1.412)))-22*x/3000.,-10.)"}, // 2023C
+    
     // Run3 wrong SiPM non-linearity corrections for data (1M variant)
     {"hbsipm","Rjet","-17.81+log(x)*(15.9+log(x)*(-4.719+log(x)*(0.3464+log(x)*(0.08054+log(x)*(-0.01553+log(x)*0.0007183)))))"},
     {"hbsipm","chf","7.678+log(x)*(-7.629+log(x)*(2.519+log(x)*(-0.2166+log(x)*(-0.04713+log(x)*(0.0104+log(x)*-0.0005435)))))"},

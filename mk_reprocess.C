@@ -61,7 +61,9 @@
   //globalFitEtaBin(0.0, 1.3, epoch, "Summer23_V2test2");
   //globalFitEtaBin(0.0, 1.3, epoch, "Summer23_V2closure");
   //globalFitEtaBin(0.0, 1.3, epoch, "Summer23_V2closure2");
-  globalFitEtaBin(0.0, 1.3, epoch, "Prompt24_3fb");
+  //globalFitEtaBin(0.0, 1.3, epoch, "Prompt24_3fb");
+  //globalFitEtaBin(0.0, 1.3, epoch, "Prompt24_3fb_V2Mclosure");
+  globalFitEtaBin(0.0, 1.3, epoch, "Prompt24_12fb_V3M");
   
   exit(0); // Avoid page full of THastList::Delete errors
 }

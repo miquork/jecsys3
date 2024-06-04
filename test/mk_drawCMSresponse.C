@@ -46,6 +46,13 @@
 
   //drawCMSresponse("Prompt24_Run2024BC_V1M","Prompt24BC_V1M",true);
   //drawCMSresponse("Prompt24_Run2024BC_V1M","Prompt24BC_V1M",false);
-  drawCMSresponse("Prompt24_Run2024BC_V2M","Prompt24BC_V2M",true);
-  drawCMSresponse("Prompt24_Run2024BC_V2M","Prompt24BC_V2M",false);
+  //drawCMSresponse("Prompt24_Run2024BC_V2M","Prompt24BC_V2M",true);
+  //drawCMSresponse("Prompt24_Run2024BC_V2M","Prompt24BC_V2M",false);
+
+  //drawCMSresponse("Summer23Prompt23_Run2023D_V2xHFscale","23D_V2xHF",false);
+
+  drawCMSresponse("Prompt24_Run2024BCD_V3M","Prompt24BCD_V3M",true);
+  drawCMSresponse("Prompt24_Run2024BCD_V3M","Prompt24BCD_V3M",false);
+  drawCMSresponse("Prompt24_Run2024CR_V3M","Prompt24CR_V3M",true);
+  drawCMSresponse("Prompt24_Run2024CR_V3M","Prompt24CR_V3M",false);
 }

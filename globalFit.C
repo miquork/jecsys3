@@ -223,6 +223,10 @@ void globalFitEtaBin(double etamin, double etamax, string run, string version) {
     if (TString(name).Contains("jetz")) {
       scaleGraph(data.input, scaleJZ);
     }
+    // Z+jet ave special
+    if (TString(name).Contains("zjav")) {
+      scaleGraph(data.input, scaleJZA);
+    }
     
     // Multijet special
     if (g2) { //string(name2)!="") {
@@ -366,7 +370,7 @@ void globalFitEtaBin(double etamin, double etamax, string run, string version) {
   fitter->ExecuteCommand("SET PRINT", &printlevel, 1);
   
   // Run fitter (multiple times if needed)
-  const int nfit = 5;//2;//1;
+  const int nfit = 1;//5;//2;//1;
   cnt = 0;
   for (int i = 0; i != nfit; ++i)
     fitter->ExecuteCommand("MINI", 0, 0);
@@ -569,7 +573,8 @@ void globalFitDraw(string run, string version) {
     if (run=="Run3") lumi_136TeV = "Run3, 64 fb^{-1}";
     //TH1D *h = tdrHist("h","JES",0.982+1e-5,1.025-1e-5); // ratio (hdm)
     TH1D *h = tdrHist("h","JES",
-		      0.75+1e-5,1.20-1e-5, // Summer23_V2
+		      0.85+1e-5,1.15-1e-5, // Prompt24BCD
+		      //0.75+1e-5,1.20-1e-5, // Summer23_V2
 		      //0.75+1e-5,1.20-1e-5, // Summer23_V1
 		      //0.75+1e-5,1.20-1e-5, // Summer22
 		      //0.83+1e-5,1.15-1e-5,
@@ -747,6 +752,8 @@ void globalFitDraw(string run, string version) {
       //if (name=="hdm_cmb_mj" || (run=="2017H" && name=="hdm_cmb")) {
       if (name=="mpfchs1_zjet_a100" || name=="hdm_mpfchs1_zjet" ||
 	  name=="ptchs_zjet_a100" || //) {
+	  //name=="mpfchs1_jetz_a100" || name=="hdm_mpfchs1_jetz" ||
+	  //name=="ptchs_jetz_a100" || //) {
 	  name=="mpfchs1_gamjet_a100" || name=="hdm_mpfchs1_gamjet" ||
 	  name=="ptchs_gamjet_a100") {
 	c1c->cd();
@@ -889,6 +896,11 @@ void globalFitDraw(string run, string version) {
     assert(gnhf0z);
     gnhf0z = (TGraphErrors*)gnhf0z->Clone("gnhf0z");
     double nhf_off(1);
+
+    TGraphErrors *gnef0 = (TGraphErrors*)f->Get("ratio/eta00-13/nef_incjet_a100");
+    assert(gnef0);
+    gnef0 = (TGraphErrors*)gnef0->Clone("gnef0");
+    
     /*
     // 22Sep2023
     if (run=="Run22CD") nhf_off = 1.0;
@@ -911,7 +923,8 @@ void globalFitDraw(string run, string version) {
     if (run=="Run23C123")  nhf_off = -1.5;//1.0;//-1.0;//1.0;
     if (run=="Run23C4")  nhf_off = 2.0;//2.0;//7.0;//4.0;
     if (run=="Run23D")  nhf_off = 3.5;//2.0;//9.0;//4.5;
-    if (run=="Run24B" || run=="Run24C" || run=="Run24BC")  nhf_off = 0.0;
+    if (run=="Run24B" || run=="Run24C" || run=="Run24D" ||
+	run=="Run24BC" || run=="Run24BCD")  nhf_off = 0.0;
     if (run=="Run3")  {
       nhf_off = ((5.1+3.0)*2.0 + 5.9*3.0 + (18.0+3.1)*3.0 +
 		 //8.7*1.0 + 9.8*4.0 + 9.5*4.5) / //Summer22
@@ -935,6 +948,12 @@ void globalFitDraw(string run, string version) {
       gnhf0z->SetPoint(i, x, (1+y)-nhf_off*0.01); // small offset
       if (x>50.) gnhf0z->RemovePoint(i); // only range with no incjet
     }
+    for (int i = gnef0->GetN()-1; i != -1; --i) {
+      double x = gnef0->GetX()[i];
+      double y = gnef0->GetY()[i];
+      gnef0->SetPoint(i, x, (1+y));
+      if (x<230.) gnef0->RemovePoint(i); // only range with no incjet
+    }
     
     //leg->AddEntry(gnhf0,"Not fit: Dijet NHF","PLE");
     //leg->AddEntry(gnhf0,"Not fit: Incjet NHF-1%","PLE");
@@ -942,11 +961,15 @@ void globalFitDraw(string run, string version) {
     if (nhf_off==0)
       leg->AddEntry(gnhf0,"Not fit: NHF","PLE");
     else
-      leg->AddEntry(gnhf0,Form("Not fit: NHF%+1.1f%%",nhf_off),"PLE");
+      leg->AddEntry(gnhf0,Form("Not fit: NHF%+1.1f%%",-nhf_off),"PLE");
     leg->SetY1NDC(leg->GetY1NDC()-0.05);
     //tdrDraw(gnhf0,"Pz",kFullSquare,kGreen+2);
     tdrDraw(gnhf0,"Pz",kOpenSquare,kGreen+2);
-    tdrDraw(gnhf0z,"Pz",kOpenSquare,kGreen+3);
+    //tdrDraw(gnhf0z,"Pz",kOpenSquare,kGreen+3);
+
+    tdrDraw(gnef0,"Pz",kOpenSquare,kBlue);
+    leg->AddEntry(gnef0,"Not fit: NEF","PLE");
+    leg->SetY1NDC(leg->GetY1NDC()-0.05);
 
     // Add average JEC also on the plot
     if (run=="Run3") {
