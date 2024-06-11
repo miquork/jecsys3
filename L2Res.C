@@ -23,8 +23,11 @@ bool fitJ = true; // Dijet (pT,tag)
 bool doClosure = false; // Do not undo L2L3Res for closure test
 
 bool flattenHF = false;//true; // Const vs pT for HF
-bool posOffHF = true; // Positive offset for HF (2024BC,3/fb patch)
-bool negLogHF = true; // Positive offset for HF (2024BC,3/fb patch)
+double flatHFptmin = 80;//60;//50;//80; // If flat, use only high pT
+double flatHFetamin = 3.139;//2.964;
+bool posOffHF = false;//true; // Positive offset for HF (2024BC,3/fb patch)
+bool posOffEC2 = false;//true; // Positive offset for EC2 (2024BCD, 12.3/fb patch)
+bool negLogHF = false;//true; // Positive offset for HF (2024BC,3/fb patch)
 
 // Global variable for renaming histograms
 string _run;
@@ -251,6 +254,8 @@ TH1D *drawCleaned(TH1D *h, double eta, string data, string draw,
       if (eta>1.653 && eta < 1.930 && pt>86 && pt<110) keep = false;
       if (eta>4.018 && eta < 4.583 && pt>279 && pt<302) keep = false;
     }
+    // Remove low pT for flat HF fits
+    if (flattenHF && eta>flatHFetamin && pt<flatHFptmin) keep = false;
 
     // Remove points we don't want to keep
     if (!keep) {
@@ -306,23 +311,33 @@ void L2Res() {
   //gROOT->ProcessLine(".! mkdir pdf/L2Res/vsPt");
 
   map<string, string> mlum;
-  mlum["2024B"] = "0.13 fb^{-1}";//"16 pb^{-1}";
-  mlum["2024C"] = "7.5 fb^{-1}";//"0.61 fb^{-1}";//"3.1 fb^{-1}";
-  mlum["2024D"] = "4.6 fb^{-1}"; //partial
-  //mlum["2024BC"] = "0.74 fb^{1}";//"3.1 fb^{-1}";
+  mlum["2024B"] = "0.13 fb^{-1}";
+  mlum["2024C"] = "7.5 fb^{-1}";
+  mlum["2024D"] = "8.3 fb^{-1}"; //partial, 4.6->7.9->8.3
   mlum["2024BC"] = "7.7 fb^{-1}";
-  mlum["2024BCD"] = "12.3 fb^{-1}"; // partial
+  mlum["2024BCD"] = "16.0 fb^{-1}"; // partial, 12.3->15.6->16.0
+  mlum["2024CP"] = "7.5 fb^{-1}";
+  mlum["2024CR"] = "7.5 fb^{-1}";
+  mlum["2024CS"] = "7.5 fb^{-1}";
+  mlum["2024E"] = "11.0 fb^{-1}"; // partial, 9.3->11.0
   
   //string vrun[] = {"2023Cv123","2023Cv4","2023D"};
   //string vrun[] = {"2022CD","2022E","2022F","2022G"};
-  string vrun[] = {"2024B","2024C","2024D"};
-  //string vrun[] = {"2024BC"};
+  //string vrun[] = {"2024B","2024C","2024D"};
+  //string vrun[] = {"2024BCD","2024CR"};
+  //string vrun[] = {"2024E","2024C","2024D","2024BCD"};
+  //string vrun[] = {"2024E"};
+  string vrun[] = {"2024BCD","2024E","2024C","2024CR","2024CS"};
   const int nrun = sizeof(vrun)/sizeof(vrun[0]);
   //string vmc[] = {"Summer23","Summer23","Summer23BPIX"};
   //string vmc[] = {"Summer22","Summer22EE","Summer22EE","Summer22EE"};
   //string vmc[] = {"Summer22","Summer22","Summer22","Summer22"}; // 22EE buggy?
-  string vmc[] = {"Summer23BPix","Summer23BPix","Summer23BPix"};
+  //string vmc[] = {"Summer23BPix","Summer23BPix","Summer23BPix"};
+  //string vmc[] = {"Summer23BPix","Summer23BPix"};
   //string vmc[] = {"Summer23BPix"};
+  //string vmc[] = {"Summer23BPix","Summer23BPix","Summer23BPix","Summer23BPix"};
+  string vmc[] = {"Summer23BPix","Summer23BPix","Summer23BPix",
+  		  "Summer23BPix","Summer23BPix"};
   const int nmc = sizeof(vmc)/sizeof(vmc[0]);
   assert(nmc==nrun);
 
@@ -348,12 +363,20 @@ void L2Res() {
   // Mikko's temporary code to create L2Res.root file
   // Load Z+jet
   TFile *fz(0);
-  if (TString(cr).Contains("2024")) {
+  if (run=="2024CS") {
+    fz = new TFile(Form("rootfiles/Prompt2024/jme_bplusZ_%s_Zmm_sync_v83.root","2024BCD"),"READ"); // June 5 hybrid, 15.6/fb
+  }
+  else if (run=="2024CR") {
+    fz = new TFile(Form("rootfiles/Prompt2024/jme_bplusZ_%s_Zmm_sync_v83.root","2024BCD"),"READ"); // June 5 hybrid, 15.6/fb
+  }
+  else if (TString(cr).Contains("2024")) {
     //fz = new TFile(Form("rootfiles/Prompt2024/jme_bplusZ_%s_Zmm_sync_v78.root",cr),"READ"); // v77: Golden 2024B, DCSOnly 2024C
     //fz = new TFile(Form("rootfiles/Prompt2024/jme_bplusZ_%s_Zmm_sync_v78golden.root",cr),"READ"); // 0.74/fb
     //fz = new TFile(Form("rootfiles/Prompt2024/jme_bplusZ_%s_Zmm_sync_v79golden.root",cr),"READ"); // 3/fb
     //fz = new TFile(Form("rootfiles/Prompt2024/jme_bplusZ_%s_Zmm_sync_v80golden.root",cr),"READ"); // 3/fb closure
-    fz = new TFile(Form("rootfiles/Prompt2024/jme_bplusZ_%s_Zmm_sync_v81.root",cr),"READ"); // May 16 golden, 12.3/fb
+    //fz = new TFile(Form("rootfiles/Prompt2024/jme_bplusZ_%s_Zmm_sync_v81.root",cr),"READ"); // May 16 golden, 12.3/fb
+    //fz = new TFile(Form("rootfiles/Prompt2024/jme_bplusZ_%s_Zmm_sync_v82.root",cr),"READ"); // May 27 golden + DCSOnly, X/fb
+    fz = new TFile(Form("rootfiles/Prompt2024/jme_bplusZ_%s_Zmm_sync_v83.root",cr),"READ"); // June 5 golden + DCSOnly, 15.6/fb
   }
   else if (TString(cr).Contains("2023")) {
     //fz = new TFile(Form("rootfiles/Summer23_L2ResOnly/jme_bplusZ_%s_Zmm_sync_v70.root",cr),"READ"); // Summer23 L2Res_V1
@@ -375,13 +398,23 @@ void L2Res() {
   
   // Load G+jet
   TFile *fg(0), *fgm(0);
-  if (TString(cr).Contains("2024")) {
+  if (run=="2024CS") {
+    fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s-ECALR-HCALDI_w29.root","2024C"),"READ");
+    fgm = new TFile("rootfiles/Prompt2024/GamHistosFill_mc_2023P8-BPix_w16.root","READ"); // as in regular 2024
+  }
+  else if (run=="2024CR") {
+    fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s-ECALRATIO_w29.root","2024C"),"READ"); // w26->w29
+    fgm = new TFile("rootfiles/Prompt2024/GamHistosFill_mc_2023P8-BPix_w16.root","READ"); // as in regular 2024
+  }
+  else if (TString(cr).Contains("2024")) {
     //fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w12.root",cr),"READ"); // DCSOnly
     //fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w13.root",cr),"READ"); // DCSOnly
     //fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w14.root",cr),"READ"); // Golden JSON 0.74/fb
     //fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w16.root",cr),"READ"); // Golden JSON 3/fb
     //fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w18.root",cr),"READ"); // Golden JSON 3/fb closure
-    fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w22.root",cr),"READ"); // May 16 golden, 12.3/fb
+    //fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w22.root",cr),"READ"); // May 16 golden, 12.3/fb
+    //fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w27.root",cr),"READ"); // DCSOnly
+    fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w29.root",cr),"READ"); // June 5 hybrid, 15.6/fb
     //fgm = new TFile("rootfiles/Prompt2024/GamHistosFill_mc_2023P8-BPix_w12.root","READ");
     //fgm = new TFile("rootfiles/Prompt2024/GamHistosFill_mc_2023P8-BPix_w16.root","READ");
     fgm = new TFile("rootfiles/Prompt2024/GamHistosFill_mc_2023P8-BPix_w16.root","READ");
@@ -403,12 +436,26 @@ void L2Res() {
 
   // Load dijet
   TFile *fd(0), *fdm(0);
-  if (TString(cr).Contains("2024")) {
+  //if (run=="2024E") {
+  //fd = new TFile(Form("rootfiles/Prompt2024/v68_2024/jmenano_data_cmb_%s_JME_v68_2024.root",cr),"READ");
+  //fdm = new TFile("rootfiles/Prompt2024/v39_2024_Prompt_etabin_DCSOnly/jmenano_mc_out_Summer23MGBPix_v39_2023_etabin_SFv2.root","READ");
+  //}
+  if (run=="2024CS") {
+    fd = new TFile(Form("rootfiles/Prompt2024/v77_2024/jmenano_data_cmb_%sS_JME_v77_2024.root","2024C"),"READ"); // was v76/*2024Crs*
+    fdm = new TFile("rootfiles/Prompt2024/v39_2024_Prompt_etabin_DCSOnly/jmenano_mc_out_Summer23MGBPix_v39_2023_etabin_SFv2.root","READ");
+  }
+  else if (run=="2024CR") {
+    fd = new TFile(Form("rootfiles/Prompt2024/v76_2024/jmenano_data_cmb_%s_ECAL_JME_v76_2024.root","2024C"),"READ"); // One half v66->v76 full
+    fdm = new TFile("rootfiles/Prompt2024/v39_2024_Prompt_etabin_DCSOnly/jmenano_mc_out_Summer23MGBPix_v39_2023_etabin_SFv2.root","READ");
+  }
+  else if (TString(cr).Contains("2024")) {
     //fd = new TFile(Form("rootfiles/Prompt2024/v39_2024_Prompt_etabin_DCSOnly/jmenano_data_cmb_%s_v39_2024_Prompt_etabin_DCSOnly.root",cr),"READ");
     //fd = new TFile(Form("rootfiles/Prompt2024/jmenano_data_cmb_%s_JME_v39_2024_Prompt_Golden_29April.root",cr),"READ"); // golden 0.74/fb
     //fd = new TFile(Form("rootfiles/Prompt2024/v41_2024_Golden/jmenano_data_cmb_%s_JME_v41_2024_Golden.root",cr),"READ"); // golden 3/fb
     //fd = new TFile(Form("rootfiles/Prompt2024/v43_2024_Golden/jmenano_data_cmb_%s_JME_v43_2024_Golden.root",cr),"READ"); // golden 3/fb closure
-    fd = new TFile(Form("rootfiles/Prompt2024/v50_2024/jmenano_data_cmb_%s_JME_v50_2024.root",cr),"READ"); // May 16 golden, 12.3/fb
+    //fd = new TFile(Form("rootfiles/Prompt2024/v50_2024/jmenano_data_cmb_%s_JME_v50_2024.root",cr),"READ"); // May 16 golden, 12.3/fb
+    //fd = new TFile(Form("rootfiles/Prompt2024/v67_2024/jmenano_data_cmb_%s_JME_v67_2024.root",cr),"READ"); // May 27 golden, X/fb
+    fd = new TFile(Form("rootfiles/Prompt2024/v76_2024/jmenano_data_cmb_%s_JME_v76_2024.root",cr),"READ"); // June 5 hybrid, 15.6/fb
     //if (run=="2024B")
     //fd = new TFile(Form(" rootfiles/Prompt2024/v39_2024_Prompt_etabin_SFD_Golden/jmenano_data_cmb_%s_v39_2024_Prompt_etabin_SFD_Golden.root",cr),"READ");
     fdm = new TFile("rootfiles/Prompt2024/v39_2024_Prompt_etabin_DCSOnly/jmenano_mc_out_Summer23MGBPix_v39_2023_etabin_SFv2.root","READ");
@@ -719,11 +766,14 @@ void L2Res() {
   if (eta>2.964 && posOffHF && !doClosure) {
     fref->SetParLimits(2,0.3,0.5); // 2024BC,3/fb special
   }
+  if (eta>2.5 && eta<2.650 && posOffEC2 && !doClosure) {
+    fref->SetParLimits(2,0.3,0.5); // 2024BCD, 12.3/fb special
+  }
   //if (eta>3.139 && negLogHF) {
   if (eta>4.538 && eta<4.716 && negLogHF && !doClosure) {
     fref->SetParLimits(1,-1,-0.1); // 2024BC,3/fb special
   }
-  if (eta>2.964 && flattenHF) {
+  if (eta>flatHFetamin && flattenHF) {
     fref->FixParameter(1,0.);
     fref->FixParameter(2,0.);
   }
@@ -797,7 +847,7 @@ void L2Res() {
   tdrDraw(hprn,"Pz",kOpenDiamond,kOrange-9);
   tdrDraw(hjrn,"Pz",kOpenDiamond,kGreen-9);
 
-  if (eta>2.964 && flattenHF) {
+  if (eta>flatHFetamin && flattenHF) {
     f0->Draw("SAME");
   }
   f1->Draw("SAME");
@@ -820,6 +870,14 @@ void L2Res() {
     leg1->Draw("SAME");
     //leg1->SetTextSize(0.045);
     //leg1->SetY2(leg1->GetY1()-0.5*fabs(leg1->GetY1()-leg1->GetY2()));
+    cx->cd(ieta+2);
+    double siz = tex->GetTextSize();
+    tex->SetTextSize(siz*2.5);
+    //tex->DrawLatex(0.20,0.50,Form("%s - %s%s",cr,cm,cl));
+    tex->DrawLatex(0.05,0.80,Form("%s vs",cr));
+    tex->DrawLatex(0.05,0.65,cm);
+    tex->DrawLatex(0.05,0.50,mlum[run].c_str());
+    tex->SetTextSize(siz);
   }
 
 
@@ -839,7 +897,7 @@ void L2Res() {
     double jes = jesref; // loglin+1/x
     double ejes = sqrt(pow(jes1-jes,2) + pow(jes2-jes,2) + 
 		       pow(jes3-jes,2) + pow(jes4-jes,2));
-    if (eta>2.964 && flattenHF) {
+    if (eta>flatHFetamin && flattenHF) {
       ejes = sqrt(pow(jes0-jes,2) + pow(jes1-jes,2));
     }
     if (emax1 < 13600.*0.5) {
@@ -944,7 +1002,8 @@ void L2Res() {
   //ofstream ftxt(Form("textfiles/Summer23_L2ResClosure/Summer23Prompt23_Run%s_V1_DATA_L2Residual_AK4PFPuppi.txt",cr));
   //ofstream ftxt(Form("textfiles/Prompt24/Prompt24_Run%s_V1M_DATA_L2Residual_AK4PFPuppi.txt",cr));
   //ofstream ftxt(Form("textfiles/Prompt24/Prompt24_Run%s_V2M_DATA_L2Residual_AK4PFPuppi.txt",cr));
-  ofstream ftxt(Form("textfiles/Prompt24/Prompt24_Run%s_V3M_DATA_L2Residual_AK4PFPuppi.txt",cr));
+  //ofstream ftxt(Form("textfiles/Prompt24/Prompt24_Run%s_V3M_DATA_L2Residual_AK4PFPuppi.txt",cr));
+  ofstream ftxt(Form("textfiles/Prompt24/Prompt24_Run%s_V4M_DATA_L2Residual_AK4PFPuppi.txt",cr));
   ftxt << Form("{ 1 JetEta 1 JetPt 1./(%s) Correction L2Relative}",
 	       vf1[0]->GetExpFormula().Data()) << endl;
   for (int ieta = p2d->GetNbinsX(); ieta != 0; --ieta) {
