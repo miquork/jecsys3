@@ -11,7 +11,7 @@
 
 bool plotEtaBins = true; // lots of plots
 
-bool skipZ = false;
+bool skipZ = true;//false;
 bool skipG = false;
 
 // Calculate JER with MPFX. If JER13 not given, calculate it
@@ -224,9 +224,18 @@ void JERSF() {
   */
   //string vrun[] = {"2024C","2024D","2024CD"};
   //string vrun[] = {"2023Cv123","2023D","2024CD"};
-  string vrun[] = {"2024B","2024C","2024D","2024BCD"};
+  //string vrun[] = {"2024B","2024C","2024D","2024BCD"};
+  //string vrun[] = {"2024BCD","2024BR"};
+  //string vrun[] = {"2024C","2024BR","2024CR","2023D"};
+  //string vrun[] = {"2024CS","2024CR","2024CP","2023D","2023Cv123"};
+  string vrun[] = {"2024BCD","2024C","2024E","2024CP","2024CS","2024CR","2023D","2023Cv123"};
   //string vrun[] = {"2024C"};
+  //string vrun[] = {"2024BCD"};
+  //string vrun[] = {"2024BCD","2024CR"};
+  //string vrun[] = {"2024E","2024C","2024D","2024BCD"};
+  //string vrun[] = {"2024BCD","2024E","2024CR"};
   //string vrun[] = {"2023D"};
+  //string vrun[] = {"2024Ev2"};
   const int nrun = sizeof(vrun)/sizeof(vrun[0]);
   //string vmc[] = {"Summer23","Summer23","Summer23BPIX"};//,"Summer23BPIX"};
   //string vmc[] = {"Summer23MG","Summer23MG","Summer23MGBPix"};
@@ -246,11 +255,20 @@ void JERSF() {
   */
   //string vmc[] = {"Summer23MGBPix","Summer23MGBPix","Summer23MGBPix"};
   //string vmc[] = {"Summer23MGBPix","Summer23MGBPix","Summer23MGBPix"};
-  string vmc[] = {"Summer23MGBPix","Summer23MGBPix","Summer23MGBPix",
-		  "Summer23MGBPix"};
+  //string vmc[] = {"Summer23MGBPix","Summer23MGBPix","Summer23MGBPix",
+  //		  "Summer23MGBPix"};
   //"Winter24MCFlat"};
   //string vmc[] = {"Summer23MG_Cv123","Summer23MG_Cv4","Summer23MGBPix_D"};
-  //string vmc[] = {"Summer23BPIX"};
+  //string vmc[] = {"Summer23BPix"};
+  //string vmc[] = {"Summer23MGBPix","Summer23MGBPix"};
+  //string vmc[] = {"Summer23MGBPix","Summer23MGBPix","Summer23MGBPix","Summer23MGBPix"};
+  //string vmc[] = {"Summer23MGBPix","Summer23MGBPix","Summer23MGBPix"};
+  //string vmc[] = {"Summer23MGBPix"};
+  //string vmc[] = {"Summer23MGBPix","Summer23MGBPix","Summer23MGBPix","Summer23MGBPix","Summer23MGBPix"};
+  string vmc[] = {"Summer23MGBPix","Summer23MGBPix","Summer23MGBPix",
+		  "Summer23MGBPix","Summer23MGBPix","Summer23MGBPix",
+		  "Summer23MGBPix","Summer23MGBPix"};
+  //string vmc[] = {"Summer23MGBPix","Summer23MGBPix","Summer23MGBPix","Summer23MGBPix"};
   const int nmc = sizeof(vmc)/sizeof(vmc[0]);
   assert(nmc==nrun);
   for (int irun = 0; irun != nrun; ++irun) {
@@ -298,6 +316,73 @@ void JERSF() {
     // Placeholder MC for all options
     fm = new TFile("rootfiles/Summer23_L2ResOnly/jmenano_mc_cmb_Summer23MGBPix_v39_noRwPU_noSmearJets_25Feb2024_L2Res_v1.root","READ"); // no JER SF
   }
+  else if (run=="2024BS" || run=="2024CS") { // ECALRATIO_HCALDI
+    //f = new TFile(Form("rootfiles/Prompt2024/v76_2024/jmenano_data_cmb_%srs_JME_v76_2024.root", run=="2024CS" ? "2024C" : "2024B"),"READ"); // prompt JEC
+    f = new TFile(Form("rootfiles/Prompt2024/v77_2024/jmenano_data_cmb_%sS_JME_v77_2024.root", run=="2024CS" ? "2024C" : "2024B"),"READ"); // re-reco JEC
+    fm = new TFile("rootfiles/Summer23_L2ResOnly/jmenano_mc_cmb_Summer23MGBPix_v39_noRwPU_noSmearJets_25Feb2024_L2Res_v1.root","READ"); // no JER SF
+    //
+    fz = new TFile(Form("rootfiles/Prompt2024/jme_bplusZ_%s_Zmm_sync_v83.root","2024BCD"),"READ"); // May 16 golden, 12.3/fb
+    //
+    fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s-ECALR-HCALDI_w29.root",run=="2024CS" ? "2024C" : "2024B"),"READ");
+    fgm = new TFile("rootfiles/Prompt2024/GamHistosFill_mc_2023P8-BPix_w16.root","READ"); // as in regular 2024
+  }
+  else if (run=="2024BR" || run=="2024CR") { // ECALRATIO
+    f = new TFile(Form("rootfiles/Prompt2024/v76_2024/jmenano_data_cmb_%s_ECAL_JME_v76_2024.root", run=="2024CR" ? "2024C" : "2024B"),"READ");
+    fm = new TFile("rootfiles/Summer23_L2ResOnly/jmenano_mc_cmb_Summer23MGBPix_v39_noRwPU_noSmearJets_25Feb2024_L2Res_v1.root","READ"); // no JER SF
+    //
+    fz = new TFile(Form("rootfiles/Prompt2024/jme_bplusZ_%s_Zmm_sync_v83.root","2024BCD"),"READ"); // May 16 golden, 12.3/fb
+    //
+    fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s-ECALRATIO_w29.root",run=="2024CR" ? "2024C" : "2024B"),"READ");
+    fgm = new TFile("rootfiles/Prompt2024/GamHistosFill_mc_2023P8-BPix_w16.root","READ"); // as in regular 2024
+  }
+  else if (run=="2024BP" || run=="2024CP") { // Prompt (ECAL CC timing)
+    f = new TFile(Form("rootfiles/Prompt2024/v76_2024/jmenano_data_cmb_%s_JME_v76_2024.root", run=="2024CP" ? "2024C" : "2024B"),"READ");
+    fm = new TFile("rootfiles/Summer23_L2ResOnly/jmenano_mc_cmb_Summer23MGBPix_v39_noRwPU_noSmearJets_25Feb2024_L2Res_v1.root","READ"); // no JER SF
+    //
+    fz = new TFile(Form("rootfiles/Prompt2024/jme_bplusZ_%s_Zmm_sync_v83.root","2024BCD"),"READ"); // May 16 golden, 12.3/fb
+    //
+    fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w29.root",run=="2024CP" ? "2024C" : "2024B"),"READ");
+    fgm = new TFile("rootfiles/Prompt2024/GamHistosFill_mc_2023P8-BPix_w16.root","READ"); // as in regular 2024
+  }
+  /*
+  else if (run=="2024BR" || run=="2024CR") {
+    if (run=="2024BR")
+      //f = new TFile(Form("rootfiles/Prompt2024/v62_2024/jmenano_data_cmb_%s_ECAL_v62_2024.root","2024B"),"READ");
+      f = new TFile(Form("rootfiles/Prompt2024/v69_2024/jmenano_data_cmb_%s_ECAL_v69_2024.root","2024B"),"READ");
+    else
+      //f = new TFile(Form("rootfiles/Prompt2024/v66_2024/jmenano_data_cmb_%s_ECAL_v66_2024.root","2024C"),"READ"); // One half
+      f = new TFile(Form("rootfiles/Prompt2024/v70_2024/jmenano_data_cmb_%s_ECAL_JME_v70_2024.root","2024C"),"READ");
+    fm = new TFile("rootfiles/Summer23_L2ResOnly/jmenano_mc_cmb_Summer23MGBPix_v39_noRwPU_noSmearJets_25Feb2024_L2Res_v1.root","READ"); // no JER SF
+    //
+    fz = new TFile(Form("rootfiles/Prompt2024/jme_bplusZ_%s_Zmm_sync_v81.root","2024BCD"),"READ"); // May 16 golden, 12.3/fb
+    if (run=="2024BR") 
+      //fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s-ECALRATIO_w26.root","2024B"),"READ");
+      fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s-ECALRATIO_w28.root","2024B"),"READ");
+    else
+      //fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s-ECALRATIO_w26.root","2024C"),"READ");
+      fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s-ECALRATIO_w28.root","2024C"),"READ");
+    //fgm = new TFile("rootfiles/Prompt2024/GamHistosFill_mc_2023P8-BPix_w16.root","READ"); // as in regular 2024
+    fgm = new TFile("rootfiles/Prompt2024/GamHistosFill_mc_2023P8-BPix_w16.root","READ"); // as in regular 2024
+    //fgm = new TFile("rootfiles/Prompt2024/GamHistosMix_mc_2023-BPixP8QCD_w16.root","READ"); // QCD added as in 2023D below => missing p2gsm
+    //fgm = new TFile(run=="2023D" ? "rootfiles/Prompt2024/GamHistosFill_mc_2023QCD-BPix_w12.root" : "rootfiles/Summer23_L2ResOnly/GamHistosFill_mc_2023P8_w6.root","READ"); // Summer23 (w3->w2)
+  }
+  */
+  else if (run=="2024Ev2") {
+    f = new TFile(Form("rootfiles/Prompt2024/v71_2024/jmenano_data_cmb_%s_JME_v71_2024.root","2024E_v2"),"READ");
+    //fm = new TFile("rootfiles/Prompt2024/v39_2024_Prompt_etabin_DCSOnly/jmenano_mc_cmb_Summer23MGBPix_v39_2023_etabin_SFv2.root","READ"); // JER SF!!
+    fm = new TFile("rootfiles/Summer23_L2ResOnly/jmenano_mc_cmb_Summer23MGBPix_v39_noRwPU_noSmearJets_25Feb2024_L2Res_v1.root","READ"); // no JER SF
+    fz = new TFile(Form("rootfiles/Prompt2024/jme_bplusZ_%s_Zmm_sync_v83.root","2024E"),"READ"); // v82
+    fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w27.root",cr),"READ");
+    fgm = new TFile("rootfiles/Prompt2024/GamHistosFill_mc_2023P8-BPix_w16.root","READ");
+  }
+  else if (run=="2024E") {
+    f = new TFile(Form("rootfiles/Prompt2024/v68_2024/jmenano_data_cmb_%s_JME_v68_2024.root",cr),"READ");
+    //fm = new TFile("rootfiles/Prompt2024/v39_2024_Prompt_etabin_DCSOnly/jmenano_mc_cmb_Summer23MGBPix_v39_2023_etabin_SFv2.root","READ"); // JER SF!!
+    fm = new TFile("rootfiles/Summer23_L2ResOnly/jmenano_mc_cmb_Summer23MGBPix_v39_noRwPU_noSmearJets_25Feb2024_L2Res_v1.root","READ"); // no JER SF
+    fz = new TFile(Form("rootfiles/Prompt2024/jme_bplusZ_%s_Zmm_sync_v83.root",cr),"READ"); // v82
+    fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w27.root",cr),"READ");
+    fgm = new TFile("rootfiles/Prompt2024/GamHistosFill_mc_2023P8-BPix_w16.root","READ");
+  }
   else if (TString(cr).Contains("2024")) {
     //f = new TFile(Form("rootfiles/Prompt2024/v39_2024_Prompt_etabin_DCSOnly/jmenano_data_cmb_%s_v39_2024_Prompt_etabin_DCSOnly.root",cr),"READ");
     //f = new TFile(Form("rootfiles/Prompt2024/v39_2024_Prompt_etabin_DCSOnly/jmenano_data_cmb_%s_JME_v39_2024_Prompt_etabin_DCSOnly.root",cr),"READ"); // no ZB
@@ -306,7 +391,8 @@ void JERSF() {
     //f = new TFile(Form("rootfiles/Prompt2024/v41_2024_Golden/jmenano_data_cmb_%s_JME_v41_2024_Golden.root",cr),"READ"); // 3/fb
     //f = new TFile(Form("rootfiles/Prompt2024/v43_2024_Golden/jmenano_data_cmb_%s_JME_v43_2024_Golden.root",cr),"READ"); // 3/fb closure
     //f = new TFile(Form("rootfiles/Prompt2024/v50_1_2024_DCSOnly/jmenano_data_cmb_%s_JME_v50_1_2024_DCSOnly.root",cr),"READ"); // May 16 DCSOnly
-    f = new TFile(Form("rootfiles/Prompt2024/v50_2024/jmenano_data_cmb_%s_JME_v50_2024.root",cr),"READ"); // May 16 golden, 12.3/fb
+    //f = new TFile(Form("rootfiles/Prompt2024/v50_2024/jmenano_data_cmb_%s_JME_v50_2024.root",cr),"READ"); // May 16 golden, 12.3/fb
+    f = new TFile(Form("rootfiles/Prompt2024/v67_2024/jmenano_data_cmb_%s_JME_v67_2024.root",cr),"READ");
     //fm = new TFile("rootfiles/Prompt2024/v39_2024_Prompt_etabin_DCSOnly/jmenano_mc_cmb_Summer23MGBPix_v39_2023_etabin_SFv2.root","READ"); // with JER SF?
     fm = new TFile("rootfiles/Summer23_L2ResOnly/jmenano_mc_cmb_Summer23MGBPix_v39_noRwPU_noSmearJets_25Feb2024_L2Res_v1.root","READ"); // no JER SF
     //if (run=="2024BCD") {
@@ -317,7 +403,9 @@ void JERSF() {
     //fz = new TFile("rootfiles/Prompt2024/jme_bplusZ_2024BC_Zmm_sync_v78golden.root","READ"); // 0.74/fb
     //fz = new TFile("rootfiles/Prompt2024/jme_bplusZ_2024BC_Zmm_sync_v79golden.root","READ"); // 3/fb
     //fz = new TFile("rootfiles/Prompt2024/jme_bplusZ_2024BC_Zmm_sync_v80DCSOnly.root","READ"); // 3/fb DCSOnly
-    fz = new TFile(Form("rootfiles/Prompt2024/jme_bplusZ_%s_Zmm_sync_v81.root",cr),"READ"); // May 16 golden, 12.3/fb
+    //fz = new TFile(Form("rootfiles/Prompt2024/jme_bplusZ_%s_Zmm_sync_v81.root",cr),"READ"); // May 16 golden, 12.3/fb
+    //fz = new TFile(Form("rootfiles/Prompt2024/jme_bplusZ_%s_Zmm_sync_v82.root",cr),"READ");
+    fz = new TFile(Form("rootfiles/Prompt2024/jme_bplusZ_%s_Zmm_sync_v83.root",cr),"READ");
     //fz = new TFile("rootfiles/Prompt2024/jme_bplusZ_2024BC_Zmm_sync_v80golden.root","READ"); // 3/fb closure
     //fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w12.root",cr),"READ"); // DCSOnly
     //fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w13.root",cr),"READ"); // DCSOnly
@@ -325,7 +413,8 @@ void JERSF() {
     //fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w16.root",cr),"READ"); // 3/fb
     //fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w17.root",cr),"READ");//string(cr)=="2024CD"? "2024C" : cr),"READ"); // DCSOnly
     //fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w21.root",cr),"READ");//string(cr)=="2024CD"? "2024C" : cr),"READ"); // DCSOnly
-    fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w22.root",cr),"READ"); // May 16 golden, 12.3/fb
+    //fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w22.root",cr),"READ"); // May 16 golden, 12.3/fb
+    fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w27.root",cr),"READ");
     //fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w18.root",cr),"READ"); // 3/fb closure
     //fgm = new TFile("rootfiles/Prompt2024/GamHistosFill_mc_2023P8-BPix_w12.root","READ");
     //fgm = new TFile("rootfiles/Prompt2024/GamHistosFill_mc_2023QCD-BPix_w12.root","READ");
@@ -338,7 +427,8 @@ void JERSF() {
     fz = new TFile(Form("rootfiles/Summer23_L2ResOnly/jme_bplusZ_%s_Zmm_sync_v70.root",cr),"READ");
     fg = new TFile(Form("rootfiles/Summer23_L2ResOnly/GamHistosFill_data_%s_w6.root",cr),"READ");
     //fgm = new TFile(run=="2023D" ? "rootfiles/Summer23_L2ResOnly/GamHistosFill_mc_2023P8-BPix_w6.root" : "rootfiles/Summer23_L2ResOnly/GamHistosFill_mc_2023P8_w6.root","READ"); // Summer23 (w3->w2)
-    fgm = new TFile(run=="2023D" ? "rootfiles/Prompt2024/GamHistosFill_mc_2023QCD-BPix_w12.root" : "rootfiles/Summer23_L2ResOnly/GamHistosFill_mc_2023P8_w6.root","READ"); // Summer23 (w3->w2)
+    //fgm = new TFile(run=="2023D" ? "rootfiles/Prompt2024/GamHistosFill_mc_2023QCD-BPix_w12.root" : "rootfiles/Summer23_L2ResOnly/GamHistosFill_mc_2023P8_w6.root","READ"); // Summer23 (w3->w2)
+    fgm = new TFile(run=="2023D" ? "rootfiles/Prompt2024/GamHistosFill_mc_2023P8-BPix_w16.root" : "rootfiles/Summer23_L2ResOnly/GamHistosFill_mc_2023P8_w6.root","READ"); // Summer23 (w3->w2), without QCD and w16 as for 2024BR
   }
   else if (TString(cr).Contains("2022")) {
     assert(false);
@@ -754,7 +844,8 @@ void JERSF() {
   //ofstream txt(Form("pdf/JERSF/Summer23_%s_JRV2_MC_SF_AK4PFPuppi.txt",cr));
   //ofstream txt(Form("textFiles/Prompt24/Prompt24_%s_JRV1M_MC_SF_AK4PFPuppi.txt",cr));
   //ofstream txt(Form("textFiles/Prompt24/Prompt24_%s_JRV2M_MC_SF_AK4PFPuppi.txt",cr));
-  ofstream txt(Form("textFiles/Prompt24/Prompt24_%s_JRV3M_MC_SF_AK4PFPuppi.txt",cr));
+  //ofstream txt(Form("textFiles/Prompt24/Prompt24_%s_JRV3M_MC_SF_AK4PFPuppi.txt",cr));
+  ofstream txt(Form("textFiles/Prompt24/Prompt24_%s_JRV4M_MC_SF_AK4PFPuppi.txt",cr));
   txt << "{1 JetEta 1 JetPt "
       << "sqrt([0]*fabs([0])/(x*x)+[1]*[1]/x+[2]*[2])/"
       << "sqrt([3]*fabs([3])/(x*x)+[4]*[4]/x+[5]*[5])"

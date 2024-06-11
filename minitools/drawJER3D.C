@@ -1,10 +1,14 @@
 // Purpose: draw JER distribution from TH3D *h3m0 and *h3m2
 #include "TFile.h"
 #include "TH3D.h"
-#include "TF1.h"
 #include "TMath.h"
+#include "TF1.h"
 
 #include "../tdrstyle_mod22.C"
+
+Double_t dgaus(Double_t *x, Double_t *p) {
+  return p[0]*TMath::Gaus(*x,p[1],p[2],kTRUE)+p[3]*TMath::Gaus(*x,p[4],p[5],kTRUE);
+}
 
 void drawJER3D() {
 
@@ -16,7 +20,8 @@ void drawJER3D() {
   //TFile *f = new TFile("rootfiles/Prompt2024/jmenano_data_out_2024C_JME_v39_2024_Prompt_Golden_29April.root","READ");
   //TFile *f = new TFile("rootfiles/Prompt2024/jmenano_data_out_2024BC_JME_v39_2024_Prompt_Golden_29April.root","READ"); // golden 0.74/fb
   //TFile *f = new TFile("rootfiles/Prompt2024/v41_2024_Golden/jmenano_data_out_2024BC_JME_v41_2024_Golden.root","READ"); // golden 3/fb
-  TFile *f = new TFile("rootfiles/Prompt2024/v50_2024/jmenano_data_out_2024BCD_JME_v50_2024.root","READ"); // May 16 golden, 12.3/fb
+  //TFile *f = new TFile("rootfiles/Prompt2024/v50_2024/jmenano_data_out_2024BCD_JME_v50_2024.root","READ"); // May 16 golden, 12.3/fb
+  TFile *f = new TFile("rootfiles/Prompt2024/v77_2024/jmenano_data_out_2024CS_JME_v77_2024.root","READ");
   assert(f && !f->IsZombie());
 
   TFile *fm = new TFile("rootfiles/Prompt2024/v39_2024_Prompt_eta_SFD_DCSOnly_Filter_HLT_MPF/jmenano_mc_cmb_Summer23MG_Cv4_v39_2024_Prompt_eta_SFD_DCSOnly_Filter_HLT_MPF.root","READ");
@@ -139,7 +144,8 @@ void drawJER3D() {
 
   TH1D *h = tdrHist("h","Fraction of N_{events}",1.5e-4,7e-2,
 		    "MPF",0.2,2.3);
-  lumi_136TeV = "2024BCD, 12.3 fb^{-1}";
+  //lumi_136TeV = "2024BCD, 12.3 fb^{-1}";
+  lumi_136TeV = "2024C HCAL_DI, 7.5 fb^{-1}";
   extraText = "Private";
   TCanvas *c1 = tdrCanvas("c1",h,8,11,kSquare);
 
@@ -200,11 +206,12 @@ void drawJER3D() {
   f1000->SetNpx(400);
   f1000->Draw("SAME");
 
-  TF1 *f1000x2 = new TF1("f1000x2","[0]*TMath::Gaus(x,[1],[2],{kTRUE})+[3]*TMath::Gaus(x,[4],[5],{kTRUE})",1-6.4*sigma1000,1+6.4*sigma1000);
+  //TF1 *f1000x2 = new TF1("f1000x2","[0]*TMath::Gaus(x,[1],[2],{kTRUE})+[3]*TMath::Gaus(x,[4],[5],{kTRUE})",1-6.4*sigma1000,1+6.4*sigma1000);
+  TF1 *f1000x2 = new TF1("f1000x2",dgaus,1-6.4*sigma1000,1+6.4*sigma1000,6);
   f1000x2->SetParameters(f1000->GetParameter(0),f1000->GetParameter(1),
 			 f1000->GetParameter(2),
-			 0.1*f1000->GetParameter(0),f1000->GetParameter(0),
-			 2.*f1000->GetParameter(0));
+			 0.1*f1000->GetParameter(0),f1000->GetParameter(1),
+			 2.*f1000->GetParameter(2));
   h1m0_1000->Fit(f1000x2,"QRN");
   f1000x2->SetLineColor(kRed+1);
   f1000x2->SetLineWidth(2);
@@ -219,7 +226,8 @@ void drawJER3D() {
   
   TLegend *leg = tdrLeg(0.55,0.90-0.05*6,0.80,0.90);
   leg->SetHeader("|#eta| < 0.783");
-  leg->AddEntry(h1m0_1000,"2024BCD Data","PLE");
+  //leg->AddEntry(h1m0_1000,"2024BCD Data","PLE");
+  leg->AddEntry(h1m0_1000,"2024CS Data","PLE");
   leg->AddEntry(h1m03_1000,"2023D Data","PLE");
   //leg->AddEntry(h1m0_1000m,"[1032,1248] GeV","PLEF");
   leg->AddEntry(h1m0_1000m,"[1032,1248] GeV","F");
@@ -228,7 +236,9 @@ void drawJER3D() {
   
   gPad->RedrawAxis();
 
-  c1->SaveAs("pdf/drawJER3D/drawJER3D_lin_2024BCD.pdf");
+  //c1->SaveAs("pdf/drawJER3D/drawJER3D_lin_2024BCD.pdf");
+  c1->SaveAs("pdf/drawJER3D/drawJER3D_lin_2024CS.pdf");
   gPad->SetLogy();
-  c1->SaveAs("pdf/drawJER3D/drawJER3D_log_2024BCD.pdf");
+  //c1->SaveAs("pdf/drawJER3D/drawJER3D_log_2024BCD.pdf");
+  c1->SaveAs("pdf/drawJER3D/drawJER3D_log_2024CS.pdf");
 } // void drawJER3D

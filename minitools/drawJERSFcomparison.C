@@ -8,7 +8,8 @@
 #include "../tools.C"
 
 TH1D *profileY(const char *name, TH2D *h2, int ix1, int ix2) {
-  TH1D *h1 = h2->ProjectionY(name,ix1,ix2); h1->Scale(1./3.);
+  TH1D *h1 = h2->ProjectionY(name,ix1,ix2); //h1->Scale(1./3.);
+  h1->Scale(1./max(ix2-ix1+1,1));
   // Do better merging
   for (int j = 1; j != h2->GetNbinsY()+1; ++j) {
     double sumw(0), sum(0), esum2(0);
@@ -42,11 +43,13 @@ void drawJERSFcomparison() {
   h2dr = (TH2D*)f->Get(Form("h2jersfRaw_%s_%s","2023D","Summer23MGBPix"));
   assert(h2d);
   assert(h2dr);
-  
+
+  double eta = 1.305;
+  int ix = h2d->GetXaxis()->FindBin(eta-0.05);
   //TH1D *h1d = h2d->ProjectionY("h1d",1,3); h1d->Scale(1./3.);
   //TH1D *h1dr = h2dr->ProjectionY("h1dr",1,3); h1dr->Scale(1./3.);
-  TH1D *h1d = profileY("h1d",h2d,1,3);
-  TH1D *h1dr = profileY("h1dr",h2dr,1,3);
+  TH1D *h1d = profileY("h1d",h2d,1,ix);
+  TH1D *h1dr = profileY("h1dr",h2dr,1,ix);
   
   TH2D *h2c(0), *h2cr(0);
   h2c = (TH2D*)f->Get(Form("h2jersf_%s_%s","2023Cv123","Summer23MG"));
@@ -56,8 +59,8 @@ void drawJERSFcomparison() {
 
   //TH1D *h1c = h2c->ProjectionY("h1c",1,3); h1c->Scale(1./3.);
   //TH1D *h1cr = h2cr->ProjectionY("h1cr",1,3); h1cr->Scale(1./3.);
-  TH1D *h1c = profileY("h1c",h2c,1,3);
-  TH1D *h1cr = profileY("h1cr",h2cr,1,3);
+  TH1D *h1c = profileY("h1c",h2c,1,ix);
+  TH1D *h1cr = profileY("h1cr",h2cr,1,ix);
   
   TH2D *h2c4(0), *h2c4r(0);
   h2c4 = (TH2D*)f->Get(Form("h2jersf_%s_%s","2023Cv4","Summer23MG"));
@@ -67,18 +70,23 @@ void drawJERSFcomparison() {
 
   //TH1D *h1c4 = h2c4->ProjectionY("h1c4",1,3); h1c4->Scale(1./3.);
   //TH1D *h1c4r = h2c4r->ProjectionY("h1c4r",1,3); h1c4r->Scale(1./3.);
-  TH1D *h1c4 = profileY("h1c4",h2c4,1,3);
-  TH1D *h1c4r = profileY("h1c4r",h2c4r,1,3);
+  TH1D *h1c4 = profileY("h1c4",h2c4,1,ix);
+  TH1D *h1c4r = profileY("h1c4r",h2c4r,1,ix);
 
   
-  TFile *f24 = new TFile("rootfiles/JERSF.root","READ");
+  //TFile *f24 = new TFile("rootfiles/JERSF.root","READ");
+  TFile *f24 = new TFile("rootfiles/JERSF_Prompt24_V4M.root","READ");
   assert(f24 && !f24->IsZombie());
 
-  TH2D *h224bc(0), *h224bcr(0);
-  h224bc = (TH2D*)f24->Get(Form("Fits/h2jersf_%s_%s","2024BC","Summer23MGBPix"));
-  h224bcr = (TH2D*)f24->Get(Form("Dijet/h2jersfRaw_%s_%s","2024BC","Summer23MGBPix"));
-  assert(h224bc);
-  assert(h224bcr);
+  TH2D *h224bcd(0), *h224bcdr(0);
+  //h224bcd = (TH2D*)f24->Get(Form("Fits/h2jersf_%s_%s","2024BCD","Summer23MGBPix"));
+  //h224bcdr = (TH2D*)f24->Get(Form("Dijet/h2jersfRaw_%s_%s","2024BCD","Summer23MGBPix"));
+  //h224bcd = (TH2D*)f24->Get(Form("Fits/h2jersf_%s_%s","2024C","Summer23MGBPix"));
+  //h224bcdr = (TH2D*)f24->Get(Form("Dijet/h2jersfRaw_%s_%s","2024C","Summer23MGBPix"));
+  h224bcd = (TH2D*)f24->Get(Form("Fits/h2jersf_%s_%s","2024CP","Summer23MGBPix"));
+  h224bcdr = (TH2D*)f24->Get(Form("Dijet/h2jersfRaw_%s_%s","2024CP","Summer23MGBPix"));
+  assert(h224bcd);
+  assert(h224bcdr);
   /*
   TH2D *h224c(0), *h224cr(0);
   h224c = (TH2D*)f24->Get(Form("Fits/h2jersf_%s_%s","2024C","Summer23MGBPix"));
@@ -86,19 +94,56 @@ void drawJERSFcomparison() {
   assert(h224c);
   assert(h224cr);
   */
-  int ix2 = h224bc->GetXaxis()->FindBin(h2d->GetXaxis()->GetBinLowEdge(3+1))-1;
-  TH1D *h124bc = profileY("h124bc",h224bc,1,ix2);
-  TH1D *h124bcr = profileY("h124bcr",h224bcr,1,ix2);
+  int ix2 = h224bcd->GetXaxis()->FindBin(h2d->GetXaxis()->GetBinLowEdge(ix+1)-0.05);//-1;
+  TH1D *h124bcd = profileY("h124bcd",h224bcd,1,ix2);
+  TH1D *h124bcdr = profileY("h124bcdr",h224bcdr,1,ix2);
   /*
   int ix2 = h224c->GetXaxis()->FindBin(h2d->GetXaxis()->GetBinLowEdge(3+1))-1;
   TH1D *h124c = profileY("h124c",h224c,1,ix2);
   TH1D *h124cr = profileY("h124cr",h224cr,1,ix2);
   */
 
+  TH2D *h224e(0), *h224er(0);
+  h224e = (TH2D*)f24->Get(Form("Fits/h2jersf_%s_%s","2024E","Summer23MGBPix"));
+  h224er = (TH2D*)f24->Get(Form("Dijet/h2jersfRaw_%s_%s","2024E","Summer23MGBPix"));
+  assert(h224e);
+  assert(h224er);
+  int ixe2 = h224e->GetXaxis()->FindBin(h2d->GetXaxis()->GetBinLowEdge(ix+1)-0.05);//-1;
+  TH1D *h124e = profileY("h124e",h224e,1,ixe2);
+  TH1D *h124er = profileY("h124er",h224er,1,ixe2);
+
+
+  TH2D *h224R(0), *h224Rr(0);
+  //h224R = (TH2D*)f24->Get(Form("Fits/h2jersf_%s_%s","2024BR","Summer23MGBPix"));
+  //h224Rr = (TH2D*)f24->Get(Form("Dijet/h2jersfRaw_%s_%s","2024BR","Summer23MGBPix"));
+  h224R = (TH2D*)f24->Get(Form("Fits/h2jersf_%s_%s","2024CR","Summer23MGBPix"));
+  h224Rr = (TH2D*)f24->Get(Form("Dijet/h2jersfRaw_%s_%s","2024CR","Summer23MGBPix"));
+  assert(h224R);
+  assert(h224Rr);
+  int ixR2 = h224R->GetXaxis()->FindBin(h2d->GetXaxis()->GetBinLowEdge(ix+1)-0.05);//-1;
+  TH1D *h124R = profileY("h124R",h224R,1,ixR2);
+  TH1D *h124Rr = profileY("h124Rr",h224Rr,1,ixR2);
+
+  TH2D *h224S(0), *h224Sr(0);
+  h224S = (TH2D*)f24->Get(Form("Fits/h2jersf_%s_%s","2024CS","Summer23MGBPix"));
+  h224Sr = (TH2D*)f24->Get(Form("Dijet/h2jersfRaw_%s_%s","2024CS","Summer23MGBPix"));
+  assert(h224S);
+  assert(h224Sr);
+  int ixS2 = h224S->GetXaxis()->FindBin(h2d->GetXaxis()->GetBinLowEdge(ix+1)-0.05);//-1;
+  TH1D *h124S = profileY("h124S",h224S,1,ixS2);
+  TH1D *h124Sr = profileY("h124Sr",h224Sr,1,ixS2);
+
+  double eta1 = h2d->GetXaxis()->GetBinLowEdge(ix+1);
+  double eta2 = h224R->GetXaxis()->GetBinLowEdge(ixR2+1);
+  assert(eta1==eta2);
+  assert(eta1==eta);
+  
   // Produce estimate for 2023D based on 2023Cv123 (+) 5% constant factor
   TH1D *h1d_est = (TH1D*)h1c->Clone("h1d_est");
-  TH2D *h2_mc = (TH2D*)f24->Get("Dijet/h2jermcRaw_2024BC_Summer23MGBPix"); assert(h2_mc);
-  int i2 = h2_mc->GetXaxis()->FindBin(0.783-0.05);
+  //TH2D *h2_mc = (TH2D*)f24->Get("Dijet/h2jermcRaw_2024BCD_Summer23MGBPix"); assert(h2_mc);
+  //TH2D *h2_mc = (TH2D*)f24->Get("Dijet/h2jermcRaw_2024C_Summer23MGBPix"); assert(h2_mc);
+  TH2D *h2_mc = (TH2D*)f24->Get("Dijet/h2jermcRaw_2024CP_Summer23MGBPix"); assert(h2_mc);
+  int i2 = h2_mc->GetXaxis()->FindBin(eta-0.05);//0.783-0.05);
   TH1D *h1_mc = profileY("h1c_mc",h2_mc,1,i2);
   for (int i = 1; i != h1c->GetNbinsX()+1; ++i) {
     double pt = h1c->GetBinCenter(i);
@@ -117,7 +162,9 @@ void drawJERSFcomparison() {
   //TH1D *h = tdrHist("h","JER SF",0.9,1.4);
   TH1D *h = tdrHist("h","JER SF",0.5,3.0);
   //lumi_136TeV = "2023Cv123+2023D";
-  lumi_136TeV = "2023-24";
+  //lumi_136TeV = "2023 + 24BCD, 12.3 fb^{-1}";
+  // 2023D: 9.5, 2023Cv123" 8.7, 2023Cv4: 4.3
+  lumi_136TeV = "2023, 18.2 fb^{-1} + 24C, 7.5 fb^{-1}";
   extraText = "Private";
   TCanvas *c1 = tdrCanvas("c1",h,8,11,kSquare);
   gPad->SetLogx();
@@ -139,13 +186,26 @@ void drawJERSFcomparison() {
   tdrDraw(new TGraph(h1d),"L",kNone,kRed,kSolid,-1);
   h1d->SetFillColorAlpha(kRed-9,0.70);
 
-  tdrDraw(h1d_est,"E3",kNone,kMagenta+2,kSolid,-1,1001,kMagenta-9);
-  tdrDraw(new TGraph(h1d_est),"L",kNone,kMagenta+2,kSolid,-1);
-  h1d_est->SetFillColorAlpha(kMagenta-9,0.70);
+  //tdrDraw(h1d_est,"E3",kNone,kMagenta+2,kSolid,-1,1001,kMagenta-9);
+  //tdrDraw(new TGraph(h1d_est),"L",kNone,kMagenta+2,kSolid,-1);
+  //h1d_est->SetFillColorAlpha(kMagenta-9,0.70);
 
-  tdrDraw(h124bc,"E3",kNone,kGray+2,kSolid,-1,1001,kGray);
-  tdrDraw(new TGraph(h124bc),"L",kNone,kBlack,kSolid,-1);
-  h124bc->SetFillColorAlpha(kGray,0.70);
+  tdrDraw(h124bcd,"E3",kNone,kGray+2,kSolid,-1,1001,kGray);
+  tdrDraw(new TGraph(h124bcd),"L",kNone,kBlack,kSolid,-1);
+  h124bcd->SetFillColorAlpha(kGray,0.70);
+
+  tdrDraw(h124e,"E3",kNone,kGray+2,kSolid,-1,1001,kGray);
+  tdrDraw(new TGraph(h124e),"L",kNone,kGray+2,kSolid,-1);
+  h124e->SetFillColorAlpha(kGray,0.70);
+
+  tdrDraw(h124R,"E3",kNone,kGreen+2,kSolid,-1,1001,kGreen);
+  tdrDraw(new TGraph(h124R),"L",kNone,kGreen+2,kSolid,-1);
+  h124R->SetFillColorAlpha(kGreen,0.70);
+
+  tdrDraw(h124S,"E3",kNone,kOrange+2,kSolid,-1,1001,kOrange);
+  tdrDraw(new TGraph(h124S),"L",kNone,kOrange+2,kSolid,-1);
+  h124S->SetFillColorAlpha(kOrange,0.70);
+  
   /*
   tdrDraw(h124c,"E3",kNone,kGray+2,kSolid,-1,1001,kGray);
   tdrDraw(new TGraph(h124c),"L",kNone,kBlack,kSolid,-1);
@@ -154,22 +214,30 @@ void drawJERSFcomparison() {
   tdrDraw(h1cr,"Pz",kFullSquare,kBlue,kSolid,-1,1001,kBlue-9);
   //tdrDraw(h1c4r,"Pz",kOpenSquare,kMagenta+2,kSolid,-1,1001,kMagenta-9);
   tdrDraw(h1dr,"Pz",kFullCircle,kRed,kSolid,-1,1001,kRed-9);
-  tdrDraw(h124bcr,"Pz",kFullDiamond,kBlack,kSolid,-1,1001,kGray);
+  tdrDraw(h124bcdr,"Pz",kFullDiamond,kBlack,kSolid,-1,1001,kGray);
+  tdrDraw(h124er,"Pz",kOpenDiamond,kGray+2,kSolid,-1,1001,kGray);
+  tdrDraw(h124Rr,"Pz",kFullDiamond,kGreen+2,kSolid,-1,1001,kGreen);
+  tdrDraw(h124Sr,"Pz",kFullDiamond,kOrange+2,kSolid,-1,1001,kOrange);
   //tdrDraw(h124cr,"Pz",kFullDiamond,kBlack,kSolid,-1,1001,kGray);
 
-  TLegend *leg = tdrLeg(0.35,0.90-5*0.05,0.60,0.90);
-  leg->SetHeader(Form("|#eta| < %1.3f",h2d->GetXaxis()->GetBinLowEdge(3+1)));
-  leg->AddEntry(h124bcr,"2024BC (per-depth)","PLEF");
+  TLegend *leg = tdrLeg(0.35,0.90-6*0.05,0.60,0.90);
+  leg->SetHeader(Form("|#eta| < %1.3f",eta1));//h2d->GetXaxis()->GetBinLowEdge(3+1)));
+  //leg->AddEntry(h124Rr,"2024B (re-reco)","PLEF");
+  leg->AddEntry(h124er,"2024E (prompt)","PLEF");
+  leg->AddEntry(h124Sr,"2024C (2^{nd} re-reco)","PLEF");
+  leg->AddEntry(h124Rr,"2024C (re-reco)","PLEF");
+  //leg->AddEntry(h124bcdr,"2024BCD (per-depth)","PLEF");
+  leg->AddEntry(h124bcdr,"2024C (prompt)","PLEF");
   //leg->AddEntry(h124cr,"2024C (per-depth)","PLEF");
   leg->AddEntry(h1dr,"2023D (per-depth)","PLEF");
   //leg->AddEntry(h1c4r,"2023Cv4 (per-depth)","PLEF");
   leg->AddEntry(h1cr,"2023Cv123","PLEF");
-  leg->AddEntry(h1d_est,"2023Cv123 #oplus c_{depth}","LF");
+  //leg->AddEntry(h1d_est,"2023Cv123 #oplus c_{depth}","LF");
   
   gPad->RedrawAxis();
 
-  c1->SaveAs("pdf/drawJERSFcomparison/drawJERSFcomparison24BC.pdf");
-  c1->SaveAs("pdf/drawJERSFcomparison/drawJERSFcomparison24BC.png");
+  c1->SaveAs("pdf/drawJERSFcomparison/drawJERSFcomparison24CS.pdf");
+  c1->SaveAs("pdf/drawJERSFcomparison/drawJERSFcomparison24CS.png");
 
   /*
   TFile *fa = new TFile("rootfiles/dijet_balance_jer_Summer23BPixPrompt23_AK4Puppi.root","READ");
