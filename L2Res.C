@@ -36,7 +36,7 @@ string _run;
 // Step 1. Slice 1D profile out of 2D in given range and draw it
 TProfile* drawEta(TProfile2D *p2, double ptmin, double ptmax,
 		  string draw, int marker, int color, string label="",
-		  TProfile2D *p2x = 0) {
+		  TProfile2D *p2x = 0, TProfile2D *p2xx = 0) {
   
   assert(p2);
   int iy1 = p2->GetYaxis()->FindBin(ptmin);
@@ -47,7 +47,7 @@ TProfile* drawEta(TProfile2D *p2, double ptmin, double ptmax,
 
   if (p2x) {
     TProfile *px = p2x->ProfileX(Form("px%s",id.c_str()),iy1,iy2);
-    for (int i = 0; i != p->GetNbinsX()+1; ++i) {
+    for (int i = 1; i != p->GetNbinsX()+1; ++i) {
       int j = px->GetXaxis()->FindBin(p->GetBinCenter(i));
       double mean_value = p->GetBinContent(i) * px->GetBinContent(j);
       //if (label=="Z") // inconsistent definition of p2res
@@ -57,6 +57,22 @@ TProfile* drawEta(TProfile2D *p2, double ptmin, double ptmax,
       p->SetBinEntries(i, entries);
       p->SetBinContent(i, entries * mean_value);
       //p->SetBinError(i, calculated_error);
+    }
+  }
+
+  // Patch for re-reco. NB: not yet averaging over pT properly
+  if (p2xx) {
+    for (int i = 1; i != p->GetNbinsX()+1; ++i) {
+      double eta = p->GetXaxis()->GetBinCenter(i);
+      double pt = max(50., p2->GetYaxis()->GetBinCenter(iy1));
+      int ieta = p2xx->GetYaxis()->FindBin(eta);
+      int ipt = p2xx->GetXaxis()->FindBin(pt);
+      double d = p2xx->GetBinContent(ipt,ieta); // 0.5*(B-A)/tag
+      double k = 1 + 2*d;
+      double mean_value = p->GetBinContent(i) * k;
+      double entries = p->GetBinEntries(i);
+      p->SetBinEntries(i, entries);
+      p->SetBinContent(i, entries * mean_value);
     }
   }
 
@@ -77,7 +93,7 @@ TProfile* drawEta(TProfile2D *p2, double ptmin, double ptmax,
 
 TProfile* drawPt(TProfile2D *p2, double etamin, double etamax,
 		 string draw, int marker, int color, string label="",
-		 TProfile2D *p2x = 0) {
+		 TProfile2D *p2x = 0, TProfile2D *p2xx = 0) {
   
   assert(p2);
   int ix1 = p2->GetXaxis()->FindBin(etamin);
@@ -89,7 +105,7 @@ TProfile* drawPt(TProfile2D *p2, double etamin, double etamax,
 
   if (p2x) {
     TProfile *py = p2x->ProfileY(Form("px%s",id.c_str()),ix1,ix2);
-    for (int i = 0; i != p->GetNbinsX()+1; ++i) {
+    for (int i = 1; i != p->GetNbinsX()+1; ++i) {
       int j = py->GetXaxis()->FindBin(p->GetBinCenter(i));
       double mean_value = p->GetBinContent(i) * py->GetBinContent(j);
       //if (label=="Z") // inconsistent definition of p2res
@@ -99,6 +115,22 @@ TProfile* drawPt(TProfile2D *p2, double etamin, double etamax,
       p->SetBinEntries(i, entries);
       p->SetBinContent(i, entries * mean_value);
       //p->SetBinError(i, calculated_error);
+    }
+  }
+
+  // Patch for re-reco. NB: not yet averaging over |eta| properly
+  if (p2xx) {
+    for (int i = 1; i != p->GetNbinsX()+1; ++i) {
+      double pt = max(50., p->GetXaxis()->GetBinCenter(i));
+      double eta = p2->GetXaxis()->GetBinCenter(ix1);
+      int ieta = p2xx->GetYaxis()->FindBin(eta);
+      int ipt = p2xx->GetXaxis()->FindBin(pt);
+      double d = p2xx->GetBinContent(ipt,ieta); // 0.5*(B-A)/tag
+      double k = 1 + 2*d;
+      double mean_value = p->GetBinContent(i) * k;
+      double entries = p->GetBinEntries(i);
+      p->SetBinEntries(i, entries);
+      p->SetBinContent(i, entries * mean_value);
     }
   }
   
@@ -327,17 +359,18 @@ void L2Res() {
   //string vrun[] = {"2024BCD","2024CR"};
   //string vrun[] = {"2024E","2024C","2024D","2024BCD"};
   //string vrun[] = {"2024E"};
-  string vrun[] = {"2024BCD","2024E","2024C","2024CR","2024CS"};
+  string vrun[] = {"2024CS"};
+  //string vrun[] = {"2024BCD","2024E","2024C","2024CR","2024CS"};
   const int nrun = sizeof(vrun)/sizeof(vrun[0]);
   //string vmc[] = {"Summer23","Summer23","Summer23BPIX"};
   //string vmc[] = {"Summer22","Summer22EE","Summer22EE","Summer22EE"};
   //string vmc[] = {"Summer22","Summer22","Summer22","Summer22"}; // 22EE buggy?
   //string vmc[] = {"Summer23BPix","Summer23BPix","Summer23BPix"};
   //string vmc[] = {"Summer23BPix","Summer23BPix"};
-  //string vmc[] = {"Summer23BPix"};
   //string vmc[] = {"Summer23BPix","Summer23BPix","Summer23BPix","Summer23BPix"};
-  string vmc[] = {"Summer23BPix","Summer23BPix","Summer23BPix",
-  		  "Summer23BPix","Summer23BPix"};
+  string vmc[] = {"Summer23BPix"};
+  //string vmc[] = {"Summer23BPix","Summer23BPix","Summer23BPix",
+  //		  "Summer23BPix","Summer23BPix"};
   const int nmc = sizeof(vmc)/sizeof(vmc[0]);
   assert(nmc==nrun);
 
@@ -362,9 +395,14 @@ void L2Res() {
 
   // Mikko's temporary code to create L2Res.root file
   // Load Z+jet
-  TFile *fz(0);
+  TFile *fz(0), *fsz(0);
+  TProfile2D *p2zxx(0);
   if (run=="2024CS") {
     fz = new TFile(Form("rootfiles/Prompt2024/jme_bplusZ_%s_Zmm_sync_v83.root","2024BCD"),"READ"); // June 5 hybrid, 15.6/fb
+    // HCALDI/ECALRATIO ~ HCALDI/Prompt for Z+jet
+    fsz = new TFile("rootfiles/compareLite_2024CR.root","READ");
+    assert(fsz && !fsz->IsZombie());
+    p2zxx = (TProfile2D*)fsz->Get("2D/p2d_tp"); assert(p2zxx);
   }
   else if (run=="2024CR") {
     fz = new TFile(Form("rootfiles/Prompt2024/jme_bplusZ_%s_Zmm_sync_v83.root","2024BCD"),"READ"); // June 5 hybrid, 15.6/fb
@@ -557,7 +595,7 @@ void L2Res() {
   p13pm = drawPt(p2pm,etamin,etamax,"HISTE",kNone,kOrange+2);
   p13dm = drawPt(p2dm,etamin,etamax,"HISTE",kNone,kBlack);
   
-  p13z = drawPt(p2z,etamin,etamax,"Pz",kFullSquare,kRed,"Z",p2zx);
+  p13z = drawPt(p2z,etamin,etamax,"Pz",kFullSquare,kRed,"Z",p2zx,p2zxx);
   p13g = drawPt(p2g,etamin,etamax,"Pz",kFullCircle,kBlue,"#gamma",p2gx);
   p13j = drawPt(p2j,etamin,etamax,"Pz",kFullDiamond,kGreen+2,"Tag",p2jx);
   p13p = drawPt(p2p,etamin,etamax,"Pz",kFullDiamond,kOrange+2,"Probe",p2px);
@@ -611,7 +649,7 @@ void L2Res() {
   pdm = drawPt(p2dm,etamin,etamax,"HISTE",kNone,kBlack);
 
   TProfile *pz, *pg, *pd, *pj, *pp;
-  pz = drawPt(p2z,etamin,etamax,"Pz",kFullSquare,kRed,"Z",p2zx);
+  pz = drawPt(p2z,etamin,etamax,"Pz",kFullSquare,kRed,"Z",p2zx,p2zxx);
   pg = drawPt(p2g,etamin,etamax,"Pz",kFullCircle,kBlue,"#gamma",p2gx);
   pj = drawPt(p2j,etamin,etamax,"Pz",kFullDiamond,kGreen+2,"Tag",p2jx);
   pp = drawPt(p2p,etamin,etamax,"Pz",kFullDiamond,kOrange+2,"Probe",p2px);
@@ -1061,7 +1099,7 @@ void L2Res() {
   pdm = drawEta(p2dm,ptmin,ptmax,"HISTE",kNone,kBlack);
 
   TProfile *pz, *pg, *pd, *pj, *pp;
-  pz = drawEta(p2z,ptmin,ptmax,"Pz",kFullSquare,kRed,"Z",p2zx);
+  pz = drawEta(p2z,ptmin,ptmax,"Pz",kFullSquare,kRed,"Z",p2zx,p2zxx);
   pg = drawEta(p2g,ptmin,ptmax,"Pz",kFullCircle,kBlue,"#gamma",p2gx);
   pj = drawEta(p2j,ptmin,ptmax,"Pz",kFullDiamond,kGreen+2,"Tag",p2jx);
   pp = drawEta(p2p,ptmin,ptmax,"Pz",kFullDiamond,kOrange+2,"Probe",p2px);
