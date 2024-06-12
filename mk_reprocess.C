@@ -44,6 +44,11 @@
   //scaleJES(epoch, "gamjet");
   //}
   //scaleJES(epoch, "multijet"); // 19Dec no scaling needed
+  if (epoch=="Run24CS") {
+    scaleJES(epoch, "zjet");
+    scaleJES(epoch, "zjav");
+    scaleJES(epoch, "jetz");
+  }
   
   // HDM method: use HT decomposition (lead, soft jets, unclustered) for FSR
   softrad3(0.0,1.3,epoch); // 3-point FSR
@@ -63,7 +68,8 @@
   //globalFitEtaBin(0.0, 1.3, epoch, "Summer23_V2closure2");
   //globalFitEtaBin(0.0, 1.3, epoch, "Prompt24_3fb");
   //globalFitEtaBin(0.0, 1.3, epoch, "Prompt24_3fb_V2Mclosure");
-  globalFitEtaBin(0.0, 1.3, epoch, "Prompt24_12fb_V3M");
+  //globalFitEtaBin(0.0, 1.3, epoch, "Prompt24_12fb_V3M");
+  globalFitEtaBin(0.0, 1.3, epoch, "Prompt24_V3Mclosure");
   
   exit(0); // Avoid page full of THastList::Delete errors
 }

@@ -51,8 +51,18 @@
 
   //drawCMSresponse("Summer23Prompt23_Run2023D_V2xHFscale","23D_V2xHF",false);
 
+  /*
   drawCMSresponse("Prompt24_Run2024BCD_V3M","Prompt24BCD_V3M",true);
   drawCMSresponse("Prompt24_Run2024BCD_V3M","Prompt24BCD_V3M",false);
   drawCMSresponse("Prompt24_Run2024CR_V3M","Prompt24CR_V3M",true);
   drawCMSresponse("Prompt24_Run2024CR_V3M","Prompt24CR_V3M",false);
+  */
+  drawCMSresponse("Prompt24_Run2024BCD_V4M","Prompt24BCD_V4M",true);
+  drawCMSresponse("Prompt24_Run2024BCD_V4M","Prompt24BCD_V4M",false);
+  drawCMSresponse("Prompt24_Run2024E_V4M","Prompt24E_V4M",true);
+  drawCMSresponse("Prompt24_Run2024E_V4M","Prompt24E_V4M",false);
+  drawCMSresponse("Prompt24_Run2024CR_V4M","Prompt24CR_V4M",true);
+  drawCMSresponse("Prompt24_Run2024CR_V4M","Prompt24CR_V4M",false);
+  drawCMSresponse("Prompt24_Run2024CS_V4M","Prompt24CS_V4M",true);
+  drawCMSresponse("Prompt24_Run2024CS_V4M","Prompt24CS_V4M",false);
 }

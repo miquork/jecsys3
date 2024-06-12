@@ -75,7 +75,8 @@ void drawJERSFcomparison() {
 
   
   //TFile *f24 = new TFile("rootfiles/JERSF.root","READ");
-  TFile *f24 = new TFile("rootfiles/JERSF_Prompt24_V4M.root","READ");
+  //TFile *f24 = new TFile("rootfiles/JERSF_Prompt24_V4M.root","READ");
+  TFile *f24 = new TFile("rootfiles/JERSF_Prompt24_V4Mb.root","READ");
   assert(f24 && !f24->IsZombie());
 
   TH2D *h224bcd(0), *h224bcdr(0);
@@ -111,6 +112,15 @@ void drawJERSFcomparison() {
   int ixe2 = h224e->GetXaxis()->FindBin(h2d->GetXaxis()->GetBinLowEdge(ix+1)-0.05);//-1;
   TH1D *h124e = profileY("h124e",h224e,1,ixe2);
   TH1D *h124er = profileY("h124er",h224er,1,ixe2);
+
+  TH2D *h224ev2(0), *h224ev2r(0);
+  h224ev2 = (TH2D*)f24->Get(Form("Fits/h2jersf_%s_%s","2024Ev2","Summer23MGBPix"));
+  h224ev2r = (TH2D*)f24->Get(Form("Dijet/h2jersfRaw_%s_%s","2024Ev2","Summer23MGBPix"));
+  assert(h224ev2);
+  assert(h224ev2r);
+  int ixev22 = h224ev2->GetXaxis()->FindBin(h2d->GetXaxis()->GetBinLowEdge(ix+1)-0.05);//-1;
+  TH1D *h124ev2 = profileY("h124ev2",h224ev2,1,ixev22);
+  TH1D *h124ev2r = profileY("h124ev2r",h224ev2r,1,ixev22);
 
 
   TH2D *h224R(0), *h224Rr(0);
@@ -164,7 +174,8 @@ void drawJERSFcomparison() {
   //lumi_136TeV = "2023Cv123+2023D";
   //lumi_136TeV = "2023 + 24BCD, 12.3 fb^{-1}";
   // 2023D: 9.5, 2023Cv123" 8.7, 2023Cv4: 4.3
-  lumi_136TeV = "2023, 18.2 fb^{-1} + 24C, 7.5 fb^{-1}";
+  //lumi_136TeV = "2023, 18.2 fb^{-1} + 24C, 7.5 fb^{-1}";
+  lumi_136TeV = "2023, 18.2 fb^{-1} + 2024, 18.7 fb^{-1}"; // 27.0-8.3D
   extraText = "Private";
   TCanvas *c1 = tdrCanvas("c1",h,8,11,kSquare);
   gPad->SetLogx();
@@ -198,6 +209,10 @@ void drawJERSFcomparison() {
   tdrDraw(new TGraph(h124e),"L",kNone,kGray+2,kSolid,-1);
   h124e->SetFillColorAlpha(kGray,0.70);
 
+  tdrDraw(h124ev2,"E3",kNone,kMagenta+2,kSolid,-1,1001,kMagenta-9);
+  tdrDraw(new TGraph(h124ev2),"L",kNone,kMagenta+2,kSolid,-1);
+  h124ev2->SetFillColorAlpha(kMagenta-9,0.70);
+
   tdrDraw(h124R,"E3",kNone,kGreen+2,kSolid,-1,1001,kGreen);
   tdrDraw(new TGraph(h124R),"L",kNone,kGreen+2,kSolid,-1);
   h124R->SetFillColorAlpha(kGreen,0.70);
@@ -216,22 +231,26 @@ void drawJERSFcomparison() {
   tdrDraw(h1dr,"Pz",kFullCircle,kRed,kSolid,-1,1001,kRed-9);
   tdrDraw(h124bcdr,"Pz",kFullDiamond,kBlack,kSolid,-1,1001,kGray);
   tdrDraw(h124er,"Pz",kOpenDiamond,kGray+2,kSolid,-1,1001,kGray);
+  tdrDraw(h124ev2r,"Pz",kOpenDiamond,kMagenta+2,kSolid,-1,1001,kMagenta-9);
   tdrDraw(h124Rr,"Pz",kFullDiamond,kGreen+2,kSolid,-1,1001,kGreen);
   tdrDraw(h124Sr,"Pz",kFullDiamond,kOrange+2,kSolid,-1,1001,kOrange);
   //tdrDraw(h124cr,"Pz",kFullDiamond,kBlack,kSolid,-1,1001,kGray);
 
-  TLegend *leg = tdrLeg(0.35,0.90-6*0.05,0.60,0.90);
+  TLegend *leg = tdrLeg(0.33,0.90-7*0.05,0.57,0.90);
   leg->SetHeader(Form("|#eta| < %1.3f",eta1));//h2d->GetXaxis()->GetBinLowEdge(3+1)));
   //leg->AddEntry(h124Rr,"2024B (re-reco)","PLEF");
   leg->AddEntry(h124er,"2024E (prompt)","PLEF");
-  leg->AddEntry(h124Sr,"2024C (2^{nd} re-reco)","PLEF");
-  leg->AddEntry(h124Rr,"2024C (re-reco)","PLEF");
+  leg->AddEntry(h124ev2r,"2024Ev2 (+CC calib.)","PLEF");
   //leg->AddEntry(h124bcdr,"2024BCD (per-depth)","PLEF");
   leg->AddEntry(h124bcdr,"2024C (prompt)","PLEF");
+  //leg->AddEntry(h124Rr,"2024C (re-reco)","PLEF");
+  leg->AddEntry(h124Rr,"2024C (CC#RightarrowECAL_R)","PLEF");
+  //leg->AddEntry(h124Sr,"2024C (2^{nd} re-reco)","PLEF");
+  leg->AddEntry(h124Sr,"2024C (+HCAL_DI)","PLEF");
   //leg->AddEntry(h124cr,"2024C (per-depth)","PLEF");
   leg->AddEntry(h1dr,"2023D (per-depth)","PLEF");
   //leg->AddEntry(h1c4r,"2023Cv4 (per-depth)","PLEF");
-  leg->AddEntry(h1cr,"2023Cv123","PLEF");
+  leg->AddEntry(h1cr,"2023Cv123 (DI)","PLEF");
   //leg->AddEntry(h1d_est,"2023Cv123 #oplus c_{depth}","LF");
   
   gPad->RedrawAxis();

@@ -25,8 +25,11 @@ bool doClosure = false; // Do not undo L2L3Res for closure test
 bool flattenHF = false;//true; // Const vs pT for HF
 double flatHFptmin = 80;//60;//50;//80; // If flat, use only high pT
 double flatHFetamin = 3.139;//2.964;
-bool posOffHF = false;//true; // Positive offset for HF (2024BC,3/fb patch)
-bool posOffEC2 = false;//true; // Positive offset for EC2 (2024BCD, 12.3/fb patch)
+bool posOffHF = true; // Positive offset for HF (2024BCD,E,CS,CR patch)
+bool posOffEC27 = true; // Positive offset for EC (2024BCD,E,CS,CR patch)
+bool posOffEC25 = true; // Positive offset for EC (2024BCD,E,CS,CR patch)
+double maxOffTrk = 0.15; // Max off % at pT=10 GeV in Trk (2024BCD,E,CS,CR patch)
+bool posOffEC20 = true; // Positive offset for EC (2024BCD,E,CS,CR patch)
 bool negLogHF = false;//true; // Positive offset for HF (2024BC,3/fb patch)
 
 // Global variable for renaming histograms
@@ -359,8 +362,8 @@ void L2Res() {
   //string vrun[] = {"2024BCD","2024CR"};
   //string vrun[] = {"2024E","2024C","2024D","2024BCD"};
   //string vrun[] = {"2024E"};
-  string vrun[] = {"2024CS"};
-  //string vrun[] = {"2024BCD","2024E","2024C","2024CR","2024CS"};
+  //string vrun[] = {"2024CS"};
+  string vrun[] = {"2024BCD","2024E","2024C","2024CR","2024CS"};
   const int nrun = sizeof(vrun)/sizeof(vrun[0]);
   //string vmc[] = {"Summer23","Summer23","Summer23BPIX"};
   //string vmc[] = {"Summer22","Summer22EE","Summer22EE","Summer22EE"};
@@ -368,9 +371,9 @@ void L2Res() {
   //string vmc[] = {"Summer23BPix","Summer23BPix","Summer23BPix"};
   //string vmc[] = {"Summer23BPix","Summer23BPix"};
   //string vmc[] = {"Summer23BPix","Summer23BPix","Summer23BPix","Summer23BPix"};
-  string vmc[] = {"Summer23BPix"};
-  //string vmc[] = {"Summer23BPix","Summer23BPix","Summer23BPix",
-  //		  "Summer23BPix","Summer23BPix"};
+  //string vmc[] = {"Summer23BPix"};
+  string vmc[] = {"Summer23BPix","Summer23BPix","Summer23BPix",
+  		  "Summer23BPix","Summer23BPix"};
   const int nmc = sizeof(vmc)/sizeof(vmc[0]);
   assert(nmc==nrun);
 
@@ -802,11 +805,21 @@ void L2Res() {
   fref->SetParameters(f1->GetParameter(0),f1->GetParameter(1),+0.02);
   fref->SetParLimits(2,-0.5,0.5); // offset no more than 50% at 10 GeV
   if (eta>2.964 && posOffHF && !doClosure) {
-    fref->SetParLimits(2,0.3,0.5); // 2024BC,3/fb special
+    fref->SetParLimits(2,0.0,0.5); // 2024BC,3/fb special
   }
-  if (eta>2.5 && eta<2.650 && posOffEC2 && !doClosure) {
-    fref->SetParLimits(2,0.3,0.5); // 2024BCD, 12.3/fb special
+  if (eta>2.650 && eta<2.965 && posOffEC27 && !doClosure) {
+    fref->SetParLimits(2,0.0,0.5); // 2024BCD, 12.3/fb special
   }
+  if (eta>2.5 && eta<2.650 && posOffEC25 && !doClosure) {
+    fref->SetParLimits(2,0.0,0.5); // 2024BCD, 12.3/fb special
+  }
+  if (eta<2.5 && maxOffTrk!=0 && !doClosure) {
+    fref->SetParLimits(2,-maxOffTrk,+maxOffTrk);
+  }
+  if (eta>2.043 && eta<2.5 && posOffEC20 && !doClosure) {
+    fref->SetParLimits(2,0.0,0.5); // 2024BCD, 12.3/fb special
+  }
+
   //if (eta>3.139 && negLogHF) {
   if (eta>4.538 && eta<4.716 && negLogHF && !doClosure) {
     fref->SetParLimits(1,-1,-0.1); // 2024BC,3/fb special

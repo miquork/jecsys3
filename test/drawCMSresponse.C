@@ -163,8 +163,8 @@ void drawCMSresponse(string era, string id="", bool isl2 = false) {
   //TH1D *h = new TH1D("h",";Jet |#eta|;Data response+offset",40,0,4.8);
   //h->SetMaximum(1.25);
   //h->SetMinimum(0.5);
-  h->SetMaximum(1.35);//1.30);//1.20);
-  h->SetMinimum(0.40);//0.55);//0.65);
+  h->SetMaximum(1.55);//1.35);//1.30);//1.20);
+  h->SetMinimum(0.00);//0.40);//0.55);//0.65);
   //extraText = "Simulation";
   //extraText = "Simulation Preliminary";
   //extraText = "Preliminary";

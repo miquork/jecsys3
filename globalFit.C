@@ -220,11 +220,17 @@ void globalFitEtaBin(double etamin, double etamax, string run, string version) {
     data.output = (TGraphErrors*)g->Clone(Form("%s_out",name));
 
     // Jet+Z special
-    if (TString(name).Contains("jetz")) {
+    if (TString(name).Contains("jetz")) { // default: 0.985, 16/fb
+      if (scaleJZperEra && run=="Run24E")    scaleJZ = 0.995; // 11/fb 
+      if (scaleJZperEra && run=="Run24BCDE") scaleJZ = 0.989; // 16+11/fb
+      
       scaleGraph(data.input, scaleJZ);
     }
     // Z+jet ave special
-    if (TString(name).Contains("zjav")) {
+    if (TString(name).Contains("zjav")) { // default: 0.9925, half of JZ
+      if (scaleJZAperEra && run=="Run24E")    scaleJZA = 0.9975;
+      if (scaleJZAperEra && run=="Run24BCDE") scaleJZA = 0.9945;
+      
       scaleGraph(data.input, scaleJZA);
     }
     
@@ -370,7 +376,7 @@ void globalFitEtaBin(double etamin, double etamax, string run, string version) {
   fitter->ExecuteCommand("SET PRINT", &printlevel, 1);
   
   // Run fitter (multiple times if needed)
-  const int nfit = 1;//5;//2;//1;
+  const int nfit = 2;//1;//5;//2;//1;
   cnt = 0;
   for (int i = 0; i != nfit; ++i)
     fitter->ExecuteCommand("MINI", 0, 0);
@@ -879,12 +885,17 @@ void globalFitDraw(string run, string version) {
     c1l->cd(); gPad->RedrawAxis();
 
     if (debug) cout << "Draw plots" << endl << flush;
-   
-    c1->SaveAs(Form("pdf/globalFit/globalFit_%s_%s_rjet.pdf",crun,cv));
-    if (plotPF) c1c->SaveAs(Form("pdf/globalFit/globalFit_%s_%s_pf.pdf",crun,cv));
-    if (usingMu) c1l->SaveAs(Form("pdf/globalFit/globalFit_%s_%s_mu.pdf",crun,cv));
-    //
-    if (saveROOT) c1->SaveAs(Form("pdf/globalFit/globalFit_%s_%s_rjet.root",crun,cv));
+
+    if (!_gf_undoJESref) {
+      c1->SaveAs(Form("pdf/globalFit/globalFit_%s_%s_rjet_closure.pdf",crun,cv));
+    }
+    else {
+      c1->SaveAs(Form("pdf/globalFit/globalFit_%s_%s_rjet.pdf",crun,cv));
+      if (plotPF) c1c->SaveAs(Form("pdf/globalFit/globalFit_%s_%s_pf.pdf",crun,cv));
+      if (usingMu) c1l->SaveAs(Form("pdf/globalFit/globalFit_%s_%s_mu.pdf",crun,cv));
+      //
+      if (saveROOT) c1->SaveAs(Form("pdf/globalFit/globalFit_%s_%s_rjet.root",crun,cv));
+    }
 
     // Test
     c1->cd();
@@ -923,8 +934,9 @@ void globalFitDraw(string run, string version) {
     if (run=="Run23C123")  nhf_off = -1.5;//1.0;//-1.0;//1.0;
     if (run=="Run23C4")  nhf_off = 2.0;//2.0;//7.0;//4.0;
     if (run=="Run23D")  nhf_off = 3.5;//2.0;//9.0;//4.5;
-    if (run=="Run24B" || run=="Run24C" || run=="Run24D" ||
-	run=="Run24BC" || run=="Run24BCD")  nhf_off = 0.0;
+    if (run=="Run24B" || run=="Run24C" || run=="Run24D" || run=="Run24E" ||
+	run=="Run24BC" || run=="Run24BCD" || run=="Run24BCDE" ||
+	run=="Run24CP" || run=="Run24CR" || run=="Run24CS")  nhf_off = 0.0;
     if (run=="Run3")  {
       nhf_off = ((5.1+3.0)*2.0 + 5.9*3.0 + (18.0+3.1)*3.0 +
 		 //8.7*1.0 + 9.8*4.0 + 9.5*4.5) / //Summer22
@@ -985,8 +997,12 @@ void globalFitDraw(string run, string version) {
 
     if (string(crun)=="Run3")
       c1->SaveAs(Form("pdf/globalFit/globalFit_%s_%s_rjet_wNHF.pdf",crun,cv));
-    else
-      c1->SaveAs(Form("pdf/globalFit/globalFit_%s_%s_rjet.pdf",crun,cv));
+    else {
+      if (_gf_undoJESref)
+	c1->SaveAs(Form("pdf/globalFit/globalFit_%s_%s_rjet.pdf",crun,cv));
+      else
+	c1->SaveAs(Form("pdf/globalFit/globalFit_%s_%s_rjet_closure.pdf",crun,cv));
+    }
   } // drawResults
 } // globalFitEtaBin
 

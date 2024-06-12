@@ -10,8 +10,13 @@ using std::map;
 
 // Global minimum (stat.) uncertainty for input data
 double globalErrMin = 0.005;//0.003;//0.002559; // chi2/NDF=101.0/101
-double scaleJZ = 0.98;  // default 0.98 for 2022-23
-double scaleJZA = 0.99;  
+
+//double scaleJZ = 0.98;  // default 0.98 for 2022-23
+//double scaleJZA = 0.99;  // default for 2022-23
+bool scaleJZperEra = true; // Enable custom scales per era (hard-coded)
+bool scaleJZAperEra = true; // Enable custom scales per era (hard-coded)
+double scaleJZ = 0.985;  // default 0.985 for 2024CS
+double scaleJZA = 0.9925;  // default 0.9925 for 2024CS
 
 // Input data
 struct fitData {
@@ -140,7 +145,7 @@ const array<string,29> _gf_shapes_whitelist = {
   //"loglin", // log^1
   //"const", // log^0 constant scale factor
   "off", // Summer23
-  //"ecalcc", // ECAL cc timing for 2024BCD, not 2024CR
+  "ecalcc", // ECAL cc timing for 2024BCD, not 2024CR
   //"qie11"
   //"x1p5",
   //"x1v4", // Summer23 variant

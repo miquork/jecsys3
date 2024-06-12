@@ -228,8 +228,9 @@ void JERSF() {
   //string vrun[] = {"2024BCD","2024BR"};
   //string vrun[] = {"2024C","2024BR","2024CR","2023D"};
   //string vrun[] = {"2024CS","2024CR","2024CP","2023D","2023Cv123"};
-  string vrun[] = {"2024BCD","2024C","2024E","2024CP","2024CS","2024CR","2023D","2023Cv123"};
+  string vrun[] = {"2024BCD","2024C","2024E","2024Ev2","2024CP","2024CS","2024CR","2023D","2023Cv123"};
   //string vrun[] = {"2024C"};
+  //string vrun[] = {"2024Ev2"};
   //string vrun[] = {"2024BCD"};
   //string vrun[] = {"2024BCD","2024CR"};
   //string vrun[] = {"2024E","2024C","2024D","2024BCD"};
@@ -266,8 +267,8 @@ void JERSF() {
   //string vmc[] = {"Summer23MGBPix"};
   //string vmc[] = {"Summer23MGBPix","Summer23MGBPix","Summer23MGBPix","Summer23MGBPix","Summer23MGBPix"};
   string vmc[] = {"Summer23MGBPix","Summer23MGBPix","Summer23MGBPix",
-		  "Summer23MGBPix","Summer23MGBPix","Summer23MGBPix",
-		  "Summer23MGBPix","Summer23MGBPix"};
+  		  "Summer23MGBPix","Summer23MGBPix","Summer23MGBPix",
+  		  "Summer23MGBPix","Summer23MGBPix","Summer23MGBPix"};
   //string vmc[] = {"Summer23MGBPix","Summer23MGBPix","Summer23MGBPix","Summer23MGBPix"};
   const int nmc = sizeof(vmc)/sizeof(vmc[0]);
   assert(nmc==nrun);
@@ -368,11 +369,13 @@ void JERSF() {
   }
   */
   else if (run=="2024Ev2") {
-    f = new TFile(Form("rootfiles/Prompt2024/v71_2024/jmenano_data_cmb_%s_JME_v71_2024.root","2024E_v2"),"READ");
+    //f = new TFile(Form("rootfiles/Prompt2024/v71_2024/jmenano_data_cmb_%s_JME_v71_2024.root","2024E_v2"),"READ");
+    f = new TFile(Form("rootfiles/Prompt2024/v76_2024/jmenano_data_cmb_%s_JME_v76_2024.root","2024Ev2"),"READ");
     //fm = new TFile("rootfiles/Prompt2024/v39_2024_Prompt_etabin_DCSOnly/jmenano_mc_cmb_Summer23MGBPix_v39_2023_etabin_SFv2.root","READ"); // JER SF!!
     fm = new TFile("rootfiles/Summer23_L2ResOnly/jmenano_mc_cmb_Summer23MGBPix_v39_noRwPU_noSmearJets_25Feb2024_L2Res_v1.root","READ"); // no JER SF
     fz = new TFile(Form("rootfiles/Prompt2024/jme_bplusZ_%s_Zmm_sync_v83.root","2024E"),"READ"); // v82
-    fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w27.root",cr),"READ");
+    //fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w27.root",cr),"READ");
+    fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w29.root",cr),"READ");
     fgm = new TFile("rootfiles/Prompt2024/GamHistosFill_mc_2023P8-BPix_w16.root","READ");
   }
   else if (run=="2024E") {
