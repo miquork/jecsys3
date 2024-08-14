@@ -62,8 +62,11 @@ void JetVeto(string run = "", string version = "vx") {
   JetVetos("2023D",version);
   */
   
-  JetVetos("2024BCD",version);
-  JetVetos("2024E",version);
+  //JetVetos("2024BCD",version);
+  //JetVetos("2024E",version);
+
+  JetVetos("2024BCDE",version);
+  JetVetos("2024F",version);
 }
 
 void JetVetos(string run, string version) {
@@ -93,19 +96,31 @@ void JetVetos(string run, string version) {
     f = new TFile("rootfiles/Iita_20230814/nano_data_out_2023D_v1.root","READ");
   }
   if (run=="2024BCD") {
-    lumi_136TeV = "Run2024BCD, 12.3 fb^{-1}";
+    lumi_136TeV = "Run2024BCD, 15.3 fb^{-1}";
     //f = new TFile("rootfiles/Prompt2024/v50_2024/jmenano_data_cmb_2024BCD_JME_v50_2024.root","READ"); // May 16 golden, 12.3/fb => some problem with cmb?
-    f = new TFile("rootfiles/Prompt2024/v50_2024/jmenano_data_out_2024BCD_JME_v50_2024.root","READ"); // May 16 golden, 12.3/fb
+    //f = new TFile("rootfiles/Prompt2024/v50_2024/jmenano_data_out_2024BCD_JME_v50_2024.root","READ"); // May 16 golden, 12.3/fb
+    f = new TFile("rootfiles/Prompt2024/v83_2024/jmenano_data_out_2024BCD_JME_v83_2024.root","READ"); // Aug 2 hybrid, 15.3/fb
     //pullThreshold = 250;//200;//150;//100;//85;//100;//70;//50;
     //pullThresholdHF45 = 300;
     nMinTowers = 50; // for BPix hole
   }
   if (run=="2024E") {
-    lumi_136TeV = "Run2024E, X.X fb^{-1}";
+    lumi_136TeV = "Run2024E, 11.3 fb^{-1}";
     //f = new TFile("rootfiles/Prompt2024/v76_2024/jmenano_data_cmb_2024E_JME_v76_2024.root","READ"); // June 6 hybrid, 27.0/fb => some problem with cmb?
-    f = new TFile("rootfiles/Prompt2024/v76_2024/jmenano_data_out_2024E_JME_v76_2024.root","READ"); // June 6 hybrid, 27.0/fb
+    //f = new TFile("rootfiles/Prompt2024/v76_2024/jmenano_data_out_2024E_JME_v76_2024.root","READ"); // June 6 hybrid, 27.0/fb
+    f = new TFile("rootfiles/Prompt2024/v83_2024/jmenano_data_out_2024E_JME_v83_2024.root","READ"); // Aug 2 hybrid, 11.3/fb
     //pullThreshold = 250;//200;//150;//100;//85;//100;//70;//50;
     //pullThresholdHF45 = 300;
+    nMinTowers = 50; // for BPix hole
+  }
+  if (run=="2024BCDE") {
+    lumi_136TeV = "Run2024BCDE, 26.6 fb^{-1}";
+    f = new TFile("rootfiles/Prompt2024/v83_2024/jmenano_data_out_2024BCDE_JME_v83_2024.root","READ"); // Aug 2 hybrid, 26.6/fb
+    nMinTowers = 50; // for BPix hole
+  }
+  if (run=="2024F") {
+    lumi_136TeV = "Run2024F, 19.4 fb^{-1}";
+    f = new TFile("rootfiles/Prompt2024/v86_2024/jmenano_data_out_2024F_JME_v86_2024.root","READ"); // Aug 2 hybrid
     nMinTowers = 50; // for BPix hole
   }
 
@@ -170,7 +185,8 @@ void JetVetos(string run, string version) {
   int ntrg = vtrg.size();
 
   vector<string> vh;
-  vh.push_back("p2asymm");
+  //vh.push_back("p2asymm");
+  vh.push_back("p2asymm_noveto");
   vh.push_back("h2phieta");//h2pt");
   vh.push_back("p2nef");
   vh.push_back("p2chf");
@@ -211,7 +227,7 @@ void JetVetos(string run, string version) {
       TH2D *h2abs = (TH2D*)h2->Clone(Form("h2abs_%s",hname.c_str()));
       
       // Calculate average JES shift
-      if (hname=="p2asymm") {
+      if (hname=="p2asymm" || hname=="p2asymm_noveto") {
 	if (!h2jes) {
 	  h2jes = (TH2D*)h2->Clone("h2jes");
 	}
@@ -384,7 +400,8 @@ void JetVetos(string run, string version) {
 
 
     
-    if (!h2nomrefsum && !h2absrefsum && hname=="p2asymm") {
+    if (!h2nomrefsum && !h2absrefsum &&
+	(hname=="p2asymm" || hname=="p2asymm_noveto")) {
       h2nomrefsum = (TH2D*)h2nomsum->Clone("h2nomrefsum");
       h2absrefsum = (TH2D*)h2abssum->Clone("h2absrefsum");
     }
@@ -445,6 +462,7 @@ void JetVetos(string run, string version) {
   TH2D *h2hotandcold = (TH2D*)h2nomsums->Clone("jetvetomap_hotandcold");
   TH2D *h2eep = (TH2D*)h2nomsums->Clone("jetvetomap_eep");
   TH2D *h2bpix = (TH2D*)h2nomsums->Clone("jetvetomap_bpix");
+  TH2D *h2fpix = (TH2D*)h2nomsums->Clone("jetvetomap_fpix");
   TH2D *h2all = (TH2D*)h2nomsums->Clone("jetvetomap_all");
   h2veto->Reset();
   h2hot->Reset();
@@ -453,6 +471,7 @@ void JetVetos(string run, string version) {
   h2hotandcold->Reset();
   h2eep->Reset();
   h2bpix->Reset();
+  h2fpix->Reset();
   h2all->Reset();
 
   h2veto->SetTitle("JME recommended map, used for JEC. Hot+Cold");
@@ -462,6 +481,7 @@ void JetVetos(string run, string version) {
   h2hotandcold->SetTitle("Union of hot and cold zone maps");
   h2eep->SetTitle("EE+ water leak region. Complete loss of ECAL energy in 2022EFG");
   h2bpix->SetTitle("Barrel pixel failure. Reduction of tracking efficiency in 2023D and later");
+  h2fpix->SetTitle("Forward pixel failure. Reduction of tracking efficiency in 2024F and later");
   h2all->SetTitle("Union of hot and cold maps");
   if (run=="2022E" || run=="2022F" || run=="2022G" ||
       run=="2022EF" || run=="2022EFG") {
@@ -472,12 +492,17 @@ void JetVetos(string run, string version) {
     h2veto->SetTitle("JME recommended map, used for JEC. Hot+Cold+BPIX");
     h2all->SetTitle("Union of hot, cold and BPIX maps");
   }
-  if (run=="2024BCD") {
+  if (run=="2024BCD" || run=="2024BCDE") {
     h2veto->SetTitle("JME recommended map. Hot+Cold(+not BPIX)");
     h2all->SetTitle("Union of all maps, used for JEC. Hot+cold+BPIX");
   }
+  if (run=="2024F") {
+    h2veto->SetTitle("JME recommended map. Hot+Cold+FPIX(+not BPIX)");
+    h2all->SetTitle("Union of all maps, used for JEC. Hot+cold+FPIX+BPIX");
+  }
   h2nomsums->SetTitle("Raw nominal pull map. NomPull=(x_i-mu)/sigma. Summed over triggers");
   h2abssums->SetTitle("Raw absolute pull map. AbsPull=|(x_i-mu)/sigma|-1. Summed over triggers");
+  h2nomrefsum->SetTitle("Nominal pull map from dijet asymmetry. Used for hot vs cold classification");
 
   for (int i = 1; i != h2nomsums->GetNbinsX()+1; ++i) {
     for (int j = 1; j != h2nomsums->GetNbinsY()+1; ++j) {
@@ -534,9 +559,20 @@ void JetVetos(string run, string version) {
 	  h2bpix->SetBinContent(i,j,100);
 	  h2all->SetBinContent(i,j,100);
 	}
-	if (run=="2024BCD") { // Keep BPix for recommended, drop for JEC
+	if (run=="2024BCD" || run=="2024BCDE" || run=="2024F") {
+	  // Keep BPix for recommended, drop for JEC
 	  h2veto->SetBinContent(i,j,0);
 	  h2bpix->SetBinContent(i,j,100);
+	  h2all->SetBinContent(i,j,100);
+	}
+      } // BPIX
+
+      // FPIX reference region (2024F and later)
+      if (eta>-2.043 && phi>2.53 &&
+	  eta<-1.653 && phi<2.71) {
+	if (run=="2024F") { // Remove FPIX
+	  h2veto->SetBinContent(i,j,100);
+	  h2fpix->SetBinContent(i,j,100);
 	  h2all->SetBinContent(i,j,100);
 	}
       } // BPIX
@@ -632,10 +668,11 @@ void JetVetos(string run, string version) {
   h2veto->Write("jetvetomap");
   h2hot->Write("jetvetomap_hot");
   h2cold->Write("jetvetomap_cold");
-  h2old->Write("jetvetomap_old");
+  if (h2old->Integral()!=0) h2old->Write("jetvetomap_old");
   h2hotandcold->Write("jetvetomap_hotandcold");
   if (h2eep->Integral()!=0) h2eep->Write("jetvetomap_eep");
   if (h2bpix->Integral()!=0) h2bpix->Write("jetvetomap_bpix");
+  if (h2fpix->Integral()!=0) h2fpix->Write("jetvetomap_fpix");
   h2all->Write("jetvetomap_all");
   if (h2jes) h2jes->Write("jetasymmetrymap");
   if (h2jesnorm) h2jesnorm->Write("jetasymmetrymap_norm");
