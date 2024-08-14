@@ -28,13 +28,17 @@ double flatHFetamin = 3.139;//2.964;
 bool posOffHF = true; // Positive offset for HF (2024BCD,E,CS,CR patch)
 bool posOffEC27 = true; // Positive offset for EC (2024BCD,E,CS,CR patch)
 bool posOffEC25 = true; // Positive offset for EC (2024BCD,E,CS,CR patch)
-double maxOffTrk = 0.15; // Max off % at pT=10 GeV in Trk (2024BCD,E,CS,CR patch)
+double maxOffTrkEC1 = 0.15; // Max off % at pT=10 GeV in EC1 Trk (2024BCD,E,CS,CR patch)
+double maxOffTrkBB = 0.30; // Max off % at pT=10 GeV in BB Trk (2024BCD,E,CS,CR patch)
 bool posOffEC20 = true; // Positive offset for EC (2024BCD,E,CS,CR patch)
 bool negLogHF = false;//true; // Positive offset for HF (2024BC,3/fb patch)
 
 // Global variable for renaming histograms
 string _run;
 
+bool _invertZ(false);
+
+TProfile2D *TH2DtoTProfile2D(TH2D *h2, string name="");
 
 // Step 1. Slice 1D profile out of 2D in given range and draw it
 TProfile* drawEta(TProfile2D *p2, double ptmin, double ptmax,
@@ -53,8 +57,9 @@ TProfile* drawEta(TProfile2D *p2, double ptmin, double ptmax,
     for (int i = 1; i != p->GetNbinsX()+1; ++i) {
       int j = px->GetXaxis()->FindBin(p->GetBinCenter(i));
       double mean_value = p->GetBinContent(i) * px->GetBinContent(j);
-      //if (label=="Z") // inconsistent definition of p2res
-      //mean_value = p->GetBinContent(i) / px->GetBinContent(j);
+      if (label=="Z" && _invertZ && px->GetBinContent(j)!=0)
+	// inconsistent definition of p2res
+	mean_value = p->GetBinContent(i) / px->GetBinContent(j);
       //double calculated_error = p->GetBinError(i) * px->GetBinContent(j);
       double entries = p->GetBinEntries(i);
       p->SetBinEntries(i, entries);
@@ -111,8 +116,9 @@ TProfile* drawPt(TProfile2D *p2, double etamin, double etamax,
     for (int i = 1; i != p->GetNbinsX()+1; ++i) {
       int j = py->GetXaxis()->FindBin(p->GetBinCenter(i));
       double mean_value = p->GetBinContent(i) * py->GetBinContent(j);
-      //if (label=="Z") // inconsistent definition of p2res
-      //mean_value = p->GetBinContent(i) / py->GetBinContent(j);
+      if (label=="Z" && _invertZ && py->GetBinContent(j))
+	// inconsistent definition of p2res
+	mean_value = p->GetBinContent(i) / py->GetBinContent(j);
       //double calculated_error = p->GetBinError(i) * py->GetBinContent(j);
       double entries = p->GetBinEntries(i);
       p->SetBinEntries(i, entries);
@@ -216,11 +222,13 @@ TH1D *drawCleaned(TH1D *h, double eta, string data, string draw,
     if (data=="Z") {
       if      (ptmin>=15. && ptmax<550 && emax<1550. && eta<2.500) keep = true;
       else if (ptmin>=15. && ptmax<550 && emax<1550. && eta<2.964) keep = true;
-      else if (ptmin>=30. && ptmax<300 && eta>2.964  && eta<3.489) keep = true;
+      else if (ptmin>=30. && ptmax<300 && eta>2.964  && eta<3.314) keep = true;
+      else if (ptmin>=30. && ptmax<250 && eta>3.314  && eta<3.489) keep = true;
       else if (ptmin>=15. && ptmax<200 && eta>3.489  && eta<3.839) keep = true;
       else if (ptmin>=15. && ptmax<100 && eta>3.839  && eta<5.191) keep = true;
-      // Additional veto
-      if (eta>2.322 && eta<3.139) keep = false;
+      // Additional veto for V4M
+      //if (eta>2.322 && eta<3.139) keep = false;
+      if (eta>2.500 && eta<2.964 && pt<70 && _run=="2024BCD") keep = false;
       // Additional veto for 2024B, 3/fb
       //if (eta>4.538 && eta<4.716 && ptmax<30) keep = false;
       // Additional veto for 2024B,C,D, 12.3/fb
@@ -229,8 +237,11 @@ TH1D *drawCleaned(TH1D *h, double eta, string data, string draw,
     if (data=="G") { // HLT_Photon50EB_TightId_TightIso, HLT_Photon30EB...
       if      (ptmin>=30. && ptmax<1300. && emax<2500.) keep = true;
       else if (ptmin>=30. && ptmax<200.  && emax<0.5*sqrts) keep = true;
-      // Additional veto for 2024C 0.7/fb golden special
-      if (fabs(eta)>2.322 && eta<2.964 && ptmin<60) keep = false;
+      // Additional veto for 2024C 0.7/fb golden special and V4M
+      //if (fabs(eta)>2.322 && eta<2.964 && ptmin<60) keep = false;
+      if (eta>2.5 && eta<2.964 && ptmin<60) keep = false; // V5M
+      if (eta>3.139 && eta<4.013 && ptmin<60 && 
+	  (_run=="2024E" || _run=="2024F" || _run=="2024EF")) keep = false;
       // Additional veto for 2024BC 3.3/fb golden closure (errors bad)
       if (doClosure && ptmin>500) keep = false;
     }
@@ -242,11 +253,14 @@ TH1D *drawCleaned(TH1D *h, double eta, string data, string draw,
       else if  (ptmin>=15. && ptmax<460.  && eta<5.191) keep = true;
       // Additional veto for 2024B, 3/fb
       //if (eta>4.538 && eta<4.716 && ptmax<30) keep = false;
+      if (eta>1.392 && eta<1.479 && pt<20) keep = false; // V5M 24BCD
+      if (eta>2.500 && eta<2.650 && pt<30) keep = false; // V5M
       // Additional veto for 2024BC 3.3/fb golden closure (bad errors?)
       if (doClosure && emax>0.5*sqrts) keep = false;
     }
     if (data=="P") {
       if (ptmin>=15. && ptmax<=110. && eta<2.322) keep = true;
+      if (eta>1.392 && eta<1.479 && pt<20) keep = false; // V5M 24BCD
     }
     if (data=="D") {
       if (ptmin>=59. && ptmax<=110. && emax<3100. && eta<2.853) keep = true;
@@ -350,11 +364,13 @@ void L2Res() {
   mlum["2024C"] = "7.5 fb^{-1}";
   mlum["2024D"] = "8.3 fb^{-1}"; //partial, 4.6->7.9->8.3
   mlum["2024BC"] = "7.7 fb^{-1}";
-  mlum["2024BCD"] = "16.0 fb^{-1}"; // partial, 12.3->15.6->16.0
+  mlum["2024BCD"] = "15.3 fb^{-1}"; // partial, 12.3->15.6->16.0->15.3 (normtag)
   mlum["2024CP"] = "7.5 fb^{-1}";
   mlum["2024CR"] = "7.5 fb^{-1}";
   mlum["2024CS"] = "7.5 fb^{-1}";
-  mlum["2024E"] = "11.0 fb^{-1}"; // partial, 9.3->11.0
+  mlum["2024E"] = "11.3 fb^{-1}"; // 9.3->11.0->11.3 (full now)
+  mlum["2024F"] = "19.4 fb^{-1}"; // partial 19.4
+  mlum["2024EF"] = "30.7 fb^{-1}"; // partial 30.7
   
   //string vrun[] = {"2023Cv123","2023Cv4","2023D"};
   //string vrun[] = {"2022CD","2022E","2022F","2022G"};
@@ -363,7 +379,15 @@ void L2Res() {
   //string vrun[] = {"2024E","2024C","2024D","2024BCD"};
   //string vrun[] = {"2024E"};
   //string vrun[] = {"2024CS"};
-  string vrun[] = {"2024BCD","2024E","2024C","2024CR","2024CS"};
+  //string vrun[] = {"2024BCD","2024E","2024C","2024CR","2024CS"};
+  string vrun[] =
+    //{"2022C_19Dec2023","2022D_19Dec2023","2022E_19Dec2023",
+    {//"2022CD_19Dec2023","2022E_19Dec2023",
+     //"2022F_19Dec2023","2022G_19Dec2023",
+     //"2023Cv123_19Dec2023","2023Cv4_19Dec2023","2023D_19Dec2023"};
+      //"2023D_19Dec2023","2023D"};
+      //"2024F","2024E","2024D","2024C"};
+      "2024EF","2024F","2024E","2024BCD"};
   const int nrun = sizeof(vrun)/sizeof(vrun[0]);
   //string vmc[] = {"Summer23","Summer23","Summer23BPIX"};
   //string vmc[] = {"Summer22","Summer22EE","Summer22EE","Summer22EE"};
@@ -372,8 +396,15 @@ void L2Res() {
   //string vmc[] = {"Summer23BPix","Summer23BPix"};
   //string vmc[] = {"Summer23BPix","Summer23BPix","Summer23BPix","Summer23BPix"};
   //string vmc[] = {"Summer23BPix"};
-  string vmc[] = {"Summer23BPix","Summer23BPix","Summer23BPix",
-  		  "Summer23BPix","Summer23BPix"};
+  //string vmc[] = {"Summer23BPix","Summer23BPix","Summer23BPix",
+  //		  "Summer23BPix","Summer23BPix"};
+  string vmc[] =
+    //{"Summer22","Summer22","Summer22",
+    {//"Summer22","Summer22",
+     //"Summer22EE","Summer22EE",
+     //"Summer23","Summer23","Summer23BPix"};
+      //"Summer23BPix","Summer23BPix"};
+      "Winter24","Winter24","Winter24","Winter24"};
   const int nmc = sizeof(vmc)/sizeof(vmc[0]);
   assert(nmc==nrun);
 
@@ -388,10 +419,14 @@ void L2Res() {
     const char *cm = mc.c_str();
     string lum = (mlum[run]!="" ? Form(", %s",mlum[run].c_str()) : "");
     const char *cl = lum.c_str();
+    _invertZ = false;
     
     gROOT->ProcessLine(Form(".! mkdir pdf/L2Res/%s",cr));
     gROOT->ProcessLine(Form(".! mkdir pdf/L2Res/%s/vsEta",cr));
     gROOT->ProcessLine(Form(".! mkdir pdf/L2Res/%s/vsPt",cr));
+
+    // Update date in case directory existed already (so lists better in Finder)
+    gROOT->ProcessLine(Form(".! touch pdf/L2Res/%s",cr));
 
   // (No indent here for the resf of the loop, maybe function call later)
 
@@ -400,6 +435,7 @@ void L2Res() {
   // Load Z+jet
   TFile *fz(0), *fsz(0);
   TProfile2D *p2zxx(0);
+  TString tr(cr), tr2(cr);//, trz(cr);
   if (run=="2024CS") {
     fz = new TFile(Form("rootfiles/Prompt2024/jme_bplusZ_%s_Zmm_sync_v83.root","2024BCD"),"READ"); // June 5 hybrid, 15.6/fb
     // HCALDI/ECALRATIO ~ HCALDI/Prompt for Z+jet
@@ -410,22 +446,57 @@ void L2Res() {
   else if (run=="2024CR") {
     fz = new TFile(Form("rootfiles/Prompt2024/jme_bplusZ_%s_Zmm_sync_v83.root","2024BCD"),"READ"); // June 5 hybrid, 15.6/fb
   }
-  else if (TString(cr).Contains("2024")) {
+  else if (tr.Contains("19Dec2023")) {
+    //trz.ReplaceAll("23Cv123","23C123");
+    //trz.ReplaceAll("23Cv4","23C4");
+    string run2 = tr2.ReplaceAll("_19Dec2023","").Data();
+    const char *cr2 = run2.c_str();
+    cout << "Reading in 19Dec Z+jet " << cr2 << endl << flush;
+
+    // 19Dec2023/22Sep2023 for Z+jet
+    //fsz = new TFile(Form("../dijet/rootfiles/compareLite_%s.root",cr2),"READ");
+    fsz = new TFile("rootfiles/compareLiteErasV2.root","READ");
+    assert(fsz && !fsz->IsZombie());
+
+    TH2D *h2zxx = (TH2D*)fsz->Get(Form("2D_19Dec_over_22Sep_vs_22Sep_%s",cr2));
+    assert(h2zxx);
+    //p2zxx = (TProfile2D*)fsz->Get("2D/p2d_tp"); assert(p2zxx);
+    p2zxx = TH2DtoTProfile2D(h2zxx,Form("p2zxx_%s",cr2));
+    
+    if (tr2.Contains("2022")) {
+      if (run2=="2022F" || run2=="2022G" || run2=="2022FG") {
+	//fz = new TFile(Form("rootfiles/jme_bplusZ_%s_Zmm_sync_v78.root",cr2),"READ"); // 22Sep2023 instead of 19Dec2023
+	fz = new TFile(Form("rootfiles/jme_bplusZ_%s_19Dec_Zmm_sync_v76.root",cr2),"READ"); // 19Dec2023 proper
+      }
+      else { 
+	fz = new TFile(Form("rootfiles/jme_bplusZ_%s_Zmm_sync_v76.root",cr2),"READ"); // 22Sep2023 instead of 19Dec2023 proper
+      }
+    }
+    else {
+      //fz = new TFile(Form("rootfiles/Summer23_L2L3Res/jme_bplusZ_%s_Zmm_sync_v77.root",cr2),"READ"); // 22Sep2023
+      fz = new TFile(Form("rootfiles/Summer23_L2L3Res/jme_bplusZ_%s_Zmm_sync_v73smearoff.root",cr2),"READ"); // 22Sep2023
+      _invertZ = true;
+    // TBD: need to add p2zxx for 22Sep2023 cases to scale JES
+    }
+  }
+  else if (tr.Contains("2024")) {
     //fz = new TFile(Form("rootfiles/Prompt2024/jme_bplusZ_%s_Zmm_sync_v78.root",cr),"READ"); // v77: Golden 2024B, DCSOnly 2024C
     //fz = new TFile(Form("rootfiles/Prompt2024/jme_bplusZ_%s_Zmm_sync_v78golden.root",cr),"READ"); // 0.74/fb
     //fz = new TFile(Form("rootfiles/Prompt2024/jme_bplusZ_%s_Zmm_sync_v79golden.root",cr),"READ"); // 3/fb
     //fz = new TFile(Form("rootfiles/Prompt2024/jme_bplusZ_%s_Zmm_sync_v80golden.root",cr),"READ"); // 3/fb closure
     //fz = new TFile(Form("rootfiles/Prompt2024/jme_bplusZ_%s_Zmm_sync_v81.root",cr),"READ"); // May 16 golden, 12.3/fb
     //fz = new TFile(Form("rootfiles/Prompt2024/jme_bplusZ_%s_Zmm_sync_v82.root",cr),"READ"); // May 27 golden + DCSOnly, X/fb
-    fz = new TFile(Form("rootfiles/Prompt2024/jme_bplusZ_%s_Zmm_sync_v83.root",cr),"READ"); // June 5 golden + DCSOnly, 15.6/fb
+    //fz = new TFile(Form("rootfiles/Prompt2024/jme_bplusZ_%s_Zmm_sync_v83.root",cr),"READ"); // June 5 golden + DCSOnly, 15.6/fb
+    //fz = new TFile(Form("rootfiles/Prompt2024/jme_bplusZ_%s_Zmm_sync_v84.root",cr),"READ"); // June 19 golden
+    fz = new TFile(Form("rootfiles/Prompt2024/jme_bplusZ_%s_Zmm_sync_v85.root",cr),"READ"); // Aug 2 hybrid
   }
-  else if (TString(cr).Contains("2023")) {
+  else if (tr.Contains("2023")) {
     //fz = new TFile(Form("rootfiles/Summer23_L2ResOnly/jme_bplusZ_%s_Zmm_sync_v70.root",cr),"READ"); // Summer23 L2Res_V1
     //fz = new TFile(Form("rootfiles/Summer23_L2L3Res/jme_bplusZ_%s_Zmm_sync_v72noPUrw.root",cr),"READ"); // MC botched?
-    //fz = new TFile(Form("rootfiles/Summer23_L2L3Res/jme_bplusZ_%s_Zmm_sync_v73smearoff.root",cr),"READ");
-    fz = new TFile(Form("rootfiles/Summer23_L2L3Res/jme_bplusZ_%s_Zmm_sync_v77.root",cr),"READ");
+    fz = new TFile(Form("rootfiles/Summer23_L2L3Res/jme_bplusZ_%s_Zmm_sync_v73smearoff.root",cr),"READ"); _invertZ = true;
+    //fz = new TFile(Form("rootfiles/Summer23_L2L3Res/jme_bplusZ_%s_Zmm_sync_v77.root",cr),"READ");
   }
-  else if (TString(cr).Contains("2022")) {
+  else if (tr.Contains("2022")) {
     //fz = new TFile(Form("rootfiles/jme_bplusZ_%s_Zmm_sync_v66.root",cr),"READ");
     if (run=="2022F" || run=="2022G" || run=="2022FG")
       fz = new TFile(Form("rootfiles/jme_bplusZ_%s_Zmm_sync_v78.root",cr),"READ"); // 22Sep2023 instead of 19Dec2023
@@ -447,7 +518,22 @@ void L2Res() {
     fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s-ECALRATIO_w29.root","2024C"),"READ"); // w26->w29
     fgm = new TFile("rootfiles/Prompt2024/GamHistosFill_mc_2023P8-BPix_w16.root","READ"); // as in regular 2024
   }
-  else if (TString(cr).Contains("2024")) {
+  else if (tr.Contains("19Dec2023")) {
+    string run2 = tr2.ReplaceAll("_19Dec2023","").Data();
+    const char *cr2 = run2.c_str();
+    cout << "Reading in 19Dec Gamjet " << cr2 << endl << flush;
+    if (tr2.Contains("2022")) {
+      fg = new TFile(Form("../gamjet/rootfiles/GamHistosFill_data_%s_v32.root",cr2),"READ");
+      const char *cmg = TString(cm).ReplaceAll("Summer","20").Data();
+      fgm = new TFile(Form("../gamjet/rootfiles/GamHistosFill_mc_%sP8_v32.root",cmg),"READ");
+    }
+    else {
+      fg = new TFile(Form("rootfiles/Summer23_L2L3Res/GamHistosFill_data_%s_w8.root",cr2),"READ");
+      fgm = new TFile(run2=="2023D" ? "rootfiles/Summer23_L2L3Res/GamHistosFill_mc_2023P8-BPix_w8.root" : "rootfiles/Summer23_L2L3Res/GamHistosFill_mc_2023P8_w8.root","READ");
+    }
+    // TBD: need to add p2gxx for 22Sep2023 files to scale JES
+  }
+  else if (tr.Contains("2024")) {
     //fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w12.root",cr),"READ"); // DCSOnly
     //fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w13.root",cr),"READ"); // DCSOnly
     //fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w14.root",cr),"READ"); // Golden JSON 0.74/fb
@@ -455,16 +541,21 @@ void L2Res() {
     //fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w18.root",cr),"READ"); // Golden JSON 3/fb closure
     //fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w22.root",cr),"READ"); // May 16 golden, 12.3/fb
     //fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w27.root",cr),"READ"); // DCSOnly
-    fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w29.root",cr),"READ"); // June 5 hybrid, 15.6/fb
+    //fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w29.root",cr),"READ"); // June 5 hybrid, 15.6/fb
+    //fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w30.root",cr),"READ"); // June 19 hybrid
+    //fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w32.root",cr),"READ"); // Aug 2 hybrid
+    fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w33.root",cr),"READ"); // Aug 2 hybrid
     //fgm = new TFile("rootfiles/Prompt2024/GamHistosFill_mc_2023P8-BPix_w12.root","READ");
     //fgm = new TFile("rootfiles/Prompt2024/GamHistosFill_mc_2023P8-BPix_w16.root","READ");
-    fgm = new TFile("rootfiles/Prompt2024/GamHistosFill_mc_2023P8-BPix_w16.root","READ");
+    //fgm = new TFile("rootfiles/Prompt2024/GamHistosFill_mc_2023P8-BPix_w16.root","READ"); // Summer23BPix
+    //fgm = new TFile("rootfiles/Prompt2024/GamHistosFill_mc_winter2024P8_w32.root","READ"); // Winter24 photon+jet only
+    fgm = new TFile("rootfiles/Prompt2024/GamHistosFill_mc_winter2024P8_w33.root","READ"); // Winter24 photon+jet only
   }
-  else if (TString(cr).Contains("2023")) {
+  else if (tr.Contains("2023")) {
     fg = new TFile(Form("rootfiles/Summer23_L2L3Res/GamHistosFill_data_%s_w8.root",cr),"READ");
     fgm = new TFile(run=="2023D" ? "rootfiles/Summer23_L2L3Res/GamHistosFill_mc_2023P8-BPix_w8.root" : "rootfiles/Summer23_L2L3Res/GamHistosFill_mc_2023P8_w8.root","READ");
   }
-  else if (TString(cr).Contains("2022")) {
+  else if (tr.Contains("2022")) {
     fg = new TFile(Form("../gamjet/rootfiles/GamHistosFill_data_%s_v32.root",cr),"READ");
     const char *cmg = TString(cm).ReplaceAll("Summer","20").Data();
     fgm = new TFile(Form("../gamjet/rootfiles/GamHistosFill_mc_%sP8_v32.root",cmg),"READ");
@@ -489,23 +580,38 @@ void L2Res() {
     fd = new TFile(Form("rootfiles/Prompt2024/v76_2024/jmenano_data_cmb_%s_ECAL_JME_v76_2024.root","2024C"),"READ"); // One half v66->v76 full
     fdm = new TFile("rootfiles/Prompt2024/v39_2024_Prompt_etabin_DCSOnly/jmenano_mc_out_Summer23MGBPix_v39_2023_etabin_SFv2.root","READ");
   }
-  else if (TString(cr).Contains("2024")) {
+  else if (tr.Contains("19Dec2023")) {
+    string run2 = tr2.ReplaceAll("_19Dec2023","").Data();
+    const char *cr2 = run2.c_str();
+    cout << "Reading in 19Dec Dijet " << cr2 << endl << flush;
+    fd = new TFile(Form("rootfiles/19Dec2023/jmenano_data_cmb_%s_v39_eta_METcut_19Dec2023.root",cr2),"READ");
+    // Placeholder MC for all options
+    //fdm = new TFile("rootfiles/Summer23_L2ResOnly/jmenano_mc_cmb_Summer23MGBPix_v39_noRwPU_noSmearJets_25Feb2024_L2Res_v1.root","READ"); // no JER SF
+    fdm = new TFile("rootfiles/Prompt2024/v39_2024_Prompt_etabin_DCSOnly/jmenano_mc_out_Summer23MGBPix_v39_2023_etabin_SFv2.root","READ");
+  }
+  else if (run=="2024F" || run=="2024EF") {
+    fd = new TFile(Form("rootfiles/Prompt2024/v86_2024/jmenano_data_cmb_%s_JME_v86_2024.root",cr),"READ"); // Aug 2 hybrid, CS_V4M JEC
+    fdm = new TFile("rootfiles/Prompt2024/v83_2024/jmenano_mc_out_Winter24MG_v83_2024.root","READ"); // Winter24
+  }
+  else if (tr.Contains("2024")) {
     //fd = new TFile(Form("rootfiles/Prompt2024/v39_2024_Prompt_etabin_DCSOnly/jmenano_data_cmb_%s_v39_2024_Prompt_etabin_DCSOnly.root",cr),"READ");
     //fd = new TFile(Form("rootfiles/Prompt2024/jmenano_data_cmb_%s_JME_v39_2024_Prompt_Golden_29April.root",cr),"READ"); // golden 0.74/fb
     //fd = new TFile(Form("rootfiles/Prompt2024/v41_2024_Golden/jmenano_data_cmb_%s_JME_v41_2024_Golden.root",cr),"READ"); // golden 3/fb
     //fd = new TFile(Form("rootfiles/Prompt2024/v43_2024_Golden/jmenano_data_cmb_%s_JME_v43_2024_Golden.root",cr),"READ"); // golden 3/fb closure
     //fd = new TFile(Form("rootfiles/Prompt2024/v50_2024/jmenano_data_cmb_%s_JME_v50_2024.root",cr),"READ"); // May 16 golden, 12.3/fb
     //fd = new TFile(Form("rootfiles/Prompt2024/v67_2024/jmenano_data_cmb_%s_JME_v67_2024.root",cr),"READ"); // May 27 golden, X/fb
-    fd = new TFile(Form("rootfiles/Prompt2024/v76_2024/jmenano_data_cmb_%s_JME_v76_2024.root",cr),"READ"); // June 5 hybrid, 15.6/fb
-    //if (run=="2024B")
-    //fd = new TFile(Form(" rootfiles/Prompt2024/v39_2024_Prompt_etabin_SFD_Golden/jmenano_data_cmb_%s_v39_2024_Prompt_etabin_SFD_Golden.root",cr),"READ");
-    fdm = new TFile("rootfiles/Prompt2024/v39_2024_Prompt_etabin_DCSOnly/jmenano_mc_out_Summer23MGBPix_v39_2023_etabin_SFv2.root","READ");
+    //fd = new TFile(Form("rootfiles/Prompt2024/v76_2024/jmenano_data_cmb_%s_JME_v76_2024.root",cr),"READ"); // June 5 hybrid, 15.6/fb
+    //fd = new TFile(Form("rootfiles/Prompt2024/v79_2024/jmenano_data_cmb_%s_JME_v79_2024.root",cr),"READ"); // July 3 hybrid
+    fd = new TFile(Form("rootfiles/Prompt2024/v83_2024/jmenano_data_cmb_%s_JME_v83_2024.root",cr),"READ"); // Aug 2 hybrid
+    //if (run=="2024B")    //fd = new TFile(Form(" rootfiles/Prompt2024/v39_2024_Prompt_etabin_SFD_Golden/jmenano_data_cmb_%s_v39_2024_Prompt_etabin_SFD_Golden.root",cr),"READ");
+    //fdm = new TFile("rootfiles/Prompt2024/v39_2024_Prompt_etabin_DCSOnly/jmenano_mc_out_Summer23MGBPix_v39_2023_etabin_SFv2.root","READ"); // Summer23BPix
+    fdm = new TFile("rootfiles/Prompt2024/v83_2024/jmenano_mc_out_Winter24MG_v83_2024.root","READ"); // Winter24
   }
-  else if (TString(cr).Contains("2023")) {
+  else if (tr.Contains("2023")) {
     fd = new TFile(Form("rootfiles/Summer23_L2L3ResJERSF/v39_2023_etabin_SFv2/jmenano_data_cmb_%s_JME_v39_2023_etabin_SFv2.root",cr),"READ");
     fdm = new TFile(Form("rootfiles/Summer23_L2L3ResJERSF/v39_2023_etabin_SFv2/jmenano_mc_out_Summer23MG%s_v39_2023_etabin_SFv2.root",run=="2023D" ? "BPix" : "_Cv123"),"READ");
   }
-  else if (TString(cr).Contains("2022")) {
+  else if (tr.Contains("2022")) {
     //fd = new TFile(Form("rootfiles/Summer22_L2L3ResOnly/v39_2022_JV_noSJets_noRwPU/jmenano_data_cmb_%s_JME_v39_2022_JV_noSJets_noRwPU.root",cr),"READ");
     //fdm = new TFile(Form("rootfiles/Summer22_L2L3ResOnly/v39_2022_JV_noSJets_noRwPU/jmenano_mc_out_%sMG_full_v39_2022_JV_noSJets_noRwPU.root",cm),"READ");
     fd = new TFile(Form("rootfiles/Summer22_L2L3ResJERSF/v39_2022_etabin_SFv/jmenano_data_cmb_%s_JME_v39_2022_etabin_SFv.root",cr),"READ");
@@ -811,15 +917,18 @@ void L2Res() {
     fref->SetParLimits(2,0.0,0.5); // 2024BCD, 12.3/fb special
   }
   if (eta>2.5 && eta<2.650 && posOffEC25 && !doClosure) {
-    fref->SetParLimits(2,0.0,0.5); // 2024BCD, 12.3/fb special
-  }
-  if (eta<2.5 && maxOffTrk!=0 && !doClosure) {
-    fref->SetParLimits(2,-maxOffTrk,+maxOffTrk);
+    //fref->SetParLimits(2,0.0,0.5); // 2024BCD, 12.3/fb special, V4M
+    fref->SetParLimits(2,0.0,1.5); // V5M
   }
   if (eta>2.043 && eta<2.5 && posOffEC20 && !doClosure) {
     fref->SetParLimits(2,0.0,0.5); // 2024BCD, 12.3/fb special
   }
-
+  if (eta>1.566 && eta<2.5 && maxOffTrkEC1!=0 && !doClosure) {
+    fref->SetParLimits(2,-maxOffTrkEC1,+maxOffTrkEC1);
+  }
+  if (eta<1.566 && maxOffTrkBB!=0 && !doClosure) {
+    fref->SetParLimits(2,-maxOffTrkBB,+maxOffTrkBB);
+  }
   //if (eta>3.139 && negLogHF) {
   if (eta>4.538 && eta<4.716 && negLogHF && !doClosure) {
     fref->SetParLimits(1,-1,-0.1); // 2024BC,3/fb special
@@ -879,9 +988,11 @@ void L2Res() {
   //if      (eta<1.653) h6->GetYaxis()->SetRangeUser(0.8+eps,1.2-eps);
   //else if (eta<2.964) h6->GetYaxis()->SetRangeUser(0.7+eps,1.3-eps);
   //else if (eta<5.191) h6->GetYaxis()->SetRangeUser(0.3+eps,1.3-eps);
-  if      (eta<1.466) h6->GetYaxis()->SetRangeUser(0.8+eps,1.2-eps);
+  //if      (eta<1.466) h6->GetYaxis()->SetRangeUser(0.8+eps,1.2-eps);
+  if      (eta<1.566) h6->GetYaxis()->SetRangeUser(0.8+eps,1.2-eps);
   else if (eta<2.650) h6->GetYaxis()->SetRangeUser(0.65+eps,1.3-eps);
-  else if (eta<4.013) h6->GetYaxis()->SetRangeUser(0.55+eps,1.35-eps);
+  //else if (eta<4.013) h6->GetYaxis()->SetRangeUser(0.55+eps,1.35-eps);
+  else if (eta<4.191) h6->GetYaxis()->SetRangeUser(0.55+eps,1.35-eps);
   else if (eta<5.191) h6->GetYaxis()->SetRangeUser(0.30+eps,1.35-eps);
   h6->Draw();
   gPad->SetLogx();
@@ -1054,7 +1165,8 @@ void L2Res() {
   //ofstream ftxt(Form("textfiles/Prompt24/Prompt24_Run%s_V1M_DATA_L2Residual_AK4PFPuppi.txt",cr));
   //ofstream ftxt(Form("textfiles/Prompt24/Prompt24_Run%s_V2M_DATA_L2Residual_AK4PFPuppi.txt",cr));
   //ofstream ftxt(Form("textfiles/Prompt24/Prompt24_Run%s_V3M_DATA_L2Residual_AK4PFPuppi.txt",cr));
-  ofstream ftxt(Form("textfiles/Prompt24/Prompt24_Run%s_V4M_DATA_L2Residual_AK4PFPuppi.txt",cr));
+  //ofstream ftxt(Form("textfiles/Prompt24/Prompt24_Run%s_V4M_DATA_L2Residual_AK4PFPuppi.txt",cr));
+  ofstream ftxt(Form("textfiles/Prompt24/Prompt24_Run%s_V5M_DATA_L2Residual_AK4PFPuppi.txt",cr));
   ftxt << Form("{ 1 JetEta 1 JetPt 1./(%s) Correction L2Relative}",
 	       vf1[0]->GetExpFormula().Data()) << endl;
   for (int ieta = p2d->GetNbinsX(); ieta != 0; --ieta) {
@@ -1225,3 +1337,41 @@ void L2Res() {
     fout->Close();
   }
 } // L2Res
+
+
+TProfile2D *TH2DtoTProfile2D(TH2D *h2, string name) {
+  
+  if(name=="") name = Form("p2_%s",h2->GetName());
+  
+  // profile keeps track of sumw, sumwz, sumwz2, sumw2
+  // sumw=fArray => p2->SetBinEntries(w) 
+  // sumwz=fBinEntries.fArray => (*p2)[ibin]
+  // sumwz2 = fBinSumw2.fArray, sumw2 = fSum2.fArray
+  // GetBinContent = sumwz/sumw
+
+  TProfile2D *p2(0); assert(false);
+  
+  // https://root-forum.cern.ch/t/copy-entries-of-tprofile/11828
+  for (int binx = 1; binx != p2->GetNbinsX()+1; ++binx) {
+    for (int biny = 1; biny != p2->GetNbinsY()+1; ++biny) {
+      int ibin = p2->GetBin(binx, biny);
+
+      double sumw = 1;
+      double sumw2 = 1;
+      double y = h2->GetBinContent(ibin); // E[y]
+      double ey = h2->GetBinError(ibin); // sqrt(Var[y])/Neff
+      // ey = sqrt(E[y^2]-E[y]^2)/sumw => E[y^2]=(sumw*ey)^2+(E[y])^2
+      double y2 = sumw*sumw*ey*ey + y*y;
+      
+      p2->SetEntries(sumw);
+      (*p2)[ibin] = y*sumw; // copy bin y values
+      (*p2->GetSumw2())[ibin] = sumw*y2; // copy y*y
+      p2->SetBinEntries(ibin, sumw);  // entries
+      // copy (if needed) bin sum of weight square
+      //if ( p2->GetBinSumw2()->fN > ibin ) { 
+      (*p2->GetBinSumw2())[ibin] = sumw2;
+    } // for biny
+  } // for biny
+
+  return p2;
+} // TH2DtoTProfile2D
