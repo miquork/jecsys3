@@ -151,6 +151,13 @@ void globalFitEtaBin(double etamin, double etamax, string run, string version) {
       whitelistshape.insert(_gf_shapes_whitelist[i]);
   }
 
+  // Blacklist some shapes from various eras
+  // (make configurable in globalFitSettings later)
+  if (run=="Run24F") {
+    if (whitelistshape.find("ecalcc")!=whitelistshape.end())
+      whitelistshape.erase(whitelistshape.find("ecalcc"));
+  }
+  
   // Create listing of all active datasets
   set<string> datasets;
   for (unsigned int i = 0; i != _gf_datasets.size(); ++i) {
@@ -221,6 +228,7 @@ void globalFitEtaBin(double etamin, double etamax, string run, string version) {
 
     // Jet+Z special
     if (TString(name).Contains("jetz")) { // default: 0.985, 16/fb
+      if (scaleJZperEra && run=="Run24F")    scaleJZ = 1.0050;//0.985; // 30/fb 
       if (scaleJZperEra && run=="Run24E")    scaleJZ = 0.995; // 11/fb 
       if (scaleJZperEra && run=="Run24BCDE") scaleJZ = 0.989; // 16+11/fb
       
@@ -228,6 +236,7 @@ void globalFitEtaBin(double etamin, double etamax, string run, string version) {
     }
     // Z+jet ave special
     if (TString(name).Contains("zjav")) { // default: 0.9925, half of JZ
+      if (scaleJZAperEra && run=="Run24F")    scaleJZA = 1.0025;//0.9925;
       if (scaleJZAperEra && run=="Run24E")    scaleJZA = 0.9975;
       if (scaleJZAperEra && run=="Run24BCDE") scaleJZA = 0.9945;
       
@@ -376,7 +385,11 @@ void globalFitEtaBin(double etamin, double etamax, string run, string version) {
   fitter->ExecuteCommand("SET PRINT", &printlevel, 1);
   
   // Run fitter (multiple times if needed)
-  const int nfit = 2;//1;//5;//2;//1;
+  //const int nfit = 2;//1;//5;//2;//1;
+  int nfit = 1;
+  if (run=="Run24F") nfit = 1;
+  if (run=="Run24E") nfit = 1;
+  if (run=="Run24BCD") nfit = 1;
   cnt = 0;
   for (int i = 0; i != nfit; ++i)
     fitter->ExecuteCommand("MINI", 0, 0);
@@ -574,6 +587,9 @@ void globalFitDraw(string run, string version) {
     #include "globalFitStyles.h"
     curdir->cd();
 
+    // Update date on directory when doing new plots
+    gROOT->ProcessLine(".! touch pdf/globalFit");
+    
     // Create canvas
     lumi_136TeV = Form("globalFit.C(\"%s\")",run.c_str());
     if (run=="Run3") lumi_136TeV = "Run3, 64 fb^{-1}";
@@ -935,6 +951,7 @@ void globalFitDraw(string run, string version) {
     if (run=="Run23C4")  nhf_off = 2.0;//2.0;//7.0;//4.0;
     if (run=="Run23D")  nhf_off = 3.5;//2.0;//9.0;//4.5;
     if (run=="Run24B" || run=="Run24C" || run=="Run24D" || run=="Run24E" ||
+	run=="Run24F" || 
 	run=="Run24BC" || run=="Run24BCD" || run=="Run24BCDE" ||
 	run=="Run24CP" || run=="Run24CR" || run=="Run24CS")  nhf_off = 0.0;
     if (run=="Run3")  {

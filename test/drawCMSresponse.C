@@ -79,7 +79,8 @@ void drawCMSresponse(string era, string id="", bool isl2 = false) {
     //const char *sd = "textFiles/Run3_22Sep2023_v3";
     //const char *sd = "textFiles/Summer23_noL2L3Res";
     //const char *sd = "textFiles/Summer23_L2ResOnly";
-    const char *sd = "textFiles/Prompt24";
+    //const char *sd = "textFiles/Prompt24";
+    const char *sd = "textFiles/Prompt24_V5M";
     //const char *sd = "textFiles/HFscale";
     //const char *st = "2017BCDEF_DATA";
     const char *st = era.c_str();
@@ -158,7 +159,8 @@ void drawCMSresponse(string era, string id="", bool isl2 = false) {
   //TH1D *h = new TH1D("h",";Jet |#eta|;Simulated jet response",40,0,4.8);
   //TH1D *h = new TH1D("h",";Jet |#eta|;Simulated jet response+offset",40,0,4.8);
   //TH1D *h = new TH1D("h",";Jet |#eta|;Data/simulated jet response",40,0,4.8);
-  TH1D *h = new TH1D("h",";Jet |#eta|;Data jet response",40,0,4.8);
+  //TH1D *h = new TH1D("h",";Jet |#eta|;Data jet response",40,0,4.8);
+  TH1D *h = new TH1D("h",";Jet |#eta|;Data jet response",52,0,5.191);
   //TH1D *h = new TH1D("h",";Jet |#eta|;Data L2Res",40,0,4.8);
   //TH1D *h = new TH1D("h",";Jet |#eta|;Data response+offset",40,0,4.8);
   //h->SetMaximum(1.25);

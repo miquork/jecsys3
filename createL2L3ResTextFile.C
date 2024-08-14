@@ -36,7 +36,8 @@ void createL2L3ResTextFile() {
 		    //0.88+1e-4,1.05-1e-4,"p_{T} (GeV)",ptmin,ptmax);
   //lumi_136TeV = "Run3, 63 fb^{-1}"; // Not including 23B
   //lumi_136TeV = "2024, 12.3 fb^{-1}"; // Not including 23B
-  lumi_136TeV = "2024, 27.0 fb^{-1}"; // June 6 hybrid
+  //lumi_136TeV = "2024, 27.0 fb^{-1}"; // June 6 hybrid
+  lumi_136TeV = "2024, 46.0 fb^{-1}"; // Aug 2 hybrid
   TCanvas *c1 = tdrCanvas("c1",h,8,11,kSquare);
   c1->SetLeftMargin(0.17);
   c1->SetRightMargin(0.03);
@@ -80,14 +81,17 @@ void createL2L3ResTextFile() {
   //createL2L3ResTextFiles("Run24BC-Prompt",true);
   createL2L3ResTextFiles("Run24BCD-Prompt",true);
   createL2L3ResTextFiles("Run24E-Prompt",true);
-  createL2L3ResTextFiles("Run24CR-ECALRATIO",true);
-  createL2L3ResTextFiles("Run24CS-HCALDI",true);
+  //createL2L3ResTextFiles("Run24CR-ECALRATIO",true);
+  //createL2L3ResTextFiles("Run24CS-HCALDI",true);
+  createL2L3ResTextFiles("Run24F-Prompt",true);
+  gPad->RedrawAxis();
   c1->Update();
   //c1->SaveAs("pdf/createL2L3ResTextFile_Prompt24.pdf");
   //c1->SaveAs("pdf/createL2L3ResTextFile_Prompt24_V1M_Summer23_V2.pdf");
   //c1->SaveAs("pdf/createL2L3ResTextFile_Prompt24_V2M.pdf");
   //c1->SaveAs("pdf/createL2L3ResTextFile_Prompt24_V3M.pdf");
-  c1->SaveAs("pdf/createL2L3ResTextFile_Prompt24_V4M.pdf");
+  //c1->SaveAs("pdf/createL2L3ResTextFile_Prompt24_V4M.pdf");
+  c1->SaveAs("pdf/createL2L3ResTextFile_Prompt24_V5M.pdf");
   
   /*
   // Produce Run2 year-averages for reprocess.C reference (jec, jecold)
@@ -165,10 +169,15 @@ void createL2L3ResTextFiles(string set, bool leg2) {
   }
   else if (set=="Run24BCD-Prompt") {
     //f = new TFile("rootfiles/jecdataRun24BCD.root","READ"); isRun3=true;
-    f = new TFile("rootfiles/jecdataRun24BCDE.root","READ"); isRun3=true;
+    //f = new TFile("rootfiles/jecdataRun24BCDE.root","READ"); isRun3=true;
+    f = new TFile("rootfiles/jecdataRun24BCD.root","READ"); isRun3=true;
   }
   else if (set=="Run24E-Prompt") {
-    f = new TFile("rootfiles/jecdataRun24BCDE.root","READ"); isRun3=true;
+    //f = new TFile("rootfiles/jecdataRun24BCDE.root","READ"); isRun3=true;
+    f = new TFile("rootfiles/jecdataRun24E.root","READ"); isRun3=true;
+  }
+  else if (set=="Run24F-Prompt") {
+    f = new TFile("rootfiles/jecdataRun24F.root","READ"); isRun3=true;
   }
   else if (set=="Run24CR-ECALRATIO") {
     f = new TFile("rootfiles/jecdataRun24CR.root","READ"); isRun3=true;
@@ -199,6 +208,13 @@ void createL2L3ResTextFiles(string set, bool leg2) {
     f1->SetParameters(0.99, 1.5,0.01, 0.01,1000.,1.3, 0.001, 0.);
   if (!isRun3)
     f1->FixParameter(7, 0.);
+
+  // Avoid divergence at pT=15 GeV
+  if (set=="Run24BCD-Prompt" || set=="Run24E-Prompt") {
+    //f1->SetParameters(0.918151, 0.5, 0.801532, -0.131235, 1680.79, 2.27111, -0.453995, 2.99145e-05); // chi2/NDF=20.9/56
+    f1->SetParameters(1.02315, -0.0420837, 0.41949, 0.0577525, 11.1207, 0.0618524, -0.148952, -6.17298e-07); // Run24F-Prompt chi2/NDF=0.0/56
+    f1->SetParLimits(1,0.0,+0.5);
+  }
   
   // To avoid division by zero errors
   f1->SetParLimits(4,10.,6500.);
@@ -222,6 +238,7 @@ void createL2L3ResTextFiles(string set, bool leg2) {
   color["Run24BC-Prompt"] = kGreen+2;
   color["Run24BCD-Prompt"] = kRed+2;
   color["Run24E-Prompt"] = kRed+1;
+  color["Run24F-Prompt"] = kGreen+2;
   color["Run24CR-ECALRATIO"] = kGreen+2;
   color["Run24CS-HCALDI"] = kBlue+2;
   color["Run3-Combo"] = kYellow+2;
@@ -249,11 +266,15 @@ void createL2L3ResTextFiles(string set, bool leg2) {
   else
     _leg->AddEntry(h,set.c_str(),"FL");
 
+  cout << "f1->SetParameters(";
   const int np = 8;//7;
   double p[np];
   for (int i = 0; i != np; ++i) {
     p[i] = f1->GetParameter(i);
+    cout << (i==0 ? "" : ", ") << p[i];
   } // for i
+  cout << Form("); // %s chi2/NDF=%1.1f/%d", set.c_str(),
+	       f1->GetChisquare(), f1->GetNDF()) << endl << flush;
 
 
   /////////////////////////////////////////////////////////////
@@ -330,12 +351,18 @@ void createL2L3ResTextFiles(string set, bool leg2) {
   if (set=="Run24BCD-Prompt") {
     //sin = "textFiles/Prompt24/Prompt24_Run2024BCD_V3M_DATA_L2Residual_AK4PFPuppi.txt"; isNewL2Res = true;
     //sout = "textFiles/Prompt24/Prompt24_Run2024BCD_V3M_DATA_L2L3Residual_AK4PFPuppi.txt";
-    sin = "textFiles/Prompt24/Prompt24_Run2024BCD_V4M_DATA_L2Residual_AK4PFPuppi.txt"; isNewL2Res = true;
-    sout = "textFiles/Prompt24/Prompt24_Run2024BCD_V4M_DATA_L2L3Residual_AK4PFPuppi.txt";
+    //sin = "textFiles/Prompt24/Prompt24_Run2024BCD_V4M_DATA_L2Residual_AK4PFPuppi.txt"; isNewL2Res = true;
+    sin = "textFiles/Prompt24_V5M/Prompt24_Run2024BCD_V5M_DATA_L2Residual_AK4PFPuppi.txt"; isNewL2Res = true;
+    sout = "textFiles/Prompt24/Prompt24_Run2024BCD_V5M_DATA_L2L3Residual_AK4PFPuppi.txt";
   }
   if (set=="Run24E-Prompt") {
-    sin = "textFiles/Prompt24/Prompt24_Run2024E_V4M_DATA_L2Residual_AK4PFPuppi.txt"; isNewL2Res = true;
-    sout = "textFiles/Prompt24/Prompt24_Run2024E_V4M_DATA_L2L3Residual_AK4PFPuppi.txt";
+    //sin = "textFiles/Prompt24/Prompt24_Run2024E_V4M_DATA_L2Residual_AK4PFPuppi.txt"; isNewL2Res = true;
+    sin = "textFiles/Prompt24_V5M/Prompt24_Run2024E_V5M_DATA_L2Residual_AK4PFPuppi.txt"; isNewL2Res = true;
+    sout = "textFiles/Prompt24/Prompt24_Run2024E_V5M_DATA_L2L3Residual_AK4PFPuppi.txt";
+  }
+  if (set=="Run24F-Prompt") {
+    sin = "textFiles/Prompt24_V5M/Prompt24_Run2024F_V5M_DATA_L2Residual_AK4PFPuppi.txt"; isNewL2Res = true;
+    sout = "textFiles/Prompt24/Prompt24_Run2024F_V5M_DATA_L2L3Residual_AK4PFPuppi.txt";
   }
   if (set=="Run24CR-ECALRATIO") {
     //sin = "textFiles/Prompt24/Prompt24_Run2024CR_V3M_DATA_L2Residual_AK4PFPuppi.txt"; isNewL2Res = true;

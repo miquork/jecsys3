@@ -265,7 +265,7 @@ void softrad3(double etamin=0.0, double etamax=1.3, string epoch="") {
 
 
 	  TH1D *hdm    = (TH1D*)h->Clone("hdm");   hdm->Reset();
-	  TH1D *hfsr   = (TH1D*)h->Clone("fsr");   hfsr->Reset();
+	  TH1D *hfsr   = (TH1D*)h->Clone("hfsr");   hfsr->Reset();
 	  TH1D *hfsr0s = (TH1D*)h->Clone("fsr0s"); hfsr0s->Reset();
 	  TH1D *hfsr1s = (TH1D*)h->Clone("fsr1s"); hfsr1s->Reset();
 	  TH1D *hfsrn1 = (TH1D*)h->Clone("fsrn1"); hfsrn1->Reset();

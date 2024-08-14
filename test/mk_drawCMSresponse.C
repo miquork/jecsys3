@@ -6,6 +6,8 @@
 
   gROOT->ProcessLine(".L test/drawCMSresponse.C+");
 
+  gROOT->ProcessLine(".! touch pdf/test");
+  
   //drawCMSresponse();
   /*
   drawCMSresponse("Summer22-22Sep2023_Run2022CD_V3","22CD-22Sep2023_V3",false);
@@ -57,6 +59,7 @@
   drawCMSresponse("Prompt24_Run2024CR_V3M","Prompt24CR_V3M",true);
   drawCMSresponse("Prompt24_Run2024CR_V3M","Prompt24CR_V3M",false);
   */
+  /*
   drawCMSresponse("Prompt24_Run2024BCD_V4M","Prompt24BCD_V4M",true);
   drawCMSresponse("Prompt24_Run2024BCD_V4M","Prompt24BCD_V4M",false);
   drawCMSresponse("Prompt24_Run2024E_V4M","Prompt24E_V4M",true);
@@ -65,4 +68,11 @@
   drawCMSresponse("Prompt24_Run2024CR_V4M","Prompt24CR_V4M",false);
   drawCMSresponse("Prompt24_Run2024CS_V4M","Prompt24CS_V4M",true);
   drawCMSresponse("Prompt24_Run2024CS_V4M","Prompt24CS_V4M",false);
+  */
+  drawCMSresponse("Prompt24_Run2024BCD_V5M","Prompt24BCD_V5M",true);
+  drawCMSresponse("Prompt24_Run2024BCD_V5M","Prompt24BCD_V5M",false);
+  drawCMSresponse("Prompt24_Run2024E_V5M","Prompt24E_V5M",true);
+  drawCMSresponse("Prompt24_Run2024E_V5M","Prompt24E_V5M",false);
+  drawCMSresponse("Prompt24_Run2024F_V5M","Prompt24F_V5M",true);
+  drawCMSresponse("Prompt24_Run2024F_V5M","Prompt24F_V5M",false);
 }
