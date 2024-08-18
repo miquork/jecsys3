@@ -14,6 +14,9 @@ bool plotEtaBins = true; // lots of plots
 bool skipZ = true;//false;
 bool skipG = false;
 
+// Patch [2.853,2.964] minimum statistical uncertainty (for trig bias?)
+double patchErr29 = 0.005; // added in quadrature to stat unc
+
 // Calculate JER with MPFX. If JER13 not given, calculate it
 TH1D *getJER(TProfile2D *p2s, TProfile2D *p2x, TH1D *hjer13,
 	     double etamin, double etamax, const char *name = 0) {
@@ -133,20 +136,28 @@ TF1 *fitJER(TH1D *hjer, double ptmin, double ptmax, double eta,
 
   TF1 *f1 = new TF1(name,"sqrt([0]*fabs([0])/(x*x)+[1]*[1]/x+[2]*[2])",
 		    ptmin,ptmax);
-  f1->SetParameters(0,1,0.05);
+  f1->SetParameters(10,1,0.05);
   // Fix sensible range for each parameter
-  if (!f1ref) {
-    f1->SetParLimits(0,  -1,  10); // Noise
+  if (!f1ref) { // should be called for MC
+    f1->SetParLimits(0,  3.,  12.); // Noise (min was -1)
     f1->SetParLimits(1, 0.5, 1.5); // Stochastic
-    f1->SetParLimits(2,0.03,0.25); // Constant
+    f1->SetParLimits(2,0.03,0.07); // Constant
+    // Special treatment for EC2
+    if (eta>2.500 && eta<3.139) {
+      f1->SetParameters(10,1.5,0.10);
+      f1->SetParLimits(0, 3., 15); // Noise (min was -1)
+      f1->SetParLimits(1, 0, 2.0); // Stochastic
+      f1->SetParLimits(2, 0.03, 0.12); // Constant
+    }
+    // Special treatment for HF
     if (eta>3.139) f1->FixParameter(2,0.065);
+    if (eta>4.013) f1->SetParLimits(0, 9., 12.);
   }
-  if (f1ref) {
-    f1->SetParameters(f1ref->GetParameter(0), f1ref->GetParameter(1),
-		      f1ref->GetParameter(2));
+  if (f1ref) { // should be called for data
     double N = f1ref->GetParameter(0);
     double S = f1ref->GetParameter(1);
     double C = f1ref->GetParameter(2);
+    f1->SetParameters(N, 1.1*S, 1.1*C);
     //f1->SetParLimits(0, N-0.2*fabs(N), N+0.2*fabs(N));
     //f1->SetParLimits(0, N-0.05*max(fabs(N),1.), N+0.05*max(fabs(N),1.));
     f1->SetParLimits(0, N, N+0.05*max(fabs(N),1.));
@@ -154,8 +165,16 @@ TF1 *fitJER(TH1D *hjer, double ptmin, double ptmax, double eta,
     //f1->SetParLimits(2, C, 5.0*C);
     //f1->SetParLimits(0, N,  10); // Noise
     f1->SetParLimits(1, S, 1.5); // Stochastic
-    f1->SetParLimits(2, C,0.25); // Constant
-
+    f1->SetParLimits(2, C,0.12); // Constant
+    // Special treatment for EC2
+    if (eta>2.500 && eta<3.139) {
+      f1->SetParameters(N, S, min(2*C,0.24));
+      f1->SetParLimits(0, N, N+0.10*max(fabs(N),1.));
+      f1->SetParLimits(1, S, 2.5); // Stochastic (min 0.75?)
+      f1->SetParLimits(2, C, 0.24); // Constant
+    }
+    // Special treatment for HF
+    if (eta>3.489) f1->FixParameter(0, N);
   }
   if (f1ptr) (*f1ptr) = hjer->Fit(f1,"QRNS");
   else                  hjer->Fit(f1,"QRN");
@@ -228,7 +247,8 @@ void JERSF() {
   //string vrun[] = {"2024BCD","2024BR"};
   //string vrun[] = {"2024C","2024BR","2024CR","2023D"};
   //string vrun[] = {"2024CS","2024CR","2024CP","2023D","2023Cv123"};
-  string vrun[] = {"2024BCD","2024C","2024E","2024Ev2","2024CP","2024CS","2024CR","2023D","2023Cv123"};
+  //string vrun[] = {"2024BCD","2024C","2024E","2024Ev2","2024CP","2024CS","2024CR","2023D","2023Cv123"};
+  string vrun[] = {"2024EF","2024F","2024E","2024BCD"};
   //string vrun[] = {"2024C"};
   //string vrun[] = {"2024Ev2"};
   //string vrun[] = {"2024BCD"};
@@ -266,9 +286,10 @@ void JERSF() {
   //string vmc[] = {"Summer23MGBPix","Summer23MGBPix","Summer23MGBPix"};
   //string vmc[] = {"Summer23MGBPix"};
   //string vmc[] = {"Summer23MGBPix","Summer23MGBPix","Summer23MGBPix","Summer23MGBPix","Summer23MGBPix"};
-  string vmc[] = {"Summer23MGBPix","Summer23MGBPix","Summer23MGBPix",
-  		  "Summer23MGBPix","Summer23MGBPix","Summer23MGBPix",
-  		  "Summer23MGBPix","Summer23MGBPix","Summer23MGBPix"};
+  //string vmc[] = {"Summer23MGBPix","Summer23MGBPix","Summer23MGBPix",
+  //		  "Summer23MGBPix","Summer23MGBPix","Summer23MGBPix",
+  //		  "Summer23MGBPix","Summer23MGBPix","Summer23MGBPix"};
+  string vmc[] = {"Winter24","Winter24","Winter24","Winter24"};
   //string vmc[] = {"Summer23MGBPix","Summer23MGBPix","Summer23MGBPix","Summer23MGBPix"};
   const int nmc = sizeof(vmc)/sizeof(vmc[0]);
   assert(nmc==nrun);
@@ -368,6 +389,7 @@ void JERSF() {
     //fgm = new TFile(run=="2023D" ? "rootfiles/Prompt2024/GamHistosFill_mc_2023QCD-BPix_w12.root" : "rootfiles/Summer23_L2ResOnly/GamHistosFill_mc_2023P8_w6.root","READ"); // Summer23 (w3->w2)
   }
   */
+  /*
   else if (run=="2024Ev2") {
     //f = new TFile(Form("rootfiles/Prompt2024/v71_2024/jmenano_data_cmb_%s_JME_v71_2024.root","2024E_v2"),"READ");
     f = new TFile(Form("rootfiles/Prompt2024/v76_2024/jmenano_data_cmb_%s_JME_v76_2024.root","2024Ev2"),"READ");
@@ -386,6 +408,14 @@ void JERSF() {
     fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w27.root",cr),"READ");
     fgm = new TFile("rootfiles/Prompt2024/GamHistosFill_mc_2023P8-BPix_w16.root","READ");
   }
+  */
+  else if (run=="2024F" || run=="2024EF") {
+    f = new TFile(Form("rootfiles/Prompt2024/v86_2024/jmenano_data_cmb_%s_JME_v86_2024.root",cr),"READ");
+    fm = new TFile("rootfiles/Prompt2024/v83_2024/jmenano_mc_cmb_Winter24MG_v83_2024.root","READ"); // no JER SF?
+    fz = new TFile(Form("rootfiles/Prompt2024/jme_bplusZ_%s_Zmm_sync_v85.root",cr),"READ");
+    fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w33.root",cr),"READ");
+    fgm = new TFile("rootfiles/Prompt2024/GamHistosFill_mc_winter2024P8_w33.root","READ"); // Winter24 photon+jet only
+  }
   else if (TString(cr).Contains("2024")) {
     //f = new TFile(Form("rootfiles/Prompt2024/v39_2024_Prompt_etabin_DCSOnly/jmenano_data_cmb_%s_v39_2024_Prompt_etabin_DCSOnly.root",cr),"READ");
     //f = new TFile(Form("rootfiles/Prompt2024/v39_2024_Prompt_etabin_DCSOnly/jmenano_data_cmb_%s_JME_v39_2024_Prompt_etabin_DCSOnly.root",cr),"READ"); // no ZB
@@ -395,9 +425,12 @@ void JERSF() {
     //f = new TFile(Form("rootfiles/Prompt2024/v43_2024_Golden/jmenano_data_cmb_%s_JME_v43_2024_Golden.root",cr),"READ"); // 3/fb closure
     //f = new TFile(Form("rootfiles/Prompt2024/v50_1_2024_DCSOnly/jmenano_data_cmb_%s_JME_v50_1_2024_DCSOnly.root",cr),"READ"); // May 16 DCSOnly
     //f = new TFile(Form("rootfiles/Prompt2024/v50_2024/jmenano_data_cmb_%s_JME_v50_2024.root",cr),"READ"); // May 16 golden, 12.3/fb
-    f = new TFile(Form("rootfiles/Prompt2024/v67_2024/jmenano_data_cmb_%s_JME_v67_2024.root",cr),"READ");
+    //f = new TFile(Form("rootfiles/Prompt2024/v67_2024/jmenano_data_cmb_%s_JME_v67_2024.root",cr),"READ");
+    //f = new TFile(Form("rootfiles/Prompt2024/v83_2024/jmenano_data_cmb_%s_JME_v83_2024.root",cr),"READ");
+    f = new TFile(Form("rootfiles/Prompt2024/v83_2024/jmenano_data_cmb_%s_JME_v83_2024.root",cr),"READ");
     //fm = new TFile("rootfiles/Prompt2024/v39_2024_Prompt_etabin_DCSOnly/jmenano_mc_cmb_Summer23MGBPix_v39_2023_etabin_SFv2.root","READ"); // with JER SF?
-    fm = new TFile("rootfiles/Summer23_L2ResOnly/jmenano_mc_cmb_Summer23MGBPix_v39_noRwPU_noSmearJets_25Feb2024_L2Res_v1.root","READ"); // no JER SF
+    //fm = new TFile("rootfiles/Summer23_L2ResOnly/jmenano_mc_cmb_Summer23MGBPix_v39_noRwPU_noSmearJets_25Feb2024_L2Res_v1.root","READ"); // no JER SF
+    fm = new TFile("rootfiles/Prompt2024/v83_2024/jmenano_mc_cmb_Winter24MG_v83_2024.root","READ"); // no JER SF?
     //if (run=="2024BCD") {
     //fm = new TFile("rootfiles/Prompt2024//v51_2024_Golden/jmenano_mc_cmb_Winter24MCFlat_v51_2024_Golden.root","READ");
     //}
@@ -408,7 +441,8 @@ void JERSF() {
     //fz = new TFile("rootfiles/Prompt2024/jme_bplusZ_2024BC_Zmm_sync_v80DCSOnly.root","READ"); // 3/fb DCSOnly
     //fz = new TFile(Form("rootfiles/Prompt2024/jme_bplusZ_%s_Zmm_sync_v81.root",cr),"READ"); // May 16 golden, 12.3/fb
     //fz = new TFile(Form("rootfiles/Prompt2024/jme_bplusZ_%s_Zmm_sync_v82.root",cr),"READ");
-    fz = new TFile(Form("rootfiles/Prompt2024/jme_bplusZ_%s_Zmm_sync_v83.root",cr),"READ");
+    //fz = new TFile(Form("rootfiles/Prompt2024/jme_bplusZ_%s_Zmm_sync_v83.root",cr),"READ");
+    fz = new TFile(Form("rootfiles/Prompt2024/jme_bplusZ_%s_Zmm_sync_v85.root",cr),"READ");
     //fz = new TFile("rootfiles/Prompt2024/jme_bplusZ_2024BC_Zmm_sync_v80golden.root","READ"); // 3/fb closure
     //fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w12.root",cr),"READ"); // DCSOnly
     //fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w13.root",cr),"READ"); // DCSOnly
@@ -417,11 +451,13 @@ void JERSF() {
     //fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w17.root",cr),"READ");//string(cr)=="2024CD"? "2024C" : cr),"READ"); // DCSOnly
     //fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w21.root",cr),"READ");//string(cr)=="2024CD"? "2024C" : cr),"READ"); // DCSOnly
     //fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w22.root",cr),"READ"); // May 16 golden, 12.3/fb
-    fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w27.root",cr),"READ");
+    //fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w27.root",cr),"READ");
+    fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w33.root",cr),"READ");
     //fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w18.root",cr),"READ"); // 3/fb closure
     //fgm = new TFile("rootfiles/Prompt2024/GamHistosFill_mc_2023P8-BPix_w12.root","READ");
     //fgm = new TFile("rootfiles/Prompt2024/GamHistosFill_mc_2023QCD-BPix_w12.root","READ");
-    fgm = new TFile("rootfiles/Prompt2024/GamHistosFill_mc_2023P8-BPix_w16.root","READ");
+    //fgm = new TFile("rootfiles/Prompt2024/GamHistosFill_mc_2023P8-BPix_w16.root","READ");
+    fgm = new TFile("rootfiles/Prompt2024/GamHistosFill_mc_winter2024P8_w33.root","READ"); // Winter24 photon+jet only
   }
   else if (TString(cr).Contains("2023")) {
     f = new TFile(Form("rootfiles/Summer23_L2ResOnly/jmenano_data_cmb_%s_JME_v39_noRwPU_noSmearJets_25Feb2024_L2Res_v1.root",cr),"READ");
@@ -602,6 +638,16 @@ void JERSF() {
   TH1D *hsf = (TH1D*)hjer->Clone(Form("hsf_%d_%s",ieta,cr));
   hsf->Divide(hjerm);
 
+  // Inflate [2.853,2.964] minimum uncertainty to avoid bad chi2 (trig bias?)
+  if (patchErr29 && eta>2.853 && eta<2.964) {
+    for (int i = 1; i!= hjer->GetNbinsX()+1; ++i) {
+      double err = hjer->GetBinError(i);
+      if (err!=0) {
+	hjer->SetBinError(i, sqrt(pow(err,2)+pow(patchErr29,2)));
+      }
+    }
+  } // patchErr29
+   
   TH1D *hjerz(0), *hjerzm(0), *hsfz(0);
   if (!skipZ) {
     hjerz  = getJERZ(p2zs,p2zx,etamin,etamax,Form("hjerz_%d_%s",ieta,cr));
@@ -618,13 +664,19 @@ void JERSF() {
     hsfg->Divide(hjergm);
   }
   
-  double ptmin = 50;
+  //double ptmin = 50;
+  double ptmin = 30;
   //double ptmax = 1500./cosh(eta1);
-  double ptmax = min(1500.,4890./cosh(eta1));
+  double ptmax = min(2000.,5500./cosh(eta1));
+  if (run=="2024BCD") ptmax = min(1500.,4890./cosh(eta1));
   // Clean up some high chi2 bins
-  if (eta>2.964 && eta<3.139) ptmax = 302;
-  if (eta>3.139 && eta<3.314) ptmax = 236;
-
+  //if (eta>2.964 && eta<3.139) ptmax = 302;
+  //if (eta>3.139 && eta<3.314) ptmax = 236;
+  // Safeguard against bad trigger in EC2
+  if (eta>2.500 && eta<2.964) ptmin = 50;
+  // Get one more bin for pT dependence
+  if (eta>4.889 && run=="2024F") { ptmin = 60; ptmax = 114.; }
+  
   // Skip before empty bins give invalid TFitResultPtr
   //if (hjer->Integral()==0) continue;
   
@@ -649,7 +701,9 @@ void JERSF() {
   gPad->SetLogx();
 
   tex->DrawLatex(0.35,0.85,Form("[%1.3f,%1.3f]",eta1,eta2));
-
+  tex->DrawLatex(0.35,0.80,Form("#chi^{2}/ndf=%1.1f/%d",
+				f1->GetChisquare(),f1->GetNDF()));
+  
   if (!skipZ) {
     tdrDraw(hjerzm,"HISTE",kNone,kRed,kSolid,-1,kNone);
     tdrDraw(hjerz,"Pz",kOpenCircle,kRed);
@@ -705,9 +759,12 @@ void JERSF() {
   cx->cd(ieta);
   TH1D *h6 = tdrHist(Form("h6_%d_%s",ieta,cr),"JER SF",0.5,2.5);
   double ptmaxe = 13600.*0.5/cosh(eta1);
-  if      (eta<1.653) h6->GetYaxis()->SetRangeUser(0.8,1.6);
-  else if (eta<2.964) h6->GetYaxis()->SetRangeUser(0.5,3.0);
-  else if (eta<5.191) h6->GetYaxis()->SetRangeUser(0.5,2.5);
+  //if      (eta<1.653) h6->GetYaxis()->SetRangeUser(0.8,1.6);
+  if      (eta<1.566) h6->GetYaxis()->SetRangeUser(0.8,1.6);
+  //else if (eta<2.964) h6->GetYaxis()->SetRangeUser(0.5,3.0);
+  //else if (eta<2.964) h6->GetYaxis()->SetRangeUser(0.5,3.0);
+  //else if (eta<5.191) h6->GetYaxis()->SetRangeUser(0.5,2.5);
+  else if (eta<5.191) h6->GetYaxis()->SetRangeUser(0.5,3.0);
   h6->Draw();
   gPad->SetLogx();
 
@@ -724,6 +781,8 @@ void JERSF() {
   
   //if (ieta==1 || ieta==nxy) leg1->Draw("SAME");
   tex->DrawLatex(0.50,0.85,Form("[%1.3f,%1.3f]",eta1,eta2));
+  tex->DrawLatex(0.35,0.80,Form("#chi^{2}/ndf=%1.1f/%d",
+				f1->GetChisquare(),f1->GetNDF()));
   
   // Store results with uncertainty to output histogram
   for (int ipt = 1; ipt != h2jersf->GetNbinsY()+1; ++ipt) {
@@ -848,7 +907,8 @@ void JERSF() {
   //ofstream txt(Form("textFiles/Prompt24/Prompt24_%s_JRV1M_MC_SF_AK4PFPuppi.txt",cr));
   //ofstream txt(Form("textFiles/Prompt24/Prompt24_%s_JRV2M_MC_SF_AK4PFPuppi.txt",cr));
   //ofstream txt(Form("textFiles/Prompt24/Prompt24_%s_JRV3M_MC_SF_AK4PFPuppi.txt",cr));
-  ofstream txt(Form("textFiles/Prompt24/Prompt24_%s_JRV4M_MC_SF_AK4PFPuppi.txt",cr));
+  //ofstream txt(Form("textFiles/Prompt24/Prompt24_%s_JRV4M_MC_SF_AK4PFPuppi.txt",cr));
+  ofstream txt(Form("textFiles/Prompt24/Prompt24_%s_JRV5M_MC_SF_AK4PFPuppi.txt",cr));
   txt << "{1 JetEta 1 JetPt "
       << "sqrt([0]*fabs([0])/(x*x)+[1]*[1]/x+[2]*[2])/"
       << "sqrt([3]*fabs([3])/(x*x)+[4]*[4]/x+[5]*[5])"
