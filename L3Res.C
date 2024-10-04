@@ -173,10 +173,12 @@ void L3Res() {
   map<string, string> mlum;
   mlum["2024BCD"] = "12.3 fb^{-1}";
   mlum["2024E"] = "X fb^{-1}";
+  mlum["2024F"] = "X fb^{-1}";
   
-  string vrun[] = {"2024BCD","2024E"};
+  string vrun[] = {"2024BCD","2024E","2024F"};
   const int nrun = sizeof(vrun)/sizeof(vrun[0]);
-  string vmc[] = {"Summer23BPix","Summer23BPix"};
+  //string vmc[] = {"Summer23BPix","Summer23BPix"};
+  string vmc[] = {"Winter24","Winter24"};
   const int nmc = sizeof(vmc)/sizeof(vmc[0]);
   assert(nmc==nrun);
 

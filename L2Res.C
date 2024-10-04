@@ -241,7 +241,8 @@ TH1D *drawCleaned(TH1D *h, double eta, string data, string draw,
       //if (fabs(eta)>2.322 && eta<2.964 && ptmin<60) keep = false;
       if (eta>2.5 && eta<2.964 && ptmin<60) keep = false; // V5M
       if (eta>3.139 && eta<4.013 && ptmin<60 && 
-	  (_run=="2024E" || _run=="2024F" || _run=="2024EF")) keep = false;
+	  (_run=="2024E" || _run=="2024F" || _run=="2024EF" ||
+	   _run=="2024G")) keep = false;
       // Additional veto for 2024BC 3.3/fb golden closure (errors bad)
       if (doClosure && ptmin>500) keep = false;
     }
@@ -371,6 +372,7 @@ void L2Res() {
   mlum["2024E"] = "11.3 fb^{-1}"; // 9.3->11.0->11.3 (full now)
   mlum["2024F"] = "19.4 fb^{-1}"; // partial 19.4
   mlum["2024EF"] = "30.7 fb^{-1}"; // partial 30.7
+  mlum["2024G"] = "X.X fb^{-1}"; // partial
   
   //string vrun[] = {"2023Cv123","2023Cv4","2023D"};
   //string vrun[] = {"2022CD","2022E","2022F","2022G"};
@@ -387,7 +389,7 @@ void L2Res() {
      //"2023Cv123_19Dec2023","2023Cv4_19Dec2023","2023D_19Dec2023"};
       //"2023D_19Dec2023","2023D"};
       //"2024F","2024E","2024D","2024C"};
-      "2024EF","2024F","2024E","2024BCD"};
+      "2024G","2024F","2024E","2024BCD"};
   const int nrun = sizeof(vrun)/sizeof(vrun[0]);
   //string vmc[] = {"Summer23","Summer23","Summer23BPIX"};
   //string vmc[] = {"Summer22","Summer22EE","Summer22EE","Summer22EE"};
@@ -488,7 +490,8 @@ void L2Res() {
     //fz = new TFile(Form("rootfiles/Prompt2024/jme_bplusZ_%s_Zmm_sync_v82.root",cr),"READ"); // May 27 golden + DCSOnly, X/fb
     //fz = new TFile(Form("rootfiles/Prompt2024/jme_bplusZ_%s_Zmm_sync_v83.root",cr),"READ"); // June 5 golden + DCSOnly, 15.6/fb
     //fz = new TFile(Form("rootfiles/Prompt2024/jme_bplusZ_%s_Zmm_sync_v84.root",cr),"READ"); // June 19 golden
-    fz = new TFile(Form("rootfiles/Prompt2024/jme_bplusZ_%s_Zmm_sync_v85.root",cr),"READ"); // Aug 2 hybrid
+    //fz = new TFile(Form("rootfiles/Prompt2024/jme_bplusZ_%s_Zmm_sync_v85.root",cr),"READ"); // Aug 2 hybrid
+    fz = new TFile(Form("rootfiles/Prompt2024/jme_bplusZ_%s_Zmm_sync_v86.root",cr),"READ"); // Aug 8 hybrid, V5M JEC
   }
   else if (tr.Contains("2023")) {
     //fz = new TFile(Form("rootfiles/Summer23_L2ResOnly/jme_bplusZ_%s_Zmm_sync_v70.root",cr),"READ"); // Summer23 L2Res_V1
@@ -544,12 +547,14 @@ void L2Res() {
     //fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w29.root",cr),"READ"); // June 5 hybrid, 15.6/fb
     //fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w30.root",cr),"READ"); // June 19 hybrid
     //fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w32.root",cr),"READ"); // Aug 2 hybrid
-    fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w33.root",cr),"READ"); // Aug 2 hybrid
+    //fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w33.root",cr),"READ"); // Aug 2 hybrid
+    fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w35.root",cr),"READ"); // Aug 8 hybrid, V5M JEC
     //fgm = new TFile("rootfiles/Prompt2024/GamHistosFill_mc_2023P8-BPix_w12.root","READ");
     //fgm = new TFile("rootfiles/Prompt2024/GamHistosFill_mc_2023P8-BPix_w16.root","READ");
     //fgm = new TFile("rootfiles/Prompt2024/GamHistosFill_mc_2023P8-BPix_w16.root","READ"); // Summer23BPix
     //fgm = new TFile("rootfiles/Prompt2024/GamHistosFill_mc_winter2024P8_w32.root","READ"); // Winter24 photon+jet only
-    fgm = new TFile("rootfiles/Prompt2024/GamHistosFill_mc_winter2024P8_w33.root","READ"); // Winter24 photon+jet only
+    //fgm = new TFile("rootfiles/Prompt2024/GamHistosFill_mc_winter2024P8_w33.root","READ"); // Winter24 photon+jet only
+    fgm = new TFile("rootfiles/Prompt2024/GamHistosFill_mc_winter2024P8_w35.root","READ"); // Winter24 photon+jet only
   }
   else if (tr.Contains("2023")) {
     fg = new TFile(Form("rootfiles/Summer23_L2L3Res/GamHistosFill_data_%s_w8.root",cr),"READ");
@@ -589,10 +594,10 @@ void L2Res() {
     //fdm = new TFile("rootfiles/Summer23_L2ResOnly/jmenano_mc_cmb_Summer23MGBPix_v39_noRwPU_noSmearJets_25Feb2024_L2Res_v1.root","READ"); // no JER SF
     fdm = new TFile("rootfiles/Prompt2024/v39_2024_Prompt_etabin_DCSOnly/jmenano_mc_out_Summer23MGBPix_v39_2023_etabin_SFv2.root","READ");
   }
-  else if (run=="2024F" || run=="2024EF") {
-    fd = new TFile(Form("rootfiles/Prompt2024/v86_2024/jmenano_data_cmb_%s_JME_v86_2024.root",cr),"READ"); // Aug 2 hybrid, CS_V4M JEC
-    fdm = new TFile("rootfiles/Prompt2024/v83_2024/jmenano_mc_out_Winter24MG_v83_2024.root","READ"); // Winter24
-  }
+  //else if (run=="2024F" || run=="2024EF" || run=="2024G") {
+    //fd = new TFile(Form("rootfiles/Prompt2024/v86_2024/jmenano_data_cmb_%s_JME_v86_2024.root",cr),"READ"); // Aug 2 hybrid, CS_V4M JEC
+    //fdm = new TFile("rootfiles/Prompt2024/v83_2024/jmenano_mc_out_Winter24MG_v83_2024.root","READ"); // Winter24
+  //}
   else if (tr.Contains("2024")) {
     //fd = new TFile(Form("rootfiles/Prompt2024/v39_2024_Prompt_etabin_DCSOnly/jmenano_data_cmb_%s_v39_2024_Prompt_etabin_DCSOnly.root",cr),"READ");
     //fd = new TFile(Form("rootfiles/Prompt2024/jmenano_data_cmb_%s_JME_v39_2024_Prompt_Golden_29April.root",cr),"READ"); // golden 0.74/fb
@@ -602,10 +607,12 @@ void L2Res() {
     //fd = new TFile(Form("rootfiles/Prompt2024/v67_2024/jmenano_data_cmb_%s_JME_v67_2024.root",cr),"READ"); // May 27 golden, X/fb
     //fd = new TFile(Form("rootfiles/Prompt2024/v76_2024/jmenano_data_cmb_%s_JME_v76_2024.root",cr),"READ"); // June 5 hybrid, 15.6/fb
     //fd = new TFile(Form("rootfiles/Prompt2024/v79_2024/jmenano_data_cmb_%s_JME_v79_2024.root",cr),"READ"); // July 3 hybrid
-    fd = new TFile(Form("rootfiles/Prompt2024/v83_2024/jmenano_data_cmb_%s_JME_v83_2024.root",cr),"READ"); // Aug 2 hybrid
+    //fd = new TFile(Form("rootfiles/Prompt2024/v83_2024/jmenano_data_cmb_%s_JME_v83_2024.root",cr),"READ"); // Aug 2 hybrid
+    fd = new TFile(Form("rootfiles/Prompt2024/v89_2024/jmenano_data_cmb_%s_JME_v89_2024.root",cr),"READ"); // Aug 8 hybrid, V5M JEC
     //if (run=="2024B")    //fd = new TFile(Form(" rootfiles/Prompt2024/v39_2024_Prompt_etabin_SFD_Golden/jmenano_data_cmb_%s_v39_2024_Prompt_etabin_SFD_Golden.root",cr),"READ");
     //fdm = new TFile("rootfiles/Prompt2024/v39_2024_Prompt_etabin_DCSOnly/jmenano_mc_out_Summer23MGBPix_v39_2023_etabin_SFv2.root","READ"); // Summer23BPix
-    fdm = new TFile("rootfiles/Prompt2024/v83_2024/jmenano_mc_out_Winter24MG_v83_2024.root","READ"); // Winter24
+    //fdm = new TFile("rootfiles/Prompt2024/v83_2024/jmenano_mc_out_Winter24MG_v83_2024.root","READ"); // Winter24
+    fdm = new TFile("rootfiles/Prompt2024/v89_2024/jmenano_mc_out_Winter24MG_v89_2024.root","READ"); // Winter24
   }
   else if (tr.Contains("2023")) {
     fd = new TFile(Form("rootfiles/Summer23_L2L3ResJERSF/v39_2023_etabin_SFv2/jmenano_data_cmb_%s_JME_v39_2023_etabin_SFv2.root",cr),"READ");
