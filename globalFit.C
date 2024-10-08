@@ -392,7 +392,7 @@ void globalFitEtaBin(double etamin, double etamax, string run, string version) {
   if (run=="Run24G") nfit = 1;
   if (run=="Run24F") nfit = 2;//1;
   if (run=="Run24E") nfit = 1;
-  if (run=="Run24BCD") nfit = 1;
+  if (run=="Run24BCD") nfit = 3;//1;
   cnt = 0;
   for (int i = 0; i != nfit; ++i)
     fitter->ExecuteCommand("MINI", 0, 0);
