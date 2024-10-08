@@ -69,10 +69,20 @@
   drawCMSresponse("Prompt24_Run2024CS_V4M","Prompt24CS_V4M",true);
   drawCMSresponse("Prompt24_Run2024CS_V4M","Prompt24CS_V4M",false);
   */
+  /*
   drawCMSresponse("Prompt24_Run2024BCD_V5M","Prompt24BCD_V5M",true);
   drawCMSresponse("Prompt24_Run2024BCD_V5M","Prompt24BCD_V5M",false);
   drawCMSresponse("Prompt24_Run2024E_V5M","Prompt24E_V5M",true);
   drawCMSresponse("Prompt24_Run2024E_V5M","Prompt24E_V5M",false);
   drawCMSresponse("Prompt24_Run2024F_V5M","Prompt24F_V5M",true);
   drawCMSresponse("Prompt24_Run2024F_V5M","Prompt24F_V5M",false);
+  */
+  drawCMSresponse("Prompt24_Run2024BCD_V6M","Prompt24BCD_V6M",true);
+  drawCMSresponse("Prompt24_Run2024BCD_V6M","Prompt24BCD_V6M",false);
+  drawCMSresponse("Prompt24_Run2024E_V6M","Prompt24E_V6M",true);
+  drawCMSresponse("Prompt24_Run2024E_V6M","Prompt24E_V6M",false);
+  drawCMSresponse("Prompt24_Run2024F_V6M","Prompt24F_V6M",true);
+  drawCMSresponse("Prompt24_Run2024F_V6M","Prompt24F_V6M",false);
+  drawCMSresponse("Prompt24_Run2024G_V6M","Prompt24G_V6M",true);
+  drawCMSresponse("Prompt24_Run2024G_V6M","Prompt24G_V6M",false);
 }
