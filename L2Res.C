@@ -233,16 +233,21 @@ TH1D *drawCleaned(TH1D *h, double eta, string data, string draw,
       //if (eta>4.538 && eta<4.716 && ptmax<30) keep = false;
       // Additional veto for 2024B,C,D, 12.3/fb
       if (eta>3.139 && ptmax<70) keep = false;
+      
+      if (_run=="2024F" || _run=="2024G" || _run=="2024FG") {
+	if (ptmin<59 && eta>2.650 && eta<2.964) keep = false;
+      }
+
     }
     if (data=="G") { // HLT_Photon50EB_TightId_TightIso, HLT_Photon30EB...
       if      (ptmin>=30. && ptmax<1300. && emax<2500.) keep = true;
       else if (ptmin>=30. && ptmax<200.  && emax<0.5*sqrts) keep = true;
       // Additional veto for 2024C 0.7/fb golden special and V4M
       //if (fabs(eta)>2.322 && eta<2.964 && ptmin<60) keep = false;
-      if (eta>2.5 && eta<2.964 && ptmin<60) keep = false; // V5M
+      if (eta>2.5 && eta<2.964 && ptmin<60) keep = false; // V5M,V6M
       if (eta>3.139 && eta<4.013 && ptmin<60 && 
 	  (_run=="2024E" || _run=="2024F" || _run=="2024EF" ||
-	   _run=="2024G")) keep = false;
+	   _run=="2024G" || _run=="2024FG")) keep = false;
       // Additional veto for 2024BC 3.3/fb golden closure (errors bad)
       if (doClosure && ptmin>500) keep = false;
     }
@@ -254,14 +259,14 @@ TH1D *drawCleaned(TH1D *h, double eta, string data, string draw,
       else if  (ptmin>=15. && ptmax<460.  && eta<5.191) keep = true;
       // Additional veto for 2024B, 3/fb
       //if (eta>4.538 && eta<4.716 && ptmax<30) keep = false;
-      if (eta>1.392 && eta<1.479 && pt<20) keep = false; // V5M 24BCD
-      if (eta>2.500 && eta<2.650 && pt<30) keep = false; // V5M
+      if (eta>1.392 && eta<1.479 && pt<20) keep = false; // V5M,V6M 24BCD
+      if (eta>2.500 && eta<2.650 && pt<30) keep = false; // V5M,V6M
       // Additional veto for 2024BC 3.3/fb golden closure (bad errors?)
       if (doClosure && emax>0.5*sqrts) keep = false;
     }
     if (data=="P") {
       if (ptmin>=15. && ptmax<=110. && eta<2.322) keep = true;
-      if (eta>1.392 && eta<1.479 && pt<20) keep = false; // V5M 24BCD
+      if (eta>1.392 && eta<1.479 && pt<20) keep = false; // V5M,V6M 24BCD
     }
     if (data=="D") {
       if (ptmin>=59. && ptmax<=110. && emax<3100. && eta<2.853) keep = true;
@@ -370,9 +375,12 @@ void L2Res() {
   mlum["2024CR"] = "7.5 fb^{-1}";
   mlum["2024CS"] = "7.5 fb^{-1}";
   mlum["2024E"] = "11.3 fb^{-1}"; // 9.3->11.0->11.3 (full now)
-  mlum["2024F"] = "19.4 fb^{-1}"; // partial 19.4
-  mlum["2024EF"] = "30.7 fb^{-1}"; // partial 30.7
-  mlum["2024G"] = "X.X fb^{-1}"; // partial
+  //mlum["2024F"] = "19.4 fb^{-1}"; // partial 19.4
+  //mlum["2024EF"] = "30.7 fb^{-1}"; // partial 30.7
+  //mlum["2024G"] = "X.X fb^{-1}"; // partial
+  mlum["2024F"] = "27.8 fb^{-1}"; // partial 19.4
+  mlum["2024FG"] = "65.5 fb^{-1}"; // partial 30.7
+  mlum["2024G"] = "37.8 fb^{-1}";
   
   //string vrun[] = {"2023Cv123","2023Cv4","2023D"};
   //string vrun[] = {"2022CD","2022E","2022F","2022G"};
@@ -389,7 +397,8 @@ void L2Res() {
      //"2023Cv123_19Dec2023","2023Cv4_19Dec2023","2023D_19Dec2023"};
       //"2023D_19Dec2023","2023D"};
       //"2024F","2024E","2024D","2024C"};
-      "2024G","2024F","2024E","2024BCD"};
+      "2024FG","2024G","2024F","2024E","2024BCD"};
+  //"2024FG","2024E","2024BCD"};
   const int nrun = sizeof(vrun)/sizeof(vrun[0]);
   //string vmc[] = {"Summer23","Summer23","Summer23BPIX"};
   //string vmc[] = {"Summer22","Summer22EE","Summer22EE","Summer22EE"};
@@ -406,7 +415,8 @@ void L2Res() {
      //"Summer22EE","Summer22EE",
      //"Summer23","Summer23","Summer23BPix"};
       //"Summer23BPix","Summer23BPix"};
-      "Winter24","Winter24","Winter24","Winter24"};
+      "Winter24","Winter24","Winter24","Winter24","Winter24"};
+  //"Winter24","Winter24","Winter24"};
   const int nmc = sizeof(vmc)/sizeof(vmc[0]);
   assert(nmc==nrun);
 
@@ -491,7 +501,8 @@ void L2Res() {
     //fz = new TFile(Form("rootfiles/Prompt2024/jme_bplusZ_%s_Zmm_sync_v83.root",cr),"READ"); // June 5 golden + DCSOnly, 15.6/fb
     //fz = new TFile(Form("rootfiles/Prompt2024/jme_bplusZ_%s_Zmm_sync_v84.root",cr),"READ"); // June 19 golden
     //fz = new TFile(Form("rootfiles/Prompt2024/jme_bplusZ_%s_Zmm_sync_v85.root",cr),"READ"); // Aug 2 hybrid
-    fz = new TFile(Form("rootfiles/Prompt2024/jme_bplusZ_%s_Zmm_sync_v86.root",cr),"READ"); // Aug 8 hybrid, V5M JEC
+    //fz = new TFile(Form("rootfiles/Prompt2024/jme_bplusZ_%s_Zmm_sync_v86.root",cr),"READ"); // Aug 8 hybrid, V5M JEC
+    fz = new TFile(Form("rootfiles/Prompt2024/v87/jme_bplusZ_%s_Zmm_sync_v87.root",cr),"READ"); // full golden, V5M->V6M JEC
   }
   else if (tr.Contains("2023")) {
     //fz = new TFile(Form("rootfiles/Summer23_L2ResOnly/jme_bplusZ_%s_Zmm_sync_v70.root",cr),"READ"); // Summer23 L2Res_V1
@@ -548,13 +559,19 @@ void L2Res() {
     //fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w30.root",cr),"READ"); // June 19 hybrid
     //fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w32.root",cr),"READ"); // Aug 2 hybrid
     //fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w33.root",cr),"READ"); // Aug 2 hybrid
-    fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w35.root",cr),"READ"); // Aug 8 hybrid, V5M JEC
+    //fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w35.root",cr),"READ"); // Aug 8 hybrid, V5M JEC
+    //fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w36.root",cr),"READ"); // Sep 12 hybrid, V5M JEC
+    //fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w38golden-g.root",cr),"READ"); // golden, V5M JEC
+    fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w38.root",cr),"READ"); // goldens, V5M->V6M JEC
     //fgm = new TFile("rootfiles/Prompt2024/GamHistosFill_mc_2023P8-BPix_w12.root","READ");
     //fgm = new TFile("rootfiles/Prompt2024/GamHistosFill_mc_2023P8-BPix_w16.root","READ");
     //fgm = new TFile("rootfiles/Prompt2024/GamHistosFill_mc_2023P8-BPix_w16.root","READ"); // Summer23BPix
     //fgm = new TFile("rootfiles/Prompt2024/GamHistosFill_mc_winter2024P8_w32.root","READ"); // Winter24 photon+jet only
     //fgm = new TFile("rootfiles/Prompt2024/GamHistosFill_mc_winter2024P8_w33.root","READ"); // Winter24 photon+jet only
-    fgm = new TFile("rootfiles/Prompt2024/GamHistosFill_mc_winter2024P8_w35.root","READ"); // Winter24 photon+jet only
+    //if (run=="2024G")
+    //fgm = new TFile("rootfiles/Prompt2024/GamHistosFill_mc_winter2024P8_w35.root","READ"); // Winter24 photon+jet only
+    //fgm = new TFile("rootfiles/Prompt2024/GamHistosFill_mc_winter2024P8_w36.root","READ"); // Winter24 photon+jet only
+    fgm = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_mc_winter2024P8_%s-pu_w38.root",cr),"READ"); // Winter24 photon+jet only
   }
   else if (tr.Contains("2023")) {
     fg = new TFile(Form("rootfiles/Summer23_L2L3Res/GamHistosFill_data_%s_w8.root",cr),"READ");
@@ -608,11 +625,14 @@ void L2Res() {
     //fd = new TFile(Form("rootfiles/Prompt2024/v76_2024/jmenano_data_cmb_%s_JME_v76_2024.root",cr),"READ"); // June 5 hybrid, 15.6/fb
     //fd = new TFile(Form("rootfiles/Prompt2024/v79_2024/jmenano_data_cmb_%s_JME_v79_2024.root",cr),"READ"); // July 3 hybrid
     //fd = new TFile(Form("rootfiles/Prompt2024/v83_2024/jmenano_data_cmb_%s_JME_v83_2024.root",cr),"READ"); // Aug 2 hybrid
-    fd = new TFile(Form("rootfiles/Prompt2024/v89_2024/jmenano_data_cmb_%s_JME_v89_2024.root",cr),"READ"); // Aug 8 hybrid, V5M JEC
+    //fd = new TFile(Form("rootfiles/Prompt2024/v89_2024/jmenano_data_cmb_%s_JME_v89_2024.root",cr),"READ"); // Aug 8 hybrid, V5M JEC
+    //fd = new TFile(Form("rootfiles/Prompt2024/v108_2024/jmenano_data_cmb_%s_JME_v108_2024.root",cr),"READ"); // golden, V5M JEC
+    fd = new TFile(Form("rootfiles/Prompt2024/v109_2024/jmenano_data_cmb_%s_JME_v109_2024.root",cr),"READ"); // golden, V5M->V6M JEC
     //if (run=="2024B")    //fd = new TFile(Form(" rootfiles/Prompt2024/v39_2024_Prompt_etabin_SFD_Golden/jmenano_data_cmb_%s_v39_2024_Prompt_etabin_SFD_Golden.root",cr),"READ");
     //fdm = new TFile("rootfiles/Prompt2024/v39_2024_Prompt_etabin_DCSOnly/jmenano_mc_out_Summer23MGBPix_v39_2023_etabin_SFv2.root","READ"); // Summer23BPix
     //fdm = new TFile("rootfiles/Prompt2024/v83_2024/jmenano_mc_out_Winter24MG_v83_2024.root","READ"); // Winter24
-    fdm = new TFile("rootfiles/Prompt2024/v89_2024/jmenano_mc_out_Winter24MG_v89_2024.root","READ"); // Winter24
+    //fdm = new TFile("rootfiles/Prompt2024/v89_2024/jmenano_mc_out_Winter24MG_v89_2024.root","READ"); // Winter24
+    fdm = new TFile(Form("rootfiles/Prompt2024/v109_2024/jmenano_mc_out_Winter24MGV14_v109_%s.root",cr),"READ"); // Winter24
   }
   else if (tr.Contains("2023")) {
     fd = new TFile(Form("rootfiles/Summer23_L2L3ResJERSF/v39_2023_etabin_SFv2/jmenano_data_cmb_%s_JME_v39_2023_etabin_SFv2.root",cr),"READ");
@@ -925,7 +945,7 @@ void L2Res() {
   }
   if (eta>2.5 && eta<2.650 && posOffEC25 && !doClosure) {
     //fref->SetParLimits(2,0.0,0.5); // 2024BCD, 12.3/fb special, V4M
-    fref->SetParLimits(2,0.0,1.5); // V5M
+    fref->SetParLimits(2,0.0,1.5); // V5M,V6M
   }
   if (eta>2.043 && eta<2.5 && posOffEC20 && !doClosure) {
     fref->SetParLimits(2,0.0,0.5); // 2024BCD, 12.3/fb special
@@ -999,7 +1019,8 @@ void L2Res() {
   if      (eta<1.566) h6->GetYaxis()->SetRangeUser(0.8+eps,1.2-eps);
   else if (eta<2.650) h6->GetYaxis()->SetRangeUser(0.65+eps,1.3-eps);
   //else if (eta<4.013) h6->GetYaxis()->SetRangeUser(0.55+eps,1.35-eps);
-  else if (eta<4.191) h6->GetYaxis()->SetRangeUser(0.55+eps,1.35-eps);
+  //else if (eta<4.191) h6->GetYaxis()->SetRangeUser(0.55+eps,1.35-eps);
+  else if (eta<4.191) h6->GetYaxis()->SetRangeUser(0.30+eps,1.35-eps);
   else if (eta<5.191) h6->GetYaxis()->SetRangeUser(0.30+eps,1.35-eps);
   h6->Draw();
   gPad->SetLogx();
@@ -1173,7 +1194,8 @@ void L2Res() {
   //ofstream ftxt(Form("textfiles/Prompt24/Prompt24_Run%s_V2M_DATA_L2Residual_AK4PFPuppi.txt",cr));
   //ofstream ftxt(Form("textfiles/Prompt24/Prompt24_Run%s_V3M_DATA_L2Residual_AK4PFPuppi.txt",cr));
   //ofstream ftxt(Form("textfiles/Prompt24/Prompt24_Run%s_V4M_DATA_L2Residual_AK4PFPuppi.txt",cr));
-  ofstream ftxt(Form("textfiles/Prompt24/Prompt24_Run%s_V5M_DATA_L2Residual_AK4PFPuppi.txt",cr));
+  //ofstream ftxt(Form("textfiles/Prompt24/Prompt24_Run%s_V5M_DATA_L2Residual_AK4PFPuppi.txt",cr));
+  ofstream ftxt(Form("textfiles/Prompt24/Prompt24_Run%s_V6M_DATA_L2Residual_AK4PFPuppi.txt",cr));
   ftxt << Form("{ 1 JetEta 1 JetPt 1./(%s) Correction L2Relative}",
 	       vf1[0]->GetExpFormula().Data()) << endl;
   for (int ieta = p2d->GetNbinsX(); ieta != 0; --ieta) {
