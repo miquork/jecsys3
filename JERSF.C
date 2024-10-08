@@ -248,7 +248,7 @@ void JERSF() {
   //string vrun[] = {"2024C","2024BR","2024CR","2023D"};
   //string vrun[] = {"2024CS","2024CR","2024CP","2023D","2023Cv123"};
   //string vrun[] = {"2024BCD","2024C","2024E","2024Ev2","2024CP","2024CS","2024CR","2023D","2023Cv123"};
-  string vrun[] = {"2024G","2024F","2024E","2024BCD"};
+  string vrun[] = {"2024FG","2024G","2024F","2024E","2024BCD"};
   //string vrun[] = {"2024CT","2024CS"};
   //string vrun[] = {"2024CT","2024CS","2024CP","2024F",
   //		   "2023D","2023Cv123"};
@@ -292,7 +292,7 @@ void JERSF() {
   //string vmc[] = {"Summer23MGBPix","Summer23MGBPix","Summer23MGBPix",
   //		  "Summer23MGBPix","Summer23MGBPix","Summer23MGBPix",
   //		  "Summer23MGBPix","Summer23MGBPix","Summer23MGBPix"};
-  string vmc[] = {"Winter24","Winter24","Winter24","Winter24"};
+  string vmc[] = {"Winter24","Winter24","Winter24","Winter24","Winter24"};
   //string vmc[] = {"Winter24","Winter24"};
   //string vmc[] = {"Winter24","Winter24","Winter24","Winter24",
   //		  "Summer23MGBPix","Summer23MG"};
@@ -448,10 +448,13 @@ void JERSF() {
     //f = new TFile(Form("rootfiles/Prompt2024/v67_2024/jmenano_data_cmb_%s_JME_v67_2024.root",cr),"READ");
     //f = new TFile(Form("rootfiles/Prompt2024/v83_2024/jmenano_data_cmb_%s_JME_v83_2024.root",cr),"READ");
     //f = new TFile(Form("rootfiles/Prompt2024/v83_2024/jmenano_data_cmb_%s_JME_v83_2024.root",cr),"READ");
-    f = new TFile(Form("rootfiles/Prompt2024/v89_2024/jmenano_data_cmb_%s_JME_v89_2024.root",cr),"READ"); // Aug 8 hybrid, V5M JEC
+    //f = new TFile(Form("rootfiles/Prompt2024/v89_2024/jmenano_data_cmb_%s_JME_v89_2024.root",cr),"READ"); // Aug 8 hybrid, V5M JEC
+    f = new TFile(Form("rootfiles/Prompt2024/v109_2024/jmenano_data_cmb_%s_JME_v109_2024.root",cr),"READ"); // V5M->V6M JEC
     //fm = new TFile("rootfiles/Prompt2024/v39_2024_Prompt_etabin_DCSOnly/jmenano_mc_cmb_Summer23MGBPix_v39_2023_etabin_SFv2.root","READ"); // with JER SF?
     //fm = new TFile("rootfiles/Summer23_L2ResOnly/jmenano_mc_cmb_Summer23MGBPix_v39_noRwPU_noSmearJets_25Feb2024_L2Res_v1.root","READ"); // no JER SF
-    fm = new TFile("rootfiles/Prompt2024/v83_2024/jmenano_mc_cmb_Winter24MG_v83_2024.root","READ"); // no JER SF?
+    //fm = new TFile("rootfiles/Prompt2024/v83_2024/jmenano_mc_cmb_Winter24MG_v83_2024.root","READ"); // no JER SF?
+    fm = new TFile(Form("rootfiles/Prompt2024/v109_2024/jmenano_mc_out_Winter24MGV14_v109_%s.root",cr),"READ"); // no JER SF?
+    fm = (TFile*)fm->GetDirectory("HLT_MC");
     //fm = new TFile("rootfiles/Prompt2024/v89_2024/jmenano_mc_cmb_Winter24MG_v89_2024.root","READ"); // MCV14, JER SF
     //if (run=="2024BCD") {
     //fm = new TFile("rootfiles/Prompt2024//v51_2024_Golden/jmenano_mc_cmb_Winter24MCFlat_v51_2024_Golden.root","READ");
@@ -465,7 +468,8 @@ void JERSF() {
     //fz = new TFile(Form("rootfiles/Prompt2024/jme_bplusZ_%s_Zmm_sync_v82.root",cr),"READ");
     //fz = new TFile(Form("rootfiles/Prompt2024/jme_bplusZ_%s_Zmm_sync_v83.root",cr),"READ");
     //fz = new TFile(Form("rootfiles/Prompt2024/jme_bplusZ_%s_Zmm_sync_v85.root",cr),"READ");
-    fz = new TFile(Form("rootfiles/Prompt2024/jme_bplusZ_%s_Zmm_sync_v86.root",cr),"READ"); // Aug 8 hybrid, V5M
+    //fz = new TFile(Form("rootfiles/Prompt2024/jme_bplusZ_%s_Zmm_sync_v86.root",cr),"READ"); // Aug 8 hybrid, V5M
+    fz = new TFile(Form("rootfiles/Prompt2024/v87/jme_bplusZ_%s_Zmm_sync_v87.root",cr),"READ"); // V5M->V6M
     //fz = new TFile("rootfiles/Prompt2024/jme_bplusZ_2024BC_Zmm_sync_v80golden.root","READ"); // 3/fb closure
     //fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w12.root",cr),"READ"); // DCSOnly
     //fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w13.root",cr),"READ"); // DCSOnly
@@ -476,13 +480,15 @@ void JERSF() {
     //fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w22.root",cr),"READ"); // May 16 golden, 12.3/fb
     //fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w27.root",cr),"READ");
     //fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w33.root",cr),"READ");
-    fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w35.root",cr),"READ"); // Aug 8 hybrid, V5M
+    //fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w35.root",cr),"READ"); // Aug 8 hybrid, V5M
+    fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w38.root",cr),"READ"); // V5M->V6M
     //fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w18.root",cr),"READ"); // 3/fb closure
     //fgm = new TFile("rootfiles/Prompt2024/GamHistosFill_mc_2023P8-BPix_w12.root","READ");
     //fgm = new TFile("rootfiles/Prompt2024/GamHistosFill_mc_2023QCD-BPix_w12.root","READ");
     //fgm = new TFile("rootfiles/Prompt2024/GamHistosFill_mc_2023P8-BPix_w16.root","READ");
     //fgm = new TFile("rootfiles/Prompt2024/GamHistosFill_mc_winter2024P8_w33.root","READ"); // Winter24 photon+jet only
-    fgm = new TFile("rootfiles/Prompt2024/GamHistosFill_mc_winter2024P8_w35.root","READ"); // Winter24 photon+jet only
+    //fgm = new TFile("rootfiles/Prompt2024/GamHistosFill_mc_winter2024P8_w35.root","READ"); // Winter24 photon+jet only
+    fgm = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_mc_winter2024P8_%s-pu_w38.root",cr),"READ"); // Winter24 photon+jet only
   }
   else if (TString(cr).Contains("2023")) {
     f = new TFile(Form("rootfiles/Summer23_L2ResOnly/jmenano_data_cmb_%s_JME_v39_noRwPU_noSmearJets_25Feb2024_L2Res_v1.root",cr),"READ");
@@ -934,7 +940,8 @@ void JERSF() {
   //ofstream txt(Form("textFiles/Prompt24/Prompt24_%s_JRV3M_MC_SF_AK4PFPuppi.txt",cr));
   //ofstream txt(Form("textFiles/Prompt24/Prompt24_%s_JRV4M_MC_SF_AK4PFPuppi.txt",cr));
   //ofstream txt(Form("textFiles/Prompt24/Prompt24_%s_JRV5M_MC_SF_AK4PFPuppi.txt",cr));
-  ofstream txt(Form("textFiles/Prompt24/Prompt24_%s_JRV5Mc_MC_SF_AK4PFPuppi.txt",cr));
+  //ofstream txt(Form("textFiles/Prompt24/Prompt24_%s_JRV5Mc_MC_SF_AK4PFPuppi.txt",cr));
+  ofstream txt(Form("textFiles/Prompt24/Prompt24_%s_JRV6M_MC_SF_AK4PFPuppi.txt",cr));
   txt << "{1 JetEta 1 JetPt "
       << "sqrt([0]*fabs([0])/(x*x)+[1]*[1]/x+[2]*[2])/"
       << "sqrt([3]*fabs([3])/(x*x)+[4]*[4]/x+[5]*[5])"

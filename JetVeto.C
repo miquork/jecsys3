@@ -66,7 +66,7 @@ void JetVeto(string run = "", string version = "vx") {
   //JetVetos("2024E",version);
 
   JetVetos("2024BCDE",version);
-  JetVetos("2024F",version);
+  JetVetos("2024FG",version);
 }
 
 void JetVetos(string run, string version) {
@@ -115,12 +115,15 @@ void JetVetos(string run, string version) {
   }
   if (run=="2024BCDE") {
     lumi_136TeV = "Run2024BCDE, 26.6 fb^{-1}";
-    f = new TFile("rootfiles/Prompt2024/v83_2024/jmenano_data_out_2024BCDE_JME_v83_2024.root","READ"); // Aug 2 hybrid, 26.6/fb
+    //f = new TFile("rootfiles/Prompt2024/v83_2024/jmenano_data_out_2024BCDE_JME_v83_2024.root","READ"); // Aug 2 hybrid, 26.6/fb
+    f = new TFile("rootfiles/Prompt2024/v109_2024/jmenano_data_out_2024BCDE_JME_v109_2024.root","READ"); // V6M
     nMinTowers = 50; // for BPix hole
   }
-  if (run=="2024F") {
-    lumi_136TeV = "Run2024F, 19.4 fb^{-1}";
-    f = new TFile("rootfiles/Prompt2024/v86_2024/jmenano_data_out_2024F_JME_v86_2024.root","READ"); // Aug 2 hybrid
+  if (run=="2024FG") {
+    //lumi_136TeV = "Run2024F, 19.4 fb^{-1}";
+    lumi_136TeV = "Run2024FG, 65.5 fb^{-1}";
+    //f = new TFile("rootfiles/Prompt2024/v86_2024/jmenano_data_out_2024F_JME_v86_2024.root","READ"); // Aug 2 hybrid
+    f = new TFile("rootfiles/Prompt2024/v109_2024/jmenano_data_out_2024FG_JME_v109_2024.root","READ"); // V6M
     nMinTowers = 50; // for BPix hole
   }
 
@@ -496,7 +499,7 @@ void JetVetos(string run, string version) {
     h2veto->SetTitle("JME recommended map. Hot+Cold(+not BPIX)");
     h2all->SetTitle("Union of all maps, used for JEC. Hot+cold+BPIX");
   }
-  if (run=="2024F") {
+  if (run=="2024F" || run=="2024G" || run=="2024FG") {
     h2veto->SetTitle("JME recommended map. Hot+Cold+FPIX(+not BPIX)");
     h2all->SetTitle("Union of all maps, used for JEC. Hot+cold+FPIX+BPIX");
   }
@@ -559,7 +562,8 @@ void JetVetos(string run, string version) {
 	  h2bpix->SetBinContent(i,j,100);
 	  h2all->SetBinContent(i,j,100);
 	}
-	if (run=="2024BCD" || run=="2024BCDE" || run=="2024F") {
+	if (run=="2024BCD" || run=="2024BCDE" || run=="2024F" ||
+	    run=="2024G" || run=="2024FG") {
 	  // Keep BPix for recommended, drop for JEC
 	  h2veto->SetBinContent(i,j,0);
 	  h2bpix->SetBinContent(i,j,100);
@@ -570,7 +574,7 @@ void JetVetos(string run, string version) {
       // FPIX reference region (2024F and later)
       if (eta>-2.043 && phi>2.53 &&
 	  eta<-1.653 && phi<2.71) {
-	if (run=="2024F") { // Remove FPIX
+	if (run=="2024F" || run=="2024G" || run=="2024FG") { // Remove FPIX
 	  h2veto->SetBinContent(i,j,100);
 	  h2fpix->SetBinContent(i,j,100);
 	  h2all->SetBinContent(i,j,100);

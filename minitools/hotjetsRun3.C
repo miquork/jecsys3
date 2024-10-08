@@ -26,7 +26,8 @@ void hotjetsRun3() {
   TDirectory *curdir = gDirectory;
 
   //string eras[] = {"22CD", "22EFG", "23BC", "23D", "24BCD", "24E"};
-  string eras[] = {"22CD", "22EFG", "23BC", "23D", "24BCDE", "24F"};
+  //string eras[] = {"22CD", "22EFG", "23BC", "23D", "24BCDE", "24F"};
+  string eras[] = {"22CD", "22EFG", "23BC", "23D", "24BCDE", "24FG"};
   const int nera = sizeof(eras)/sizeof(eras[0]);
 
   map<string, const char*> mera;
@@ -37,7 +38,8 @@ void hotjetsRun3() {
   //mera["24BCD"] = "24";
   mera["24BCDE"] = "24BCDE";
   //mera["24E"] = "24E";
-  mera["24F"] = "24F";
+  //mera["24F"] = "24F";
+  mera["24FG"] = "24FG";
 
   map<string, int> mcolor;
   mcolor["22CD"] = kGreen+2;
@@ -47,7 +49,8 @@ void hotjetsRun3() {
   //mcolor["24BCD"] = kRed;
   mcolor["24BCDE"] = kOrange;
   //mcolor["24E"] = kYellow+2;
-  mcolor["24F"] = kRed;
+  //mcolor["24F"] = kRed;
+  mcolor["24FG"] = kRed;
 
   TH1D *h = new TH1D("h",";#eta_{jet};#phi_{jet}",100,-4.7,4.7);
   h->SetMaximum(+TMath::Pi());
@@ -57,7 +60,8 @@ void hotjetsRun3() {
   //lumi_13TeV = "Run2024BC, 3.3 fb^{-1}";
   //lumi_13TeV = "Run2024BCD, 12.3 fb^{-1}";
   //lumi_13TeV = "Run2024BCDE, 27.0 fb^{-1}";
-  lumi_13TeV = "Run2024BCDEF, 46.0 fb^{-1}";
+  //lumi_13TeV = "Run2024BCDEF, 46.0 fb^{-1}";
+  lumi_13TeV = "Run2024BCDEFG, 92.2 fb^{-1}";
   TCanvas *c1 = tdrCanvas("c1",h,4,0,kRectangular);
 
   TLine *l = new TLine();
@@ -124,7 +128,8 @@ void hotjetsRun3() {
   gPad->Paint();
 
   //c1->SaveAs("pdf/hotjetsRun3_V4M.pdf");
-  c1->SaveAs("pdf/hotjetsRun3_V5M.pdf");
+  //c1->SaveAs("pdf/hotjetsRun3_V5M.pdf");
+  c1->SaveAs("pdf/hotjetsRun3_V6M.pdf");
 
   //TFile *fout = new TFile("rootfiles/hotjets-Run3.root","RECREATE");
   //h2sum->Write();
