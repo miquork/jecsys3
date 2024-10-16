@@ -16,6 +16,17 @@ string triggerString(double pt, double eta) {
   // for (int i = 1; i != hpt13->GetNbinsX()+1; ++i) cout << hpt13->GetBinLowEdge(i) << (hpt13->GetBinContent(i)>hpt13->GetBinContent(i-1) ? "*":"") << ", "; cout << endl;
   
   // Inclusive jet thresholds, mi[]
+  if (pt>=686. && fabs(eta)>2.964) return "HLT_PFJetFwd500";
+  if (pt>=548. && pt<686 && fabs(eta)>2.964) return "HLT_PFJetFwd450";
+  if (pt>=468. && pt<548 && fabs(eta)>2.964) return "HLT_PFJetFwd400";
+  if (pt>=395. && pt<468 && fabs(eta)>2.964) return "HLT_PFJetFwd320";
+  if (pt>=330. && pt<395 && fabs(eta)>2.964) return "HLT_PFJetFwd260";
+  if (pt>=272. && pt<330 && fabs(eta)>2.964) return "HLT_PFJetFwd200";
+  if (pt>=196. && pt<272 && fabs(eta)>3.139) return "HLT_PFJetFwd140"; // x
+  if (pt>=114. && pt<196 && fabs(eta)>3.139) return "HLT_PFJetFwd80"; // x
+  if (pt>=84.  && pt<114 && fabs(eta)>3.239) return "HLT_PFJetFwd60"; // x
+  if (pt>=49.  && pt<84  && fabs(eta)>2.965)  return "HLT_PFJetFwd40";
+    
   //if (pt>686.) return "HLT_PFJet550";
   if (pt>=686.) return "HLT_PFJet500";
   if (pt>=548.) return "HLT_PFJet450";
@@ -29,6 +40,7 @@ string triggerString(double pt, double eta) {
   if (pt>=84.)  return "HLT_PFJet60";
   if (pt>=49.)  return "HLT_PFJet40"; // 15 now?
   return "HLT_PFJet40"; // "HLT_ZeroBias"
+
 }
 
 map<string, map<string, double> > _trgLumCache;
@@ -84,20 +96,22 @@ void normalizeHistByLumi(TH1D *h, string run) {
   }
 } // normalizeHistByLumi (TH1D)
 
-void normalizeHistByLumi(TH2D *h2, string run) {
+void normalizeHistByLumiAndBin(TH2D *h2, string run) {
   for (int i = 1; i != h2->GetNbinsX()+1; ++i) {
     for (int j = 1; j != h2->GetNbinsY()+1; ++j) {
       double eta = h2->GetXaxis()->GetBinCenter(i);
+      double deta = h2->GetXaxis()->GetBinWidth(i);
       double pt = h2->GetYaxis()->GetBinCenter(j);
+      double dpt = h2->GetYaxis()->GetBinWidth(j);
       string trg = triggerString(pt, eta);
       double lumi = triggerLumi(run, trg);
-      h2->SetBinContent(i, j, h2->GetBinContent(i,j)/lumi);
-      h2->SetBinError(i, j, h2->GetBinError(i,j)/lumi);
+      h2->SetBinContent(i, j, h2->GetBinContent(i,j)/lumi/deta/dpt);
+      h2->SetBinError(i, j, h2->GetBinError(i,j)/lumi/deta/dpt);
     }
   }
 } // normalizeHistByLumi (TH2D)
 
-TH1D* timeDep2Ds(string run="2024BCD") {
+TH1D* timeDep1Ds(string run="2024BCD") {
 
   setTDRStyle();
   TDirectory *curdir = gDirectory;
@@ -155,14 +169,96 @@ TH1D* timeDep2Ds(string run="2024BCD") {
   
   gPad->RedrawAxis();
 
-  c1->SaveAs(Form("pdf/timeDep2D/timeDep2D_%s.pdf",cr));
+  c1->SaveAs(Form("pdf/timeDep2D/timeDep2D_1DBB_%s.pdf",cr));
   c1->Close();
 
   return hpt13p;
-} // TH1D* timeDeps2D
+} // TH1D* timeDep1Ds
+
+void timeDep2Ds(string run="2024BCD", string ref="2024F") {
+
+  setTDRStyle();
+  TDirectory *curdir = gDirectory;
+
+  const char *cr = run.c_str();
+  TFile *f = new TFile(Form("rootfiles/Prompt2024/v109_2024/jmenano_data_cmb_%s_JME_v109_2024.root",cr),"READ");
+  assert(f && !f->IsZombie());
+
+  const char *cref = ref.c_str();
+  TFile *fref = new TFile(Form("rootfiles/Prompt2024/v109_2024/jmenano_data_cmb_%s_JME_v109_2024.root",cref),"READ");
+  assert(fref && !fref->IsZombie());
+
+  TH2D *h2pteta = (TH2D*)f->Get("Incjet/h2pteta"); assert(h2pteta);
+  TH2D *h2pteta_ref = (TH2D*)fref->Get("Incjet/h2pteta"); assert(h2pteta_ref);
+  curdir->cd();
+  
+  double lum500 = triggerLumi(run,"HLT_PFJet500") * 1e-3;
+  TH1D *h = tdrHist(Form("h_%s",cr),"p_{T,jet} (GeV)",15,4500,
+		    "#eta_{jet} (rad)",-5.2,5.2);
+  lumi_136TeV = Form("%s, %1.1f fb^{-1}",cr,lum500);
+  extraText = "Private";
+  TCanvas *c2 = tdrCanvas(Form("c2_%s",cr),h,8,11,kSquare);
+  gPad->SetRightMargin(0.20);
+  
+  TH2D *h2 = (TH2D*)h2pteta->Clone(Form("h2pteta_%s",cr));
+  normalizeHistByLumiAndBin(h2,cr);
+
+  TH2D *h2ref = (TH2D*)h2pteta_ref->Clone(Form("h2pteta_%s_%s",cr,cref));
+  normalizeHistByLumiAndBin(h2ref,cref);
+
+  gPad->SetLogy();
+  gPad->SetLogz();
+  h2->Draw("SAME COLZ");
+  h2->GetZaxis()->SetRangeUser(0.2e-6,2.5e8);
+  h2->GetZaxis()->SetTitle("Cross section (pb / GeV / rad)");
+  h2->GetZaxis()->SetTitleOffset(1.6);
+  h2->GetZaxis()->SetTitleSize(0.05);
+  h2->GetZaxis()->SetLabelSize(0.05);
+
+  gPad->RedrawAxis();
+
+  gPad->Update();
+  c2->SaveAs(Form("pdf/timeDep2D/timeDep2D_xsec_%s.pdf",cr));
+
+  
+  TH1D *h_3 = tdrHist(Form("h_3_%s",cr),"p_{T} (GeV)",15,4500,
+		      "#eta (rad)",-5.2,5.2);
+  h_3->GetYaxis()->SetMoreLogLabels();
+  h_3->GetYaxis()->SetNoExponent();
+  TCanvas *c3 = tdrCanvas(Form("c3_%s",cr),h_3,8,11,kSquare);
+  gPad->SetLeftMargin(0.18);
+  gPad->SetRightMargin(0.20);
+  h_3->GetYaxis()->SetTitleOffset(1.5);
+
+  TH2D *h2r = (TH2D*)h2->Clone(Form("h2r_%s",cr));
+  h2r->Divide(h2ref);
+
+  gPad->SetLogy();
+  h2r->Draw("SAME COLZ");
+  double eps = 1e-4;
+  //h2r->GetZaxis()->SetRangeUser(0.5+eps,1.5-eps);
+  h2r->GetZaxis()->SetRangeUser(0.75+eps,1.25-eps);
+  h2r->GetZaxis()->SetTitle(Form("%s / %s",cr,cref));
+  h2r->GetZaxis()->SetTitleOffset(1.6);
+  h2r->GetZaxis()->SetTitleSize(0.05);
+  h2r->GetZaxis()->SetLabelSize(0.05);
+
+  gPad->RedrawAxis();
+
+  gPad->Update();
+  c3->SaveAs(Form("pdf/timeDep2D/timeDep2D_ratio_%s.pdf",cr));
+
+  c2->Close();
+  c3->Close();
+
+} // timeDep2Ds
 
 void timeDep2D() {
 
+  ///////////////////////////////////////
+  // Start with 1D spectra as a warmup //
+  ///////////////////////////////////////
+  
   // Unprescaled luminosities calculated by hand
   double lum24bcd = 15.3; // fb-1
   double lum24e = 11.3; // fb-1
@@ -171,10 +267,10 @@ void timeDep2D() {
   double lumsum = lum24bcd + lum24e + lum24f + lum24g;
 
   // Normalized spectra for each eta
-  TH1D *h24bcd = timeDep2Ds("2024BCD");
-  TH1D *h24e   = timeDep2Ds("2024E");
-  TH1D *h24f   = timeDep2Ds("2024F");
-  TH1D *h24g   = timeDep2Ds("2024G");
+  TH1D *h24bcd = timeDep1Ds("2024BCD");
+  TH1D *h24e   = timeDep1Ds("2024E");
+  TH1D *h24f   = timeDep1Ds("2024F");
+  TH1D *h24g   = timeDep1Ds("2024G");
 
   TH1D *h24 = (TH1D*)h24bcd->Clone("h24"); h24->Reset();
   h24->Add(h24bcd, lum24bcd);
@@ -236,5 +332,15 @@ void timeDep2D() {
     
   gPad->RedrawAxis();
 
-  c1->SaveAs("pdf/timeDep2D/timeDep2D.pdf");
+  c1->SaveAs("pdf/timeDep2D/timeDep2D_1D.pdf");
+
+
+  ///////////////////
+  // On to full 2D //
+  ///////////////////
+  timeDep2Ds("2024BCD");
+  timeDep2Ds("2024E");
+  timeDep2Ds("2024F");
+  timeDep2Ds("2024G");
+  
 }
