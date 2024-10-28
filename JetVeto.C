@@ -65,8 +65,12 @@ void JetVeto(string run = "", string version = "vx") {
   //JetVetos("2024BCD",version);
   //JetVetos("2024E",version);
 
-  JetVetos("2024BCDE",version);
-  JetVetos("2024FG",version);
+  //JetVetos("2024BCDE",version);
+  //JetVetos("2024FG",version);
+  
+  JetVetos("2024BCDEFG",version);
+  JetVetos("2024HI",version);
+  JetVetos("2024BCDEFGHI",version);
 }
 
 void JetVetos(string run, string version) {
@@ -78,7 +82,7 @@ void JetVetos(string run, string version) {
 			  "RECREATE");
   fout->mkdir("trigs");
   
-  TFile *f(0);
+  TFile *f(0), *fg(0);
   if (run=="2022CD") { // Summer22
     lumi_136TeV = "Run2022CD, 8.1 fb^{-1}";
     f = new TFile("rootfiles/Iita_20230816/jmenano_data_out_2022CD_v1.root","READ");
@@ -124,6 +128,24 @@ void JetVetos(string run, string version) {
     lumi_136TeV = "Run2024FG, 65.5 fb^{-1}";
     //f = new TFile("rootfiles/Prompt2024/v86_2024/jmenano_data_out_2024F_JME_v86_2024.root","READ"); // Aug 2 hybrid
     f = new TFile("rootfiles/Prompt2024/v109_2024/jmenano_data_out_2024FG_JME_v109_2024.root","READ"); // V6M
+    nMinTowers = 50; // for BPix hole
+  }
+  if (run=="2024BCDEFG") {
+    lumi_136TeV = "Run2024BCDEFG, 92.1 fb^{-1}";
+    f = new TFile("rootfiles/Prompt2024/v110_2024/jmenano_data_out_2024BCDEFG_JME_v110_2024.root","READ"); // V6M closure
+    fg = new TFile("rootfiles/Prompt2024/GamHistosFill_data_2024BCDEFG_w39.root","READ"); // V6M closure
+    nMinTowers = 50; // for BPix hole
+  }
+  if (run=="2024HI") {
+    lumi_136TeV = "Run2024HI, 17.0 fb^{-1}";
+    f = new TFile("rootfiles/Prompt2024/v111_2024/jmenano_data_out_2024HI_JME_v111_2024.root","READ"); // V6M
+    fg = new TFile("rootfiles/Prompt2024/GamHistosFill_data_2024HIskim_w40.root","READ"); // V6M
+    nMinTowers = 50; // for BPix hole
+  }
+  if (run=="2024BCDEFGHI") {
+    lumi_136TeV = "Run2024BCDEFGHI, 109.2 fb^{-1}";
+    f = new TFile("rootfiles/Prompt2024/v111_2024/jmenano_data_out_2024BCDEFG_JME_v110_2024HI_JME_v111_2024.root","READ"); // V6M closure + V6M
+    fg = new TFile("rootfiles/Prompt2024/GamHistosFill_data_2024BCDEFG_w39_2024HIskim_w40.root","READ"); // V6M closure + V6M
     nMinTowers = 50; // for BPix hole
   }
 
@@ -180,6 +202,8 @@ void JetVetos(string run, string version) {
   vtrg.push_back("HLT_DiPFJetAve160_HFJEC");
   vtrg.push_back("HLT_DiPFJetAve220_HFJEC");
   vtrg.push_back("HLT_DiPFJetAve300_HFJEC");
+
+  if (fg) vtrg.push_back("HLT_Photon50EB_TightID_TightIso");
   
   if (oneTrig!="") {
     vtrg.clear();
@@ -188,6 +212,7 @@ void JetVetos(string run, string version) {
   int ntrg = vtrg.size();
 
   vector<string> vh;
+  //vh.push_back("p2mpf"); // for GamJet instead of p2asymm?
   //vh.push_back("p2asymm");
   vh.push_back("p2asymm_noveto");
   vh.push_back("h2phieta");//h2pt");
@@ -215,8 +240,14 @@ void JetVetos(string run, string version) {
       //string hname = "p2nef";
       //isProfile2D = (hname[0]='p' && hname[1]='2');
 
-      string objname = Form("%s/Jetveto/%s",trg.c_str(),hname.c_str());
-      TObject *obj = f->Get(objname.c_str());
+      // Enable photon+jet as well
+      const char *ct = trg.c_str();
+      TFile *fs = (TString(ct).Contains("Photon") ? fg : f);
+      // Patch: until separate photon triggers enabled, use root path
+      const char *cts = (TString(ct).Contains("Photon") ? "" : ct);
+      
+      string objname = Form("%s/Jetveto/%s",cts,hname.c_str());
+      TObject *obj = fs->Get(objname.c_str());
       if (!obj) {
 	cout << "Missing " << objname << endl << flush;
       }
@@ -258,6 +289,22 @@ void JetVetos(string run, string version) {
 	    } // for j
 	  } // for i
 	}
+	
+	// JES with normalized eta strips
+	// Useful for later phi symmetry studies and jet substructure
+	TH2D *h2jesnorm = (TH2D*)h2->Clone(Form("h2jesnorm_%s",cts));
+	for (int i = 1; i != h2jesnorm->GetNbinsX()+1; ++i) {
+	  double norm = h2jesnorm->Integral(i,i,1,72) / 72.;
+	  for (int j = 1; j != h2jesnorm->GetNbinsY()+1; ++j) {
+	    h2jesnorm->SetBinContent(i,j,(1+h2jesnorm->GetBinContent(i,j))/(1+norm)-1);
+	    h2jesnorm->SetBinError(i,j,h2jesnorm->GetBinError(i,j)/(1+norm));
+	  }
+	}
+	fout->cd("trigs");
+	h2->Write(Form("jetasymmetrymap_%s",ct));
+	h2jesnorm->Write(Form("jetasymmetrymap_norm_%s",ct));
+	curdir->cd();
+	
       } // p2asymm
       
       // Normalize eta strips vs phi
@@ -499,7 +546,8 @@ void JetVetos(string run, string version) {
     h2veto->SetTitle("JME recommended map. Hot+Cold(+not BPIX)");
     h2all->SetTitle("Union of all maps, used for JEC. Hot+cold+BPIX");
   }
-  if (run=="2024F" || run=="2024G" || run=="2024FG") {
+  if (run=="2024F" || run=="2024G" || run=="2024FG" ||
+      run=="2024BCDEFG" || run=="2024HI" || run=="2024BCDEFGHI") {
     h2veto->SetTitle("JME recommended map. Hot+Cold+FPIX(+not BPIX)");
     h2all->SetTitle("Union of all maps, used for JEC. Hot+cold+FPIX+BPIX");
   }
@@ -563,18 +611,21 @@ void JetVetos(string run, string version) {
 	  h2all->SetBinContent(i,j,100);
 	}
 	if (run=="2024BCD" || run=="2024BCDE" || run=="2024F" ||
-	    run=="2024G" || run=="2024FG") {
+	    run=="2024G" || run=="2024FG" ||
+	    run=="2024BCDEFG" || run=="2024HI" || run=="2024BCDEFGHI") {
 	  // Keep BPix for recommended, drop for JEC
-	  h2veto->SetBinContent(i,j,0);
-	  h2bpix->SetBinContent(i,j,100);
-	  h2all->SetBinContent(i,j,100);
+	  h2veto->SetBinContent(i,j,0);   // keep!
+	  h2bpix->SetBinContent(i,j,100); // drop
+	  h2all->SetBinContent(i,j,100);  // drop
 	}
       } // BPIX
 
       // FPIX reference region (2024F and later)
       if (eta>-2.043 && phi>2.53 &&
 	  eta<-1.653 && phi<2.71) {
-	if (run=="2024F" || run=="2024G" || run=="2024FG") { // Remove FPIX
+	if (run=="2024F" || run=="2024G" || run=="2024FG" ||
+	    run=="2024BCDEFG" || run=="2024HI" || run=="2024BCDEFGHI") {
+	  // Remove FPIX
 	  h2veto->SetBinContent(i,j,100);
 	  h2fpix->SetBinContent(i,j,100);
 	  h2all->SetBinContent(i,j,100);
