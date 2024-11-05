@@ -153,7 +153,7 @@ void globalFitEtaBin(double etamin, double etamax, string run, string version) {
 
   // Blacklist some shapes from various eras
   // (make configurable in globalFitSettings later)
-  if (run=="Run24F" || run=="Run24G") {
+  if (run=="Run24F" || run=="Run24G" || run=="Run24H" || run=="Run24I") {
     if (whitelistshape.find("ecalcc")!=whitelistshape.end())
       whitelistshape.erase(whitelistshape.find("ecalcc"));
   }
@@ -228,6 +228,8 @@ void globalFitEtaBin(double etamin, double etamax, string run, string version) {
 
     // Jet+Z special
     if (TString(name).Contains("jetz")) { // default: 0.985, 16/fb
+      if (scaleJZperEra && run=="Run24I")    scaleJZ = 1.0050;
+      if (scaleJZperEra && run=="Run24H")    scaleJZ = 1.0050;
       if (scaleJZperEra && run=="Run24G")    scaleJZ = 1.0050;//0.985; // 30/fb 
       if (scaleJZperEra && run=="Run24F")    scaleJZ = 1.0050;//0.985; // 30/fb 
       if (scaleJZperEra && run=="Run24E")    scaleJZ = 0.995; // 11/fb 
@@ -237,6 +239,8 @@ void globalFitEtaBin(double etamin, double etamax, string run, string version) {
     }
     // Z+jet ave special
     if (TString(name).Contains("zjav")) { // default: 0.9925, half of JZ
+      if (scaleJZAperEra && run=="Run24I")    scaleJZA = 1.0025;
+      if (scaleJZAperEra && run=="Run24H")    scaleJZA = 1.0025;
       if (scaleJZAperEra && run=="Run24G")    scaleJZA = 1.0025;//0.9925;
       if (scaleJZAperEra && run=="Run24F")    scaleJZA = 1.0025;//0.9925;
       if (scaleJZAperEra && run=="Run24E")    scaleJZA = 0.9975;
@@ -389,6 +393,8 @@ void globalFitEtaBin(double etamin, double etamax, string run, string version) {
   // Run fitter (multiple times if needed)
   //const int nfit = 2;//1;//5;//2;//1;
   int nfit = 1;
+  if (run=="Run24I") nfit = 1;
+  if (run=="Run24H") nfit = 1;
   if (run=="Run24G") nfit = 1;
   if (run=="Run24F") nfit = 2;//1;
   if (run=="Run24E") nfit = 1;
@@ -954,7 +960,7 @@ void globalFitDraw(string run, string version) {
     if (run=="Run23C4")  nhf_off = 2.0;//2.0;//7.0;//4.0;
     if (run=="Run23D")  nhf_off = 3.5;//2.0;//9.0;//4.5;
     if (run=="Run24B" || run=="Run24C" || run=="Run24D" || run=="Run24E" ||
-	run=="Run24F" || run=="Run24G" || 
+	run=="Run24F" || run=="Run24G" || run=="Run24H" || run=="Run24I" || 
 	run=="Run24BC" || run=="Run24BCD" || run=="Run24BCDE" ||
 	run=="Run24CP" || run=="Run24CR" || run=="Run24CS")  nhf_off = 0.0;
     if (run=="Run3")  {

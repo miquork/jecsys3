@@ -87,6 +87,8 @@ void createL2L3ResTextFile() {
   //createL2L3ResTextFiles("Run24CS-HCALDI",true);
   createL2L3ResTextFiles("Run24F-Prompt",true);
   createL2L3ResTextFiles("Run24G-Prompt",true);
+  createL2L3ResTextFiles("Run24H-Prompt",true);
+  createL2L3ResTextFiles("Run24I-Prompt",true);
   gPad->RedrawAxis();
   c1->Update();
   //c1->SaveAs("pdf/createL2L3ResTextFile_Prompt24.pdf");
@@ -95,7 +97,8 @@ void createL2L3ResTextFile() {
   //c1->SaveAs("pdf/createL2L3ResTextFile_Prompt24_V3M.pdf");
   //c1->SaveAs("pdf/createL2L3ResTextFile_Prompt24_V4M.pdf");
   //c1->SaveAs("pdf/createL2L3ResTextFile_Prompt24_V5M.pdf");
-  c1->SaveAs("pdf/createL2L3ResTextFile_Prompt24_V6M.pdf");
+  //c1->SaveAs("pdf/createL2L3ResTextFile_Prompt24_V6M.pdf");
+  c1->SaveAs("pdf/createL2L3ResTextFile_Prompt24_V7M.pdf");
   
   /*
   // Produce Run2 year-averages for reprocess.C reference (jec, jecold)
@@ -186,6 +189,12 @@ void createL2L3ResTextFiles(string set, bool leg2) {
   else if (set=="Run24G-Prompt") {
     f = new TFile("rootfiles/jecdataRun24G.root","READ"); isRun3=true;
   }
+  else if (set=="Run24H-Prompt") {
+    f = new TFile("rootfiles/jecdataRun24H.root","READ"); isRun3=true;
+  }
+  else if (set=="Run24I-Prompt") {
+    f = new TFile("rootfiles/jecdataRun24I.root","READ"); isRun3=true;
+  }
   else if (set=="Run24CR-ECALRATIO") {
     f = new TFile("rootfiles/jecdataRun24CR.root","READ"); isRun3=true;
   }
@@ -249,6 +258,8 @@ void createL2L3ResTextFiles(string set, bool leg2) {
   color["Run24E-Prompt"] = kRed+1;
   color["Run24F-Prompt"] = kGreen+2;
   color["Run24G-Prompt"] = kCyan+2;
+  color["Run24H-Prompt"] = kBlue+1;
+  color["Run24I-Prompt"] = kMagenta+1;
   color["Run24CR-ECALRATIO"] = kGreen+2;
   color["Run24CS-HCALDI"] = kBlue+2;
   color["Run3-Combo"] = kYellow+2;
@@ -365,25 +376,41 @@ void createL2L3ResTextFiles(string set, bool leg2) {
     //sin = "textFiles/Prompt24/Prompt24_Run2024BCD_V4M_DATA_L2Residual_AK4PFPuppi.txt"; isNewL2Res = true;
     //sin = "textFiles/Prompt24_V5M/Prompt24_Run2024BCD_V5M_DATA_L2Residual_AK4PFPuppi.txt"; isNewL2Res = true;
     //sout = "textFiles/Prompt24/Prompt24_Run2024BCD_V5M_DATA_L2L3Residual_AK4PFPuppi.txt";
-    sin = "textFiles/Prompt24_V6M/Prompt24_Run2024BCD_V6M_DATA_L2Residual_AK4PFPuppi.txt"; isNewL2Res = true;
-    sout = "textFiles/Prompt24/Prompt24_Run2024BCD_V6M_DATA_L2L3Residual_AK4PFPuppi.txt";
+    //sin = "textFiles/Prompt24_V6M/Prompt24_Run2024BCD_V6M_DATA_L2Residual_AK4PFPuppi.txt"; isNewL2Res = true;
+    //sout = "textFiles/Prompt24/Prompt24_Run2024BCD_V6M_DATA_L2L3Residual_AK4PFPuppi.txt";
+    sin = "textFiles/Prompt24/Prompt24_Run2024BCD_V7M_DATA_L2Residual_AK4PFPuppi.txt"; isNewL2Res = true;
+    sout = "textFiles/Prompt24/Prompt24_Run2024BCD_V7M_DATA_L2L3Residual_AK4PFPuppi.txt";
   }
   if (set=="Run24E-Prompt") {
     //sin = "textFiles/Prompt24/Prompt24_Run2024E_V4M_DATA_L2Residual_AK4PFPuppi.txt"; isNewL2Res = true;
     //sin = "textFiles/Prompt24_V5M/Prompt24_Run2024E_V5M_DATA_L2Residual_AK4PFPuppi.txt"; isNewL2Res = true;
     //sout = "textFiles/Prompt24/Prompt24_Run2024E_V5M_DATA_L2L3Residual_AK4PFPuppi.txt";
-    sin = "textFiles/Prompt24_V6M/Prompt24_Run2024E_V6M_DATA_L2Residual_AK4PFPuppi.txt"; isNewL2Res = true;
-    sout = "textFiles/Prompt24/Prompt24_Run2024E_V6M_DATA_L2L3Residual_AK4PFPuppi.txt";
+    //sin = "textFiles/Prompt24_V6M/Prompt24_Run2024E_V6M_DATA_L2Residual_AK4PFPuppi.txt"; isNewL2Res = true;
+    //sout = "textFiles/Prompt24/Prompt24_Run2024E_V6M_DATA_L2L3Residual_AK4PFPuppi.txt";
+    sin = "textFiles/Prompt24/Prompt24_Run2024E_V7M_DATA_L2Residual_AK4PFPuppi.txt"; isNewL2Res = true;
+    sout = "textFiles/Prompt24/Prompt24_Run2024E_V7M_DATA_L2L3Residual_AK4PFPuppi.txt";
   }
   if (set=="Run24F-Prompt") {
     //sin = "textFiles/Prompt24_V5M/Prompt24_Run2024F_V5M_DATA_L2Residual_AK4PFPuppi.txt"; isNewL2Res = true;
     //sout = "textFiles/Prompt24/Prompt24_Run2024F_V5M_DATA_L2L3Residual_AK4PFPuppi.txt";
-    sin = "textFiles/Prompt24_V6M/Prompt24_Run2024F_V6M_DATA_L2Residual_AK4PFPuppi.txt"; isNewL2Res = true;
-    sout = "textFiles/Prompt24/Prompt24_Run2024F_V6M_DATA_L2L3Residual_AK4PFPuppi.txt";
+    //sin = "textFiles/Prompt24_V6M/Prompt24_Run2024F_V6M_DATA_L2Residual_AK4PFPuppi.txt"; isNewL2Res = true;
+    //sout = "textFiles/Prompt24/Prompt24_Run2024F_V6M_DATA_L2L3Residual_AK4PFPuppi.txt";
+    sin = "textFiles/Prompt24/Prompt24_Run2024F_V7M_DATA_L2Residual_AK4PFPuppi.txt"; isNewL2Res = true;
+    sout = "textFiles/Prompt24/Prompt24_Run2024F_V7M_DATA_L2L3Residual_AK4PFPuppi.txt";
   }
   if (set=="Run24G-Prompt") {
-    sin = "textFiles/Prompt24_V6M/Prompt24_Run2024G_V6M_DATA_L2Residual_AK4PFPuppi.txt"; isNewL2Res = true;
-    sout = "textFiles/Prompt24/Prompt24_Run2024G_V6M_DATA_L2L3Residual_AK4PFPuppi.txt";
+    //sin = "textFiles/Prompt24_V6M/Prompt24_Run2024G_V6M_DATA_L2Residual_AK4PFPuppi.txt"; isNewL2Res = true;
+    //sout = "textFiles/Prompt24/Prompt24_Run2024G_V6M_DATA_L2L3Residual_AK4PFPuppi.txt";
+    sin = "textFiles/Prompt24/Prompt24_Run2024G_V7M_DATA_L2Residual_AK4PFPuppi.txt"; isNewL2Res = true;
+    sout = "textFiles/Prompt24/Prompt24_Run2024G_V7M_DATA_L2L3Residual_AK4PFPuppi.txt";
+  }
+  if (set=="Run24H-Prompt") {
+    sin = "textFiles/Prompt24/Prompt24_Run2024H_V7M_DATA_L2Residual_AK4PFPuppi.txt"; isNewL2Res = true;
+    sout = "textFiles/Prompt24/Prompt24_Run2024H_V7M_DATA_L2L3Residual_AK4PFPuppi.txt";
+  }
+  if (set=="Run24I-Prompt") {
+    sin = "textFiles/Prompt24/Prompt24_Run2024I_V7M_DATA_L2Residual_AK4PFPuppi.txt"; isNewL2Res = true;
+    sout = "textFiles/Prompt24/Prompt24_Run2024I_V7M_DATA_L2L3Residual_AK4PFPuppi.txt";
   }
   if (set=="Run24CR-ECALRATIO") {
     //sin = "textFiles/Prompt24/Prompt24_Run2024CR_V3M_DATA_L2Residual_AK4PFPuppi.txt"; isNewL2Res = true;
