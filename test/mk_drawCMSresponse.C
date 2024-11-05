@@ -77,6 +77,7 @@
   drawCMSresponse("Prompt24_Run2024F_V5M","Prompt24F_V5M",true);
   drawCMSresponse("Prompt24_Run2024F_V5M","Prompt24F_V5M",false);
   */
+  /*
   drawCMSresponse("Prompt24_Run2024BCD_V6M","Prompt24BCD_V6M",true);
   drawCMSresponse("Prompt24_Run2024BCD_V6M","Prompt24BCD_V6M",false);
   drawCMSresponse("Prompt24_Run2024E_V6M","Prompt24E_V6M",true);
@@ -85,4 +86,18 @@
   drawCMSresponse("Prompt24_Run2024F_V6M","Prompt24F_V6M",false);
   drawCMSresponse("Prompt24_Run2024G_V6M","Prompt24G_V6M",true);
   drawCMSresponse("Prompt24_Run2024G_V6M","Prompt24G_V6M",false);
+  */
+  
+  drawCMSresponse("Prompt24_Run2024BCD_V7M","Prompt24BCD_V7M",true);
+  drawCMSresponse("Prompt24_Run2024BCD_V7M","Prompt24BCD_V7M",false);
+  drawCMSresponse("Prompt24_Run2024E_V7M","Prompt24E_V7M",true);
+  drawCMSresponse("Prompt24_Run2024E_V7M","Prompt24E_V7M",false);
+  drawCMSresponse("Prompt24_Run2024F_V7M","Prompt24F_V7M",true);
+  drawCMSresponse("Prompt24_Run2024F_V7M","Prompt24F_V7M",false);
+  drawCMSresponse("Prompt24_Run2024G_V7M","Prompt24G_V7M",true);
+  drawCMSresponse("Prompt24_Run2024G_V7M","Prompt24G_V7M",false);
+  drawCMSresponse("Prompt24_Run2024H_V7M","Prompt24H_V7M",true);
+  drawCMSresponse("Prompt24_Run2024H_V7M","Prompt24H_V7M",false);
+  drawCMSresponse("Prompt24_Run2024I_V7M","Prompt24I_V7M",true);
+  drawCMSresponse("Prompt24_Run2024I_V7M","Prompt24I_V7M",false);
 }
