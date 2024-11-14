@@ -21,6 +21,7 @@ void drawTimeStability() {
 
   TH1D *hlum = (TH1D*)flum->Get("hlum"); assert(hlum); // per run
   TH1D *hlum2 = (TH1D*)flum->Get("hlum2"); assert(hlum2); // per range
+  TH1D *hcumlum = (TH1D*)flum->Get("hcumlum"); assert(hcumlum); // per run
   TH1D *hcumlum2 = (TH1D*)flum->Get("hcumlum2"); assert(hcumlum2); // per range
   TH1D *hbins = (TH1D*)flum->Get("hcumlumbins2"); assert(hbins); // per range
 
@@ -217,13 +218,17 @@ void drawTimeStability() {
       // List of eras as (start_run, era name)
       std::vector<std::pair<int, string>> eras = {
         // 2022
-        {355100, "22"},/* {355794, "22C"}, {357487, "22D"}, {357734, "22Dv2"}, {358220, "22Dv3"},*/ {359022, "E"},
-        {360332, "F"}, /*{362181, "22HI"}, {362350, "G"},*/
+        //{355100, "22"},/* {355794, "22C"}, {357487, "22D"}, {357734, "22Dv2"}, {358220, "22Dv3"},*/ {359022, "E"},
+        //{360332, "F"}, /*{362181, "22HI"}, {362350, "G"},*/
+	{355374, "22"}, {359569, "E"}, {360390, "F"}, /*{362181, "22HI"},*/ {362437, "G"}, // Updated actual first run
         // 2023
-        {366442, "23"}, /*{367080, "23C"}, {367516, "23Cv2"}, {367621, "23Cv3"},*/ {367765, "Cv4"}, {369803, "D"}, /*{370603, "23Dv2"},*/
+        //{366442, "23"}, /*{367080, "23C"}, {367516, "23Cv2"}, {367621, "23Cv3"},*/ {367765, "Cv4"}, {369803, "D"}, /*{370603, "23Dv2"},*/
+	{366727, "23"}, {367770, "Cv4"}, {369927, "D"}, // Updated actual first run
         // 2024
-        {378971, "24"}, /*{379412, "24C"}, {380253, "24D"},*/ {380948, "E"}, /*{381384, "24Ev2"},*/ {381944, "F"},
-        {383780, "G"}, {385814, "H"}, {386409, "I"}
+        //{378971, "24"}, /*{379412, "24C"}, {380253, "24D"},*/ {380948, "E"}, /*{381384, "24Ev2"},*/ {381944, "F"},
+	{378985, "24"}, {380963, "E"}, {382229, "F"}, // Updated actual first run
+        //{383780, "G"}, {385814, "H"}, {386409, "I"}
+	{383811, "G"}, {385836, "H"}, {386478, "I"} // Updated actual first run
       };
 
       // Additional HCAL breaks
@@ -232,10 +237,45 @@ void drawTimeStability() {
       //eras.push_back(pair<int,string>(383195,"24_v2.0")); // HLT
       //eras.push_back(pair<int,string>(383219,"24_v2.1")); // HLT
       //eras.push_back(pair<int,string>(386401,"24_v3.0")); // HLT, eraH
-      eras.push_back(pair<int,string>(382287,"V2.0"));
-      eras.push_back(pair<int,string>(383219,"V2.1"));
-      eras.push_back(pair<int,string>(386401,"V3.0"));
+
+      // => https://cms-talk.web.cern.ch/t/fast-track-validation-hlt-prompt-hcal-respcorrs-condition-update-from-hb-time-adjustment/25302/5
+      //eras.push_back(pair<int,string>(368775,"V1.0")); // 368765, 368822 =>
+      eras.push_back(pair<int,string>(368822,"V1.0")); // (actual run, 23D-)
       
+      //eras.push_back(pair<int,string>(367765,"V1.0")); // 23_v1.0 => 23Cv4
+      //eras.push_back(pair<int,string>(380637,"V1.0")); // Something in mid-24C?
+      //eras.push_back(pair<int,string>(380852,"V1.0")); // 24E
+      //eras.push_back(pair<int,string>(382287,"V2.0")); // 24_v2.0 =>
+      eras.push_back(pair<int,string>(382298,"V2.0")); // 24_v2.0 (actual first run)
+      //eras.push_back(pair<int,string>(383219,"V2.1")); // 24_v2.1 =>
+      eras.push_back(pair<int,string>(383247,"V2.1")); // 24_v2.1 (actual first run)
+      //eras.push_back(pair<int,string>(386401,"V3.0")); // 24_v3.0 => 24I =>
+      //eras.push_back(pair<int,string>(386478,"V3.0")); // 24_v3.0 / 24I (actual first run)
+      //eras.push_back(pair<int,string>(383811,"VG")); // 24G tes
+      
+      // Additional ECAL intercalibration updates
+      // https://cms-talk.web.cern.ch/c/ppd/alca/108
+      // => https://cms-talk.web.cern.ch/t/gt-online-hlt-express-prompt-update-of-ecal-pedestals-conditions-run-368782-w24/25407
+      //era_boundaries.push_back(pair<int,int>(368919,368919)); // 23D-, 368823, 369927 =>
+      //eras.push_back(pair<int,string>(369927,"EP")); // =? 23D (actual run)
+      // => https://cms-talk.web.cern.ch/t/gt-online-hlt-express-prompt-update-of-ecal-pedestals-conditions-run-384719-w34/46354/10
+      //eras.push_back(pair<int,string>(384719,"IC")); // mid-24G! =>
+      eras.push_back(pair<int,string>(384933,"IC")); // mid-24G! (actual first run) 384644, 384933
+      // => https://cms-talk.web.cern.ch/t/l1-pre-announcement-of-ecal-intercalibration-update-at-l1-run-386025/57306
+      //eras.push_back(pair<int,string>(386025,"IC")); // also actual run? or deployed later?
+      // => https://cms-talk.web.cern.ch/t/l1-pre-announcement-of-ecal-intercalibration-update-at-l1-run-386945/61017
+      // eras.push_back(pair<int,string>(386945,"IC")); // post 24I
+
+      // => https://cms-talk.web.cern.ch/t/full-track-validation-hlt-prompt-ecalintercalibconstants-conditions-from-runs-378981-379660/39889/5
+      //eras.push_back(pair<int,string>(380115,"IC")); // mid-24C (too late)
+      // => https://cms-talk.web.cern.ch/t/full-track-validation-hlt-prompt-ecalintercalibconstants-conditions-from-runs-378981-379616/39588/4
+      //eras.push_back(pair<int,string>(379956,"IC")); // mid-24C 379866, 379984 =>
+      eras.push_back(pair<int,string>(379984,"IC")); // (actual run)
+      
+      //eras.push_back(pair<int,string>(368824,"XX")); // 23D- mystery run
+      //eras.push_back(pair<int,string>(368765,"XX")); // 23D- mystery run
+      //eras.push_back(pair<int,string>(380030,"XX")); // mid-24C mystery runx
+	
       TLatex *tex = new TLatex();
       tex->SetTextSize(0.045);
       int ks(0), kh(0);
@@ -247,23 +287,33 @@ void drawTimeStability() {
 	TString t = TString(cn);
 
 	int j = hcumlum2->FindBin(run);
-	if (hcumlum2->GetBinLowEdge(j)<run) ++j;
+	//if (hcumlum2->GetBinLowEdge(j)<run) ++j;
+	if (hcumlum2->GetBinLowEdge(j)!=run) cout << "run="<<run<<", bin edge="<<hcumlum2->GetBinLowEdge(j)<<endl<<flush;
 	double cumlum = hcumlum2->GetBinContent(j);
+	//int k = hcumlum->FindBin(run)+1;
+	//if (hcumlum->GetBinLowEdge(k)<run) ++k;
+	//double cumlum1 = hcumlum->GetBinContent(k);
 
 	l->SetLineColor(kGray);
 	if (t.Contains("V")) l->SetLineColor(kRed);
+	if (t.Contains("IC")) l->SetLineColor(kBlue);
+	if (t.Contains("EP")) l->SetLineColor(kBlue);
+	if (t.Contains("XX")) l->SetLineColor(kMagenta+1);
 	l->SetLineStyle(kSolid);
+	//if (t.Contains("V")) l->DrawLine(cumlum1,ymin,cumlum1,ymax);
+	//else
 	l->DrawLine(cumlum,ymin,cumlum,ymax);
 	if (s=="22"||s=="23"||s=="24") ks = 0;
 	//tex->DrawLatex(cumlum+1,-1.2-0.2*(ks++),cn);
-	if (t.Contains("V")) tex->DrawLatex(cumlum+1,-1.6-0.4*(kh++),cn);
+	//if (t.Contains("V")) tex->DrawLatex(cumlum1+1,-1.6-0.4*(kh++),cn);
+	if (t.Contains("V") || t.Contains("IC") || t.Contains("XX") || t.Contains("EP")) tex->DrawLatex(cumlum+1,-1.6-0.4*(kh++%3),cn);
 	else tex->DrawLatex(cumlum+1,+3.5-0.4*(ks++),cn);
       }
             
       tdrDraw(hjes,"PE",kOpenSquare,kRed,kSolid,-1,kNone,0,0.6);
       tdrDraw(h,"PE",kFullCircle,kGreen+2,kSolid,-1,kNone,0,0.6);
 
-      TLegend *leg = tdrLeg(0.60,0.85-0.05*3,0.85,0.85);
+      TLegend *leg = tdrLeg(0.65,0.85-0.05*3,0.90,0.85);
       leg->SetHeader("#gamma+jet MPF 110EB");
       leg->AddEntry(hjes,"Before JEC");
       leg->AddEntry(h,"After JEC");

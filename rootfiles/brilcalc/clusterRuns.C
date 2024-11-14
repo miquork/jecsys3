@@ -143,6 +143,31 @@ void clusterRuns() {
         {383780, 385813}, {385814, 386408}, {386409, 386951}
     };
 
+    // Additional HCAL breaks
+    // https://twiki.cern.ch/twiki/bin/viewauth/CMS/HcalRespCorrsTagsRun3
+    // https://twiki.cern.ch/twiki/bin/view/CMS/HcalRespCorrsTags2011
+    //eras.push_back(pair<int,string>(383195,"24_v2.0")); // HLT
+    //eras.push_back(pair<int,string>(383219,"24_v2.1")); // HLT
+    //eras.push_back(pair<int,string>(386401,"24_v3.0")); // HLT, eraH
+    era_boundaries.push_back(pair<int,int>(382287,382287)); // 382262, 382298
+    era_boundaries.push_back(pair<int,int>(383219,383219)); // 383175, 383247
+    era_boundaries.push_back(pair<int,int>(386401,386401)); // 386319, 386478
+    // => https://cms-talk.web.cern.ch/t/fast-track-validation-hlt-prompt-hcal-respcorrs-condition-update-from-hb-time-adjustment/25302/5
+    era_boundaries.push_back(pair<int,int>(368775,368775)); // 368765, 368822
+    
+    // Additional ECAL intercalibration updates
+    // https://cms-talk.web.cern.ch/c/ppd/alca/108
+    // => https://cms-talk.web.cern.ch/t/gt-online-hlt-express-prompt-update-of-ecal-pedestals-conditions-run-384719-w34/46354/10
+    era_boundaries.push_back(pair<int,int>(384719,384710)); // mid-24G!  384644, 384933
+    // => https://cms-talk.web.cern.ch/t/l1-pre-announcement-of-ecal-intercalibration-update-at-l1-run-386025/57306
+    era_boundaries.push_back(pair<int,int>(386025-1,386025-1)); // shift by 1 to get this right
+    //era_boundaries.push_back(pair<int,int>(387576-1,387576-1));
+    // => https://cms-talk.web.cern.ch/t/gt-online-hlt-express-prompt-update-of-ecal-pedestals-conditions-run-368782-w24/25407
+    //era_boundaries.push_back(pair<int,int>(368919,368919)); // nah, matches 24D break
+
+    // => https://cms-talk.web.cern.ch/t/full-track-validation-hlt-prompt-ecalintercalibconstants-conditions-from-runs-378981-379616/39588/4
+    era_boundaries.push_back(pair<int,int>(379956,379956)); // mid-24C 379866, 379984
+    
     // Define break points for the era boundaries and map their sources
     std::unordered_set<int> break_points;
     std::unordered_set<int> era_break_points;
