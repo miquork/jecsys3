@@ -55,7 +55,8 @@ void fullSimShapes() {
 
   //fullSimShape("hhpfc"); // HcalPFcut in MC
   //fullSimShape("hhnoise"); // HB noise in data (RunC, RunG)
-  fullSimShape("hbtime"); // HB noise in data (RunC, RunG)
+  //fullSimShape("hbtime"); // HB noise in data (RunC, RunG)
+  fullSimShape("hbsipm"); // SiPM parameters
 
   /*
   Fullsimshape("hp3");
@@ -142,7 +143,9 @@ void fullSimShape(string mode) {
   //TFile *f = new TFile("rootfiles/DATA_Run2022GC_HBnoise.root","READ");//bad
   //TFile *f = new TFile("rootfiles/DATA_Run2022Gfix_HBnoise.root","READ");//ok
   //TFile *f = new TFile("rootfiles/HBtiming_v1.root","READ");
-  TFile *f = new TFile("rootfiles/HBtiming_v2.root","READ");
+  //TFile *f = new TFile("rootfiles/HBtiming_v2.root","READ"); // hbtime
+  //TFile *f = new TFile("rootfiles/HB_SiPM_down_100k.root","READ"); // hbsipm
+  TFile *f = new TFile("rootfiles/HB_SiPM_down_1M.root","READ"); // hbsipm
   assert(f && !f->IsZombie()); is1M = true;
 
   // Open input file for toyPF placeholders
@@ -376,6 +379,7 @@ void fullSimShape(string mode) {
   func["hhpfc"] = clogpol4;//6;
   func["hhnoise"] = clogpol6;
   func["hbtime"] = clogpol6;//3_fix15;//6;
+  func["hbsipm"] = clogpol6;
   //
   func["cmb"] = clogpol6;
   // observables
@@ -431,6 +435,7 @@ void fullSimShape(string mode) {
   funcs["chf"]["hhpfc"] = clogpol3;//4;//6;
   funcs["chf"]["hhnoise"] = clogpol6;
   funcs["chf"]["hbtime"] = clogpol6;//3_fix15;//6;
+  funcs["chf"]["hbsipm"] = clogpol6;
   //
   funcs["cmb"]["chf"] = clogpol6;
   //
@@ -478,6 +483,7 @@ void fullSimShape(string mode) {
   funcs["nhf"]["hhpfc"] = clogpol4;//6;
   funcs["nhf"]["hhnoise"] = clogpol6;
   funcs["nhf"]["hbtime"] = clogpol6;//3_fix15;//6;
+  funcs["nhf"]["hbsipm"] = clogpol6;
   //
   funcs["cmb"]["nhf"] = clogpol6;
   //
@@ -525,6 +531,7 @@ void fullSimShape(string mode) {
   funcs["nef"]["hhpfc"] = clogpol3;//5;//4;//3;//6;
   funcs["nef"]["hhnoise"] = clogpol6;
   funcs["nef"]["hbtime"] = clogpol6;//3_fix15;//6;
+  funcs["nef"]["hbsipm"] = clogpol6;
   //
   funcs["cmb"]["nef"] = clogpol6;
 
@@ -594,6 +601,7 @@ void fullSimShape(string mode) {
   toyf["chf"]["hhpfc"] = 0;
   toyf["chf"]["hhnoise"] = 0;
   toyf["chf"]["hbtime"] = 0;
+  toyf["chf"]["hbsipm"] = 0;
   toyf["chf"]["cmb"] = 0;
   //
   toyf["nhf"]["hp3"] = 0;
@@ -616,6 +624,7 @@ void fullSimShape(string mode) {
   toyf["nhf"]["hhpfc"] = 0;
   toyf["nhf"]["hhnoise"] = 0;
   toyf["nhf"]["hbtime"] = 0;
+  toyf["nhf"]["hbsipm"] = 0;
   toyf["nhf"]["cmb"] = 0;
   //
   toyf["nef"]["hp3"] = 0;
@@ -638,6 +647,7 @@ void fullSimShape(string mode) {
   toyf["nef"]["hhpfc"] = 0;
   toyf["nef"]["hhnoise"] = 0;
   toyf["nef"]["hbtime"] = 0;
+  toyf["nef"]["hbsipm"] = 0;
   toyf["nef"]["cmb"] = 0;
 
   // Map new fullSimShapes
@@ -697,6 +707,7 @@ void fullSimShape(string mode) {
   name["hhnoise"] = "HBnoise";
   //name["hbtime"] = "delayQIE5";
   name["hbtime"] = "delayQIEfixm5";
+  name["hbsipm"] = "sipmNonlinDn";
   //
   name["cmb"] = "Combined";
   // observables
@@ -1198,6 +1209,7 @@ void fullSimShape(string mode) {
   */
   double maxy(3-1e-5), miny(-2+1e-5);
   if (mode=="tv3") { maxy = 10; miny = -10; }
+  if (mode=="hbsipm") { maxy = 6-1e-5; miny = -8+1e-5; }
   const char *title = (mode=="Rjet" ? "Response change (%)" :
 		       sysMode ? "PF composition change (10^{-2})" :
 		       "PF changes (% or 10^{-2})");
