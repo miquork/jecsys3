@@ -37,7 +37,7 @@ long long getMinutesSince2022(const std::string &dateStr, const std::string &tim
 
 // Function to load data from a file and fill vectors
 void loadData(const std::string &filename, std::vector<int> &years, std::vector<int> &fills, 
-              std::vector<int> &runs, std::vector<float> &lumis, std::vector<long long> &times,
+              std::vector<int> &runs, std::vector<float> &lumis, std::vector<int> &nls, std::vector<long long> &times,
               std::vector<long long> &minutes_since_2022, std::unordered_map<int, float> &fill_lumi_map) {
     std::ifstream file(filename);
     if (!file.is_open()) {
@@ -51,12 +51,12 @@ void loadData(const std::string &filename, std::vector<int> &years, std::vector<
 
     while (std::getline(file, line)) {
         // Use sscanf to check for valid 'run:fill' format at the beginning
-        int run, fill;
+        int run, fill, ncms;
         char dateStr[20], timeStr[20];
         float lumi;
         
         // Parse only lines matching the data format (run:fill, date, time, and recorded lumi)
-        if (sscanf(line.c_str(), " | %d:%d | %10s %8s | %*d | %*d | %*f | %f |", &run, &fill, dateStr, timeStr, &lumi) != 5) {
+        if (sscanf(line.c_str(), " | %d:%d | %10s %8s | %*d | %d | %*f | %f |", &run, &fill, dateStr, timeStr, &ncms, &lumi) != 6) {
             std::cerr << "Skipping line due to formatting: " << line << std::endl;
             continue;
         }
@@ -72,6 +72,7 @@ void loadData(const std::string &filename, std::vector<int> &years, std::vector<
         years.push_back(year);
         fills.push_back(fill);
         runs.push_back(run);
+	nls.push_back(ncms);
         lumis.push_back(lumi);
         times.push_back(timeVal);
         minutes_since_2022.push_back(minutesSince2022);
@@ -84,22 +85,22 @@ void loadData(const std::string &filename, std::vector<int> &years, std::vector<
 
 void treeRuns() {
     // Vectors to store data
-    std::vector<int> years, fills, runs;
+    std::vector<int> years, fills, runs, nls;
     std::vector<float> lumis;
     std::vector<long long> times, minutes_since_2022;
     std::unordered_map<int, float> fill_lumi_map;  // Cumulative luminosity per fill
 
     // Load data from each file (assuming files are in the same directory)
-    loadData("2022.txt", years, fills, runs, lumis, times, minutes_since_2022, fill_lumi_map);
-    loadData("2023.txt", years, fills, runs, lumis, times, minutes_since_2022, fill_lumi_map);
-    loadData("2024.txt", years, fills, runs, lumis, times, minutes_since_2022, fill_lumi_map);
+    loadData("2022.txt", years, fills, runs, lumis, nls, times, minutes_since_2022, fill_lumi_map);
+    loadData("2023.txt", years, fills, runs, lumis, nls, times, minutes_since_2022, fill_lumi_map);
+    loadData("2024.txt", years, fills, runs, lumis, nls, times, minutes_since_2022, fill_lumi_map);
 
     // Create ROOT file and TTree
     TFile *file = new TFile("luminosity_data.root", "RECREATE");
     TTree *tree = new TTree("LumiTree", "Lumi data per run and fill");
 
     // Variables to hold data for each entry
-    int year, fill, run;
+    int year, fill, run, ls;
     float lumi, fill_lumi, cumulative_lumi = 0.0;
     long long time, mins_since_2022;
 
@@ -108,6 +109,7 @@ void treeRuns() {
     tree->Branch("fill", &fill, "fill/I");
     tree->Branch("run", &run, "run/I");
     tree->Branch("lumi", &lumi, "lumi/F");
+    tree->Branch("nls", &ls, "nls/I");
     tree->Branch("time", &time, "time/L");
     tree->Branch("fill_lumi", &fill_lumi, "fill_lumi/F");
     tree->Branch("cumulative_lumi", &cumulative_lumi, "cumulative_lumi/F");
@@ -120,6 +122,7 @@ void treeRuns() {
         fill = fills[i];
         run = runs[i];
         lumi = lumis[i];
+	ls = nls[i];
         time = times[i];
         mins_since_2022 = minutes_since_2022[i];
 

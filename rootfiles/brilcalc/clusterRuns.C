@@ -17,17 +17,21 @@ struct RunRange {
     float luminosity;
     long long start_time;
     long long end_time;
+    int n_runs;
+    int n_ls;
 
-    RunRange(int start, int end, float lumi, long long start_t, long long end_t) 
-        : start_run(start), end_run(end), luminosity(lumi), start_time(start_t), end_time(end_t) {}
+    RunRange(int start, int end, float lumi, long long start_t, long long end_t, int nruns, int nls) 
+      : start_run(start), end_run(end), luminosity(lumi), start_time(start_t), end_time(end_t), n_runs(nruns), n_ls(nls) {}
 };
 
 struct Pair {
     int index1, index2;
     float combined_lumi;
     float min_lumi;
+    int n_runs;
+    int n_ls;
 
-    Pair(int i1, int i2, float lumi, float min) : index1(i1), index2(i2), combined_lumi(lumi), min_lumi(min) {}
+Pair(int i1, int i2, float lumi, float min, int nruns, int nls) : index1(i1), index2(i2), combined_lumi(lumi), min_lumi(min), n_runs(nruns), n_ls(nls) {}
 
     bool operator<(const Pair &other) const {
       return combined_lumi > other.combined_lumi; // Min-heap priority queue (by combined luminosity)
@@ -71,7 +75,7 @@ std::vector<RunRange> clusterRuns(std::vector<RunRange> &runs, const std::unorde
     // Generate initial list of valid pairs (only consecutive pairs)
     for (size_t i = 0; i < runs.size() - 1; ++i) {
         if (canMerge(runs[i], runs[i + 1], break_points, max_lumi, max_time_diff)) {
-	  merge_queue.emplace(i, i + 1, runs[i].luminosity + runs[i + 1].luminosity, min(runs[i].luminosity, runs[i +1].luminosity));
+	  merge_queue.emplace(i, i + 1, runs[i].luminosity + runs[i + 1].luminosity, min(runs[i].luminosity, runs[i +1].luminosity), runs[i].n_runs + runs[i+1].n_runs, runs[i].n_ls + runs[i+1].n_ls);
         }
     }
 
@@ -89,7 +93,7 @@ std::vector<RunRange> clusterRuns(std::vector<RunRange> &runs, const std::unorde
         RunRange &right = runs[index2];
 
         // Create the merged RunRange
-        RunRange merged_range(left.start_run, right.end_run, left.luminosity + right.luminosity, left.start_time, right.end_time);
+        RunRange merged_range(left.start_run, right.end_run, left.luminosity + right.luminosity, left.start_time, right.end_time, left.n_runs + right.n_runs, left.n_ls + right.n_ls);
 
         // Replace the first cluster with the merged one
         runs[index1] = merged_range;
@@ -101,7 +105,7 @@ std::vector<RunRange> clusterRuns(std::vector<RunRange> &runs, const std::unorde
         std::priority_queue<Pair> new_merge_queue;
         for (size_t i = 0; i < runs.size() - 1; ++i) {
             if (canMerge(runs[i], runs[i + 1], break_points, max_lumi, max_time_diff)) {
-	      new_merge_queue.emplace(i, i + 1, runs[i].luminosity + runs[i + 1].luminosity, min(runs[i].luminosity, runs[i+1].luminosity));
+	      new_merge_queue.emplace(i, i + 1, runs[i].luminosity + runs[i + 1].luminosity, min(runs[i].luminosity, runs[i+1].luminosity), runs[i].n_runs + runs[i+1].n_runs, runs[i].n_ls + runs[i+1].n_ls);
             }
         }
         merge_queue = std::move(new_merge_queue);
@@ -116,11 +120,12 @@ void clusterRuns() {
     TTree *tree = (TTree*)file->Get("LumiTree");
 
     // Variables to read from the tree
-    int run;
+    int run, nls;
     float lumi;
     long long time;
     tree->SetBranchAddress("run", &run);
     tree->SetBranchAddress("lumi", &lumi);
+    tree->SetBranchAddress("nls", &nls);
     //tree->SetBranchAddress("time", &time); // this is YYMMDDHHMM format
     tree->SetBranchAddress("minutes_since_2022", &time);
 
@@ -128,7 +133,7 @@ void clusterRuns() {
     std::vector<RunRange> runs;
     for (int i = 0; i < tree->GetEntries(); i++) {
         tree->GetEntry(i);
-        runs.emplace_back(run, run, lumi, time, time); // Each run starts as its own range
+        runs.emplace_back(run, run, lumi, time, time, 1, nls); // Each run starts as its own range
     }
 
     // Define era boundaries as pairs of (start_run, end_run)
@@ -255,6 +260,78 @@ void clusterRuns() {
     }
     arrays_outfile.close();
 
+    // Print fibs and parts
+    std::ofstream fibs("fibs.txt");
+    fibs << "[run1, run2] | name = [year][era]-part[N]-fib[M] | lum(/fb) |  start and end time  | runs  | number of LS" << std::endl;
+    int fib = 0;
+    int part = 1;
+    int current_year = -1;
+    std::string current_era;
+    std::unordered_set<int> part_breaks = {370602, 380252}; // Example list of part break points
+
+    // Define era boundaries as tuples of (start_run, end_run, "[year][era]")
+    std::vector<std::tuple<int, int, std::string>> era_boundaries2 = {
+        // 2022
+      {355100, 355793, "2022A"}, {355794, 357486, "2022B"}, /*{357487, 357733, "2022Dv1"}, {357734, 358219, "2022Dv2"}, {358220, 359021, "2022Dv3"},*/
+      {357487, 359021, "2022D"},
+      {359022, 360331, "2022E"}, {360332, 362180, "2022F"}, {362181, 362349, "2022HI"}, {362350, 362760, "2022G"},
+      // 2023
+      {366442, 367079, "2023B"}, /*{367080, 367515, "2023Cv1"}, {367516, 367620, "2023Cv2"}, {367621, 367763, "2023Cv3"},*/
+      {367080, 367763, "2023C"},
+      {367765, 369802, "2023Cv4"}, /*{369803, 370602, "2023Dv1"}, {370603, 370790, "2023Dv2"},*/
+      {369803, 370790, "2023D"},
+      // 2024
+      {378971, 379411, "2024A"}, {379412, 380252, "2024B"}, {380253, 380947, "2024C"}, {380948, 381383, "2024D"}, {381384, 381943, "2024E"}, {381944, 383779, "2024F"},
+      {383780, 385813, "2024G"}, {385814, 386408, "2024H"}, {386409, 386951, "2024I"}
+    };
+    
+    for (const auto &range : merged_runs) {
+        // Determine the current era and year from era_boundaries
+        for (const auto &boundary : era_boundaries2) {
+            if (range.start_run >= std::get<0>(boundary) && range.end_run <= std::get<1>(boundary)) {
+                if (current_year != stoi(std::get<2>(boundary).substr(0, 4)) || current_era != std::get<2>(boundary)) {
+                    // Reset fib counter if era changes
+                    current_year = stoi(std::get<2>(boundary).substr(0, 4));
+                    current_era = std::get<2>(boundary);
+                    fib = 0;
+                    part = 1;
+                }
+                break;
+            }
+        }
+
+        // Increment part if a part break point is crossed
+        if (part_breaks.find(range.start_run) != part_breaks.end()) {
+            part++;
+        }
+
+        // Increment fib number for non-zero luminosity runs
+        if (range.luminosity > 0) {
+            fib++;
+        }
+
+        // Print fib information
+        fibs << "[" << range.start_run << ", " << range.end_run << "]  |  "
+             << setw(7) << right << current_era << "-part" << part << "-fib" << setw(2) << left << fib << "  |  "
+             << setw(9) << right << setprecision(4) << range.luminosity << " fb^-1  |  "
+	     << setw(7) << range.start_time << " to " << setw(7) << range.end_time << "  |  "
+	     << setw(3) << range.n_runs << "  |  " << range.n_ls  << std::endl;
+    }
+    fibs.close();
+
+    /*
+    // Print fibs and parts
+    std::ofstream fibs("fibs.txt");
+    fibs << "[run1,run2] | name = [year][era]-part[N]-fib[M] | lum(/fb) | start and end date | number of runs| duration (mins)" << endl;
+    fibs << "[%d, %d] %d%s-part%d-fib%d"
+    int fib(0);
+    int year(0);
+    string era = "F";
+    for (const auto &range : merged_runs) {
+      fibs << Form("[%d, %d] %d%s-part%d-fib%d",range.start_run,range.end_run,year,era,++fib) << endl;
+    }
+    */
+      
     // Create the histogram and draw it
     TCanvas *c1 = new TCanvas("c1", "Run Range Luminosity", 800, 600);
     TH1D *h = new TH1D("h", ";Run range;Run Range Lum (/fb)", nruns, &vrun[0]);
