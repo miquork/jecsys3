@@ -260,14 +260,15 @@ void clusterRuns() {
     }
     arrays_outfile.close();
 
-    // Print fibs and parts
+    // Print fibs and nibs
     std::ofstream fibs("fibs.txt");
-    fibs << "[run1, run2] | name = [year][era]-part[N]-fib[M] | lum(/fb) |  start and end time  | runs  | number of LS" << std::endl;
+    fibs << "[run1, run2] | name = [year][era]-nib[N]-fib[M] | lum(/fb) |  start and end time  | runs  | number of LS" << std::endl;
     int fib = 0;
-    int part = 1;
+    int nib = 1;
     int current_year = -1;
     std::string current_era;
-    std::unordered_set<int> part_breaks = {370602, 380252}; // Example list of part break points
+    //std::unordered_set<int> nib_breaks = {370602, 380252}; // Example list of nib break points
+    std::unordered_set<int> nib_breaks = {368822, 382298, 383247, 384933}; // 2023-2024 list
 
     // Define era boundaries as tuples of (start_run, end_run, "[year][era]")
     std::vector<std::tuple<int, int, std::string>> era_boundaries2 = {
@@ -294,15 +295,15 @@ void clusterRuns() {
                     current_year = stoi(std::get<2>(boundary).substr(0, 4));
                     current_era = std::get<2>(boundary);
                     fib = 0;
-                    part = 1;
+                    nib = 1;
                 }
                 break;
             }
         }
 
-        // Increment part if a part break point is crossed
-        if (part_breaks.find(range.start_run) != part_breaks.end()) {
-            part++;
+        // Increment nib if a nib break point is crossed
+        if (nib_breaks.find(range.start_run) != nib_breaks.end()) {
+            nib++;
         }
 
         // Increment fib number for non-zero luminosity runs
@@ -312,26 +313,14 @@ void clusterRuns() {
 
         // Print fib information
         fibs << "[" << range.start_run << ", " << range.end_run << "]  |  "
-             << setw(7) << right << current_era << "-part" << part << "-fib" << setw(2) << left << fib << "  |  "
+             << setw(7) << right << current_era << "-nib" << nib << "-fib" << setw(2) << left << fib << "  |  "
              << setw(9) << right << setprecision(4) << range.luminosity << " fb^-1  |  "
 	     << setw(7) << range.start_time << " to " << setw(7) << range.end_time << "  |  "
 	     << setw(3) << range.n_runs << "  |  " << range.n_ls  << std::endl;
     }
     fibs.close();
 
-    /*
-    // Print fibs and parts
-    std::ofstream fibs("fibs.txt");
-    fibs << "[run1,run2] | name = [year][era]-part[N]-fib[M] | lum(/fb) | start and end date | number of runs| duration (mins)" << endl;
-    fibs << "[%d, %d] %d%s-part%d-fib%d"
-    int fib(0);
-    int year(0);
-    string era = "F";
-    for (const auto &range : merged_runs) {
-      fibs << Form("[%d, %d] %d%s-part%d-fib%d",range.start_run,range.end_run,year,era,++fib) << endl;
-    }
-    */
-      
+
     // Create the histogram and draw it
     TCanvas *c1 = new TCanvas("c1", "Run Range Luminosity", 800, 600);
     TH1D *h = new TH1D("h", ";Run range;Run Range Lum (/fb)", nruns, &vrun[0]);
