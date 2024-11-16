@@ -49,9 +49,9 @@ void drawTimeStability() {
     // Gamma+jet
     "GamJet",
     "pr50n","pr110n","pr230n",
-    "pr230m",
-    "pr110m",
-    "pr50m",
+    "pr230m","pr110m","pr50m",
+    "pr50nhf","pr50nef","pr50chf",
+    "pr110nhf","pr110nef","pr110chf",
     // Zmm+jet
     "ZmmJet",
     "mpf_run_zpt110",
@@ -67,6 +67,12 @@ void drawTimeStability() {
   mcolor["pr50m"] = kRed;
   mcolor["pr110m"] = kBlue;
   mcolor["pr230m"] = kGreen+2;
+  mcolor["pr50chf"] = kRed;
+  mcolor["pr50nhf"] = kGreen+2;
+  mcolor["pr50nef"] = kBlue;
+  mcolor["pr110chf"] = kRed;
+  mcolor["pr110nhf"] = kGreen+2;
+  mcolor["pr110nef"] = kBlue;
   mcolor["mpf_run_zpt30"] = kRed;
   mcolor["mpf_run_zpt50"] = kBlue;
   mcolor["mpf_run_zpt110"] = kGreen+2;
@@ -78,6 +84,12 @@ void drawTimeStability() {
   mhead["pr50m"] = "#gamma+jet MPF 50EB";
   mhead["pr110m"] = "#gamma+jet MPF 110EB";
   mhead["pr230m"] = "#gamma+jet MPF 200";
+  mhead["pr50chf"] = "#gamma+jet CHF 50EB";
+  mhead["pr50nhf"] = "#gamma+jet NHF 50EB";
+  mhead["pr50nef"] = "#gamma+jet NEF 50EB";
+  mhead["pr110chf"] = "#gamma+jet CHF 110EB";
+  mhead["pr110nhf"] = "#gamma+jet NHF 110EB";
+  mhead["pr110nef"] = "#gamma+jet NEF 110EB";
   mhead["mpf_run_zpt30"] = "Z(#mu#mu)+jet MPF 30";
   mhead["mpf_run_zpt50"] = "Z(#mu#mu)+jet MPF 50";
   mhead["mpf_run_zpt110"] = "Z(#mu#mu)+jet MPF 110";
@@ -88,9 +100,15 @@ void drawTimeStability() {
 
     string sh = vh[ih];
     const char *ch = sh.c_str();
+    TString th(ch);
     cout << "Analyzing " << ch << endl << flush;
     if (sh=="GamJet") { useGam = true; useZmm = false; continue; }
     if (sh=="ZmmJet") { useGam = false; useZmm = true; continue; }
+    bool isPF = (th.Contains("nhf") || th.Contains("nef") || th.Contains("chf"));
+    double kpf(1);
+    if (th.Contains("nhf")) kpf = 20;  // 5%
+    if (th.Contains("nef")) kpf = 4;   // 25%
+    if (th.Contains("chf")) kpf = 1.5; // 65%
     
     TH1D *hsum = (TH1D*)hlum2->Clone(Form("hsum_%s",ch)); hsum->Reset();
     //double vx[hsum->GetNbinsX()+1];
@@ -221,9 +239,9 @@ void drawTimeStability() {
 
     double xmin = hbins->GetXaxis()->GetXmin();
     double xmax = hbins->GetXaxis()->GetXmax();
-    double kf = (psum->Integral()!=0 ? 1. : 20.);
-    double ymin = (psum->Integral()!=0 ? -2.5 : -2.5*kf);
-    double ymax = (psum->Integral()!=0 ? +5.5 : +5.5*kf);
+    double kf = (psum->Integral()!=0 ? (isPF ? kpf : 1.) : 20.);
+    double ymin = (psum->Integral()!=0 ? (isPF ? -2.5*kpf : -2.5) : -2.5*kf);
+    double ymax = (psum->Integral()!=0 ? (isPF ? +5.5*kpf : +5.5) : +5.5*kf);
     //TH1D *h1 = tdrHist(Form("h1_%s",ch),"JES",0.975,1.025,"Cumulative luminosity (fb^{-1})",0,hbins->GetXaxis()->GetXmax());
     TH1D *h1 = tdrHist(Form("h1_%s",ch),"JES-1 (%)",ymin,ymax,"Cumulative luminosity (fb^{-1})",xmin,xmax);
     lumi_136TeV = "Run3, 2022-24";
@@ -231,6 +249,7 @@ void drawTimeStability() {
     TCanvas *c1 = tdrCanvas(Form("c1_%s",ch),h1,8,11,kRectangular);
 
     if (true) { // Draw extra lines etc.
+
       // Horizontal lines at 0 and +/-1% for reference
       TLine *l = new TLine();
       l->SetLineStyle(kDashed);
@@ -320,7 +339,10 @@ void drawTimeStability() {
       //eras.push_back(pair<int,string>(382298,"DJ")); // HCAL 24_v2.0
       //eras.push_back(pair<int,string>(383247,"DJ")); // HCAL 24_v2.1
       //eras.push_back(pair<int,string>(384933,"DJ")); // IC
-	
+
+      // Keep record of breaks for drawTimeStabilityPairs
+      TH1D *hbreaks = new TH1D("hbreaks",";Break;Cum.Lum. (/fb)",eras.size(),0,eras.size());
+      
       TLatex *tex = new TLatex();
       tex->SetTextSize(0.045);
       int ks(0), kh(0);
@@ -356,7 +378,15 @@ void drawTimeStability() {
 	  tex->DrawLatex(cumlum+1,(-1.6-0.4*(kh++%3))*kf,cn);
 	else
 	  tex->DrawLatex(cumlum+1,(+3.5-0.4*(ks++))*kf,cn);
+
+	hbreaks->SetBinContent(i+1,cumlum);
+	hbreaks->GetXaxis()->SetBinLabel(i+1,cn);
       }
+
+      fout->cd();
+      hbreaks->Write("hbreaks",TObject::kOverwrite);
+      curdir->cd();
+      delete hbreaks;
     }
 
     TF1 *f1 = new TF1("f1","[0]",0,1e6);
