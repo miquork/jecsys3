@@ -3,6 +3,7 @@
 #include "TFile.h"
 #include "TH1D.h"
 #include "TProfile.h"
+#include "TProfile2D.h"
 #include "TF1.h"
 
 #include <iostream>
@@ -16,25 +17,47 @@ void drawTimeStability() {
   setTDRStyle();
   TDirectory *curdir = gDirectory;
 
+  TFile *fout = new TFile("rootfiles/drawTimeStability.root","RECREATE");
+  
   TFile *flum = new TFile("rootfiles/brilcalc/clusterRuns.root","READ");
   assert(flum && !flum->IsZombie());
 
+  // Load luminosity information
   TH1D *hlum = (TH1D*)flum->Get("hlum"); assert(hlum); // per run
   TH1D *hlum2 = (TH1D*)flum->Get("hlum2"); assert(hlum2); // per range
   TH1D *hcumlum = (TH1D*)flum->Get("hcumlum"); assert(hcumlum); // per run
   TH1D *hcumlum2 = (TH1D*)flum->Get("hcumlum2"); assert(hcumlum2); // per range
   TH1D *hbins = (TH1D*)flum->Get("hcumlumbins2"); assert(hbins); // per range
 
-  string vf[] =
-    {"2022CDE_v32","2022FG_v32",
-     "2023Cv123_w8","2023Cv4_w8","2023D_w8",
-     "2024BCD_w39","2024E_w39","2024F_w39","2024G_w39","2024H_w40","2024I_w40"};
+  // Listing all files here. GamJet and ZmmJet switch filetype
+  string vf[] = {
+    // gamma+jet
+    "GamJet",
+    "2022CDE_v32","2022FG_v32",
+    "2023Cv123_w8","2023Cv4_w8","2023D_w8",
+    "2024BCD_w39","2024E_w39","2024F_w39","2024G_w39","2024H_w40","2024I_w40",
+    // Z+jet
+    "ZmmJet",
+    "2022CD","2022E","2022FG",
+    "2023C123","2023C4","2023D",
+    "2024BCD","2024E","2024F","2024G","2024H","2024I"
+  };
   const int nf = sizeof(vf)/sizeof(vf[0]);
-    
-  string vh[] =
-    {//"pr50n","pr110n","pr230n",
-      //"pr50m","pr110m"};//,"pr230m"};
-      "pr110m"};
+
+  // Listing all histograms here. GamJet and ZmmJet switch filetype
+  string vh[] = {
+    // Gamma+jet
+    "GamJet",
+    "pr50n","pr110n","pr230n",
+    "pr230m",
+    "pr110m",
+    "pr50m",
+    // Zmm+jet
+    "ZmmJet",
+    "mpf_run_zpt110",
+    "mpf_run_zpt50",
+    "mpf_run_zpt30"
+  };
   const int nh = sizeof(vh)/sizeof(vh[0]);
 
   map<string, int> mcolor;
@@ -44,13 +67,31 @@ void drawTimeStability() {
   mcolor["pr50m"] = kRed;
   mcolor["pr110m"] = kBlue;
   mcolor["pr230m"] = kGreen+2;
+  mcolor["mpf_run_zpt30"] = kRed;
+  mcolor["mpf_run_zpt50"] = kBlue;
+  mcolor["mpf_run_zpt110"] = kGreen+2;
+
+  map<string,const char*> mhead;
+  mhead["pr50n"] = "#gamma+jet Xsec 50EB";
+  mhead["pr110n"] = "#gamma+jet Xsec 110EB";
+  mhead["pr230n"] = "#gamma+jet Xsec 200";
+  mhead["pr50m"] = "#gamma+jet MPF 50EB";
+  mhead["pr110m"] = "#gamma+jet MPF 110EB";
+  mhead["pr230m"] = "#gamma+jet MPF 200";
+  mhead["mpf_run_zpt30"] = "Z(#mu#mu)+jet MPF 30";
+  mhead["mpf_run_zpt50"] = "Z(#mu#mu)+jet MPF 50";
+  mhead["mpf_run_zpt110"] = "Z(#mu#mu)+jet MPF 110";
   
   // Loop over files to retrieve stuff
+  bool useGam(false), useZmm(false);
   for (int ih = 0; ih != nh; ++ih) {
 
-    const char *ch = vh[ih].c_str();
-    cout << "Analyuzing " << ch << endl << flush;
-
+    string sh = vh[ih];
+    const char *ch = sh.c_str();
+    cout << "Analyzing " << ch << endl << flush;
+    if (sh=="GamJet") { useGam = true; useZmm = false; continue; }
+    if (sh=="ZmmJet") { useGam = false; useZmm = true; continue; }
+    
     TH1D *hsum = (TH1D*)hlum2->Clone(Form("hsum_%s",ch)); hsum->Reset();
     //double vx[hsum->GetNbinsX()+1];
     //for (int i = 1; i != hsum->GetNbinsX()+2; ++i) vx[i-1] = hsum->GetBinLowEdge(i);
@@ -62,22 +103,42 @@ void drawTimeStability() {
 
     // Keep track of JES (1=L2L3Res) for gamma+jet MPF
     //TH1D *hjes = new TH1D(Form("hjes_%s",ch),";JES;Cum.Lum(/fb)",hbins->GetNbinsX(),&vx[0]);
-    
+
+    bool isGam(false), isZmm(false);
     for (int iff = 0; iff != nf; ++iff) {
 
-      const char *cf = vf[iff].c_str();
+      string sf = vf[iff];
+      const char *cf = sf.c_str();
       TString tf(cf);
+      
+      if (sf=="GamJet") { isGam = true; isZmm = false; continue; }
+      if (sf=="ZmmJet") { isGam = false; isZmm = true; continue; }
+      if (useGam && !isGam) continue;
+      if (useZmm && !isZmm) continue;
+      
       TFile *f(0);
-      if (tf.Contains("2024")) f = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s.root",cf),"READ");
-      if (tf.Contains("2023")) f = new TFile(Form("rootfiles/Summer23_L2L3Res/GamHistosFill_data_%s.root",cf),"READ");
-      if (tf.Contains("2022")) f = new TFile(Form("../gamjet/rootfiles/GamHistosFill_data_%s.root",cf),"READ");
+      // Photon+jet files
+      if (useGam) {
+	if (tf.Contains("2024")) f = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s.root",cf),"READ");
+	if (tf.Contains("2023")) f = new TFile(Form("rootfiles/Summer23_L2L3Res/GamHistosFill_data_%s.root",cf),"READ");
+	if (tf.Contains("2022")) f = new TFile(Form("../gamjet/rootfiles/GamHistosFill_data_%s.root",cf),"READ");
+      }
+      // Zmm+jet files
+      if (useZmm) {
+	if (tf.Contains("2022FG")) f = new TFile(Form("rootfiles/jme_bplusZ_%s_Zmm_sync_v78.root",cf),"READ");
+	else if (tf.Contains("2022"))   f = new TFile(Form("rootfiles/jme_bplusZ_%s_Zmm_sync_v76.root",cf),"READ");
+	if (tf.Contains("2023"))   f = new TFile(Form("rootfiles/Prompt2024/jme_bplusZ_%s_Zmm_sync_v84.root",cf),"READ");
+	if (tf.Contains("2024"))   f = new TFile(Form("rootfiles/Prompt2024/v88/jme_bplusZ_%s_Zmm_sync_v88.root",cf),"READ");
+      }
       if (!f || f->IsZombie()) cout << "Missing " << cf << endl << flush;
       assert(f && !f->IsZombie());
       curdir->cd();
 
       TH1D *h(0);
       TProfile *p(0);
-      TObject *o = f->Get(Form("runs/%s",ch));
+      TObject *o(0);
+      if (useGam) o = f->Get(Form("runs/%s",ch));
+      if (useZmm) o = f->Get(Form("data/%s",ch));
       // Detect object type automatically
       if (o) {
 	if (o->InheritsFrom("TProfile"))  p = (TProfile*)o;
@@ -85,8 +146,10 @@ void drawTimeStability() {
       }
 
       // Determine the average JES that was applied to each run
-      TProfile2D *p2res = (TProfile2D*)f->Get("Gamjet2/p2res");
-      if (!p2res) cout << "Missing Gamjet2/p2res in " << cf << endl << flush;
+      TProfile2D *p2res(0);
+      if (useGam) p2res = (TProfile2D*)f->Get("Gamjet2/p2res");
+      if (useZmm) p2res = (TProfile2D*)f->Get("data/l2res/p2res");
+      if (!p2res) cout << "Missing p2res in " << cf << endl << flush;
       double jes(1.);
       if (p2res) {
 	// Slice out [110,230]x[-1.3,1.3] region to get mean JES here
@@ -158,50 +221,24 @@ void drawTimeStability() {
 
     double xmin = hbins->GetXaxis()->GetXmin();
     double xmax = hbins->GetXaxis()->GetXmax();
-    double ymin = -2.5;
-    double ymax = +5.5;//+2.5;
+    double kf = (psum->Integral()!=0 ? 1. : 20.);
+    double ymin = (psum->Integral()!=0 ? -2.5 : -2.5*kf);
+    double ymax = (psum->Integral()!=0 ? +5.5 : +5.5*kf);
     //TH1D *h1 = tdrHist(Form("h1_%s",ch),"JES",0.975,1.025,"Cumulative luminosity (fb^{-1})",0,hbins->GetXaxis()->GetXmax());
     TH1D *h1 = tdrHist(Form("h1_%s",ch),"JES-1 (%)",ymin,ymax,"Cumulative luminosity (fb^{-1})",xmin,xmax);
     lumi_136TeV = "Run3, 2022-24";
     extraText = "Private";
     TCanvas *c1 = tdrCanvas(Form("c1_%s",ch),h1,8,11,kRectangular);
 
-    TF1 *f1 = new TF1("f1","[0]",0,1e6);
-    if (hsum->Integral()!=0) {
-      hsum->Fit(f1,"QRN");
-      hsum->Scale(1./f1->GetParameter(0));
-      hsum->SetLineColor(mcolor[ch]);
-      //hsum->Draw(ih==0 ? "HE" : "HESAME");
-      tdrDraw(hsum,"PE",kFullCircle,kBlack,kSolid,-1,kNone,0,0.6);
-    }
-    if (psum->Integral()!=0) {
-
-      // Normalize average to unity to focus on time dependence
-      psum->Fit(f1,"QRN");
-      TH1D *h = psum->ProjectionX(Form("h_%s",ch));
-      h->Scale(1./f1->GetParameter(0));
-
-      psumjes->Fit(f1,"QRN");
-      TH1D *hjes = psumjes->ProjectionX(Form("hjes_%s",ch));
-      hjes->Scale(1./f1->GetParameter(0));
-
-      // Turn JES into JES-1 (%)
-      for (int i = 1; i != h->GetNbinsX()+1; ++i) {
-	h->SetBinContent(i, (h->GetBinContent(i)-1)*100.);
-	h->SetBinError(i, h->GetBinError(i)*100.);
-
-	hjes->SetBinContent(i, (hjes->GetBinContent(i)-1)*100.);
-	hjes->SetBinError(i, hjes->GetBinError(i)*100.);
-      }
-
+    if (true) { // Draw extra lines etc.
       // Horizontal lines at 0 and +/-1% for reference
       TLine *l = new TLine();
       l->SetLineStyle(kDashed);
       l->SetLineColor(kGray+1);
       l->DrawLine(xmin, 0, xmax, 0);
       l->SetLineStyle(kDotted);
-      l->DrawLine(xmin, +1, xmax, +1);
-      l->DrawLine(xmin, -1, xmax, -1);
+      l->DrawLine(xmin, +1*kf, xmax, +1*kf);
+      l->DrawLine(xmin, -1*kf, xmax, -1*kf);
 
       // Lines at era breaks
       // Define era boundaries as pairs of (start_run, end_run)
@@ -275,6 +312,14 @@ void drawTimeStability() {
       //eras.push_back(pair<int,string>(368824,"XX")); // 23D- mystery run
       //eras.push_back(pair<int,string>(368765,"XX")); // 23D- mystery run
       //eras.push_back(pair<int,string>(380030,"XX")); // mid-24C mystery runx
+
+      // Dijet team
+      //Runs 382298 - 383246
+      //Runs 383247 – 384932
+      //Runs 384933 – End of Era G
+      //eras.push_back(pair<int,string>(382298,"DJ")); // HCAL 24_v2.0
+      //eras.push_back(pair<int,string>(383247,"DJ")); // HCAL 24_v2.1
+      //eras.push_back(pair<int,string>(384933,"DJ")); // IC
 	
       TLatex *tex = new TLatex();
       tex->SetTextSize(0.045);
@@ -299,6 +344,7 @@ void drawTimeStability() {
 	if (t.Contains("IC")) l->SetLineColor(kBlue);
 	if (t.Contains("EP")) l->SetLineColor(kBlue);
 	if (t.Contains("XX")) l->SetLineColor(kMagenta+1);
+	if (t.Contains("DJ")) l->SetLineColor(kOrange+1);
 	l->SetLineStyle(kSolid);
 	//if (t.Contains("V")) l->DrawLine(cumlum1,ymin,cumlum1,ymax);
 	//else
@@ -306,24 +352,84 @@ void drawTimeStability() {
 	if (s=="22"||s=="23"||s=="24") ks = 0;
 	//tex->DrawLatex(cumlum+1,-1.2-0.2*(ks++),cn);
 	//if (t.Contains("V")) tex->DrawLatex(cumlum1+1,-1.6-0.4*(kh++),cn);
-	if (t.Contains("V") || t.Contains("IC") || t.Contains("XX") || t.Contains("EP")) tex->DrawLatex(cumlum+1,-1.6-0.4*(kh++%3),cn);
-	else tex->DrawLatex(cumlum+1,+3.5-0.4*(ks++),cn);
+	if (t.Contains("V") || t.Contains("IC") || t.Contains("XX") || t.Contains("EP"))
+	  tex->DrawLatex(cumlum+1,(-1.6-0.4*(kh++%3))*kf,cn);
+	else
+	  tex->DrawLatex(cumlum+1,(+3.5-0.4*(ks++))*kf,cn);
       }
-            
-      tdrDraw(hjes,"PE",kOpenSquare,kRed,kSolid,-1,kNone,0,0.6);
+    }
+
+    TF1 *f1 = new TF1("f1","[0]",0,1e6);
+    if (hsum->Integral()!=0) {
+      f1->SetRange(382298,1e6); // V2.0 onwards
+      hsum->Fit(f1,"QRN");
+      hsum->Scale(1./f1->GetParameter(0));
+      
+      // Turn Xsec into Xsec-1 (%) and map to cumlum2
+      TH1D  *h = (TH1D*)hbins->Clone(Form("h_%s",ch)); h->Reset();
+      for (int i = 1; i != hsum->GetNbinsX()+1; ++i) {
+	int run = hsum->GetBinCenter(i);
+	double cumlum = hcumlum2->GetBinContent(hcumlum2->FindBin(run));
+	int j = hbins->FindBin(cumlum);
+	if (hsum->GetBinContent(i)!=0) {
+	  h->SetBinContent(j, (hsum->GetBinContent(i)-1)*100.);
+	  h->SetBinError(j, hsum->GetBinError(i)*100.);
+	}
+      }
+      
+      h1->SetYTitle("Rel.Xsec-1 (%)");
+
       tdrDraw(h,"PE",kFullCircle,kGreen+2,kSolid,-1,kNone,0,0.6);
 
+      fout->cd();
+      h->Write(Form("%s",ch),TObject::kOverwrite);
+      curdir->cd();
+    } // hsum
+    
+    if (psum->Integral()!=0) {
+      f1->SetRange(82,1e6); // V2.0 onwards
+      
+      // Normalize average to unity to focus on time dependence
+      psum->Fit(f1,"QRN");
+      TH1D *h = psum->ProjectionX(Form("h_%s",ch));
+      h->Scale(1./f1->GetParameter(0));
+      
+      psumjes->Fit(f1,"QRN");
+      TH1D *hjes = psumjes->ProjectionX(Form("hjes_%s",ch));
+      hjes->Scale(1./f1->GetParameter(0));
+
+      // Turn JES into JES-1 (%)
+      for (int i = 1; i != h->GetNbinsX()+1; ++i) {
+	if (h->GetBinContent(i)!=0) {
+	  h->SetBinContent(i, (h->GetBinContent(i)-1)*100.);
+	  h->SetBinError(i, h->GetBinError(i)*100.);
+	  
+	  hjes->SetBinContent(i, (hjes->GetBinContent(i)-1)*100.);
+	  hjes->SetBinError(i, hjes->GetBinError(i)*100.);
+	}
+      }
+      
+      tdrDraw(hjes,"PE",kOpenSquare,kRed,kSolid,-1,kNone,0,0.6);
+      tdrDraw(h,"PE",kFullCircle,kGreen+2,kSolid,-1,kNone,0,0.6);
+      
       TLegend *leg = tdrLeg(0.65,0.85-0.05*3,0.90,0.85);
-      leg->SetHeader("#gamma+jet MPF 110EB");
+      //leg->SetHeader("#gamma+jet MPF 110EB");
+      leg->SetHeader(mhead[ch]);
       leg->AddEntry(hjes,"Before JEC");
       leg->AddEntry(h,"After JEC");
-    }
+      
+      fout->cd();
+      hjes->Write(Form("%s_jes",ch),TObject::kOverwrite);
+      h->Write(Form("%s",ch),TObject::kOverwrite);
+      curdir->cd();
+    } // psum
 
     c1->RedrawAxis();
     c1->SaveAs(Form("pdf/drawTimeStability/drawTimeStability_%s.pdf",ch));
   } // for ih
   
-  
+  cout << "Results stored in rootfiles/drawTimeStability.root" << endl << flush;
+  fout->Close();
 } // drawTimeStability
 
 
