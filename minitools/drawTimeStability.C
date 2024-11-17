@@ -10,6 +10,7 @@
 
 #include "../tdrstyle_mod22.C"
 
+bool debug = false;
 void rebinProfileCustom(TProfile* p, TProfile* p_new);
 
 void drawTimeStability() {
@@ -52,11 +53,13 @@ void drawTimeStability() {
     "pr230m","pr110m","pr50m",
     "pr50nhf","pr50nef","pr50chf",
     "pr110nhf","pr110nef","pr110chf",
+    "pr230nhf","pr230nef","pr230chf",
     // Zmm+jet
     "ZmmJet",
-    "mpf_run_zpt110",
-    "mpf_run_zpt50",
-    "mpf_run_zpt30"
+    "mpf_run_zpt110","mpf_run_zpt50","mpf_run_zpt30",
+    "chf_run_zpt30","nef_run_zpt30","nhf_run_zpt30",
+    "chf_run_zpt50","nef_run_zpt50","nhf_run_zpt50",
+    "chf_run_zpt110","nef_run_zpt110","nhf_run_zpt110",
   };
   const int nh = sizeof(vh)/sizeof(vh[0]);
 
@@ -76,6 +79,9 @@ void drawTimeStability() {
   mcolor["mpf_run_zpt30"] = kRed;
   mcolor["mpf_run_zpt50"] = kBlue;
   mcolor["mpf_run_zpt110"] = kGreen+2;
+  mcolor["chf_run_zpt30"] = kRed;
+  mcolor["nef_run_zpt30"] = kBlue;
+  mcolor["nhf_run_zpt30"] = kGreen+2;
 
   map<string,const char*> mhead;
   mhead["pr50n"] = "#gamma+jet Xsec 50EB";
@@ -93,6 +99,13 @@ void drawTimeStability() {
   mhead["mpf_run_zpt30"] = "Z(#mu#mu)+jet MPF 30";
   mhead["mpf_run_zpt50"] = "Z(#mu#mu)+jet MPF 50";
   mhead["mpf_run_zpt110"] = "Z(#mu#mu)+jet MPF 110";
+  mhead["chf_run_zpt30"] = "Z(#mu#mu)+jet CHF 30";
+  mhead["nef_run_zpt30"] = "Z(#mu#mu)+jet NEF 30";
+  mhead["nhf_run_zpt30"] = "Z(#mu#mu)+jet NHF 30";
+  
+
+  // Store normalizations to histogra
+  TH1D *hscales = new TH1D("hscales",";Observable;Scale",2*nh,0,2*nh);
   
   // Loop over files to retrieve stuff
   bool useGam(false), useZmm(false);
@@ -192,7 +205,7 @@ void drawTimeStability() {
 	       
       if (p) {
 
-	cout << "Fill p for file " << cf << endl << flush;
+	if (debug) cout << "Fill p for file " << cf << endl << flush;
 	//rebinProfileCustom(psum, p);
 
 	// Scale out L2L3Res
@@ -341,7 +354,7 @@ void drawTimeStability() {
       //eras.push_back(pair<int,string>(384933,"DJ")); // IC
 
       // Keep record of breaks for drawTimeStabilityPairs
-      TH1D *hbreaks = new TH1D("hbreaks",";Break;Cum.Lum. (/fb)",eras.size(),0,eras.size());
+      TH1D *hbreaks = new TH1D("hbreaks",";Break point;Cum.Lum. (/fb)",eras.size(),0,eras.size());
       
       TLatex *tex = new TLatex();
       tex->SetTextSize(0.045);
@@ -389,7 +402,8 @@ void drawTimeStability() {
       delete hbreaks;
     }
 
-    TF1 *f1 = new TF1("f1","[0]",0,1e6);
+    TF1 *f1 = new TF1("f1","[0]",0,1e6); f1->SetParameter(0,0);
+    TF1 *f2 = new TF1("f2","[0]",0,1e6); f2->SetParameter(0,0);
     if (hsum->Integral()!=0) {
       f1->SetRange(382298,1e6); // V2.0 onwards
       hsum->Fit(f1,"QRN");
@@ -417,16 +431,17 @@ void drawTimeStability() {
     } // hsum
     
     if (psum->Integral()!=0) {
-      f1->SetRange(82,1e6); // V2.0 onwards
+      //f1->SetRange(82,1e6); // V2.0 onwards => wrong /fb
+      f1->SetRange(90.7,1e6); // V2.0 onwards
       
       // Normalize average to unity to focus on time dependence
       psum->Fit(f1,"QRN");
       TH1D *h = psum->ProjectionX(Form("h_%s",ch));
       h->Scale(1./f1->GetParameter(0));
       
-      psumjes->Fit(f1,"QRN");
+      psumjes->Fit(f2,"QRN");
       TH1D *hjes = psumjes->ProjectionX(Form("hjes_%s",ch));
-      hjes->Scale(1./f1->GetParameter(0));
+      hjes->Scale(1./f2->GetParameter(0));
 
       // Turn JES into JES-1 (%)
       for (int i = 1; i != h->GetNbinsX()+1; ++i) {
@@ -454,9 +469,20 @@ void drawTimeStability() {
       curdir->cd();
     } // psum
 
+    hscales->SetBinContent(2*ih+1, f1->GetParameter(0));
+    hscales->SetBinError(2*ih+1, f1->GetParError(0));
+    hscales->GetXaxis()->SetBinLabel(2*ih+1,ch);
+    hscales->SetBinContent(2*ih+2, f2->GetParameter(0));
+    hscales->SetBinError(2*ih+2, f2->GetParError(0));
+    hscales->GetXaxis()->SetBinLabel(2*ih+2,Form("%s_jes",ch));
+    
     c1->RedrawAxis();
     c1->SaveAs(Form("pdf/drawTimeStability/drawTimeStability_%s.pdf",ch));
   } // for ih
+
+  fout->cd();
+  hscales->Write("hscales",TObject::kOverwrite);
+  curdir->cd();
   
   cout << "Results stored in rootfiles/drawTimeStability.root" << endl << flush;
   fout->Close();
