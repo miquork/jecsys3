@@ -36,7 +36,8 @@ void drawJERSFcomparisonV2() {
   setTDRStyle();
   TDirectory *curdir = gDirectory;
   
-  TFile *f = new TFile("rootfiles/JERSF_Run3_vs_Summer23BPix.root","READ");
+  //TFile *f = new TFile("rootfiles/JERSF_Run3_vs_Summer23BPix.root","READ");
+  TFile *f = new TFile("rootfiles/JERSF_Run3_vs_Summer23BPix_upto_2024I.root","READ");
   assert(f && !f->IsZombie());
 
   string vera[] = {
@@ -51,7 +52,8 @@ void drawJERSFcomparisonV2() {
     "2022F_19Dec2023","2022G_19Dec2023",
     "2023Cv123_19Dec2023","2023Cv4_19Dec2023","2023D_19Dec2023",
       "2023D_19Dec2023",
-    "2024BC"
+      //"2024BC"
+      "2024BCD","2024E","2024F","2024G","2024H","2024I"
   };
   const int nera = sizeof(vera)/sizeof(vera[0]);
 
@@ -75,6 +77,12 @@ void drawJERSFcomparisonV2() {
   color["2023Cv4_19Dec2023"] = kMagenta+1;
   color["2023D_19Dec2023"] = kMagenta+2;
   color["2024BC"] = kBlack;
+  color["2024BCD"] = kYellow+1;
+  color["2024E"] = kYellow+2;
+  color["2024F"] = kOrange;
+  color["2024G"] = kOrange+1;
+  color["2024H"] = kYellow+2;
+  color["2024I"] = kYellow+3;
 
   map<string,int> marker;
   marker["2022C_Prompt2022"] = kOpenSquare;
@@ -96,6 +104,12 @@ void drawJERSFcomparisonV2() {
   marker["2023Cv4_19Dec2023"] = kFullCircle;
   marker["2023D_19Dec2023"] = kFullCircle;
   marker["2024BC"] = kFullCircle;//kOpenSquare;
+  marker["2024BCD"] = kOpenStar;
+  marker["2024E"] = kOpenStar;
+  marker["2024F"] = kFullStar;
+  marker["2024G"] = kFullStar;
+  marker["2024H"] = kFullStar;
+  marker["2024I"] = kFullStar;
 
   map<string,const char*> label;
   label["2022C_Prompt2022"] = "22C_Pr22";
@@ -117,6 +131,12 @@ void drawJERSFcomparisonV2() {
   label["2023Cv4_19Dec2023"] = "23C4_19Dec";
   label["2023D_19Dec2023"] = "23D_19Dec";
   label["2024BC"] = "24BC_Pr24";
+  label["2024BCD"] = "24BCD_Pr24";
+  label["2024E"] = "24E_Pr24";
+  label["2024F"] = "24F_Pr24";
+  label["2024G"] = "24G_Pr24";
+  label["2024H"] = "24H_Pr24";
+  label["2024I"] = "24I_Pr24";
 
   map<string,int> bin;
   bin["2022C_Prompt2022"] = 1;
@@ -138,6 +158,12 @@ void drawJERSFcomparisonV2() {
   bin["2023Cv4_19Dec2023"] = 18;
   bin["2023D_19Dec2023"] = 19;
   bin["2024BC"] = 20;
+  bin["2024BCD"] = 20;
+  bin["2024E"] = 21;
+  bin["2024F"] = 22;
+  bin["2024G"] = 23;
+  bin["2024H"] = 24;
+  bin["2024I"] = 25;
   
   TH1D *h = tdrHist("h","JER SF",0.5,3.0);
   lumi_136TeV = "Run3 vs Summer23BPix MC";
@@ -160,7 +186,8 @@ void drawJERSFcomparisonV2() {
   leg->SetNColumns(2);
   leg->SetTextSize(lsize);
 
-  int nb = bin["2024BC"];//bin.size();
+  //int nb = bin["2024BC"];//bin.size();
+  int nb = bin["2024I"];//bin.size();
   TH1D *h100 = new TH1D("h100",";Era;JER SF",nb,0.5,nb+0.5);
   TH1D *h250 = new TH1D("h250",";Era;JER SF",nb,0.5,nb+0.5);
   TH1D *h1000 = new TH1D("h1000",";Era;JER SF",nb,0.5,nb+0.5);
@@ -248,7 +275,7 @@ void drawJERSFcomparisonV2() {
   gPad->RedrawAxis();
 
   c1->SaveAs("pdf/drawJERSFcomparison/drawJERSFcomparisonV2.pdf");
-  c1->SaveAs("pdf/drawJERSFcomparison/drawJERSFcomparisonV2.png");
+  //c1->SaveAs("pdf/drawJERSFcomparison/drawJERSFcomparisonV2.png");
 
   h100->GetYaxis()->SetRangeUser(0.9,1.5);//0.8,2.0);//0.90,1.5);  
   h100->GetXaxis()->SetLabelSize(0.025);
@@ -261,17 +288,17 @@ void drawJERSFcomparisonV2() {
 
   l->SetLineStyle(kSolid);
   l->SetLineColor(kGray+2);
-  l->DrawLine(0.5,1,20.5,1);
+  l->DrawLine(0.5,1,nb+0.5,1);//20.5,1);
   l->SetLineStyle(kDotted);
-  l->DrawLine(0.5,1.1,20.5,1.1);
+  l->DrawLine(0.5,1.1,nb+0.5,1.1);//20.5,1.1);
 
   double y1 = 0.9;//0.8
   double y2 = 1.35;//2.0
-  double y3 = 1.5;//2.0
+  double y3 = 1.44;//1.5;//2.0
   l->SetLineStyle(kSolid);
   l->SetLineColor(kGray+1);
   l->DrawLine(bin["2022E_19Dec2023"]+0.5,y1,bin["2022E_19Dec2023"]+0.5,y2);
-  l->DrawLine(bin["2022G_19Dec2023"]+0.5,y1,bin["2022G_19Dec2023"]+0.5,y3);
+  l->DrawLine(bin["2022G_19Dec2023"]+0.5,y1,bin["2022G_19Dec2023"]+0.5,y2);
   l->DrawLine(bin["2023D_19Dec2023"]+0.5,y1,bin["2023D_19Dec2023"]+0.5,y3);
   l->SetLineStyle(kDashed);
   l->SetLineColor(kGray);
@@ -279,6 +306,7 @@ void drawJERSFcomparisonV2() {
   l->DrawLine(bin["2022C_19Dec2023"]-0.5,y1,bin["2022C_19Dec2023"]-0.5,y2);
   l->DrawLine(bin["2022F_19Dec2023"]-0.5,y1,bin["2022F_19Dec2023"]-0.5,y2);
   l->DrawLine(bin["2023Cv123_19Dec2023"]-0.5,y1,bin["2023Cv123_19Dec2023"]-0.5,y2);
+  l->DrawLine(bin["2024F"]-0.5,y1,bin["2024F"]-0.5,y2);
 
   tex->SetTextSize(0.045);
   tex->DrawLatex(0.70,0.87,Form("|#eta| < %1.3f",etamax));
@@ -291,8 +319,10 @@ void drawJERSFcomparisonV2() {
   tex->SetNDC(kFALSE);
   double d = 0.35;
   tex->DrawLatex(1,1.36,"2022(EE)");
-  tex->DrawLatex(10-d,1.36,"2022EE");
-  tex->DrawLatex(14-d,1.36,"2023(BPix)");
+  tex->DrawLatex(10-d,1.36,"22EE");//"2022EE");
+  tex->DrawLatex(14-d,1.36,"23(BPix)");//"2023(BPix)");
+  tex->DrawLatex(14-d,1.36,"23(BPix)");//"2023(BPix)");
+  tex->DrawLatex(20-d,1.36,"2024");//"2023(BPix)");
   
   tex->SetTextSize(0.030);
   //tex->DrawLatex(1,1.36,"2022(EE)");
@@ -335,6 +365,6 @@ void drawJERSFcomparisonV2() {
 
   gPad->RedrawAxis();
   c2->SaveAs("pdf/drawJERSFcomparison/drawJERSFcomparisonV2_eras.pdf");
-  c2->SaveAs("pdf/drawJERSFcomparison/drawJERSFcomparisonV2_eras.png");
+  //c2->SaveAs("pdf/drawJERSFcomparison/drawJERSFcomparisonV2_eras.png");
   
 } // void drawJERSFcomparisonV2
