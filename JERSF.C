@@ -12,7 +12,7 @@
 bool plotEtaBins = true; // lots of plots
 
 bool skipZ = true;//false;
-bool skipG = false;
+bool skipG = true;//false;
 
 // Patch [2.853,2.964] minimum statistical uncertainty (for trig bias?)
 double patchErr29 = 0.005; // added in quadrature to stat unc
@@ -229,7 +229,8 @@ void JERSF() {
   //string vrun[] = {"2023Cv123","2023Cv4","2023D"};//,"2023Cv4D"};
   //string vrun[] = {"2024B","2024C"};
   //string vrun[] = {"2024BC"};
-  /*
+
+  // Grand scan of all eras and recos
   string vrun[] = {"2022C_Prompt2022","2022D_Prompt2022", //Pr22
                    "2022C_22Sep2023","2022D_22Sep2023","2022E_22Sep2023",//22Sep
 		   "2022F_22Sep2023","2022G_22Sep2023", //22Sep
@@ -239,8 +240,13 @@ void JERSF() {
 		   "2022F_19Dec2023","2022G_19Dec2023", //19Dec
 		   "2023Cv123_19Dec2023","2023Cv4_19Dec2023", //19Dec
 		   "2023D_19Dec2023", //19Dec
-		   "2024BC"}; //Pr24
-  */
+		   //"2024BC", //Pr24
+		   "2024BCD","2024E","2024F","2024G","2024H","2024I"
+		   //"2024B_nib1","2024C_nib1","2024D_nib1","2024E_nib1",
+		   //"2024F_nib1","2024F_nib2","2024F_nib3",
+		   //"2024G_nib1","2024G_nib2","2024H_nib1","2024I_nib1"
+  };
+
   //string vrun[] = {"2024C","2024D","2024CD"};
   //string vrun[] = {"2023Cv123","2023D","2024CD"};
   //string vrun[] = {"2024B","2024C","2024D","2024BCD"};
@@ -249,7 +255,7 @@ void JERSF() {
   //string vrun[] = {"2024CS","2024CR","2024CP","2023D","2023Cv123"};
   //string vrun[] = {"2024BCD","2024C","2024E","2024Ev2","2024CP","2024CS","2024CR","2023D","2023Cv123"};
   //string vrun[] = {"2024FG","2024G","2024F","2024E","2024BCD"};
-  string vrun[] = {"2024I","2024H","2024G","2024F","2024E","2024BCD"};
+//string vrun[] = {"2024I","2024H","2024G","2024F","2024E","2024BCD"};
   //string vrun[] = {"2024CT","2024CS"};
   //string vrun[] = {"2024CT","2024CS","2024CP","2024F",
   //		   "2023D","2023Cv123"};
@@ -266,7 +272,8 @@ void JERSF() {
   //string vmc[] = {"Summer23MG","Summer23MG","Summer23MGBPix"};
   //string vmc[] = {"Summer23MGBPix","Summer23MGBPix"};
   //string vmc[] = {"Summer23MGBPix"};
-  /*
+
+  // Grand scan of all eras and re-recos
   string vmc[] = {"Summer23MGBPix","Summer23MGBPix", //Pr22
 		  "Summer23MGBPix","Summer23MGBPix","Summer23MGBPix", //22Sep
 		  "Summer23MGBPix","Summer23MGBPix", //22Sep
@@ -276,8 +283,13 @@ void JERSF() {
 		  "Summer23MGBPix","Summer23MGBPix", //19Dec
 		  "Summer23MGBPix","Summer23MGBPix", //19Dec
 		  "Summer23MGBPix", //19Dec
-		  "Summer23MGBPix"}; //Pr24
-  */
+		  //"Summer23MGBPix"}; //Pr24
+		  //"Winter24","Winter24","Winter24","Winter24","Winter24","Winter24"
+		  "Summer23MGBPix","Summer23MGBPix","Summer23MGBPix","Summer23MGBPix","Summer23MGBPix","Summer23MGBPix"
+		  //"Winter24","Winter24","Winter24","Winter24",
+		  //"Winter24","Winter24","Winter24","Winter24","Winter24",
+		  //"Winter24","Winter24"
+  };
   //string vmc[] = {"Summer23MGBPix","Summer23MGBPix","Summer23MGBPix"};
   //string vmc[] = {"Summer23MGBPix","Summer23MGBPix","Summer23MGBPix"};
   //string vmc[] = {"Summer23MGBPix","Summer23MGBPix","Summer23MGBPix",
@@ -294,7 +306,7 @@ void JERSF() {
   //		  "Summer23MGBPix","Summer23MGBPix","Summer23MGBPix",
   //		  "Summer23MGBPix","Summer23MGBPix","Summer23MGBPix"};
   //string vmc[] = {"Winter24","Winter24","Winter24","Winter24","Winter24"};
-  string vmc[] = {"Winter24","Winter24","Winter24","Winter24","Winter24","Winter24"};
+//string vmc[] = {"Winter24","Winter24","Winter24","Winter24","Winter24","Winter24"};
   //string vmc[] = {"Winter24","Winter24"};
   //string vmc[] = {"Winter24","Winter24","Winter24","Winter24",
   //		  "Summer23MGBPix","Summer23MG"};
@@ -456,6 +468,7 @@ void JERSF() {
       f = new TFile(Form("rootfiles/Prompt2024/v111_2024/jmenano_data_cmb_%s_JME_v111_2024.root",cr),"READ"); // V6M->V7M
     else
       f = new TFile(Form("rootfiles/Prompt2024/v110_2024/jmenano_data_cmb_%s_JME_v110_2024.root",cr),"READ"); // V6M closure
+    //f = new TFile(Form("rootfiles/Prompt2024/v113_2024/jmenano_data_cmb_%s_JME_v113_2024.root",cr),"READ"); // V7M closure (cmb still missing)
     //fm = new TFile("rootfiles/Prompt2024/v39_2024_Prompt_etabin_DCSOnly/jmenano_mc_cmb_Summer23MGBPix_v39_2023_etabin_SFv2.root","READ"); // with JER SF?
     //fm = new TFile("rootfiles/Summer23_L2ResOnly/jmenano_mc_cmb_Summer23MGBPix_v39_noRwPU_noSmearJets_25Feb2024_L2Res_v1.root","READ"); // no JER SF
     //fm = new TFile("rootfiles/Prompt2024/v83_2024/jmenano_mc_cmb_Winter24MG_v83_2024.root","READ"); // no JER SF?
