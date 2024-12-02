@@ -13,21 +13,29 @@
 
 // Clean out bins from hd that are empty for ha or hb
 void cleanEmpty(TH1D *hd, TH1D *ha, TH1D *hb);
+// Clean out bins outside given range
+void cleanRange(TH1D *h, double xmin, double xmax);
 // Find scale from hscales
 double getScale(TH1D *hscales, string name);
 // Draw Gamma scale vs Zmm scale
-void drawGamVsZmm();
+void drawGamVsZmm(string mode);
+// Draw Central vs Outer Barrel photon scale
 void drawGamVsGam();
-void drawPFcomp(string ref);
+// Draw PFcomposition + JES (+ reference run if not 0)
+void drawPFcomp(string ref, double refrun=0);
 
 // Main call for drawing various pairs
 void drawTimeStabilityPairs() {
 
-  //drawGamVsZmm();
+  //drawGamVsZmm("MPF");
+  //drawGamVsZmm("DB");
 
+  drawPFcomp("pr50pr110");
+  /*
   drawPFcomp("pr50");
   drawPFcomp("pr110");
   drawPFcomp("pr230");
+  */
   /*
   drawPFcomp("zpt30");
   drawPFcomp("zpt50");
@@ -36,7 +44,9 @@ void drawTimeStabilityPairs() {
   //drawGamVsGam();
 }
 
-void drawGamVsZmm() {
+void drawGamVsZmm(string mode) {
+
+  const char *cm = mode.c_str();
   
   setTDRStyle();
   TDirectory *curdir = gDirectory;
@@ -58,24 +68,50 @@ void drawGamVsZmm() {
   TCanvas *c1 = tdrDiCanvas("c1",h,h_d,8,11);
 
   TH1D *hbreaks = (TH1D*)f->Get("hbreaks"); assert(hbreaks);
-  
-  TH1D *ha = (TH1D*)f->Get("pr50m"); assert(ha);
-  TH1D *hb = (TH1D*)f->Get("mpf_run_zpt50"); assert(hb);
+
+  TH1D *ha(0), *hb(0);
+  if (mode=="MPF") {
+    ha = (TH1D*)f->Get("pr50m"); assert(ha);
+    hb = (TH1D*)f->Get("mpf_run_zpt50"); assert(hb);
+  }
+  if (mode=="DB") {
+    ha = (TH1D*)f->Get("pr50b"); assert(ha);
+    hb = (TH1D*)f->Get("db_run_zpt50"); assert(hb);
+  }
   TH1D *hd = (TH1D*)ha->Clone("hd");
   hd->Add(hb,-1);
   cleanEmpty(hd,ha,hb);
 
+  cleanRange(ha,63.2,200); // noisy
+  //cleanRange(hb,63.2,200); // ok
+  cleanRange(hd,63.2,200); // noisy
+  
   // Extra pairs
-  TH1D *ha2 = (TH1D*)f->Get("pr110m"); assert(ha2);
-  TH1D *hb2 = (TH1D*)f->Get("mpf_run_zpt110"); assert(hb2);
+  TH1D *ha2(0), *hb2(0);
+  if (mode=="MPF") {
+    ha2 = (TH1D*)f->Get("pr110m"); assert(ha2);
+    hb2 = (TH1D*)f->Get("mpf_run_zpt110"); assert(hb2);
+  }
+  if (mode=="DB") {
+  ha2 = (TH1D*)f->Get("pr110b"); assert(ha2);
+  hb2 = (TH1D*)f->Get("db_run_zpt110"); assert(hb2);
+  }
   TH1D *hd2 = (TH1D*)ha2->Clone("hd2");
   hd2->Add(hb2,-1);
   cleanEmpty(hd2,ha2,hb2);
+
+  //cleanRange(ha2,0,63.2);
+  //cleanRange(hb2,0,63.2);
+  //cleanRange(hd2,0,63.2);
   
   c1->cd(1);
 
   TLine *ll = new TLine();
   TLatex *tex = new TLatex();
+  tex->SetTextSize(0.045);
+  tex->SetNDC();
+  tex->DrawLatex(0.40,0.80,cm);
+  tex->SetNDC(kFALSE);
   tex->SetTextSize(0.03);
   set<double> breakset;
   breakset.insert(xmin);
@@ -84,16 +120,19 @@ void drawGamVsZmm() {
     TString ts(hbreaks->GetXaxis()->GetBinLabel(i));
 
     ll->SetLineColor(kGray);
-    if (ts.Contains("V")) ll->SetLineColor(kRed-9);
+    if (ts.Contains("V")) { ll->SetLineColor(kRed-9); continue; }
     if (ts.Contains("IC")) ll->SetLineColor(kBlue-9);
+    if (ts.Contains("TRK")) { ll->SetLineColor(kOrange+1); continue; }
     ll->DrawLine(cumlum,ymin,cumlum,ymax);
 
     tex->SetTextColor(kGray);
     if (ts.Contains("V")) tex->SetTextColor(kRed-9);
     if (ts.Contains("IC")) tex->SetTextColor(kBlue-9);
+    if (ts.Contains("TRK")) tex->SetTextColor(kOrange+1);
     tex->DrawLatex(cumlum+1,ymin+0.4-((i-1)%3)*0.15,ts.Data());
 
-    breakset.insert(cumlum);
+    if (ts.Contains("IC"))
+      breakset.insert(cumlum);
   }
   breakset.insert(xmax);
   
@@ -126,14 +165,20 @@ void drawGamVsZmm() {
     TString ts(hbreaks->GetXaxis()->GetBinLabel(i));
 
     ll->SetLineColor(kGray);
-    if (ts.Contains("V")) ll->SetLineColor(kRed-9);
+    if (ts.Contains("V")) { ll->SetLineColor(kRed-9); continue; }
     if (ts.Contains("IC")) ll->SetLineColor(kBlue-9);
+    if (ts.Contains("TRK")) { ll->SetLineColor(kOrange+1); continue; }
     ll->DrawLine(cumlum,ymind,cumlum,ymaxd);
 
     tex->SetTextColor(kGray);
     if (ts.Contains("V")) tex->SetTextColor(kRed-9);
     if (ts.Contains("IC")) {
       tex->SetTextColor(kBlue-9);
+      //tex->DrawLatex(cumlum+1,ymind+0.5,ts.Data());
+      tex->DrawLatex(cumlum+1,ymind+0.5-((i-1)%3)*0.20,ts.Data());
+    }
+    if (ts.Contains("TRK")) {
+      tex->SetTextColor(kOrange+1);
       tex->DrawLatex(cumlum+1,ymind+0.5,ts.Data());
     }
     //tex->DrawLatex(cumlum+1,ymind+0.4-((i-1)%3)*0.15,ts.Data());
@@ -175,7 +220,7 @@ void drawGamVsZmm() {
       ++nib;
     }
   }
-  TH1D *hnib = new TH1D("hnib","",nib,&vx[0]);
+  TH1D *hnib = new TH1D(Form("GamJetMinusZmmJet_%s",cm),"",nib,&vx[0]);
   for (int i = 0; i != nib; ++i) {
     hnib->SetBinContent(i+1, vy[i]);
     hnib->SetBinError(i+1, vye[i]);
@@ -184,8 +229,14 @@ void drawGamVsZmm() {
   hnib->SetFillColorAlpha(kCyan+1,0.5);
   
   gPad->RedrawAxis();
-  
-  c1->SaveAs("pdf/drawTimeStability/drawTimeStabilityPairs_GamVsZmm.pdf");
+
+  c1->SaveAs(Form("pdf/drawTimeStability/drawTimeStabilityPairs_GamVsZmm_%s.pdf",cm));
+
+  // Save photon correction
+  cout << "Save "<<Form("GamJetVsZmmJet_%s",cm)<<" to rootfiles/drawTimeStabilityPairs.root" << endl;
+  TFile *fout = new TFile("rootfiles/drawTimeStabilityPairs.root","UPDATE");
+  hnib->Write(Form("GamJetMinusZmmJet_%s",cm),TObject::kOverwrite);
+  fout->Close();
 } // drawGamVsZmm
 
 void drawGamVsGam() {
@@ -338,51 +389,38 @@ void drawGamVsGam() {
 } // drawTimeStabilityPairs()
 
 
-void drawPFcomp(string ref) {
+void drawPFcomp(string ref, double refrun) {
   
   setTDRStyle();
   TDirectory *curdir = gDirectory;
 
-  const char *cr = ref.c_str();
+  const char *cr = (ref=="pr50pr110" ? "pr50" : ref.c_str());
   TString tr(cr);  
 
   TFile *f = new TFile("rootfiles/drawTimeStability.root","READ");
   assert(f && !f->IsZombie());
 
+  // Photon scale from drawGamVsZmm()
+  TFile *fs = new TFile("rootfiles/drawTimeStabilityPairs.root","READ");
+  assert(fs && !fs->IsZombie());
+  
   curdir->cd();
 
   TLine *l = new TLine();
   l->SetLineStyle(kDashed);
   l->SetLineColor(kGray+1);
 
-  //double xmin(0), xmax(175), ymin(-3.6), ymax(+5.4);//, ymind(-1.5), ymaxd(+1.9);
-  double xmin(0), xmax(175), ymin(-3.7), ymax(+6.3);//, ymind(-1.5), ymaxd(+1.9);
+  double xmin(0), xmax(175), ymin(-3.7), ymax(+6.3);
   TH1D *h = tdrHist(Form("hpf_%s",cr),"PFJES-1 (%)",ymin,ymax,"Cumulative luminosity (fb^{-1})",xmin,xmax);
   lumi_136TeV = "Run3, 2022-24";
   extraText = "Private";
-  TCanvas *c1 = tdrCanvas(Form("c1pf_%s",cr),h,8,11,kSquare);
+  TCanvas *c1 = tdrCanvas(Form("c1pf_%s",cr),h,8,11,kRectangular);
 
   TH1D *hbreaks = (TH1D*)f->Get("hbreaks"); assert(hbreaks);
   TH1D *hscales = (TH1D*)f->Get("hscales"); assert(hscales);
 
-  /*
-  TH1D *hr = (TH1D*)f->Get("pr50m_jes"); assert(hr);
-  TH1D *hc = (TH1D*)f->Get("pr50chf");   assert(hc);
-  TH1D *hn = (TH1D*)f->Get("pr50nhf");   assert(hn);
-  TH1D *he = (TH1D*)f->Get("pr50nef");   assert(he);
-  */
-  /*
-  TH1D *hr = (TH1D*)f->Get("pr110m_jes"); assert(hr);
-  TH1D *hc = (TH1D*)f->Get("pr110chf");   assert(hc);
-  TH1D *hn = (TH1D*)f->Get("pr110nhf");   assert(hn);
-  TH1D *he = (TH1D*)f->Get("pr110nef");   assert(he);
-  */
-  /*
-  TH1D *hr = (TH1D*)f->Get(Form("%sm_jes",cr)); assert(hr);
-  TH1D *hc = (TH1D*)f->Get(Form("%schf",cr));  assert(hc);
-  TH1D *hn = (TH1D*)f->Get(Form("%snhf",cr));  assert(hn);
-  TH1D *he = (TH1D*)f->Get(Form("%snef",cr));  assert(he);
-  */
+  // DB has bigger effect than MPF in 2022-23. Good?
+  TH1D *hgamvsz = (TH1D*)fs->Get("GamJetMinusZmmJet_DB"); assert(hgamvsz);
 
   // Format string for Z+jet
   TH1D *hr(0), *hc(0), *hn(0), *he(0);
@@ -411,45 +449,78 @@ void drawPFcomp(string ref) {
   }
   assert(hr);
 
-  /*
-  double kr = getScale(hscales,Form("%sm_jes",cr));//hr->GetName());
-  double fc = getScale(hscales,Form("%schf",cr));//hc->GetName());
-  double fe = getScale(hscales,Form("%snef",cr));//he->GetName());
-  double fn = getScale(hscales,Form("%snhf",cr));//hn->GetName());
-  */
+  // Get second photon trigger to patch full range
+  TH1D *hr2(0), *hc2(0), *hn2(0), *he2(0);
+  double kr2(1), fc2(0.65), fe2(0.25), fn2(0.10);
+  if (ref=="pr50pr110") {
+    const char *cr2 = "pr110";
+    hr2 = (TH1D*)f->Get(Form("%sm_jes",cr2)); assert(hr2);
+    hc2 = (TH1D*)f->Get(Form("%schf",cr2));  assert(hc2);
+    hn2 = (TH1D*)f->Get(Form("%snhf",cr2));  assert(hn2);
+    he2 = (TH1D*)f->Get(Form("%snef",cr2));  assert(he2);
+
+    kr2 = getScale(hscales,Form("%sm_jes",cr2));
+    fc2 = getScale(hscales,Form("%schf",cr2));
+    fe2 = getScale(hscales,Form("%snef",cr2));
+    fn2 = getScale(hscales,Form("%snhf",cr2));
+  }
+
   // Calculate JES and scale with per-fib JES
   TH1D *hjesr = (TH1D*)hr->Clone(Form("hjesr_%s",cr));
   TH1D *hjesc = (TH1D*)hc->Clone(Form("hjesc_%s",cr));
   TH1D *hjesn = (TH1D*)hn->Clone(Form("hjesn_%s",cr));
   TH1D *hjese = (TH1D*)he->Clone(Form("hjese_%s",cr));
   for (int i = 1; i != hr->GetNbinsX()+1; ++i) {
-    double s = hr->GetBinContent(i); // s = (jes-1)*100
-    double es = hr->GetBinError(i);
+
+    TH1D *hrs(hr), *hcs(hc), *hns(hn), *hes(he);
+    double krs(kr), fcs(fc), fns(fn), fes(fe);
+    if (ref=="pr50pr110" && hr->GetBinLowEdge(i)<63.2) {
+      assert(hr2); assert(hc2); assert(hn2); assert(he2);
+      hrs = hr2; hcs = hc2; hns = hn2; hes = he2;
+      krs = kr2; fcs = fc2; fns = fn2; fes = fe2;
+    }
+    
+    double s = hrs->GetBinContent(i); // s = (jes-1)*100
+    double es = hrs->GetBinError(i);
     double jes = s*kr*0.01+1;
+
+    // Patch photon scale before 2024F from GamVsZmm_DB
+    double cumlum = hrs->GetBinCenter(i);
+    //if (cumlum>=91 && cumlum<92) jes *= 1./1.008;
+    //if (cumlum>=67 && cumlum<91) jes *= 1./1.014;
+    //if (cumlum>=64 && cumlum<67) jes *= 1./1.004;
+    //if (cumlum>=44 && cumlum<64) jes *= 1./1.004;
+    //if (cumlum>=10 && cumlum<44) jes *= 1./1.010;
+    //if (cumlum>=0  && cumlum<10) jes *= 1./1.007;
+    double j = hgamvsz->GetXaxis()->FindBin(cumlum);
+    double gamvsz = (1+0.01*hgamvsz->GetBinContent(j));
+    jes *= 1./gamvsz;
+    
     double jesr = (jes-1)*100.;
-    double ejesr = es*kr;
+    double ejesr = es*krs;
     hjesr->SetBinContent(i, jesr);
     hjesr->SetBinError(i, ejesr);
-    double c = hc->GetBinContent(i);
-    double ec = hc->GetBinError(i);
+    double c = hcs->GetBinContent(i);
+    double ec = hcs->GetBinError(i);
     double jesc = ((1+c*0.01)*fc*jes-fc)*100;
-    double ejesc = ec*fc*jes;
+    double ejesc = ec*fcs*jes;
     hjesc->SetBinContent(i, jesc);
     hjesc->SetBinError(i, ejesc);
-    double n = hn->GetBinContent(i);
-    double en = hn->GetBinError(i);
+    double n = hns->GetBinContent(i);
+    double en = hns->GetBinError(i);
     double jesn = ((1+n*0.01)*fn*jes-fn)*100;
-    double ejesn = en*fn*jes;
+    double ejesn = en*fns*jes;
     hjesn->SetBinContent(i, jesn);
     hjesn->SetBinError(i, ejesn);
-    double e = he->GetBinContent(i);
-    double ee = he->GetBinError(i);
+    double e = hes->GetBinContent(i);
+    double ee = hes->GetBinError(i);
     double jese = ((1+e*0.01)*fe*jes-fe)*100;
-    double ejese = ee*fe*jes;
+    double ejese = ee*fes*jes;
     hjese->SetBinContent(i, jese);
     hjese->SetBinError(i, ejese);
   }
-  
+
+  // Add known breaks
   TLine *ll = new TLine();
   TLatex *tex = new TLatex();
   tex->SetTextSize(0.03);
@@ -460,18 +531,28 @@ void drawPFcomp(string ref) {
     TString ts(hbreaks->GetXaxis()->GetBinLabel(i));
 
     ll->SetLineColor(kGray);
-    if (ts.Contains("V")) ll->SetLineColor(kRed-9);
+    if (ts.Contains("V")) ll->SetLineColor(kGreen+1);
     if (ts.Contains("IC")) ll->SetLineColor(kBlue-9);
-    ll->DrawLine(cumlum,ymin,cumlum,ymax);
+    if (ts.Contains("TRK")) ll->SetLineColor(kRed-9);
+    if (ll->GetLineColor()==kGray || refrun>=0)
+      ll->DrawLine(cumlum,ymin,cumlum,ymax);
 
     tex->SetTextColor(kGray);
-    if (ts.Contains("V")) tex->SetTextColor(kRed-9);
-    if (ts.Contains("IC")) tex->SetTextColor(kBlue-9);
-    tex->DrawLatex(cumlum+1,ymin+0.4-((i-1)%3)*0.15,ts.Data());
+    if (ts.Contains("V")) tex->SetTextColor(kGreen+2);
+    if (ts.Contains("IC")) tex->SetTextColor(kBlue);
+    if (ts.Contains("TRK")) tex->SetTextColor(kRed);
+    if (ll->GetLineColor()==kGray || refrun>=0)
+      tex->DrawLatex(cumlum+1,ymin+0.4-((i-1)%3)*0.15,ts.Data());
 
     breakset.insert(cumlum);
   }
   breakset.insert(xmax);
+
+  // Add new break
+  if (refrun!=0 && fabs(refrun)<10000) {
+    ll->SetLineColor(kBlack);
+    ll->DrawLine(refrun,ymin,refrun,ymax);
+  }
   
   l->SetLineStyle(kDashed);
   l->DrawLine(xmin,0,xmax,0);
@@ -487,6 +568,12 @@ void drawPFcomp(string ref) {
   //TLegend *leg = tdrLeg(0.65,0.89-0.05*4,0.90,0.89);
   TLegend *leg = tdrLeg(0.58,0.89-0.05*4,0.83,0.89);
   leg->SetFillStyle(1001);
+  if (ref=="pr50pr110") {
+    leg->AddEntry(hjesr,"#gamma+jet MPF 50/110","PLE");
+    leg->AddEntry(hjesc,"#gamma+jet CHF 50/110","PLE");
+    leg->AddEntry(hjesn,"#gamma+jet NHF 50/110","PLE");
+    leg->AddEntry(hjese,"#gamma+jet NEF 50/110","PLE");
+  }
   if (ref=="pr50" || ref=="pr110" || ref=="pr230") {
     int ipt; sscanf(cr,"pr%d",&ipt);
     leg->AddEntry(hjesr,Form("#gamma+jet MPF %d",ipt),"PLE");
@@ -504,8 +591,11 @@ void drawPFcomp(string ref) {
     
   gPad->RedrawAxis();
   gPad->Update();
-  
-  c1->SaveAs(Form("pdf/drawTimeStability/drawTimeStabilityPairs_PFcomp_%s.pdf",cr));
+
+  if (ref=="pr50pr110")
+    c1->SaveAs(Form("pdf/drawTimeStability/drawTimeStabilityPairs_PFcomp_%s.pdf",ref.c_str()));
+  else
+    c1->SaveAs(Form("pdf/drawTimeStability/drawTimeStabilityPairs_PFcomp_%s.pdf",cr));
 } // drawTimeStabilityPairs()
 
 
@@ -519,7 +609,17 @@ void cleanEmpty(TH1D *hd, TH1D *ha, TH1D *hb) {
       hd->SetBinError(i,0);
     }
   }
-}
+} // cleanEmpty
+
+void cleanRange(TH1D *h, double xmin, double xmax) {
+  for (int i = 1; i != h->GetNbinsX()+1; ++i) {
+    if (h->GetBinLowEdge(i)<xmin || h->GetBinLowEdge(i+1)>=xmax) {
+      h->SetBinContent(i,0);
+      h->SetBinError(i,0);
+    }
+  }
+} // cleanRange
+
 
 double getScale(TH1D *hscales, string name) {
 

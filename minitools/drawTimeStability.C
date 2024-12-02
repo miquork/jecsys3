@@ -79,19 +79,22 @@ void drawTimeStability() {
     //"pr50m_eta3to4","pr50m_eta4to5",
     //"pr110m_eta3to4","pr110m_eta4to5",
     "pr50n","pr110n","pr230n",
-    /*
+ 
     "pr230m","pr110m","pr50m",
+    "pr230b","pr110b","pr50b",
     "pr50nhf","pr50nef","pr50chf",
     "pr110nhf","pr110nef","pr110chf",
     "pr230nhf","pr230nef","pr230chf",
-    */
+ 
 
     // Zmm+jet
     "ZmmJet",
     //"mz_run_zpt0","mz_run_zpt30","mz_run_zpt50","mz_run_zpt110",
     "nz_run_zpt0","nz_run_zpt30","nz_run_zpt50","nz_run_zpt110",
-    /*
+
     "mpf_run_zpt30","mpf_run_zpt110","mpf_run_zpt50",
+    "db_run_zpt30","db_run_zpt110","db_run_zpt50",
+    /*
     "chf_run_zpt30","nef_run_zpt30","nhf_run_zpt30",
     "chf_run_zpt50","nef_run_zpt50","nhf_run_zpt50",
     "chf_run_zpt110","nef_run_zpt110","nhf_run_zpt110",
@@ -420,6 +423,11 @@ void drawTimeStability() {
       //eras.push_back(pair<int,string>(386401,"V3.0")); // 24_v3.0 => 24I =>
       //eras.push_back(pair<int,string>(386478,"V3.0")); // 24_v3.0 / 24I (actual first run)
       //eras.push_back(pair<int,string>(383811,"VG")); // 24G tes
+
+      // https://twiki.cern.ch/twiki/bin/viewauth/CMS/AlCaTSGConditionsUpdate
+      eras.push_back(pair<int,string>(386401,"V1.0")); // Old tag?
+      eras.push_back(pair<int,string>(386732,"VHP")); // HCAL pedestals
+      eras.push_back(pair<int,string>(386936,"VHP")); // HCAL pedestals
       
       // Additional ECAL intercalibration updates
       // https://cms-talk.web.cern.ch/c/ppd/alca/108
@@ -428,7 +436,7 @@ void drawTimeStability() {
       //eras.push_back(pair<int,string>(369927,"EP")); // =? 23D (actual run)
       // => https://cms-talk.web.cern.ch/t/gt-online-hlt-express-prompt-update-of-ecal-pedestals-conditions-run-384719-w34/46354/10
       //eras.push_back(pair<int,string>(384719,"IC")); // mid-24G! =>
-      eras.push_back(pair<int,string>(384933,"IC")); // mid-24G! (actual first run) 384644, 384933
+      //eras.push_back(pair<int,string>(384933,"IC1")); // mid-24G! (actual first run) 384644, 384933
       // => https://cms-talk.web.cern.ch/t/l1-pre-announcement-of-ecal-intercalibration-update-at-l1-run-386025/57306
       //eras.push_back(pair<int,string>(386025,"IC")); // also actual run? or deployed later?
       // => https://cms-talk.web.cern.ch/t/l1-pre-announcement-of-ecal-intercalibration-update-at-l1-run-386945/61017
@@ -438,7 +446,61 @@ void drawTimeStability() {
       //eras.push_back(pair<int,string>(380115,"IC")); // mid-24C (too late)
       // => https://cms-talk.web.cern.ch/t/full-track-validation-hlt-prompt-ecalintercalibconstants-conditions-from-runs-378981-379616/39588/4
       //eras.push_back(pair<int,string>(379956,"IC")); // mid-24C 379866, 379984 =>
-      eras.push_back(pair<int,string>(379984,"IC")); // (actual run)
+      //eras.push_back(pair<int,string>(379984,"IC1")); // (actual run)
+
+      // Some more from:
+      // https://twiki.cern.ch/twiki/bin/viewauth/CMS/AlCaTSGConditionsUpdate
+      //eras.push_back(pair<int,string>(387696,"IC"));
+      //eras.push_back(pair<int,string>(387048,"IC"));
+      //eras.push_back(pair<int,string>(386663,"ICT")); // TimeCalib
+      //eras.push_back(pair<int,string>(386661,"ICS")); // PulseShapes
+      //eras.push_back(pair<int,string>(386455,"IC"));
+      eras.push_back(pair<int,string>(386489,"ICP")); // Pulseshapes
+      //eras.push_back(pair<int,string>(386357,"ICL")); // TPGLinearization??
+      //eras.push_back(pair<int,string>(386319,"IC"));
+      //eras.push_back(pair<int,string>(386186,"IC"));
+      eras.push_back(pair<int,string>(385728,"ICU")); // PulseShapes+TimeCalib
+      //eras.push_back(pair<int,string>(385620,"ICC")); // per crystal
+      eras.push_back(pair<int,string>(385286,"ICT")); // TimeCalib
+      //eras.push_back(pair<int,string>(385154,"ICU")); // PulseShapes+TimeCalib
+      //eras.push_back(pair<int,string>(384982,"IC")); // before
+      eras.push_back(pair<int,string>(384935,"ICN")); // ChannelStatus (noise)
+      //eras.push_back(pair<int,string>(384756,"ICT")); // TimeCalib FEdelay,aft
+      //eras.push_back(pair<int,string>(384719,"ICP")); // pedestals
+      // 384719 -> 384933 (mid-24G)
+      //eras.push_back(pair<int,string>(384578,"IC"));
+      //eras.push_back(pair<int,string>(384413,"ICU")); // PulseShapes+TimeCalib
+      //eras.push_back(pair<int,string>(384332,"IC"));
+      //eras.push_back(pair<int,string>(384285,"IC"));
+      //eras.push_back(pair<int,string>(384237,"IC"));
+      //eras.push_back(pair<int,string>(384052,"IC2"));
+      eras.push_back(pair<int,string>(383756,"ICU")); // PulseShapes+TimeCalib
+      //eras.push_back(pair<int,string>(383227,"IC"));
+      //eras.push_back(pair<int,string>(383155,"IC2"));
+      //eras.push_back(pair<int,string>(382921,"IC2"));
+      //eras.push_back(pair<int,string>(382777,"IC"));
+      //eras.push_back(pair<int,string>(382712,"IC"));
+      eras.push_back(pair<int,string>(382298,"ICF")); // 24_v2.0 (24F DD)
+      //eras.push_back(pair<int,string>(381640,"IC"));
+      eras.push_back(pair<int,string>(381379,"ICN")); // ChannelStatus EB+13
+      //eras.push_back(pair<int,string>(381208,"IC")); // BIG, later
+      //eras.push_back(pair<int,string>(380992,"IC"));
+      //eras.push_back(pair<int,string>(380049,"ICN")); // ChannelStatus EB-03
+      eras.push_back(pair<int,string>(380000,"ICT")); // TimeCalib
+      //eras.push_back(pair<int,string>(379956,"IC")); // BIG or MID?
+      // 379956 -> 379984
+      //eras.push_back(pair<int,string>(379693,"ICN")); // ChannelStatus EB+16
+      //eras.push_back(pair<int,string>(379661,"ICN")); // ChannelStatus EB+16,bef
+      eras.push_back(pair<int,string>(379434,"ICT")); // TimeCalib
+      //eras.push_back(pair<int,string>(379367,"ICT")); // TimeCalib CC,aft
+      eras.push_back(pair<int,string>(366727,"IC3")); // 2023 start
+      //eras.push_back(pair<int,string>(362523,"ICT")); // TimeCalib
+      //eras.push_back(pair<int,string>(362181,"ICHI")); // HI
+      eras.push_back(pair<int,string>(362475,"ICP")); // Pedestals
+      eras.push_back(pair<int,string>(362012,"ICP")); // Pedestals
+      eras.push_back(pair<int,string>(360390,"IC2F")); // 22F start
+      eras.push_back(pair<int,string>(359569,"IC2E")); // 22E start
+      // ...
       
       //eras.push_back(pair<int,string>(368824,"XX")); // 23D- mystery run
       //eras.push_back(pair<int,string>(368765,"XX")); // 23D- mystery run
@@ -452,6 +514,21 @@ void drawTimeStability() {
       //eras.push_back(pair<int,string>(383247,"DJ")); // HCAL 24_v2.1
       //eras.push_back(pair<int,string>(384933,"DJ")); // IC
 
+      // Tracker voltage changes (Martin Delcourt, CMS-PPD-Muon..., 28 Nov 2024)
+      //eras.push_back(pair<int,string>(380504,"TRK"));
+      //eras.push_back(pair<int,string>(380517,"TRK")); // next up => nah
+      eras.push_back(pair<int,string>(380481,"TRK")); // one down
+      //eras.push_back(pair<int,string>(382772,"TRK"));
+      //eras.push_back(pair<int,string>(382834,"TRK")); // next up => nah
+      eras.push_back(pair<int,string>(382770,"TRK")); // one down
+      //eras.push_back(pair<int,string>(385063,"TRK"));
+      //eras.push_back(pair<int,string>(385127,"TRK")); // next up => not ok
+      eras.push_back(pair<int,string>(385012,"TRK")); // one down
+      //eras.push_back(pair<int,string>(385959,"TRK"));
+      eras.push_back(pair<int,string>(385986,"TRK")); // next up => ok!
+      //eras.push_back(pair<int,string>(386968,"TRK"));
+      //eras.push_back(pair<int,string>(387017,"TRK")); // next up (after I)
+      
       // Keep record of breaks for drawTimeStabilityPairs
       TH1D *hbreaks = new TH1D("hbreaks",";Break point;Cum.Lum. (/fb)",eras.size(),0,eras.size());
       
@@ -467,7 +544,7 @@ void drawTimeStability() {
 
 	int j = hcumlum2->FindBin(run);
 	//if (hcumlum2->GetBinLowEdge(j)<run) ++j;
-	if (hcumlum2->GetBinLowEdge(j)!=run) cout << "run="<<run<<", bin edge="<<hcumlum2->GetBinLowEdge(j)<<endl<<flush;
+	if (hcumlum2->GetBinLowEdge(j)!=run) cout << "run="<<run<<", bin edges="<<hcumlum2->GetBinLowEdge(j)<<","<<hcumlum2->GetBinLowEdge(j+1)<<" (lum="<<hcumlum2->GetBinContent(j)<<")"<<endl<<flush;
 	double cumlum = hcumlum2->GetBinContent(j);
 	//int k = hcumlum->FindBin(run)+1;
 	//if (hcumlum->GetBinLowEdge(k)<run) ++k;
@@ -479,6 +556,7 @@ void drawTimeStability() {
 	if (t.Contains("EP")) l->SetLineColor(kBlue);
 	if (t.Contains("XX")) l->SetLineColor(kMagenta+1);
 	if (t.Contains("DJ")) l->SetLineColor(kOrange+1);
+	if (t.Contains("TRK")) l->SetLineColor(kOrange+1);
 	l->SetLineStyle(kSolid);
 	//if (t.Contains("V")) l->DrawLine(cumlum1,ymin,cumlum1,ymax);
 	//else
@@ -486,7 +564,7 @@ void drawTimeStability() {
 	if (s=="22"||s=="23"||s=="24") ks = 0;
 	//tex->DrawLatex(cumlum+1,-1.2-0.2*(ks++),cn);
 	//if (t.Contains("V")) tex->DrawLatex(cumlum1+1,-1.6-0.4*(kh++),cn);
-	if (t.Contains("V") || t.Contains("IC") || t.Contains("XX") || t.Contains("EP")) {
+	if (t.Contains("V") || t.Contains("IC") || t.Contains("XX") || t.Contains("EP") || t.Contains("TRK")) {
 	  if (isZmass) tex->DrawLatex(cumlum+1,(-0.12-0.03*(kh++%3))*kf,cn);
 	  else if (isEta) tex->DrawLatex(cumlum+1,(-3.2-0.8*(kh++%3))*kf,cn);
 	  //else if (isEta) tex->DrawLatex(cumlum+1,(-5.8-1.6*(kh++%3))*kf,cn);
