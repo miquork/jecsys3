@@ -19,13 +19,17 @@ void drawIncjetPRL() {
 
   //TH1D *h = tdrHist("h","Cross section d#sigma/dp_{T}dy (pb/GeV)",1e-8,1e11,
   //		    "Jet p_{T} (GeV)",10-1e-3,5000);
+  //TH1D *h = tdrHist("h","Cross section d#sigma/dp_{T}dy (pb/GeV)",
+  //		    1.001e-8,0.999e8,
+  //		    "Jet p_{T} (GeV)",50,5000);
   TH1D *h = tdrHist("h","Cross section d#sigma/dp_{T}dy (pb/GeV)",
-		    1.001e-8,0.999e8,
-		    "Jet p_{T} (GeV)",50,5000);
+  		    1.001e-8,0.999e9,
+  		    "Jet p_{T} (GeV)",28,5000);
   extraText = "Private";
   lumi_136TeV = "Late 2024, 82.4 fb^{-1}";
   TCanvas *c1 = tdrCanvas("c1",h,8,11,kSquare);
-  h->GetXaxis()->SetMoreLogLabels(kFALSE);
+  //h->GetXaxis()->SetMoreLogLabels(kFALSE);
+  h->GetYaxis()->SetTitleOffset(1.19);
   c1->SetLogx();
   c1->SetLogy();
 
@@ -52,7 +56,9 @@ void drawIncjetPRL() {
     
     TH1D *hpt = (TH1D*)f->Get(Form("Incjet/hpt%02d",ieta)); assert(hpt);
     normalizeHist(hpt, y);
-    cleanHist(hpt, 50., 13000.);
+    //cleanHist(hpt, 50., 13000.);
+    cleanHist(hpt, 28., 13000.);
+    if (ieta==30) cleanHist(hpt, 50, 13000.); 
 
     tdrDraw(hpt,"HP][",marker[ybin],color[ybin],kSolid,-1,kNone,0,size[ybin]);
 
@@ -99,6 +105,9 @@ void normalizeHist(TH1D *h, double absy) {
     mi["HLT_PFJetFwd450"] = range{548, 686, fwdeta0, 5.2};
     mi["HLT_PFJetFwd500"] = range{686,6500, fwdeta0, 5.2};
     */
+
+    // HLT_ZeroBias_v* fudge factor for luminosity
+    double kzb = 0.5;
     
     double lum(82438.188401497); // 2024FGHI_all.txt online
     // Prescale trigger luminosities calculated with brilcalc, e.g.:
@@ -125,7 +134,7 @@ void normalizeHist(TH1D *h, double absy) {
       } else if (x>49) { // HLT_PFJet40_v*
 	lum = 0.157404619;
       } else if (x>0) { // HLT_ZeroBias_v*
-	lum = 0.157432157;
+	lum = 0.157432157*kzb;
       }
     }
     else {
@@ -150,7 +159,7 @@ void normalizeHist(TH1D *h, double absy) {
       } else if (x>49) { // HLT_PFJetFwd40_v*
 	lum = 0.190857498;//0.157404619;
       } else if (x>0) { // HLT_ZeroBias_v*
-	lum = 0.157432157;
+	lum = 0.157432157*kzb;
       }
     }
       
