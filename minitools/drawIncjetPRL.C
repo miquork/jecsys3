@@ -1,19 +1,25 @@
 // Purpose: Draw two PRL plots for inclusive jet xsec at 13.6 TeV (late 2024)
 #include "TFile.h"
 #include "TH1D.h"
+#include "TF1.h"
 
 #include "../tdrstyle_mod22.C"
 
 // Normalize histogram for pT and lumi
-void normalizeHist(TH1D *h, double absy);
-void cleanHist(TH1D *h, double xmin, double xmax);
+void normalizeHist(TH1D *h, double absy, string trigger="");
+void cleanHist(TH1D *h, double xmin, double xmax, bool filterBins = false);
+
+// Draw trigger efficiency in addition to data/theory ratio
+const bool drawTrigEff = true;
 
 void drawIncjetPRL() {
 
   setTDRStyle();
   TDirectory *curdir = gDirectory;
   
-  TFile *f = new TFile("rootfiles/Prompt2024/v113_2024/jmenano_data_cmb_2024FGHI_JME_v113.root","READ");
+  //TFile *f = new TFile("rootfiles/Prompt2024/v113_2024/jmenano_data_cmb_2024FGHI_JME_v113.root","READ");
+  //TFile *f = new TFile("rootfiles/Prompt2024/v114_2024/jmenano_data_cmb_2024FGHI_JME_v114.root","READ");
+  TFile *f = new TFile("rootfiles/Prompt2024/v114_2024/jmenano_data_cmb_2024FGHI_JME_v114_2024.root","READ"); // new version
   assert(f && !f->IsZombie());
   curdir->cd();
 
@@ -27,51 +33,255 @@ void drawIncjetPRL() {
   		    "Jet p_{T} (GeV)",28,5000);
   extraText = "Private";
   lumi_136TeV = "Late 2024, 82.4 fb^{-1}";
+
+  // Spectra all on the same plot
   TCanvas *c1 = tdrCanvas("c1",h,8,11,kSquare);
   //h->GetXaxis()->SetMoreLogLabels(kFALSE);
   h->GetYaxis()->SetTitleOffset(1.19);
   c1->SetLogx();
   c1->SetLogy();
 
+  // Data / theory or Data / fit plots
+  //TH1D *h2 = tdrHist("h2","Data / fit",0,2,"Jet p_{T} (GeV)",28,5000);
+  TH1D *h2 = tdrHist("h2","Data / fit",0,2,"Jet p_{T} (GeV)",24,5000);
+  TCanvas *c2 = new TCanvas("c2","c2",5*600,2*600);
+  c2->Divide(5,2,0,0);
+
+  TLatex *tex = new TLatex();
+  tex->SetNDC(); tex->SetTextSize(0.045);
+
+  tex->DrawLatex(0.045,0.95,"CMS Private");
+  tex->DrawLatex(0.77,0.95,lumi_136TeV + " (13.6 TeV)");
+
+  
   const int nybins(10);
   int marker[nybins] =
-    {kFullSquare, kOpenSquare, kFullCircle, kOpenCircle, kFullDiamond,
-     kFullSquare, kOpenSquare, kFullCircle, kOpenCircle, kFullDiamond};
+  //{kFullSquare, kOpenSquare, kFullCircle, kOpenCircle, kFullDiamond,
+  // kFullSquare, kOpenSquare, kFullCircle, kOpenCircle, kFullDiamond};
+    {kFullSquare, kOpenSquare, kFullCircle, kOpenCircle, kFullSquare,
+     kFullSquare, kOpenSquare, kFullCircle, kOpenCircle, kFullSquare};
   int color[nybins] =
     {kBlack, kBlack, kBlack, kBlack, kBlack,
      kRed, kBlue, kBlue, kBlue, kBlue};
   double size[nybins] =
-    {0.5, 0.5, 0.5, 0.5, 0.8,
-     0.5, 0.5, 0.5, 0.5, 0.8};
+    //{0.5, 0.5, 0.5, 0.5, 0.8,
+  //0.5, 0.5, 0.5, 0.5, 0.8};
+      {0.5, 0.5, 0.5, 0.5, 0.5,
+     0.5, 0.5, 0.5, 0.5, 0.5};
 
+  TLine *l = new TLine();
+  l->SetLineStyle(kDashed);
+  l->SetLineColor(kGray+2);
+  
+  c1->cd();
   TLegend *leg = tdrLeg(0.85-0.25,0.90-0.035*nybins,0.85,0.90);
   leg->SetTextSize(0.040);
-  
+  c2->cd(10);
+  TLegend *leg2 = tdrLeg(0.85-0.25*1.5,0.90-0.035*nybins*1.5,0.85,0.90);
+  leg2->SetTextSize(0.040*1.5);
+
   for (int ybin = 0; ybin != nybins; ++ybin) {
 
     int ieta = 5*(ybin+1);
     double y1 = 0+ybin*0.5;
     double y2 = 0.5+ybin*0.5;
     double y = 0.5*(y1+y2);
-    
+
+    // Original spectrum
     TH1D *hpt = (TH1D*)f->Get(Form("Incjet/hpt%02d",ieta)); assert(hpt);
+    hpt = (TH1D*)hpt->Clone(Form("hpt_%d",ybin));
     normalizeHist(hpt, y);
     //cleanHist(hpt, 50., 13000.);
-    cleanHist(hpt, 28., 13000.);
-    if (ieta==30) cleanHist(hpt, 50, 13000.); 
+    //cleanHist(hpt, 28., 13600.);
+    cleanHist(hpt, 28., 6800./cosh(y1));
+    //if (ieta==30) cleanHist(hpt, 50, 13600.); 
 
-    tdrDraw(hpt,"HP][",marker[ybin],color[ybin],kSolid,-1,kNone,0,size[ybin]);
+    TH1D *hptf = (TH1D*)hpt->Clone(Form("hptf_%d",ybin));
+    cleanHist(hptf, 28, 13600., true);
+    
+    // Fits for ratio
+    TF1 *f1 = new TF1(Form("f1_%d",ybin),
+		      Form("[0]*pow(x-[3],[1])*pow(1-x*%1.4g,[2])",
+			   2.*cosh(y1)/13600.),28,6800./cosh(y1+0.125));
+    //2.*cosh(y1)/13600.),28,6800./cosh(y1));
+    //2.*cosh(y2)/13600.),28,6800./cosh(y2));
+    //2.*cosh(y)/13600.),28,6800./cosh(y));
+    f1->SetParameters(1e11,-5,10,0.);
+    //if (ybin==9) f1->SetRange(49, 6800./cosh(y1));
+    if (ybin>4) {
+    //f1->SetRange(84, 6800./cosh(y1));
+      f1->FixParameter(3,0.);
+    }
+    hptf->Fit(f1,"QRN");
+    hptf->Fit(f1,"QRNM");
+    
 
-    if (y1==0) leg->AddEntry(hpt,Form("|y| < %1.1f",y2));
-    else leg->AddEntry(hpt,Form("%1.1f #leq |y| < %1.1f",y1,y2));
+    c1->cd();
+    tdrDraw(hpt,"H][",kNone,color[ybin],kSolid,-1,kNone,0,size[ybin]);
+    tdrDraw(hptf,"Pz",marker[ybin],color[ybin],kSolid,-1,kNone,0,size[ybin]);
+
+    if (y1==0) leg->AddEntry(hptf,Form("|y| < %1.1f",y2),"PLE");
+    else leg->AddEntry(hptf,Form("%1.1f #leq |y| < %1.1f",y1,y2),"PLE");
+
+    f1->SetLineColor(hpt->GetLineColor());
+    f1->Draw("SAME");
+    
+
+    c2->cd(ybin+1);
+    gPad->SetLogx();
+
+    TH1D *hr = (TH1D*)hpt->Clone(Form("hr_%d",ybin));
+    TH1D *hrf = (TH1D*)hptf->Clone(Form("hrf_%d",ybin));
+    for (int i = 1; i != hr->GetNbinsX()+1; ++i) {
+      double x1 = min(hr->GetBinLowEdge(i),6800./cosh(y1));
+      double x2 = min(hr->GetBinLowEdge(i+1),6800./cosh(y1));
+      if (x2==x1) {
+	hr->SetBinContent(i, 0.);
+	hr->SetBinError(i, 0.);
+	hrf->SetBinContent(i, 0.);
+	hrf->SetBinError(i, 0.);
+	continue;
+      }
+      double xsec = f1->Integral(x1, x2) / (x2 - x1);
+      if (xsec>0) {
+	hr->SetBinContent(i, hpt->GetBinContent(i) / xsec);
+	hr->SetBinError(i, hpt->GetBinError(i) / xsec);
+	hrf->SetBinContent(i, hptf->GetBinContent(i) / xsec);
+	hrf->SetBinError(i, hptf->GetBinError(i) / xsec);
+      }
+    } // for i
+
+    if (ybin<=4) {
+      gPad->SetTopMargin(0.10);
+      h2->GetYaxis()->SetRangeUser(0+1e-4,2);
+      h2->GetYaxis()->SetTitleSize(0.045*1.7);
+      h2->GetYaxis()->SetLabelSize(0.045*1.7);
+    }
+    if (ybin>=5) {
+      gPad->SetBottomMargin(0.17);
+      h2->GetYaxis()->SetRangeUser(0,4-1e-4);
+      h2->GetYaxis()->SetTitleSize(0.045*1.5);
+      h2->GetYaxis()->SetLabelSize(0.045*1.5);
+      h2->GetXaxis()->SetTitleSize(ybin>5 ? 0.045*1.7 : 0.045*1.5);
+      h2->GetXaxis()->SetLabelSize(ybin>5 ? 0.045*1.7 : 0.045*1.5);
+      h2->GetXaxis()->SetTitleOffset(ybin>5 ? 1.1 : 1.2);
+    }
+
+    h2->DrawClone("AXIS");
+    l->DrawLine(28,1.,(ybin==9 ? 200. : 5000.),1.);
+    if (true) {
+      tex->DrawLatex(ybin%5==0 ? 0.25 : 0.10, ybin<5 ? 0.85 : 0.95,
+		     Form("[%1.1f, %1.1f]",y1,y2));
+      tex->DrawLatex(ybin%5==0 ? 0.25 : 0.10, ybin<5 ? 0.80 : 0.90,
+		     Form("N_{0} = %1.3g #pm %1.3g",
+			  f1->GetParameter(0), f1->GetParError(0)));
+      tex->DrawLatex(ybin%5==0 ? 0.25 : 0.10, ybin<5 ? 0.75 : 0.85,
+		     Form("#alpha = %1.3f #pm %1.3f",
+			  f1->GetParameter(1), f1->GetParError(1)));
+      tex->DrawLatex(ybin%5==0 ? 0.25 : 0.10, ybin<5 ? 0.70 : 0.80,
+		     Form("#beta = %1.2f #pm %1.2f",
+			  f1->GetParameter(2), f1->GetParError(2)));
+      if (f1->GetParameter(3)!=0 || f1->GetParError(3)!=0)
+	tex->DrawLatex(ybin%5==0 ? 0.25 : 0.10, ybin<5 ? 0.65 : 0.75,
+		       Form("#Deltap_{T} = %1.2f #pm %1.2f GeV",
+			    f1->GetParameter(3), f1->GetParError(3)));
+    }
+      
+    tdrDraw(hr,"H][",kNone,color[ybin],kSolid,-1,kNone,0,1.5);
+    tdrDraw(hrf,"Pz",marker[ybin],color[ybin],kSolid,-1,kNone,0,1.5);
+    if (y1==0) leg2->AddEntry(hrf,Form("|y| < %1.1f",y2),"PLE");
+    else leg2->AddEntry(hrf,Form("%1.1f #leq |y| < %1.1f",y1,y2),"PLE");
+    gPad->RedrawAxis();
   } // for ybin
 
+  c1->cd();
   gPad->RedrawAxis();
   c1->SaveAs("pdf/drawIncjetPRL/drawIncjetPRL_spectra.pdf");
-}
+
+  c2->cd(10);
+  //TLegend *leg2 = (TLegend*)leg->Clone();
+  //leg2->SetTextSize(0.045*1.5);
+  //leg2->SetX1NDC(0.85-(0.25+0.05)*1.5);
+  //leg2->SetY1NDC(0.90-nybins*0.035*1.5);
+  leg2->Draw();
+  c2->SaveAs("pdf/drawIncjetPRL/drawIncjetPRL_ratio.pdf");
 
 
-void normalizeHist(TH1D *h, double absy) {
+  if (drawTrigEff) {
+
+    c2->cd(10);
+  
+    cout << "Do drawTrigEff" << endl << flush;
+    TFile *ft = new TFile("rootfiles/Prompt2024/v114_2024//jmenano_data_out_2024FGHI_JME_v114_2024.root","READ");
+    assert(ft && !ft->IsZombie());
+
+    string vt[] =
+    //{"HLT_PFJet40"};
+      {"HLT_ZeroBias", "HLT_PFJet40", "HLT_PFJet60", "HLT_PFJet80",
+       "HLT_PFJet140","HLT_PFJet200", "HLT_PFJet260",
+       "HLT_PFJetFwd40", "HLT_PFJetFwd60" , "HLT_PFJetFwd80",
+       "HLT_PFJetFwd140", "HLT_PFJetFwd200", "HLT_PFJetFwd260"};
+    const int nt = sizeof(vt)/sizeof(vt[0]);
+    int color[nt] =
+      {kGray+2, kMagenta+1, kBlue, kRed,
+       kGreen+1, kCyan+1, kOrange+1,
+       kMagenta-9, kBlue-9, kRed-9,
+       kGreen-9, kRed-9, kOrange-9};
+
+    TLegend *leg2t = tdrLeg(0.85-0.25*1.5,0.90-0.035*nt*1.5,0.85,0.90);
+    leg2t->SetTextSize(0.040*1.5);
+    
+    for (int it = 0; it != nt; ++it) {
+      const char *trg = vt[it].c_str();
+      
+      for (int ybin = 0; ybin != nybins; ++ybin) {
+
+	c2->cd(ybin+1);
+	int ieta = 5*(ybin+1);
+	double y1 = 0+ybin*0.5;
+	double y2 = 0.5+ybin*0.5;
+	double y = 0.5*(y1+y2);
+	    
+	// Original spectrum
+	TH1D *hpt = (TH1D*)f->Get(Form("Incjet/hpt%02d",ieta)); assert(hpt);
+	hpt = (TH1D*)hpt->Clone(Form("hpt2_%d",ybin));
+	normalizeHist(hpt, y);
+	cleanHist(hpt, 28., 13600.);
+	
+	TH1D *ht = (TH1D*)ft->Get(Form("%s/Incjet/hpt%02d",trg,ieta));
+	assert(ht);
+	TH1D *hrt = (TH1D*)ht->Clone(Form("hrt_%d",ybin));
+	normalizeHist(hrt, y, trg);
+	cleanHist(hrt, 28., 13600.);
+
+	hrt->Divide(hpt);
+
+	if (it==0) {
+	  h2->GetYaxis()->SetRangeUser(0.+1e-3,2-1e-3);
+	  h2->DrawClone("AXIS");
+	  l->DrawLine(28,1.,(ybin==9 ? 200. : 5000.),1.);
+	  tex->DrawLatex(ybin%5==0 ? 0.25 : 0.10, ybin<5 ? 0.85 : 0.95,
+			 Form("[%1.1f, %1.1f]",y1,y2));
+	}
+	if (ybin==0) {
+	  leg2t->AddEntry(hrt,TString(trg).ReplaceAll("HLT_",""),"FL");
+	}
+	
+	tdrDraw(hrt,"HIST][",kNone,color[it],kSolid,-1,kNone,0,1,1);
+
+	if (it==nt-1) gPad->RedrawAxis();
+	if (ybin==nybins-1) leg2t->Draw();
+      } // for ybin
+    } // for it
+    
+    c2->SaveAs("pdf/drawIncjetPRL/drawIncjetPRL_trigEff.pdf");
+
+  }
+
+} // drawIncjetPRL
+
+#include "../minitools/DijetHistosCombine.C"
+void normalizeHist(TH1D *h, double absy, string trg) {
 
   for (int i = 1; i != h->GetNbinsX()+1; ++i) {
 
@@ -107,8 +317,82 @@ void normalizeHist(TH1D *h, double absy) {
     */
 
     // HLT_ZeroBias_v* fudge factor for luminosity
-    double kzb = 0.5;
+    //double kzb = 0.5;
+    double kzb = 0.5*0.9;
+    double kfwd80 = 0.5*1.3;//1.2;//1.1;//*0.9;
+    double kfwd140 = 0.5*1.3;//1.1;
+    double kfwd200 = 0.5*1.3;
+    double kfwd260 = 0.5*1.3;
+    double kfwd320 = 0.5*1.3;
+    double kfwd400 = 0.5*1.3;
+
+    map<string, double> ml;
+    ml["HLT_PFJet500"] = 82419.755946457;
+    ml["HLT_PFJet450"] = 10302.469493307;
+    ml["HLT_PFJet400"] = 5151.234746654;
+    ml["HLT_PFJet320"] = 2575.617373327;
+    ml["HLT_PFJet260"] = 643.904343332;
+    ml["HLT_PFJet200"] = 235.485016990;
+    ml["HLT_PFJet140"] = 54.946503964;
+    ml["HLT_PFJet80"] = 4.488592109;
+    ml["HLT_PFJet60"] = 1.180534644;
+    ml["HLT_PFJet40"] = 0.157404619;
+    ml["HLT_ZeroBias"] =  0.157404619*kzb;
+
+    ml["HLT_PFJetFwd500"] = 82419.755946457;
+    ml["HLT_PFJetFwd450"] = 82419.755946457;
+    ml["HLT_PFJetFwd400"] = 82419.755946457 * kfwd400;
+    ml["HLT_PFJetFwd320"] = 20604.938986614 * kfwd320;
+    ml["HLT_PFJetFwd260"] = 10302.469493307 * kfwd260;
+    ml["HLT_PFJetFwd200"] = 1831.550132143 * kfwd200;
+    ml["HLT_PFJetFwd140"] = 312.196045252 * kfwd140;
+    ml["HLT_PFJetFwd80"] = 15.095193397 * kfwd80;
+    ml["HLT_PFJetFwd60"] = 2.361069288;
+    ml["HLT_PFJetFwd40"] = 0.190857498;
+
+    // Copied from minitools/DijetHistosCombine.C
+    // Need tables from there as well
+    //#include "../minitools/DijetHistosCombine.C"
+
+    double lum(0);
+    if (trg=="") {
+
+      string trigger("none");
+      bool covered = false;
+      for (auto& box : incjetBoxes) {
+	// Check if (pt, eta) is in the region
+	if (inRange(x, box.ptMin, box.ptMax) &&
+	    inRange(absy, box.absyMin, box.absyMax)) {
+	  
+	  // Copy bin content for this trigger
+	  trigger = box.triggerName;
+	  
+	  // Sanity check for overlapping boxes
+	  if (covered) {
+	    std::cerr << "Warning: Trigger " << trigger
+		      << " bin (pt=" << x << ", absy=" << absy << ")"
+		      << " already covered by another trigger!\n";
+	  }
+	  
+	  // Mark as covered and break if you expect only one coverage
+	  covered = true;
+	  //break;
+	}
+      }
+      
+      // Sanity check for missing phase space corners
+      if (!covered) {
+	std::cerr << "Warning: Bin (pt=" << x
+		  << ", absy=" << absy << ") not covered by any trigger!\n";
+      }
+      
+      lum = ml[trigger];
+      assert(lum!=0);
+    }
+    else
+      lum = ml[trg];
     
+    /*
     double lum(82438.188401497); // 2024FGHI_all.txt online
     // Prescale trigger luminosities calculated with brilcalc, e.g.:
     // brilcalc lumi --normtag /cvmfs/cms-bril.cern.ch/cms-lumi-pog/Normtags/normtag_BRIL.json --datatag online -u /pb --begin 382229 -i Cert_Collisions2024_378981_386951_Golden.json --hltpath "HLT_PFJet500_v*" > 2024FGHI_500.txt
@@ -133,7 +417,7 @@ void normalizeHist(TH1D *h, double absy) {
 	lum = 1.180534644;
       } else if (x>49) { // HLT_PFJet40_v*
 	lum = 0.157404619;
-      } else if (x>0) { // HLT_ZeroBias_v*
+      } else if (x>=0) { // HLT_ZeroBias_v*
 	lum = 0.157432157*kzb;
       }
     }
@@ -158,11 +442,12 @@ void normalizeHist(TH1D *h, double absy) {
 	lum = 2.361069288;//1.180534644;
       } else if (x>49) { // HLT_PFJetFwd40_v*
 	lum = 0.190857498;//0.157404619;
-      } else if (x>0) { // HLT_ZeroBias_v*
+      } else if (x>=0) { // HLT_ZeroBias_v*
 	lum = 0.157432157*kzb;
       }
     }
-      
+    */
+    
     h->SetBinContent(i, y / ex / lum);
     h->SetBinError(i, ey / ex / lum);
   } // for i
@@ -170,13 +455,34 @@ void normalizeHist(TH1D *h, double absy) {
 } // normalizeHist
 
 
-void cleanHist(TH1D *h, double xmin, double xmax) {
+void cleanHist(TH1D *h, double xmin, double xmax, bool filterBins) {
 
+  int ybin(0);
+  if (filterBins) {
+    sscanf(h->GetName(),"hptf_%d",&ybin);
+    cout << "Filter ybin " << ybin << endl << flush;
+  }
+  
   for (int i = 1; i != h->GetNbinsX()+1; ++i) {
     double x = h->GetBinCenter(i);
     if (x<xmin || x>xmax) {
       h->SetBinContent(i, 0.);
       h->SetBinError(i, 0.);
     }
+
+    if (filterBins) {
+      double y = ybin*0.5;
+      if ( (ybin==5 && (x<74)) || //|| (x>110 && x<200))) ||
+	   //(ybin>5 && (x<84 || (x>110 && x<160) || x>0.8*6800./cosh(y))) ) {
+	   //(ybin>5 && (x<28 || (x>110 && x<160) || x>0.6*6800./cosh(y))) ||
+	   //(ybin<5 && (x>49 && x<57)) ||
+	   //(ybin>5 && (x>49 && x<57)) ||
+	   //(ybin==9 && x<49) ) {
+	   (ybin==9 && x<56) ) {
+	h->SetBinContent(i, 0.);
+	h->SetBinError(i, 0.);
+      }
+    }
+    
   } // for i
 } // cleanHist
