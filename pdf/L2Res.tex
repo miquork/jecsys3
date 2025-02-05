@@ -1,0 +1,83 @@
+% Define your eras in a macro
+
+\documentclass{beamer}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usepackage{xstring}
+
+% Use \def instead of \newcommand and keep it on one line
+%\def\IOVlist{2024B\_nib1,2024C\_nib1,2024D\_nib1,2024Ev1\_nib1,2024Ev2\_nib1,2024F\_nib1,2024F\_nib2,2024F\_nib3,2024G\_nib1,2024G\_nib2,2024H\_nib1,2024I\_nib1}
+\def\vJECfit{V8M}
+\def\vJECtest{V7M}
+\def\IOVlist{2024B_nib1,2024C_nib1,2024D_nib1,2024Ev1_nib1,2024Ev2_nib1,2024F_nib1,2024F_nib2,2024F_nib3,2024G_nib1,2024G_nib2,2024H_nib1,2024I_nib1}
+\def\ptlist{15,30,100,300,1000,3000}
+
+\begin{document}
+
+\begin{frame}
+  \frametitle{L2Res fits (new: \vJECfit, test: \vJECtest)}
+  Date: \today
+  \begin{itemize}
+  \item {\bf First nib-based fits, Prompt24 data}
+  \item 2024B was commissioning era (V7M non-closure, 0.13~fb$^{-1}$)
+  \item 2024F\_nib1 missed HCAL\_DI (V7M non-closure, 0.88~fb$^{-1}$)
+  \item 2024FG have some bins with $\pm1$\% JES shifts in L3Res, but within uncertainty band (mid-era HCAL+ECAL updates)
+  \item $2<|\eta|<3$ region has offset-like non-closure (was $Z/\gamma$+jet pileup reweighing upated after V7M derivation?)
+  \item 2024B and 2024F\_nib1 have large error bars in L2Res due to low statistics ($\le1$~fb$^{-1}$)
+  \item To-do: (i) account for photon scale drifts, (ii) clean out bad fits, (iii) add inclusive jet vs full 2024
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{JES L2Res fits (\vJECfit)}
+\foreach \era [count=\x from 1] in \IOVlist{
+  \includegraphics[width=0.22\textwidth]{L2Res/L2Res_Summary_\era.pdf}
+  \ifnum\x=4\newline\fi
+  \ifnum\x=8\newline\fi
+}
+\end{frame}
+
+\begin{frame}
+\frametitle{JES L2Res closure (with \vJECtest)}
+\foreach \era [count=\x from 1] in \IOVlist{
+  \includegraphics[width=0.22\textwidth]{L2Res/L2Res_Summary_\era_closure.pdf}
+  \ifnum\x=4\newline\fi
+  \ifnum\x=8\newline\fi
+}
+\end{frame}
+
+\begin{frame}
+\frametitle{JES L2Res fits (\vJECfit): Chisquare}
+\foreach \era [count=\x from 1] in \IOVlist{
+  \includegraphics[width=0.22\textwidth]{L2Res/L2Res_Chi2_\era.pdf}
+  \ifnum\x=4\newline\fi
+  \ifnum\x=8\newline\fi
+}
+\end{frame}
+
+\begin{frame}
+\frametitle{JES L2Res closure (with \vJECtest): Chisquare}
+\foreach \era [count=\x from 1] in \IOVlist{
+  \includegraphics[width=0.22\textwidth]{L2Res/L2Res_Chi2_\era_closure.pdf}
+  \ifnum\x=4\newline\fi
+  \ifnum\x=8\newline\fi
+}
+\end{frame}
+
+\foreach \era [count=\x from 1] in \IOVlist{%
+  \StrSubstitute{\era}{_}{\_}[\eraTitle]%
+  \begin{frame}
+    \frametitle{JES L2Res fits (\vJECfit): \eraTitle}
+    \includegraphics[width=0.99\textwidth]{L2Res/L2Res_AllEta_\era.pdf}
+  \end{frame}
+}
+
+\foreach \era [count=\x from 1] in \IOVlist{
+  \StrSubstitute{\era}{_}{\_}[\eraTitle]
+  \begin{frame}
+    \frametitle{JES L2Res closure (\vJECtest): \eraTitle}
+    \includegraphics[width=0.99\textwidth]{L2Res/L2Res_AllEta_\era_closure.pdf}
+  \end{frame}
+}
+
+\end{document}
