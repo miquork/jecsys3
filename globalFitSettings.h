@@ -56,7 +56,7 @@ bool _gf_fitZjetHDM = true;//false;
 // Permit baseline shift for JES with L2L3Res inputs. Needed for PFcomp fit
 bool _gf_useJESref = false;//true;//false;
 // Alternatively, undo JES completely to show pre-closure plots
-bool _gf_undoJESref = true;
+bool _gf_undoJESref = false;//true;
 
 // Listing of all available 'datasets'
 // {name, type, name2}
@@ -145,7 +145,7 @@ const array<string,29> _gf_shapes_whitelist = {
   //"loglin", // log^1
   //"const", // log^0 constant scale factor
   "off", // Summer23
-  "ecalcc", // ECAL cc timing for 2024BCD, not 2024CR
+  "ecalcc", // ECAL cc timing for 2024BCD, not 2024CR/CS/F
   //"qie11"
   //"x1p5",
   //"x1v4", // Summer23 variant

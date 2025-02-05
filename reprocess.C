@@ -18,6 +18,7 @@
 #include "TMath.h"
 #include "TLine.h"
 #include "TProfile.h"
+#include "TProfile2D.h"
 
 #include "CondFormats/JetMETObjects/interface/FactorizedJetCorrector.h"
 #include "CondFormats/JetMETObjects/interface/JetCorrectorParameters.h"
@@ -105,6 +106,8 @@ void setEtaPtRho(FactorizedJetCorrector *jec, double eta,double pt,double rho);
 Double_t funcCorrPt(Double_t *x, Double_t *p);
 double getJEC(FactorizedJetCorrector *jec, double eta, double ptcorr,
 	      double rho = 0);
+double getJES(TProfile2D *p2jes, double eta, double ptcorr);
+double getJES(TProfile *pjes, double ptcorr);
 void setEpoch(string epoch);
 
 // put all the different methods in a single file for easy access for everybody
@@ -124,7 +127,7 @@ void reprocess(string epoch="") {
     fmjptmin = 30; fmjptmax = 2787;//2000;//2787;
     fijptmin = 15; fijptmax = 2800;//3103;
 
-    doMultijetRecoil = (epoch=="Run24CP" || epoch=="Run24BCD" || epoch=="Run24BCDE" || epoch=="Run24C" || epoch=="Run24E");// || epoch=="Run24F");
+    doMultijetRecoil = (epoch=="Run24CP" || epoch=="Run24BCD" || epoch=="Run24BCDE" || epoch=="Run24C" || epoch=="Run24E" || epoch=="2024B_nib1" || epoch=="2024C_nib1" || epoch=="2024D_nib1" || epoch=="2024Ev1_nib1" || epoch=="2024Ev2_nib1");// || epoch=="Run24F");
   }
   if (usePrompt24Range) {
     //fjzptmin = 15; //fjzptmax = 300;
@@ -141,7 +144,7 @@ void reprocess(string epoch="") {
     fjzptmin = 15; fjzptmax = 70;//15;
     fzjaptmin = 25; fzjaptmax = 70;//15;
     fzptmin  = 15; fzptmax  = 1000;//700;
-    fgptmin =  (epoch=="Run24F" || epoch=="Run24G" || epoch=="Run24FG" || epoch=="Run24H" || epoch=="Run24I" ? 75 : 110);//60;//40;//130;//40;
+    fgptmin =  (epoch=="Run24F" || epoch=="Run24G" || epoch=="Run24FG" || epoch=="Run24H" || epoch=="Run24I" || tepoch.Contains("nib") ? 75 : 110);//60;//40;//130;//40;
     //fgptmin = 175; // w32-33 until QCD included
     fgptmax = 1750;//300;//1750;
     //doMultijetRecoil = true;
@@ -158,7 +161,7 @@ void reprocess(string epoch="") {
       //fmjptmin = 56;
       //fmjptmax = 2787;
     //}
-    doMultijetRecoil = (epoch=="Run24CP" || epoch=="Run24BCD" || epoch=="Run24BCDE" || epoch=="Run24C" || epoch=="Run24E");// || epoch=="Run24F");
+    doMultijetRecoil = (epoch=="Run24CP" || epoch=="Run24BCD" || epoch=="Run24BCDE" || epoch=="Run24C" || epoch=="Run24E" || epoch=="2024B_nib1" || epoch=="2024C_nib1" || epoch=="2024D_nib1" || epoch=="2024Ev1_nib1" || epoch=="2024Ev2_nib1");// || epoch=="Run24F"););// || epoch=="Run24F");
     fmjptmin = (doMultijetRecoil ? 600 : 133);
   }
   
@@ -256,6 +259,9 @@ void reprocess(string epoch="") {
     //fz = new TFile(Form("%s/jme_bplusZ_Run3_Zmm_sync_v59.root",cdz58p1),"READ"); // Sami's combo
     fz = new TFile("rootfiles/jecdataRun3Data.root","READ"); // manual combo
   }
+  if (tepoch.Contains("nib")) {
+    fz = new TFile(Form("rootfiles/Prompt2024/v93/jme_bplusZ_%s_Zmm_v93.root",epoch.c_str()), "READ");
+  }
 
   assert(fz && !fz->IsZombie());
   
@@ -268,7 +274,7 @@ void reprocess(string epoch="") {
 
   TH1D *hcounts(0);
   TH1D *hmz_dt(0), *hmz_mc(0);
-  if (tepoch.Contains("UL") ||
+  if (tepoch.Contains("UL") || tepoch.Contains("nib") ||
       epoch=="RunCD" ||
       epoch=="Run22C" || epoch=="Run22D" || epoch=="Run22CD" ||
       epoch=="Run22E" || epoch=="Run22F" || epoch=="Run22G"||
@@ -366,7 +372,7 @@ void reprocess(string epoch="") {
 
   // 22Sep2023 V3 used v32 files
   //TFile *fp = new TFile(Form("../gamjet/rootfiles/GamHistosRatio_%s_P8QCD_v32.root",mp[epoch]),"READ"); // L2L3Res_V3
-  TFile *fp(0);
+  TFile *fp(0), *fp0(0);
   if (epoch=="Run22FG") {
     //fp = new TFile(Form("../gamjet/rootfiles/GamHistosRatio_%s_P8QCD_19Dec_v33.root",mp[epoch]),"READ"); // 19Dec2023
     assert(false);
@@ -417,6 +423,10 @@ void reprocess(string epoch="") {
   }
   else if (epoch=="Run24CP") {
     fp = new TFile(Form("rootfiles/Prompt2024/GamHistosRatio_%s_P8BPixQCD_w29.root","2024C"),"READ");
+  }
+  else if (tepoch.Contains("nib")) {
+    fp = new TFile(Form("rootfiles/Prompt2024/w43/GamHistosRatio_%s_w43.root",epoch.c_str()),"READ");
+    fp0 = new TFile(Form("rootfiles/Prompt2024/w43/GamHistosFill_data_%s_w43.root",epoch.c_str()),"READ"); assert(fp0); // for JES 
   }
   else {
     fp = new TFile(Form("../gamjet/rootfiles/GamHistosRatio_%s_P8QCD_v32.root",mp[epoch]),"READ"); // L2L3Res_V3
@@ -579,7 +589,13 @@ void reprocess(string epoch="") {
       fmjm = new TFile(Form("rootfiles/Prompt2024/v109_2024/jmenano_mc_out_%s_v109_%s.root",mmjm[epoch],mmjd[epoch]),"READ"); // with JER SF V5M, V5M->V6M (TMP out)
     if (fmjm) fmjm = (TFile*)fmjm->GetDirectory("HLT_MC"); // PATCH
   }
+  else if (tepoch.Contains("nib")) {
+    fmjd = new TFile(Form("rootfiles/Prompt2024/v113_2024/jmenano_data_cmb_%s_JME_v113_2024.root",epoch.c_str()),"READ"); // V7M closure
+    fmjm = new TFile(Form("rootfiles/Prompt2024/v113_2024/jmenano_mc_out_Winter24MGV14_v113_%s.root",epoch.c_str()),"READ"); // // V7M closure
+    if (fmjm) fmjm = (TFile*)fmjm->GetDirectory("HLT_MC"); // PATCH
+  }
   else {
+    assert(false);
   // 22Sep2023_V3 used v35a files
   //TFile *fmjd = new TFile(Form("rootfiles/Summer23_noL2L3Res/jmenano_data_cmb_%s_JME_v36_Summer23.root",mmjd[epoch]),"READ"); // Summer23_V1
   //TFile *fmjm = new TFile(Form("rootfiles/Summer23_noL2L3Res/jmenano_mc_cmb_%s_v36_Summer23.root",mmjm[epoch]),"READ"); // Summer23_V1
@@ -633,7 +649,7 @@ void reprocess(string epoch="") {
   map<string, map<string, const char*> > rename;
 
   // Results from Sami's Z+b analysis
-  if (tepoch.Contains("UL") ||
+  if (tepoch.Contains("UL") || tepoch.Contains("nib") ||
       epoch=="RunCD" ||
       epoch=="Run22C" || epoch=="Run22D" || epoch=="Run22CD" ||
       epoch=="Run22E" || epoch=="Run22F" || epoch=="Run22G" ||
@@ -892,7 +908,7 @@ void reprocess(string epoch="") {
   types.push_back("mpfchs1"); // Type-I MET
   types.push_back("ptchs");
   // for pfjet only (activate puf, cef, muf later?)
-  if (tepoch.Contains("UL") ||
+  if (tepoch.Contains("UL") || tepoch.Contains("nib") ||
       epoch=="RunCD" || 
       epoch=="Run22C" || epoch=="Run22D" || epoch=="Run22CD" ||
       epoch=="Run22E" || epoch=="Run22F" || epoch=="Run22G" ||
@@ -918,7 +934,7 @@ void reprocess(string epoch="") {
   types.push_back("mpfn");
   types.push_back("mpfu");
   types.push_back("crecoil");
-  if (tepoch.Contains("UL") ||
+  if (tepoch.Contains("UL") || tepoch.Contains("nib") ||
       epoch=="RunCD" || 
       epoch=="Run22C" || epoch=="Run22D" || epoch=="Run22CD" ||
       epoch=="Run22E" || epoch=="Run22F" || epoch=="Run22G" ||
@@ -938,7 +954,7 @@ void reprocess(string epoch="") {
   //types.push_back("npv");
 
   // <pT,reco> and <pT,gen> vs ref pT (MC only)
-  if (tepoch.Contains("UL") ||
+  if (tepoch.Contains("UL") || tepoch.Contains("nib") ||
       epoch=="RunCD" ||
       epoch=="Run22C" || epoch=="Run22D" || epoch=="Run22CD" ||
       epoch=="Run22E" || epoch=="Run22F" || epoch=="Run22G" ||
@@ -1118,7 +1134,7 @@ void reprocess(string epoch="") {
 		     rename["zjet"][t],100.*alpha);
 	  } // "zjav"
 	  if (s=="zjet") {
-	    if (tepoch.Contains("UL") ||
+	    if (tepoch.Contains("UL") || tepoch.Contains("nib") ||
 		epoch=="RunCD" ||
 		epoch=="Run22C" || epoch=="Run22D" || epoch=="Run22CD" ||
 		epoch=="Run22E" || epoch=="Run22F" || epoch=="Run22G" ||
@@ -1412,7 +1428,7 @@ void reprocess(string epoch="") {
   fout->cd("mc/eta00-13");
   hmz_mc->Write("mass_zjet_a100");
 
-  if (fz) fz->Close();
+  //if (fz) fz->Close();
   curdir->cd();
 
 
@@ -1570,8 +1586,41 @@ void reprocess(string epoch="") {
       jec = getFJC("","","Summer22Prompt23_Run3_reV3_DATA_L2L3Residual");
       mcjec = getFJC("","Summer22Run3_V1_MC_L2Relative");
     }
-    assert(jec);
-    assert(mcjec);
+    // New method 2024-12-13 of using stored JES
+    TProfile2D *p2jes(0), *p2res(0);
+    TProfile *pjes(0), *pres(0);
+    if (tepoch.Contains("nib")) {
+      TProfile2D *p2jesp(0), *p2jesz(0);//, *p2jesm(0);
+      TProfile *pjesp(0), *pjesz(0);//, *pjesm(0);
+    //pjesp = (TProfile*)fp0->Get("resp_JES_DATA_a100_eta00_13"); assert(pjesp);
+      p2jesp = (TProfile2D*)fp0->Get("Gamjet2/p2corr"); assert(p2jesp);//!!
+      pjesp = p2jesp->ProfileY(Form("pjesp_%s",epoch.c_str()),1,15);//|eta|<1.3
+      p2jesz = (TProfile2D*)fz->Get("data/l2res/p2jes"); assert(p2jesz);
+      pjesz = p2jesz->ProfileY(Form("pjesz_%s",epoch.c_str()),1,15);//|eta|<1.3
+      //
+      p2jes = (TProfile2D*)p2jesp->Clone(Form("p2jes_%s",epoch.c_str())); //!!
+      //p2jes = (TProfile2D*)p2jesz->Clone(Form("p2jes_%s",epoch.c_str()));
+      pjes = (TProfile*)pjesp->Clone(Form("pjes_%s",epoch.c_str()));//!!
+      //pjes = (TProfile*)pjesz->Clone(Form("pjes_%s",epoch.c_str()));
+      pjes->Add(pjesz);
+      //pjes->Add(pjesm);
+
+      TProfile2D *p2resp(0), *p2resz(0), *p2resm(0);
+      TProfile *presp(0), *presz(0), *presm(0);
+    //presp = (TProfile*)fp0->Get("resp_RES_DATA_a100_eta00_13"); assert(presp);
+      p2resp = (TProfile2D*)fp0->Get("Gamjet2/p2res"); assert(p2resp);
+      presp = p2resp->ProfileY(Form("presp_%s",epoch.c_str()),1,15);//|eta|<1.3
+      p2resz = (TProfile2D*)fz->Get("data/l2res/p2res"); assert(p2resz);
+      presz = p2resz->ProfileY(Form("presz_%s",epoch.c_str()),1,15);//|eta|<1.3
+      presm = (TProfile*)fmjd->Get("Multijet/presa"); assert(presm);
+      p2res = (TProfile2D*)p2resz->Clone(Form("p2res_%s",epoch.c_str()));
+      pres = (TProfile*)presp->Clone(Form("pres_%s",epoch.c_str()));
+      //pres = (TProfile*)presm->Clone(Form("pres_%s",epoch.c_str()));
+      pres->Add(presz);
+      pres->Add(presm);
+    }
+    assert(jec || pres);
+    assert(mcjec || pjes);
 
     //#define PAIR(a,b) (make_pair<double,FactorizedJetCorrector*>((a),getFJC("","",(b))))
     //add vjec here later to combine IOVs
@@ -1678,7 +1727,7 @@ void reprocess(string epoch="") {
       // Combo done with jecdataRun3Data.root and createL2L3ResTextFile.C
       jecold = getFJC("","","Summer22Prompt23_Run3_reV3_DATA_L2L3Residual");
     }
-    assert(jecold);
+    assert(jecold || pjes);
 
     if (rp_debug) cout << "Loading uncertainty sources..." << endl << flush;
 
@@ -1849,12 +1898,12 @@ void reprocess(string epoch="") {
 	  sumw8 += w;
 	  if (abseta<5.191) {
 	    sumw5 += w;
-	    double l2l3p = 1./getJEC(mcjec,+abseta,ptref);
-	    double l2l3m = 1./getJEC(mcjec,-abseta,ptref);
+	    double l2l3p = (mcjec ? 1./getJEC(mcjec,+abseta,ptref) : getJES(p2jes,+abseta,ptref));
+	    double l2l3m = (mcjec ? 1./getJEC(mcjec,-abseta,ptref) : getJES(p2jes,-abseta,ptref));
 	    double l2l3 = 0.5*(l2l3p+l2l3m);
 	    suml2l3 += w*l2l3;
-	    double l2l3resp = 1./getJEC(jec,+abseta,ptref);
-	    double l2l3resm = 1./getJEC(jec,-abseta,ptref);
+	    double l2l3resp = (jec ? 1./getJEC(jec,+abseta,ptref) : getJES(p2res,+abseta,ptref));
+	    double l2l3resm = (jec ? 1./getJEC(jec,-abseta,ptref) : getJES(p2res,-abseta,ptref));
 	    double l2l3res = 0.5*(l2l3resp+l2l3resm);
 	    suml2l3res += w*l2l3res;
 	  }
@@ -1910,14 +1959,14 @@ void reprocess(string epoch="") {
 	  }
 
 	  // JEC central values first
-	  double val = 1./getJEC(jec,eta,pt);
+	  double val = (jec ? 1./getJEC(jec,eta,pt) : getJES(pres,pt));
 
 	  // Run I and Run II reference JECs
 	  double jesrun1 = 1./getJEC(jecrun1,eta,pt);
 	  double jesrun2 = 1./getJEC(jecrun2,eta,pt);
 
 	  // old JEC
-	  double jes = 1./getJEC(jecold,eta,pt);
+	  double jes = (jecold ? 1./getJEC(jecold,eta,pt) : getJES(pres,pt));
 
 	  double vall2l3res = val; // For closure test 
 	  if(CorLevel=="L1L2L3Res") { //to get proper bands during closure test
@@ -2081,6 +2130,9 @@ void reprocess(string epoch="") {
 
       dout2->cd();
 
+      if (pjes) pjes->Write();
+      if (pres) pres->Write();
+      
       herr->SetMarkerSize(0);
       herr->SetFillStyle(1001);
       herr->SetFillColorAlpha(kYellow+1,0.5);
@@ -2173,6 +2225,11 @@ void reprocess(string epoch="") {
   } // JEC+sys
 
   fout->Close();
+  if (fz) fz->Close();
+  if (fp) fp->Close();
+  if (fmjd) fmjd->Close();
+  if (fmjm) fmjm->Close();
+  curdir->cd();
 
 } // reprocess
 
@@ -2257,6 +2314,23 @@ double getJEC(FactorizedJetCorrector *jec, double eta, double ptcorr,
 
   return (jec->getCorrection());
 } // getEtaPtE
+
+double getJES(TProfile2D *p2jes, double eta, double ptcorr) {
+  if (p2jes->GetXaxis()->GetBinLowEdge(1)==0) eta = fabs(eta);
+  int i = p2jes->GetXaxis()->FindBin(eta);
+  int j = p2jes->GetYaxis()->FindBin(ptcorr);
+  double jes = p2jes->GetBinContent(i,j);
+  if (jes<=0) return 1;
+  return jes;
+} // getJES(2D)
+
+double getJES(TProfile *pjes, double ptcorr) {
+  int i = pjes->FindBin(ptcorr);
+  double jes = pjes->GetBinContent(i);
+  if (jes<=0) return 1;
+  jes = pjes->Interpolate(ptcorr);
+  return jes;
+} // getJES(1D)
 
 void setEpoch(string epoch) {
 

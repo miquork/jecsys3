@@ -119,6 +119,7 @@ void globalFitEtaBin(double etamin, double etamax, string run, string version) {
 
   // Open file created by minitools/runAllIOVs.py and recombine.C
   const char *crun = run.c_str();
+  TString trun(crun);
   const char *cv = version.c_str();
   TFile *f = new TFile(Form("rootfiles/jecdata%s.root",crun),"UPDATE");
   assert(f && !f->IsZombie());
@@ -153,7 +154,9 @@ void globalFitEtaBin(double etamin, double etamax, string run, string version) {
 
   // Blacklist some shapes from various eras
   // (make configurable in globalFitSettings later)
-  if (run=="Run24F" || run=="Run24G" || run=="Run24H" || run=="Run24I") {
+  if (run=="Run24F" || run=="Run24G" || run=="Run24H" || run=="Run24I" ||
+      trun.Contains("2024F") || trun.Contains("2024G") ||
+      trun.Contains("2024H") || trun.Contains("2024I")) {
     if (whitelistshape.find("ecalcc")!=whitelistshape.end())
       whitelistshape.erase(whitelistshape.find("ecalcc"));
   }
@@ -228,23 +231,27 @@ void globalFitEtaBin(double etamin, double etamax, string run, string version) {
 
     // Jet+Z special
     if (TString(name).Contains("jetz")) { // default: 0.985, 16/fb
-      if (scaleJZperEra && run=="Run24I")    scaleJZ = 1.0050;
-      if (scaleJZperEra && run=="Run24H")    scaleJZ = 1.0050;
-      if (scaleJZperEra && run=="Run24G")    scaleJZ = 1.0050;//0.985; // 30/fb 
-      if (scaleJZperEra && run=="Run24F")    scaleJZ = 1.0050;//0.985; // 30/fb 
-      if (scaleJZperEra && run=="Run24E")    scaleJZ = 0.995; // 11/fb 
-      if (scaleJZperEra && run=="Run24BCDE") scaleJZ = 0.989; // 16+11/fb
+      if (scaleJZperEra && trun.Contains("24I")) scaleJZ = 1.0050;
+      if (scaleJZperEra && trun.Contains("24H")) scaleJZ = 1.0050;
+      if (scaleJZperEra && trun.Contains("24G")) scaleJZ = 1.0050; // 30/fb 
+      if (scaleJZperEra && trun.Contains("24F")) scaleJZ = 1.0050; // 30/fb 
+      if (scaleJZperEra && trun.Contains("24E")) scaleJZ = 0.995; // 11/fb 
+      if (scaleJZperEra && trun.Contains("24D")) scaleJZ = 0.989; // 16+11/fb
+      if (scaleJZperEra && trun.Contains("24C")) scaleJZ = 0.989; // 16+11/fb
+      if (scaleJZperEra && trun.Contains("24B")) scaleJZ = 0.989; // 16+11/fb
       
       scaleGraph(data.input, scaleJZ);
     }
     // Z+jet ave special
     if (TString(name).Contains("zjav")) { // default: 0.9925, half of JZ
-      if (scaleJZAperEra && run=="Run24I")    scaleJZA = 1.0025;
-      if (scaleJZAperEra && run=="Run24H")    scaleJZA = 1.0025;
-      if (scaleJZAperEra && run=="Run24G")    scaleJZA = 1.0025;//0.9925;
-      if (scaleJZAperEra && run=="Run24F")    scaleJZA = 1.0025;//0.9925;
-      if (scaleJZAperEra && run=="Run24E")    scaleJZA = 0.9975;
-      if (scaleJZAperEra && run=="Run24BCDE") scaleJZA = 0.9945;
+      if (scaleJZAperEra && trun.Contains("24I")) scaleJZA = 1.0025;
+      if (scaleJZAperEra && trun.Contains("24H")) scaleJZA = 1.0025;
+      if (scaleJZAperEra && trun.Contains("24G")) scaleJZA = 1.0025;
+      if (scaleJZAperEra && trun.Contains("24F")) scaleJZA = 1.0025;
+      if (scaleJZAperEra && trun.Contains("24E")) scaleJZA = 0.9975;
+      if (scaleJZAperEra && trun.Contains("24D")) scaleJZA = 0.9945;
+      if (scaleJZAperEra && trun.Contains("24C")) scaleJZA = 0.9945;
+      if (scaleJZAperEra && trun.Contains("24B")) scaleJZA = 0.9945;
       
       scaleGraph(data.input, scaleJZA);
     }
@@ -391,13 +398,8 @@ void globalFitEtaBin(double etamin, double etamax, string run, string version) {
   fitter->ExecuteCommand("SET PRINT", &printlevel, 1);
   
   // Run fitter (multiple times if needed)
-  //const int nfit = 2;//1;//5;//2;//1;
   int nfit = 1;
-  if (run=="Run24I") nfit = 1;
-  if (run=="Run24H") nfit = 1;
-  if (run=="Run24G") nfit = 1;
   if (run=="Run24F") nfit = 2;//1;
-  if (run=="Run24E") nfit = 1;
   if (run=="Run24BCD") nfit = 3;//1;
   cnt = 0;
   for (int i = 0; i != nfit; ++i)
@@ -575,6 +577,7 @@ void globalFitDraw(string run, string version) {
 
   // Load globalFit fit results
   const char *crun = run.c_str();
+  TString trun(crun);
   const char *cv = version.c_str();
   TFile *f = new TFile(Form("rootfiles/jecdata%s.root",run.c_str()),"READ");
   assert(f && !f->IsZombie());
@@ -912,12 +915,16 @@ void globalFitDraw(string run, string version) {
     if (debug) cout << "Draw plots" << endl << flush;
 
     if (!_gf_undoJESref) {
-      c1->SaveAs(Form("pdf/globalFit/globalFit_%s_%s_rjet_closure.pdf",crun,cv));
+      //c1->SaveAs(Form("pdf/globalFit/globalFit_%s_%s_rjet_closure.pdf",crun,cv));
+      c1->SaveAs(Form("pdf/globalFit/globalFit_closure_%s_%s.pdf",crun,cv));
     }
     else {
-      c1->SaveAs(Form("pdf/globalFit/globalFit_%s_%s_rjet.pdf",crun,cv));
-      if (plotPF) c1c->SaveAs(Form("pdf/globalFit/globalFit_%s_%s_pf.pdf",crun,cv));
-      if (usingMu) c1l->SaveAs(Form("pdf/globalFit/globalFit_%s_%s_mu.pdf",crun,cv));
+      //c1->SaveAs(Form("pdf/globalFit/globalFit_%s_%s_rjet.pdf",crun,cv));
+      c1->SaveAs(Form("pdf/globalFit/globalFit_rjet_%s_%s.pdf",crun,cv));
+      //if (plotPF) c1c->SaveAs(Form("pdf/globalFit/globalFit_%s_%s_pf.pdf",crun,cv));
+      if (plotPF) c1c->SaveAs(Form("pdf/globalFit/globalFit_pf_%s_%s.pdf",crun,cv));
+      //if (usingMu) c1l->SaveAs(Form("pdf/globalFit/globalFit_%s_%s_mu.pdf",crun,cv));
+      if (usingMu) c1l->SaveAs(Form("pdf/globalFit/globalFit_mu_%s_%s.pdf",crun,cv));
       //
       if (saveROOT) c1->SaveAs(Form("pdf/globalFit/globalFit_%s_%s_rjet.root",crun,cv));
     }
@@ -963,6 +970,7 @@ void globalFitDraw(string run, string version) {
 	run=="Run24F" || run=="Run24G" || run=="Run24H" || run=="Run24I" || 
 	run=="Run24BC" || run=="Run24BCD" || run=="Run24BCDE" ||
 	run=="Run24CP" || run=="Run24CR" || run=="Run24CS")  nhf_off = 0.0;
+    if (trun.Contains("2024")) nhf_off = 0.0;
     if (run=="Run3")  {
       nhf_off = ((5.1+3.0)*2.0 + 5.9*3.0 + (18.0+3.1)*3.0 +
 		 //8.7*1.0 + 9.8*4.0 + 9.5*4.5) / //Summer22
@@ -1025,9 +1033,11 @@ void globalFitDraw(string run, string version) {
       c1->SaveAs(Form("pdf/globalFit/globalFit_%s_%s_rjet_wNHF.pdf",crun,cv));
     else {
       if (_gf_undoJESref)
-	c1->SaveAs(Form("pdf/globalFit/globalFit_%s_%s_rjet.pdf",crun,cv));
+	//c1->SaveAs(Form("pdf/globalFit/globalFit_%s_%s_rjet.pdf",crun,cv));
+	c1->SaveAs(Form("pdf/globalFit/globalFit_rjet_%s_%s.pdf",crun,cv));
       else
-	c1->SaveAs(Form("pdf/globalFit/globalFit_%s_%s_rjet_closure.pdf",crun,cv));
+	//c1->SaveAs(Form("pdf/globalFit/globalFit_%s_%s_rjet_closure.pdf",crun,cv));
+	c1->SaveAs(Form("pdf/globalFit/globalFit_closure_%s_%s.pdf",crun,cv));
     }
   } // drawResults
 } // globalFitEtaBin

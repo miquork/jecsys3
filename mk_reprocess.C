@@ -73,7 +73,8 @@
   //globalFitEtaBin(0.0, 1.3, epoch, "Prompt24_V5M");
   //globalFitEtaBin(0.0, 1.3, epoch, "Prompt24_V5Mclosure");
   //globalFitEtaBin(0.0, 1.3, epoch, "Prompt24_V6M");
-  globalFitEtaBin(0.0, 1.3, epoch, "Prompt24_V7M");
+  //globalFitEtaBin(0.0, 1.3, epoch, "Prompt24_V7M");
+  globalFitEtaBin(0.0, 1.3, epoch, "Prompt24_V8M");
   
   exit(0); // Avoid page full of THastList::Delete errors
 }
