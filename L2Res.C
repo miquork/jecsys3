@@ -20,6 +20,7 @@ bool fitD = true; // Dijet (pT,ave)
 bool fitP = true; // Dijet (pT,probe)
 bool fitJ = true; // Dijet (pT,tag)
 
+bool refitPtRaw = true; // Re-parameterize L2Res vs pTraw instead of pTref
 bool doClosure = false; // Do not undo L2L3Res for closure test
 
 bool flattenHF = false; // Const vs pT for HF
@@ -626,7 +627,11 @@ void L2Res() {
     }
     else { // FGHI
       fd = new TFile(Form("rootfiles/Prompt2024/v114_2024/jmenano_data_cmb_%s_JME_v114_2024.root",cr),"READ");
-      fdm = new TFile("rootfiles/Prompt2024/v114_2024/jmenano_mc_out_Winter24MGV14_v114_2024.root","READ"); // Winter24
+      //fdm = new TFile("rootfiles/Prompt2024/v114_2024/jmenano_mc_out_Winter24MGV14_v114_2024.root","READ"); // Winter24
+      if (tr.Contains("F_nib1"))
+	fdm = new TFile("rootfiles/Prompt2024/v114_2024/jmenano_mc_out_Winter24MGV14_v114_2024.root","READ"); // v113 missing ZeroBias pu reweighing
+      else
+	fdm = new TFile(Form("rootfiles/Prompt2024/v113_2024/jmenano_mc_out_Winter24MGV14_v113_%s.root",cr),"READ"); // Winter24
     }
   }
   else if (tr.Contains("2024")) {
@@ -1224,7 +1229,8 @@ void L2Res() {
 
   // Step 9. Remap [pT,ref] to <pT,jet,uncorr> before writing out .txt file
   TCanvas *cx2 = new TCanvas(Form("cx2_%s",cr),"cx2",9*300,5*300);
-  cx2->Divide(9,5,0,0);
+  //cx2->Divide(9,5,0,0);
+  cx2->Divide(7,6,0,0);
   vector<TF1*> vf2(p2d->GetNbinsX()+1);
   for (int ieta = 1; ieta != p2d->GetNbinsX()+1; ++ieta) {
 
@@ -1236,59 +1242,124 @@ void L2Res() {
     // Generate graph with 100 points logarithmically distributed between
     // pTref=15 GeV / 1.40 (JER 40%*1) and E=sqrt(s)/2. * 1.2 (JER 10%*2)
     const int npt = 100;
-    const double ptrefmin = 15 / 1.4;
-    const double erefmax = (13600./2.) * 1.2;
+    const double ptrefmin = 15;
+    const double ptrefmin2 = ptrefmin / 1.4;
+    const double erefmax = (13600./2.);
+    const double erefmax2 = erefmax * 1.2;
     double ptrefmax = erefmax / cosh(eta1);
+    double ptrefmax2 = erefmax2 / cosh(eta1);
 
     TGraph *g = new TGraph();
-    double c = pow(ptrefmax/ptrefmin,1./(npt-1));
+    TGraph *gr = new TGraph();
+    double c = pow(ptrefmax2/ptrefmin2,1./(npt-1));
     for (int i = 0; i != npt; ++i) {
-      double pt = ptrefmin * pow(c, i);
+      double pt = ptrefmin2 * pow(c, i);
       double jes = f1->Eval(pt);
       g->SetPoint(i, pt*jes, jes);
+      // Bias in current corrections when f1 evaluated at wrong pt
+      double jes2 = f1->Eval(pt*jes);
+      gr->SetPoint(i, pt, jes2/jes);
     }
     
     // Reference JES refit vs <pT,jet,uncorr>
     TF1 *fref2 = new TF1(Form("fref2_%d_%s",ieta,cr),
-			 "[0]+[1]*log10(0.01*x)+[2]/(x/10.)",
-			 ptrefmin, ptrefmax);
+			 //"[0]+[1]*log10(0.01*x)+[2]/(x/10.)",
+			 "[0]+[1]*log10(0.01*x)+[2]/(x/10.)+"
+			 "[3]*log10(x/10.)/(x/10.)",
+			 ptrefmin2*f1->Eval(ptrefmin2),
+			 ptrefmax2*f1->Eval(ptrefmax2));
     for (int ip = 0; ip != f1->GetNpar() && ip != fref2->GetNpar(); ++ip) {
       fref2->SetParameter(ip, f1->GetParameter(ip));
+    }
+    for (int ip = f1->GetNpar(); ip < fref2->GetNpar(); ++ip) {
+      fref2->SetParameter(ip, 0.);
     }
     g->Fit(fref2,"QRN");
 
     vf2[ieta-1] = fref2;
+
+    TGraph *gr2 = new TGraph(g->GetN());
+    for (int i = 0; i != npt; ++i) {
+      double pt = g->GetX()[i];
+      double jes1 = g->GetY()[i];
+      double jes2 = fref2->Eval(pt);
+      gr2->SetPoint(i, pt, jes2/jes1);
+    }
     
     cx2->cd(ieta);
     double eps = 1e-4;
     TH1D *h9 = tdrHist(Form("h9_%s_%d",cr,ieta),"Rel. JES Data/MC refit",
-		       0.65+eps,1.35-eps);
-    if      (eta<1.566) h9->GetYaxis()->SetRangeUser(0.8+eps,1.2-eps);
-    else if (eta<2.650) h9->GetYaxis()->SetRangeUser(0.65+eps,1.3-eps);
-    else if (eta<4.191) h9->GetYaxis()->SetRangeUser(0.30+eps,1.35-eps);
-    else if (eta<5.191) h9->GetYaxis()->SetRangeUser(0.30+eps,1.35-eps);
+		       0.65+eps,1.35-eps,"p_{T} (GeV)",5.,3500.);
+    /*
+    // 9x5
+    if      (eta<0.783) h9->GetYaxis()->SetRangeUser(0.93+eps,1.07-eps);
+    else if (eta<1.566) h9->GetYaxis()->SetRangeUser(0.70+eps,1.15-eps);
+    else if (eta<2.650) h9->GetYaxis()->SetRangeUser(0.40+eps,1.35-eps);
+    else if (eta<4.191) h9->GetYaxis()->SetRangeUser(0.40+eps,1.35-eps);
+    else if (eta<5.191) h9->GetYaxis()->SetRangeUser(0.70+eps,1.20-eps);
+    */
+    // 8x6
+    if      (eta<1.218) h9->GetYaxis()->SetRangeUser(0.95+eps,1.07-eps);
+    else if (eta<1.830) h9->GetYaxis()->SetRangeUser(0.55+eps,1.10-eps);
+    else if (eta<2.853) h9->GetYaxis()->SetRangeUser(0.30+eps,1.20-eps);
+    else if (eta<4.013) h9->GetYaxis()->SetRangeUser(0.70+eps,1.25-eps);
+    else if (eta<5.191) h9->GetYaxis()->SetRangeUser(0.70+eps,1.25-eps);
+    // Adjust HF for 2024BCD (and earlier)
+    if (tr.Contains("B") || tr.Contains("C") || tr.Contains("D")) {
+      if (eta>4.013 && eta<5.191) h9->GetYaxis()->SetRangeUser(0.30+eps,1.25-eps);
+    }
+    if (tr.Contains("E") || tr.Contains("F_nib1")) {
+      if (eta>2.853 && eta<4.013) h9->GetYaxis()->SetRangeUser(0.30+eps,1.30-eps);
+    }
+
     h9->Draw();
     gPad->SetLogx();
     
     l->SetLineStyle(kDotted);
     l->DrawLine(ptrefmax,0.30,ptrefmax,1.35);
+    l->DrawLine(ptrefmin,0.30,ptrefmin,1.35);
     l->SetLineStyle(kDashed);
-    l->DrawLine(15.,1,3500.,1);
+    l->DrawLine(5.,1,3500.,1);
 
-    tdrDraw(g, "Pz", kOpenCircle, kBlack);
-    f1->SetLineColor(kBlack);
+    tdrDraw(g, "Pz", kOpenCircle, kBlack, kSolid, -1, kNone, 0, 0.5);
+    tdrDraw(gr, "L", kNone, kGreen+2, kSolid, -1, kNone, 0, 0.5);
+    tdrDraw(gr2, "L", kNone, kMagenta+1, kSolid, -1, kNone, 0, 0.5);
+    f1->SetRange(ptrefmin2,ptrefmax2);
+    f1->SetLineColor(kBlue);
     f1->Draw("SAME");
     fref2->SetLineColor(kRed);
     fref2->Draw("SAME");
+
+    tex->DrawLatex(0.50,0.85,Form("[%1.3f,%1.3f]",eta1,eta2));
+    if (ieta==nxy) {
+      cx2->cd(ieta+1);
+      TLegend *leg9 = tdrLeg(0.05,0.90-0.06*2.5*5,0.30,0.90);
+      leg9->SetTextSize(2.5*0.045);
+      leg9->AddEntry(f1,"JES fit vs p_{T,ref}","L");
+      leg9->AddEntry(g,"JES vs p_{T,raw}","P");
+      leg9->AddEntry(fref2,"Fit vs p_{T,raw}","L");
+      leg9->AddEntry(gr,"Ratio of JES","L");
+      leg9->AddEntry(gr2,"Ratio of fit/JES","L");
+
+      cx2->cd(ieta);
+      double siz = tex->GetTextSize();
+      tex->SetTextSize(siz*2.0);//2.5);
+      tex->DrawLatex(0.50,0.70,Form("%s vs",cr));
+      tex->DrawLatex(0.50,0.55,cm);
+      tex->DrawLatex(0.50,0.40,mlum[run].c_str());
+      tex->SetTextSize(siz);
+
+    }
   } // for ieta
-  cx2->SaveAs(Form("pdf/L2Res_AllRefit_%s.pdf",cr));
+  cx2->SaveAs(Form("pdf/L2Res/L2Res_AllRefit_%s.pdf",cr));
 
   
   // Step 10. Print out text files
-  string ftxtname = Form("textfiles/Prompt24/Prompt24_Run%s_V8M_DATA_L2Residual_AK4PFPuppi.txt",cr);
+  // 10a: Original parameterization vs pTref
+  string ftxtname = Form("textfiles/Prompt24/Prompt24_Run%s_V8M_DATA_L2ResidualVsPtRef_AK4PFPuppi.txt",cr);
   cout << "Writing results to text file " << ftxtname << endl << flush;
   ofstream ftxt(ftxtname.c_str());
-  
+
   ftxt << Form("{ 1 JetEta 1 JetPt 1./(%s) Correction L2Relative}",
 	       vf1[0]->GetExpFormula().Data()) << endl;
   for (int ieta = p2d->GetNbinsX(); ieta != 0; --ieta) {
@@ -1313,7 +1384,35 @@ void L2Res() {
     }
     ftxt << endl;
   }
-
+  // 10b: Re-parameterization vs pTraw
+  string ftxtname2 = Form("textfiles/Prompt24/Prompt24_Run%s_V8M_DATA_L2Residual_AK4PFPuppi.txt",cr);
+  cout << "Writing results to text file " << ftxtname2 << endl << flush;
+  ofstream ftxt2(ftxtname2.c_str());
+  
+  ftxt2 << Form("{ 1 JetEta 1 JetPt 1./(%s) Correction L2Relative}",
+		vf2[0]->GetExpFormula().Data()) << endl;
+  for (int ieta = p2d->GetNbinsX(); ieta != 0; --ieta) {
+    double eta1 = -p2d->GetXaxis()->GetBinLowEdge(ieta+1);
+    double eta2 = -p2d->GetXaxis()->GetBinLowEdge(ieta);
+    TF1 *f2 = vf2[ieta-1];
+    ftxt2 << Form("  %+1.3f %+1.3f  %d  %d %4d  ", eta1, eta2,
+		  2 + f2->GetNpar(), int(f2->GetXmin()), int(f2->GetXmax()));
+    for (int i = 0; i != f2->GetNpar(); ++i) {
+      ftxt2 << Form(" %7.4f",f2->GetParameter(i));
+    }
+    ftxt2 << endl;
+  }
+  for (int ieta = 1; ieta != p2d->GetNbinsX()+1; ++ieta) {
+    double eta1 = p2d->GetXaxis()->GetBinLowEdge(ieta);
+    double eta2 = p2d->GetXaxis()->GetBinLowEdge(ieta+1);
+    TF1 *f2 = vf2[ieta-1];
+    ftxt2 << Form("  %+1.3f %+1.3f  %d  %d %4d  ", eta1, eta2,
+		  2 + f2->GetNpar(), int(f2->GetXmin()), int(f2->GetXmax()));
+    for (int i = 0; i != f2->GetNpar(); ++i) {
+      ftxt2 << Form(" %7.4f",f2->GetParameter(i));
+    }
+    ftxt2 << endl;
+  }
   
   // Loop over gamjet pT bins for plotting
   for (int ipt = 1; ipt != p2g->GetNbinsY()+1; ++ipt) {
