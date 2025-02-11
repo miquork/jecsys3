@@ -130,8 +130,8 @@ void createL2L3ResTextFiles(string set) {
 		  ts.Contains("24G") || ts.Contains("24H") ||
 		  ts.Contains("24I"));
   
-  TF1 *f1 = new TF1(Form("f1_%s",set.c_str()),"[0]+[1]/(0.1*x)+[2]*log10(x)/(0.1*x)+[3]*(pow(x/[4],[5])-1)/(pow(x/[4],[5])+1)+[6]*pow(x,-0.3051)+[7]*(0.001*x)+[8]*pow(x/15.,2.)/(1+0.5*pow(x/15.,4.))",15,4500);
-  TF1 *f1raw = new TF1(Form("f1_%s",set.c_str()),"[0]+[1]/(0.1*x)+[2]*log10(x)/(0.1*x)+[3]*(pow(x/[4],[5])-1)/(pow(x/[4],[5])+1)+[6]*pow(x,-0.3051)+[7]*(0.001*x)+[8]*pow((x+[9])/15.,2.)/(1+0.5*pow((x+[9])/15.,4.))",15,4500);
+  TF1 *f1 = new TF1(Form("f1_%s",set.c_str()),"[0]+[1]/(0.1*x)+[2]*log10(x)/(0.1*x)+[3]*(pow(x/[4],[5])-1)/(pow(x/[4],[5])+1)+[6]*pow(x,-0.3051)+[7]*(0.001*x)+[8]*pow(x*[9]/15.,2.)/(1+0.5*pow(x*[9]/15.,4.))",15,4500);
+  TF1 *f1raw = new TF1(Form("f1_%s",set.c_str()),"[0]+[1]/(0.1*x)+[2]*log10(x)/(0.1*x)+[3]*(pow(x/[4],[5])-1)/(pow(x/[4],[5])+1)+[6]*pow(x,-0.3051)+[7]*(0.001*x)+[8]*pow((x*[9])/15.,2.)/(1+0.5*pow((x*[9])/15.,4.))",15,4500);
 
   string n1[10] =
   {"[0]","[1]/x","[2]*l/x","[3]*x^5","x/[4]^5",
@@ -139,7 +139,7 @@ void createL2L3ResTextFiles(string set) {
 
   // Set initial guesses and limit or switch off unnecessary parts of fit
   if (!isECALCC) {
-    f1->SetParameters(0.96, 0.,0., 0,1600,0, -0.12, 0., 0.16);
+    f1->SetParameters(0.96, 0.,0., 0,1600,0, -0.12, 0., 0.16, 1.);
 
     // Remove "erf" component for "ecalcc"
     f1->FixParameter(3, 0.);
@@ -148,7 +148,7 @@ void createL2L3ResTextFiles(string set) {
     f1->FixParameter(7, 0.);
   }
   if (isECALCC) {
-    f1->SetParameters(0.94, 0.,0., -0.06,1600,3, -0.12, 0.01, 0.04);
+    f1->SetParameters(0.94, 0.,0., -0.06,1600,3, -0.12, 0.01, 0.04, 1.);
 
     // Limit "erf" component for "ecalcc"
     //f1->SetParLimits(3, -0.3, 0.3);
@@ -159,11 +159,12 @@ void createL2L3ResTextFiles(string set) {
   }
 
   // To avoid very weird fits
-  f1->SetParLimits(0,0.5,2.5);
+  f1->SetParLimits(0,0.5,2.0);
 
   // To avoid division by zero errors
   f1->SetParLimits(4,10.,6500.);
   f1->SetParLimits(5,0.,10.);
+  f1->SetParLimits(9,0.5,2.0);
   
   // Other reasonable limitations
   //f1->SetParLimits(0,  0.5, 1.5);
@@ -232,21 +233,23 @@ void createL2L3ResTextFiles(string set) {
   // "[0]+[1]/(0.1*x)+[2]*log10(x)/(0.1*x)+[3]*(pow(x/[4],[5])-1)/(pow(x/[4],[5])+1)+[6]*pow(x,-0.3051)+[7]*(0.001*x)+[8]*pow((x+[9])/15.,2.)/(1+0.5*pow((x+[9])/15.,4.))",15,4500);
   // Set initial parameters carefully to ensure good convergence of the fit
   double k_10 = f1->Eval(10.);
-  //double k_20 = f1->Eval(20.); // => k10->k_20 better?
+  double k_20 = f1->Eval(20.); // => k10->k_20 better?
   double k_100 = f1->Eval(100.);
   double k_1500 = f1->Eval(1500.);
+  double k_3000 = f1->Eval(3000.);
   f1raw->SetParameter(0, f1->GetParameter(0)); // 1
-  f1raw->SetParameter(1, f1->GetParameter(1)/k_10 +
-		      f1->GetParameter(2)/k_10*log10(k_10)); // 1/x
-  f1raw->SetParameter(2, f1->GetParameter(2)/k_10); // log(x)/x
+  f1raw->SetParameter(1, f1->GetParameter(1)/k_20 +
+		      f1->GetParameter(2)/k_20*log10(k_20)); // 1/x
+  f1raw->SetParameter(2, f1->GetParameter(2)/k_20); // log(x)/x
   f1raw->SetParameter(3, f1->GetParameter(3)); // "erf" heigh
-  f1raw->SetParameter(4, f1->GetParameter(4)/k_1500); // "erf" mean
+  f1raw->SetParameter(4, f1->GetParameter(4)/k_3000); // "erf" mean
   f1raw->SetParameter(5, f1->GetParameter(5)); // "erf" steepness
   f1raw->SetParameter(6, f1->GetParameter(6)*pow(k_100,-0.3051)); // "hcal"
-  f1raw->SetParameter(7, f1->GetParameter(7)*k_1500); // "trk" x
+  f1raw->SetParameter(7, f1->GetParameter(7)*k_3000); // "trk" x
   // Last part has essentially fixed heigh vs JES, but peak position shifts
   f1raw->SetParameter(8, f1->GetParameter(8)); // "nhf_off" peak height
-  f1raw->SetParameter(9, 18.*(k_10-1)); // "nhf_off" peak position
+  //f1raw->SetParameter(9, 18.*(k_10-1)); // "nhf_off" peak position
+  f1raw->SetParameter(9, k_20*f1->GetParameter(9)); // "nhf_off" peak position
 
   // Remove "erf" when no bias from ECALCC
   if (!isECALCC) {
@@ -346,22 +349,24 @@ void createL2L3ResTextFiles(string set) {
   if (debug) cout << "1./("<<f1raw->GetExpFormula().Data()<<")" << endl;
 
   // New combined function(s) and header(s)
-  string func = "[0]+[1]*log10(0.01*x)+[2]/(0.1*x)+[3]*log10(x)/(0.1*x)+[4]*(pow(x/[5],[6])-1)/(pow(x/[5],[6])+1)+[7]*pow(x,-0.3051)+[8]*(0.001*x)+[9]*pow(x/15.,2.)/(1+0.5*pow(x/15.,4.))";
-  string func3 = "[0]+[1]*log10(0.01*x)+[2]/(0.1*x)+[3]*log10(x)/(0.1*x)+[4]*(pow(x/[5],[6])-1)/(pow(x/[5],[6])+1)+[7]*pow(x,-0.3051)+[8]*(0.001*x)+[9]*pow((x+[10])/15.,2.)/(1+0.5*pow((x+[10])/15.,4.))";
+  //string func = "[0]+[1]*log10(0.01*x)+[2]/(0.1*x)+[3]*log10(x)/(0.1*x)+[4]*(pow(x/[5],[6])-1)/(pow(x/[5],[6])+1)+[7]*pow(x,-0.3051)+[8]*(0.001*x)+[9]*pow(x/15.,2.)/(1+0.5*pow(x/15.,4.))";
+  //string func3 = "[0]+[1]*log10(0.01*x)+[2]/(0.1*x)+[3]*log10(x)/(0.1*x)+[4]*(pow(x/[5],[6])-1)/(pow(x/[5],[6])+1)+[7]*pow(x,-0.3051)+[8]*(0.001*x)+[9]*pow((x+[10])/15.,2.)/(1+0.5*pow((x+[10])/15.,4.))";
+  string func3 = "[0]+[1]*log10(0.01*x)+[2]/(0.1*x)+[3]*log10(x)/(0.1*x)+[4]*(pow(x/[5],[6])-1)/(pow(x/[5],[6])+1)+[7]*pow(x,-0.3051)+[8]*(0.001*x)+[9]*pow(x*[10]/15.,2.)/(1+0.5*pow(x*[10]/15.,4.))";
 
-  header = "{1 JetEta 1 JetPt 1./("+func+") Correction L2Relative";
+  //header = "{1 JetEta 1 JetPt 1./("+func+") Correction L2Relative";
   header3 = "{1 JetEta 1 JetPt 1./("+func3+") Correction L2Relative";
     
   cout << "Writing out L2L3Residual files:" << endl
-       << "   " << sout << endl
+    //<< "   " << sout << endl
        << "   " << sout3 << endl << flush;
   if (debug) cout << "Output L2L3Residual headers:" << endl;
-  if (debug) cout << header << endl;
+  //if (debug) cout << header << endl;
   if (debug) cout << header3 << endl;
 
   ofstream fout(sout.c_str());
-  const int nparnew = 2 + 3 + 10; // 15
-  fout << header << endl;
+  //const int nparnew = 2 + 3 + 10; // 15
+  //fout << header << endl;
+  fout << header3 << endl;
   
   ofstream fout3(sout3.c_str());
   const int nparnew3 = 2 + 3 + 11; // 16
@@ -426,11 +431,13 @@ void createL2L3ResTextFiles(string set) {
     // Reference JES refit vs <pT,ref>:
     // "[0]+[1]*log10(x/100.)+[2]/(x/10.)+[3]*log10(x)/(x/10.)+"
     // "[4]*(pow(x/[5],[6])-1)/(pow(x/[5],[6])+1)+[7]*pow(x,-0.3051)+"
-    // "[8]*(x/1000.)+[9]*pow((x+[10])/15.,2)/(1+0.5*pow((x+[10])/15.,4))"
-    // f1(without[9])/f1raw(with[9]):
+    // "[8]*(x/1000.)+[9]*pow((x*[10])/15.,2)/(1+0.5*pow((x*[10])/15.,4))"
+    // // "[8]*(x/1000.)+[9]*pow((x*[10])/15.,2)/(1+0.5*pow((x*[10])/15.,4))"
+    // f1/f1raw:
     // "[0]+[1]/(x/10.)+[2]*log10(x)/(x/10.)+"
     // "[3]*(pow(x/[4],[5])-1)/(pow(x/[4],[5])+1)+[6]*pow(x,-0.3051)"
-    // "+[7]*(x/1000.)+[8]*pow((x-[9])/15.,2)/(1+0.5*pow((x+[9])/15.,4))"
+    // "+[7]*(x/1000.)+[8]*pow((x*[9])/15.,2)/(1+0.5*pow((x*[9])/15.,4))"
+    // // "+[7]*(x/1000.)+[8]*pow((x*[9])/15.,2)/(1+0.5*pow((x*[9])/15.,4))"
     // f2 (p1,p2,p3):
     // "[0]+[1]*log10(0.01*x)+[2]/(x/10.)"
 
@@ -438,29 +445,50 @@ void createL2L3ResTextFiles(string set) {
     // issues caused by mapping on the x-axis and set better initial values
     // Three ranges:
     // 1) x=20 GeV for offset (1/x, log(x)/x, "nhf_off")
-    // 2) x~100 GeV for absolute scale and "hcal" (-"erf")
-    // 3) x~3000 GeV for log, "erf" and "trk" x
+    // 2) x~300 GeV for absolute scale and "hcal" (-"erf")
+    // 3) x~4000 GeV for log, "erf" and "trk" x
     // Consider product of F(x) = A + Bl + C/x and f(x) = a + b/x + cl/x + d(x)
     // => F(x)*f(x) = (A + Bl + C/x)*(a + b/x + cl/x + d(x))
     // Multiplying and regrouping can get
     // Aa + Ba*l + (Ab+Ca)*1/x + (Ac+Bb+B*c*l)*l/x + F(x)*d(x) + O(1/x^2)
     
-    TF1 *f22 = new TF1(Form("f22_%s_%d",cs,cnt),func.c_str(),
+    TF1 *f22 = new TF1(Form("f22_%s_%d",cs,cnt),func3.c_str(),
 		       floor(ptrefmin2), ceil(ptrefmax2));
+    /*
     f22->SetParameter(0, f2->GetParameter(0)*f1->GetParameter(0)); // 1
     f22->SetParameter(1, f2->GetParameter(1)*f1->GetParameter(0)); // log
     f22->SetParameter(2, f2->GetParameter(0)*f1->GetParameter(1) +
-		      f2->GetParameter(2)*f1->GetParameter(0)); // 1/x
+    		      f2->GetParameter(2)*f1->GetParameter(0)); // 1/x
     f22->SetParameter(3, f2->GetParameter(0)*f1->GetParameter(2) +
 		      f2->GetParameter(1)*f1->GetParameter(1) +
-		      f2->GetParameter(1)*f1->GetParameter(2)*log10(10.));// l/x
-    double k100 = f2->Eval(100.);
-    f22->SetParameter(4, k100*f1->GetParameter(3));
+		      f2->GetParameter(1)*f1->GetParameter(2)*log10(20.));// l/x
+    */
+
+    double k300a = f2->Eval(300.);
+    f22->SetParameter(0, k300a*f1->GetParameter(0)); // 1
+    double k300b = f2->Eval(300.);
+    f22->SetParameter(1, k300b*p1); // log10(x/100.)
+
+    double k20a = f2->Eval(20.);
+    double k20b = f2->Eval(20.);
+    f22->SetParameter(2, k20a*f1->GetParameter(1) + k20b*p2); // 1/(x/10)
+    f22->SetParameter(3, k20a*f1->GetParameter(2) +
+		      k20b*p2); // log10(x)/(x/10)
+    
+    double k4000 = f2->Eval(4000.);
+    // "erf" for "ecalcc"
+    f22->SetParameter(4, k4000*f1->GetParameter(3));
     f22->SetParameter(5, f1->GetParameter(4));
     f22->SetParameter(6, f1->GetParameter(5));
-    f22->SetParameter(7, k100*f1->GetParameter(6));
-    f22->SetParameter(8, k100*f1->GetParameter(7));
-    f22->FixParameter(9, 0.);
+
+    // x^-0.3 + x parts for "hcal" + "trk"
+    double k300 = f2->Eval(300.);
+    f22->SetParameter(7, k300*f1->GetParameter(6));
+    f22->SetParameter(8, k4000*f1->GetParameter(7));
+
+    double k20 = f2->Eval(20.);
+    f22->FixParameter(9, k20*f1->GetParameter(8));
+    f22->FixParameter(10, k20*f1->GetParameter(9));
 
     // Input parameters
     if (etamin>=0) {
@@ -508,42 +536,52 @@ void createL2L3ResTextFiles(string set) {
     double ptminraw = ptrefmin2*jesmin2;
     double ptmaxraw = ptrefmax2*jesmax2;
     const int nparnew = 11;//9;
-    //double ptrefmid2 = sqrt(ptrefmin2*ptrefmax2);
 
-    double k2_10 = f2->Eval(10.);
-    double k1_10 = f1->Eval(10.);
-    double kjes_10 = k2_10*k1_10;
-    double k2_20 = f2->Eval(20.);
-    double k1_20 = f1->Eval(20.);
-    double kjes_20 = k2_20*k1_20;
-    //double k1_20 = h->Interpolate(20.);
-    double k2_100 = f2->Eval(100.);
-    double k1_100 = f1->Eval(100.);
-    double kjes_100 = k2_100*k1_100;
-    //double k1_100 = h->Interpolate(100.);
-    double k2_1500 = f2->Eval(1500.);
-    double k1_1500 = f1->Eval(1500.);
-    double kjes_1500 = k2_1500*k1_1500;
-    //double k1_1500 = h->Interpolate(1500.);
-      
+    //double k2_10 = f2->Eval(10.);
+    //double k1_10 = f1->Eval(10.);
+    //double kjes_10 = k2_10*k1_10;
+
     TF1 *f23 = new TF1(Form("f23_%s_%d",cs,cnt),func3.c_str(),
 		       floor(ptminraw), ceil(ptmaxraw));
-    f23->SetParameter(0, k2_100*f1raw->GetParameter(0)); // 1
-    f23->SetParameter(1, k1_100*p1); // log10(x/100.)
+
+    //double k1_100 = h->Interpolate(100.);
+    double k1_300 = f1->Eval(300.);
+    double k2_300 = f2->Eval(300.);
+    double kjes_300 = k1_300*k2_300;
+    f23->SetParameter(0, k2_300*f1->GetParameter(0)); // 1
+    f23->SetParameter(1, k1_300*p1); // log10(x/100.)
+
+    //double k1_20 = h->Interpolate(20.);
+    double k1_20 = f1->Eval(20.);
+    double k2_20 = f2->Eval(20.);
+    double kjes_20 = k2_20*k1_20;
     f23->SetParameter(2, k2_20*(f1->GetParameter(1)/kjes_20 +
 				f1->GetParameter(2)/kjes_20*log10(kjes_20)) +
 		      k1_20*(p2/kjes_20 +
 			     p2/kjes_20*log10(kjes_20))); // 1/(x/10)
     f23->SetParameter(3, k2_20*f1->GetParameter(2)/kjes_20 +
 		      k1_20*p2/kjes_20); // log10(x)/(x/10)
-    f23->SetParameter(4, k2_1500*f1->GetParameter(3)); // [-1,1] "erf"
-    f23->SetParameter(5, f1->GetParameter(4)/kjes_1500); // "erf" position
+
+    //double k1_1500 = h->Interpolate(1500.);
+    //double k1_1500 = f1->Eval(1500.);
+    //double k2_1500 = f2->Eval(1500.);
+    //double kjes_1500 = k2_1500*k1_1500;
+    // "erf" shape for "ecalcc" 
+    double k1_4000 = f1->Eval(4000.);
+    double k2_4000 = f2->Eval(4000.);
+    double kjes_4000 = k2_4000*k1_4000;
+    f23->SetParameter(4, k2_4000*f1->GetParameter(3)); // [-1,1] "erf"
+    f23->SetParameter(5, f1->GetParameter(4)/kjes_4000); // "erf" position
     f23->SetParameter(6, f1->GetParameter(5)); // "erf" steepness
-    f23->SetParameter(7, k2_100*f1raw->GetParameter(6)*pow(kjes_100,-0.3051));
-    f23->SetParameter(8, k2_1500*f1raw->GetParameter(7)*kjes_1500); // x
+
+    // "hcal" x^=0.3 and "trk" x shapes
+    f23->SetParameter(7, k2_300*f1->GetParameter(6)*pow(kjes_300,-0.3051));
+    f23->SetParameter(8, k2_4000*f1->GetParameter(7)*kjes_4000); // x
+
     // Last part has essentially fixed heigh vs JES, but peak position shifts
     f23->SetParameter(9, k2_20*f1->GetParameter(8));
-    f23->SetParameter(10, 20*(kjes_20-1));
+    //f23->SetParameter(10, 20*(kjes_20-1));
+    f23->SetParameter(10, kjes_20);
     
     // To avoid very weird fits
     //f23->SetParameter(0, max(0.3,min(0.25,f23->GetParameter(0))));
