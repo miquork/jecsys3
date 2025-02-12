@@ -375,8 +375,8 @@ void createL2L3ResTextFiles(string set) {
   //string func3 = "[0]+[1]*log10(0.01*x)+[2]/(0.1*x)+[3]*log10(x)/(0.1*x)+[4]*(1+(pow(x/[5],[6])-1)/(pow(x/[5],[6])+1))+[7]*pow(x,-0.3051)+[8]*(0.001*x)+[9]*pow((x+[10])/15.,2.)/(1+0.5*pow((x+[10])/15.,4.))";
   string func3 = "[0]+[1]*log10(0.01*x)+[2]/(0.1*x)+[3]*log10(x)/(0.1*x)+[4]*(1+(pow(x/[5],[6])-1)/(pow(x/[5],[6])+1))+[7]*pow(x,-0.3051)+[8]*(0.001*x)+[9]*pow(x*[10]/15.,2.)/(1+0.5*pow(x*[10]/15.,4.))";
 
-  header2 = "{1 JetEta 1 JetPt 1./("+func3+") Correction L2Relative";
-  header3 = "{1 JetEta 1 JetPt 1./("+func3+") Correction L2Relative";
+  header2 = "{ 1 JetEta 1 JetPt 1./("+func3+") Correction L2Relative }";
+  header3 = "{ 1 JetEta 1 JetPt 1./("+func3+") Correction L2Relative }";
     
   cout << "Writing out L2L3Residual files:" << endl
        << "   " << sout2 << endl
@@ -755,7 +755,8 @@ void createL2L3ResTextFiles(string set) {
 			 "%6.4f %+7.4f   %+7.4f %+7.4f   "
 			 "%7.4f %5.1f %6.4f   %+7.3f   %+7.4f   "
 			 "%+7.3f   %+7.4f",
-			 etamin, etamax, nparnew, int(ptminraw), int(ptmaxraw),
+			 etamin, etamax, nparnew + 2,
+			 int(ptminraw), int(ptmaxraw),
 			 p23raw[0],p23raw[1], p23raw[2],p23raw[3],
 			 p23raw[4],p23raw[5],p23raw[6],  p23raw[7], p23raw[8],
 			 p23raw[9],p23raw[10]);
@@ -768,7 +769,8 @@ void createL2L3ResTextFiles(string set) {
 			 "%6.4f %+7.4f   %+7.4f %+7.4f   "
 			 "%7.4f %5.1f %6.4f   %+7.3f   %+7.4f   "
 			 "%+7.3f   %+7.4f",
-			 etamin, etamax, nparnew, int(ptminraw), int(ptmaxraw),
+			 etamin, etamax, nparnew + 2,
+			 int(ptminraw), int(ptmaxraw),
 			 p22ref[0],p22ref[1], p22ref[2],p22ref[3],
 			 p22ref[4],p22ref[5],p22ref[6],  p22ref[7], p22ref[8],
 			 p22ref[9],p22ref[10]);
