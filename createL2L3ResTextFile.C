@@ -27,6 +27,13 @@ TCanvas *_c1(0), *_c3(0);
 TLegend *_leg(0), *_leg1(0), *_leg2(0), *_leg3(0);
 void createL2L3ResTextFile() {
 
+  //if (debug)
+  cout << endl;
+  cout << "****************************************************************\n";
+  cout << "Warning: sscanf only works correctly when code is compiled (.C+)\n";
+  cout << "****************************************************************\n";
+  cout << endl;
+    
   setTDRStyle();
 
   // Plots vs pT,ref
@@ -98,11 +105,8 @@ void createL2L3ResTextFile() {
 
 void createL2L3ResTextFiles(string set) {
 
-  //if (debug) 
-  cout << "****************************************************************\n";
-  cout << "Warning: sscanf only works correctly when code is compiled (.C+)\n";
-  cout << "****************************************************************\n";
-
+  cout << endl;
+  cout << "******************************\n";
   cout << "** Processing " << set << " **" << endl << flush;
   cout << "******************************\n";
 
@@ -130,8 +134,8 @@ void createL2L3ResTextFiles(string set) {
 		  ts.Contains("24G") || ts.Contains("24H") ||
 		  ts.Contains("24I"));
   
-  TF1 *f1 = new TF1(Form("f1_%s",set.c_str()),"[0]+[1]/(0.1*x)+[2]*log10(x)/(0.1*x)+[3]*(pow(x/[4],[5])-1)/(pow(x/[4],[5])+1)+[6]*pow(x,-0.3051)+[7]*(0.001*x)+[8]*pow(x*[9]/15.,2.)/(1+0.5*pow(x*[9]/15.,4.))",15,4500);
-  TF1 *f1raw = new TF1(Form("f1_%s",set.c_str()),"[0]+[1]/(0.1*x)+[2]*log10(x)/(0.1*x)+[3]*(pow(x/[4],[5])-1)/(pow(x/[4],[5])+1)+[6]*pow(x,-0.3051)+[7]*(0.001*x)+[8]*pow((x*[9])/15.,2.)/(1+0.5*pow((x*[9])/15.,4.))",15,4500);
+  TF1 *f1 = new TF1(Form("f1_%s",set.c_str()),"[0]+[1]/(0.1*x)+[2]*log10(x)/(0.1*x)+[3]*(1+(pow(x/[4],[5])-1)/(pow(x/[4],[5])+1))+[6]*pow(x,-0.3051)+[7]*(0.001*x)+[8]*pow(x*[9]/15.,2.)/(1+0.5*pow(x*[9]/15.,4.))",15,4500);
+  TF1 *f1raw = new TF1(Form("f1_%s",set.c_str()),"[0]+[1]/(0.1*x)+[2]*log10(x)/(0.1*x)+[3]*(1+(pow(x/[4],[5])-1)/(pow(x/[4],[5])+1))+[6]*pow(x,-0.3051)+[7]*(0.001*x)+[8]*pow((x*[9])/15.,2.)/(1+0.5*pow((x*[9])/15.,4.))",15,4500);
 
   string n1[10] =
   {"[0]","[1]/x","[2]*l/x","[3]*x^5","x/[4]^5",
@@ -147,24 +151,25 @@ void createL2L3ResTextFiles(string set) {
     f1->FixParameter(5, 0.);
     f1->FixParameter(7, 0.);
   }
-  if (isECALCC) {
+  else {
     f1->SetParameters(0.94, 0.,0., -0.06,1600,3, -0.12, 0.01, 0.04, 1.);
 
     // Limit "erf" component for "ecalcc"
     //f1->SetParLimits(3, -0.3, 0.3);
     // To avoid division by zero errors
-    f1->SetParLimits(4, 10., 6500.);
-    f1->SetParLimits(5, 0., 10.);
+    f1->SetParLimits(3, -0.2, 0.2);
+    f1->SetParLimits(4, 1000., 2000.);
+    f1->SetParLimits(5, 1., 5.);
     f1->SetParLimits(7, -0.2, 0.2);
   }
 
   // To avoid very weird fits
-  f1->SetParLimits(0,0.5,2.0);
-
-  // To avoid division by zero errors
-  f1->SetParLimits(4,10.,6500.);
-  f1->SetParLimits(5,0.,10.);
-  f1->SetParLimits(9,0.5,2.0);
+  f1->SetParLimits(0, 0.5, 2.0);   // 1
+  f1->SetParLimits(1, -0.5, +0.5); // 1/x
+  f1->SetParLimits(2, -0.5, +0.5); // log(x)/x
+  f1->SetParLimits(6, -0.5, +0.5); // x^-0.3
+  f1->SetParLimits(8, 0., 0.5); // nhf_off
+  f1->SetParLimits(9, 0.5, 2.0); // nhf_off peak
   
   // Other reasonable limitations
   //f1->SetParLimits(0,  0.5, 1.5);
@@ -199,7 +204,7 @@ void createL2L3ResTextFiles(string set) {
   f1->Draw("SAME");
 
   _leg1->SetTextSize(0.03);
-  _leg1->SetY1(_leg1->GetY1()-0.03);
+  _leg1->SetY1NDC(_leg1->GetY1NDC()-0.03);
   _leg1->AddEntry(h,set.c_str(),"FL");
 
   cout << Form("Writing out textfiles/createL2L3ResTextFile_%s.txt",
@@ -208,8 +213,8 @@ void createL2L3ResTextFiles(string set) {
   
   ftxt << f1->GetExpFormula() << endl;
   ftxt << "   f1->SetParNames  (";
-  const int np = 9;
-  double p[np];
+  const int np = 11;//10;
+  double p1ref[np];
   for (int i = 0; i != min(f1->GetNpar(),np); ++i) {
     if (i==1) ftxt << ",        ";
     ftxt << (i==0 ? "" : ", ") << Form("%8s",n1[i].c_str());
@@ -219,10 +224,10 @@ void createL2L3ResTextFiles(string set) {
   cout << "f1->SetParameters(";
   ftxt << "   f1->SetParameters(";
   for (int i = 0; i != min(f1->GetNpar(),np); ++i) {
-    p[i] = f1->GetParameter(i);
-    cout << (i==0 ? "" : ", ") << p[i];
+    p1ref[i] = f1->GetParameter(i);
+    cout << (i==0 ? "" : ", ") << p1ref[i];
     if (i==1) ftxt << ",        ";
-    ftxt << (i==0 ? "" : ", ") << Form("%+8.3f",p[i]);
+    ftxt << (i==0 ? "" : ", ") << Form("%+8.3f",p1ref[i]);
   } // for i
   cout << Form("); // %s chi2/NDF=%1.1f/%d", set.c_str(),
 	       f1->GetChisquare(), f1->GetNDF()) << endl << flush;
@@ -230,7 +235,7 @@ void createL2L3ResTextFiles(string set) {
 	       f1->GetChisquare(), f1->GetNDF()) << endl << flush;
 
   // Functional form as reminder:
-  // "[0]+[1]/(0.1*x)+[2]*log10(x)/(0.1*x)+[3]*(pow(x/[4],[5])-1)/(pow(x/[4],[5])+1)+[6]*pow(x,-0.3051)+[7]*(0.001*x)+[8]*pow((x+[9])/15.,2.)/(1+0.5*pow((x+[9])/15.,4.))",15,4500);
+  // "[0]+[1]/(0.1*x)+[2]*log10(x)/(0.1*x)+[3]*(1+(pow(x/[4],[5])-1)/(pow(x/[4],[5])+1))+[6]*pow(x,-0.3051)+[7]*(0.001*x)+[8]*pow((x+[9])/15.,2.)/(1+0.5*pow((x+[9])/15.,4.))",15,4500);
   // Set initial parameters carefully to ensure good convergence of the fit
   double k_10 = f1->Eval(10.);
   double k_20 = f1->Eval(20.); // => k10->k_20 better?
@@ -258,6 +263,20 @@ void createL2L3ResTextFiles(string set) {
     f1raw->FixParameter(5,0.);
     f1raw->FixParameter(7,0.);
   }
+  else {
+    f1raw->SetParLimits(3, -0.2, 0.);
+    f1raw->SetParLimits(4, 1000., 6500.);
+    f1raw->SetParLimits(5, 1., 10.);
+    f1raw->SetParLimits(7, -0.2, 0.2);
+  }
+  
+  // To avoid very weird fits
+  f1raw->SetParLimits(0, 0.5, 2.0);   // 1
+  f1raw->SetParLimits(1, -0.5, +0.5); // 1/x
+  f1raw->SetParLimits(2, -0.5, +0.5); // log(x)/x
+  f1raw->SetParLimits(6, -0.5, +0.5); // x^-0.3
+  f1raw->SetParLimits(8, 0., 0.5); // nhf_off
+  f1raw->SetParLimits(9, 0.5, 2.0); // nhf_off peak
 
   
   _c3->cd();
@@ -279,30 +298,33 @@ void createL2L3ResTextFiles(string set) {
   _leg3->SetY1(_leg3->GetY1()-0.03);
   _leg3->AddEntry(graw3,set.c_str(),"FL");
   
+  cout << "f1raw->SetParameters(";
   ftxt << "f1raw->SetParameters(";
   const int npraw = 10;
-  double praw[np];
+  double p1raw[np];
   for (int i = 0; i != min(f1raw->GetNpar(),npraw); ++i) {
-    praw[i] = f1raw->GetParameter(i);
-    cout << (i==0 ? "" : ", ") << praw[i];
+    p1raw[i] = f1raw->GetParameter(i);
+    cout << (i==0 ? "" : ", ") << p1raw[i];
     if (i==1) ftxt << ",        ";
-    ftxt << (i==0 ? "" : ", ") << Form("%+8.3f",praw[i]);
+    ftxt << (i==0 ? "" : ", ") << Form("%+8.3f",p1raw[i]);
   } // for i
+  cout << "); // Pre-set values" << endl;
   ftxt << "); // Pre-set values" << endl;
     
   graw3->Fit(f1raw,"QRN");
   graw3->Fit(f1raw,"QRNM");
-  graw3->Fit(f1raw,"QRNM");    
+  graw3->Fit(f1raw,"QRNM");
+  
   f1raw->SetLineColor(color[set]);
   f1raw->Draw("SAME");
 
   cout << "f1raw->SetParameters(";
   ftxt << "f1raw->SetParameters(";
   for (int i = 0; i != min(f1raw->GetNpar(),npraw); ++i) {
-    praw[i] = f1raw->GetParameter(i);
-    cout << (i==0 ? "" : ", ") << praw[i];
+    p1raw[i] = f1raw->GetParameter(i);
+    cout << (i==0 ? "" : ", ") << p1raw[i];
     if (i==1) ftxt << ",        ";
-    ftxt << (i==0 ? "" : ", ") << Form("%+8.3f",praw[i]);
+    ftxt << (i==0 ? "" : ", ") << Form("%+8.3f",p1raw[i]);
   } // for i
   cout << Form("); // %s chi2/NDF=%1.1f/%d", set.c_str(),
 	       f1raw->GetChisquare(), f1raw->GetNDF()) << endl << flush;
@@ -315,16 +337,16 @@ void createL2L3ResTextFiles(string set) {
   //////////////////////////////////////////////////////////////
   const char *run = set.c_str();
 
-  string sin(""), sout(""), sout3("");
+  string sin(""), sout2(""), sout3("");
   sin = Form("textFiles/Prompt24/Prompt24_Run%s_V8M_DATA_L2ResidualVsPtRef_AK4PFPuppi.txt",cs);
-  sout = Form("textFiles/Prompt24/Prompt24_Run%s_V8M_DATA_L2L3ResidualVsPtRef_AK4PFPuppi.txt",cs);
+  sout2 = Form("textFiles/Prompt24/Prompt24_Run%s_V8M_DATA_L2L3ResidualVsPtRef_AK4PFPuppi.txt",cs);
   sout3 = Form("textFiles/Prompt24/Prompt24_Run%s_V8M_DATA_L2L3Residual_AK4PFPuppi.txt",cs);
   
   assert(sin!="");
-  assert(sout!="");
+  assert(sout2!="");
   assert(sout3!="");
-  assert(sout!=sin);
-  assert(sout!=sout3);
+  assert(sout2!=sin);
+  assert(sout2!=sout3);
   assert(sout3!=sin);
 						       
   // New code to merge L2Res and L3Res vs pTref, then re-map combination
@@ -338,7 +360,7 @@ void createL2L3ResTextFiles(string set) {
   assert(fin.is_open());
   
   // Input L2Residual header
-  string header, header3;
+  string header, header2, header3;
   getline(fin, header);
   if (debug) cout << "Input L2Residual header:" << endl;
   if (debug) cout << header << endl;
@@ -349,28 +371,28 @@ void createL2L3ResTextFiles(string set) {
   if (debug) cout << "1./("<<f1raw->GetExpFormula().Data()<<")" << endl;
 
   // New combined function(s) and header(s)
-  //string func = "[0]+[1]*log10(0.01*x)+[2]/(0.1*x)+[3]*log10(x)/(0.1*x)+[4]*(pow(x/[5],[6])-1)/(pow(x/[5],[6])+1)+[7]*pow(x,-0.3051)+[8]*(0.001*x)+[9]*pow(x/15.,2.)/(1+0.5*pow(x/15.,4.))";
-  //string func3 = "[0]+[1]*log10(0.01*x)+[2]/(0.1*x)+[3]*log10(x)/(0.1*x)+[4]*(pow(x/[5],[6])-1)/(pow(x/[5],[6])+1)+[7]*pow(x,-0.3051)+[8]*(0.001*x)+[9]*pow((x+[10])/15.,2.)/(1+0.5*pow((x+[10])/15.,4.))";
-  string func3 = "[0]+[1]*log10(0.01*x)+[2]/(0.1*x)+[3]*log10(x)/(0.1*x)+[4]*(pow(x/[5],[6])-1)/(pow(x/[5],[6])+1)+[7]*pow(x,-0.3051)+[8]*(0.001*x)+[9]*pow(x*[10]/15.,2.)/(1+0.5*pow(x*[10]/15.,4.))";
+  //string func = "[0]+[1]*log10(0.01*x)+[2]/(0.1*x)+[3]*log10(x)/(0.1*x)+[4]*(1+(pow(x/[5],[6])-1)/(pow(x/[5],[6])+1))+[7]*pow(x,-0.3051)+[8]*(0.001*x)+[9]*pow(x/15.,2.)/(1+0.5*pow(x/15.,4.))";
+  //string func3 = "[0]+[1]*log10(0.01*x)+[2]/(0.1*x)+[3]*log10(x)/(0.1*x)+[4]*(1+(pow(x/[5],[6])-1)/(pow(x/[5],[6])+1))+[7]*pow(x,-0.3051)+[8]*(0.001*x)+[9]*pow((x+[10])/15.,2.)/(1+0.5*pow((x+[10])/15.,4.))";
+  string func3 = "[0]+[1]*log10(0.01*x)+[2]/(0.1*x)+[3]*log10(x)/(0.1*x)+[4]*(1+(pow(x/[5],[6])-1)/(pow(x/[5],[6])+1))+[7]*pow(x,-0.3051)+[8]*(0.001*x)+[9]*pow(x*[10]/15.,2.)/(1+0.5*pow(x*[10]/15.,4.))";
 
-  //header = "{1 JetEta 1 JetPt 1./("+func+") Correction L2Relative";
+  header2 = "{1 JetEta 1 JetPt 1./("+func3+") Correction L2Relative";
   header3 = "{1 JetEta 1 JetPt 1./("+func3+") Correction L2Relative";
     
   cout << "Writing out L2L3Residual files:" << endl
-    //<< "   " << sout << endl
+       << "   " << sout2 << endl
        << "   " << sout3 << endl << flush;
   if (debug) cout << "Output L2L3Residual headers:" << endl;
-  //if (debug) cout << header << endl;
+  if (debug) cout << header2 << endl;
   if (debug) cout << header3 << endl;
 
-  ofstream fout(sout.c_str());
+  ofstream fout22ref(sout2.c_str());
   //const int nparnew = 2 + 3 + 10; // 15
   //fout << header << endl;
-  fout << header3 << endl;
+  fout22ref << header2 << endl;
   
-  ofstream fout3(sout3.c_str());
+  ofstream fout23raw(sout3.c_str());
   const int nparnew3 = 2 + 3 + 11; // 16
-  fout3 << header3 << endl;
+  fout23raw << header3 << endl;
     
   string line;
   double etamin(0), etamax(0);
@@ -408,8 +430,10 @@ void createL2L3ResTextFiles(string set) {
     double ptrefmax = erefmax / cosh(eta);
     double ptrefmax2 = min(4500., erefmax2 / cosh(eta));
     
-    TGraph *gref = new TGraph();
-    TGraph *graw = new TGraph();
+    //TGraph *gref = new TGraph();
+    //TGraph *graw = new TGraph();
+    TGraphErrors *gref = new TGraphErrors();
+    TGraphErrors *graw = new TGraphErrors();
     TGraph *gr = new TGraph();
     double c = pow(ptrefmax2/ptrefmin2,1./(npt-1));
     for (int i = 0; i != npt; ++i) {
@@ -420,7 +444,9 @@ void createL2L3ResTextFiles(string set) {
       double jes = jesref * f2->Eval(ptref);
       double ptraw = ptref*jes;
       gref->SetPoint(i, ptref, jes);
+      gref->SetPointError(i, ptref*0.001, jes*0.001);
       graw->SetPoint(i, ptraw, jes);
+      graw->SetPointError(i, ptraw*0.001, jes*0.001);
       // Bias in current corrections when f1,f2 evaluated at wrong pt
       //double jesraw = h->Interpolate(ptraw);
       double jesraw = f1->Eval(ptraw);
@@ -430,12 +456,12 @@ void createL2L3ResTextFiles(string set) {
 
     // Reference JES refit vs <pT,ref>:
     // "[0]+[1]*log10(x/100.)+[2]/(x/10.)+[3]*log10(x)/(x/10.)+"
-    // "[4]*(pow(x/[5],[6])-1)/(pow(x/[5],[6])+1)+[7]*pow(x,-0.3051)+"
+    // "[4]*(1+(pow(x/[5],[6])-1)/(pow(x/[5],[6])+1))+[7]*pow(x,-0.3051)+"
     // "[8]*(x/1000.)+[9]*pow((x*[10])/15.,2)/(1+0.5*pow((x*[10])/15.,4))"
     // // "[8]*(x/1000.)+[9]*pow((x*[10])/15.,2)/(1+0.5*pow((x*[10])/15.,4))"
     // f1/f1raw:
     // "[0]+[1]/(x/10.)+[2]*log10(x)/(x/10.)+"
-    // "[3]*(pow(x/[4],[5])-1)/(pow(x/[4],[5])+1)+[6]*pow(x,-0.3051)"
+    // "[3]*(1+(pow(x/[4],[5])-1)/(pow(x/[4],[5])+1))+[6]*pow(x,-0.3051)"
     // "+[7]*(x/1000.)+[8]*pow((x*[9])/15.,2)/(1+0.5*pow((x*[9])/15.,4))"
     // // "+[7]*(x/1000.)+[8]*pow((x*[9])/15.,2)/(1+0.5*pow((x*[9])/15.,4))"
     // f2 (p1,p2,p3):
@@ -455,6 +481,7 @@ void createL2L3ResTextFiles(string set) {
     TF1 *f22 = new TF1(Form("f22_%s_%d",cs,cnt),func3.c_str(),
 		       floor(ptrefmin2), ceil(ptrefmax2));
     /*
+    // Works well for 2023D, works for 2024I
     f22->SetParameter(0, f2->GetParameter(0)*f1->GetParameter(0)); // 1
     f22->SetParameter(1, f2->GetParameter(1)*f1->GetParameter(0)); // log
     f22->SetParameter(2, f2->GetParameter(0)*f1->GetParameter(1) +
@@ -463,33 +490,69 @@ void createL2L3ResTextFiles(string set) {
 		      f2->GetParameter(1)*f1->GetParameter(1) +
 		      f2->GetParameter(1)*f1->GetParameter(2)*log10(20.));// l/x
     */
+    double k1_300 = f1->Eval(300.);
+    double k2_300 = f2->Eval(300.);
+    double k1_20 = f1->Eval(20.);
+    double k2_20 = f2->Eval(20.);
 
-    double k300a = f2->Eval(300.);
-    f22->SetParameter(0, k300a*f1->GetParameter(0)); // 1
-    double k300b = f2->Eval(300.);
-    f22->SetParameter(1, k300b*p1); // log10(x/100.)
+    // This not working so well for 2024D
+    f22->SetParameter(0, k2_300*f1->GetParameter(0)); // 1
+    f22->SetParameter(1, k1_300*p1); // log(x)
 
-    double k20a = f2->Eval(20.);
-    double k20b = f2->Eval(20.);
-    f22->SetParameter(2, k20a*f1->GetParameter(1) + k20b*p2); // 1/(x/10)
-    f22->SetParameter(3, k20a*f1->GetParameter(2) +
-		      k20b*p2); // log10(x)/(x/10)
+    f22->SetParameter(2, k2_20*f1->GetParameter(1) + k1_20*p2); // 1/x
+    f22->SetParameter(3, k2_20*f1->GetParameter(2) + k1_20*p1); // log(x)/x
     
-    double k4000 = f2->Eval(4000.);
+    double k2_4000 = f2->Eval(4000.);
     // "erf" for "ecalcc"
-    f22->SetParameter(4, k4000*f1->GetParameter(3));
+    f22->SetParameter(4, k2_4000*f1->GetParameter(3));
     f22->SetParameter(5, f1->GetParameter(4));
     f22->SetParameter(6, f1->GetParameter(5));
 
     // x^-0.3 + x parts for "hcal" + "trk"
-    double k300 = f2->Eval(300.);
-    f22->SetParameter(7, k300*f1->GetParameter(6));
-    f22->SetParameter(8, k4000*f1->GetParameter(7));
+    //double k2_300 = f2->Eval(300.);
+    f22->SetParameter(7, k2_300*f1->GetParameter(6));
+    f22->SetParameter(8, k2_4000*f1->GetParameter(7));
 
-    double k20 = f2->Eval(20.);
-    f22->FixParameter(9, k20*f1->GetParameter(8));
-    f22->FixParameter(10, k20*f1->GetParameter(9));
+    //double k2_20 = f2->Eval(20.);
+    f22->FixParameter(9, k2_20*f1->GetParameter(8));
+    f22->FixParameter(10, k2_20*f1->GetParameter(9));
 
+    // Limitations on ecalcc shapes
+    if (!isECALCC) {
+      f22->FixParameter(4, 0.);
+      f22->FixParameter(5, 1500.);
+      f22->FixParameter(6, 0.);
+      f22->FixParameter(8, 0.);
+    }
+    else {
+      f22->SetParameter(4, max(-0.2,min(0.2,f22->GetParameter(4))));
+      f22->SetParLimits(4, -0.2, 0.2);
+      f22->SetParameter(5, max(1000.,min(2000.,f22->GetParameter(5))));
+      f22->SetParLimits(5, 1000., 2000.);
+      f22->SetParameter(6, max(1.,min(5.,f22->GetParameter(6))));
+      f22->SetParLimits(6, 1., 5.);
+      f22->SetParameter(7, max(-0.2,min(0.2,f22->GetParameter(7))));
+      f22->SetParLimits(7, -0.2, 0.2);
+      f22->SetParameter(8, max(-0.2,min(0.2,f22->GetParameter(8))));
+      f22->SetParLimits(8, -0.2, 0.2);
+    }
+
+    // To avoid very weird fits
+    f22->SetParameter(0, max(0.5,min(2.0,f22->GetParameter(0))));
+    f22->SetParLimits(0, 0.5, 2.0);   // 1
+    f22->SetParameter(1, max(-0.25,min(0.25,f22->GetParameter(1))));
+    f22->SetParLimits(1, -0.25, +0.25);   // log(x)
+    f22->SetParameter(2, max(-0.5,min(0.5,f22->GetParameter(2))));
+    f22->SetParLimits(2, -0.5, +0.5); // 1/x
+    f22->SetParameter(3, max(-0.5,min(0.5,f22->GetParameter(3))));
+    f22->SetParLimits(3, -0.5, +0.5); // log(x)/x
+    f22->SetParameter(7, max(-0.5,min(0.5,f22->GetParameter(7))));
+    f22->SetParLimits(7, -0.5, +0.5); // x^-0.3
+    f22->SetParameter(9, max(0.,min(0.5,f22->GetParameter(9))));
+    f22->SetParLimits(9, 0., 0.5); // nhf_off
+    f22->SetParameter(10, max(0.5,min(2.0,f22->GetParameter(10))));
+    f22->SetParLimits(10, 0.5, 2.0); // nhf_off peak
+      
     // Input parameters
     if (etamin>=0) {
       ftxt << "  f22->SetParameters(";
@@ -504,6 +567,11 @@ void createL2L3ResTextFiles(string set) {
     gref->Fit(f22,"QRNM");
     
     // Output L2L3Res
+    double p22ref[np];
+    assert(np>=f22->GetNpar());
+    for (int ip = 0; ip != min(f22->GetNpar(),np); ++ip) {
+      p22ref[ip] = f22->GetParameter(ip);
+    }
     if (etamin>=0) {
       ftxt << "  f22->SetParameters(";
       for (int ip = 0; ip != f22->GetNpar(); ++ip) {
@@ -524,7 +592,7 @@ void createL2L3ResTextFiles(string set) {
 
     // Reference JES refit vs <pT,raw>:
     // "[0]+[1]*log10(x/100.)+[2]/(x/10.)+[3]*log10(x)/(x/10.)+"
-    // "[4]*(pow(x/[5],[6])-1)/(pow(x/[5],[6])+1)+[7]*pow(x,-0.3051)+"
+    // "[4]*(1+(pow(x/[5],[6])-1)/(pow(x/[5],[6])+1))+[7]*pow(x,-0.3051)+"
     // "[8]*(x/1000.)+[9]*pow((x+[10])/15.,2)/(1+0.5*pow((x+[10])/15.,4))"
     
     //double jesrefmin2  = h->Interpolate(ptrefmin2);
@@ -545,15 +613,15 @@ void createL2L3ResTextFiles(string set) {
 		       floor(ptminraw), ceil(ptmaxraw));
 
     //double k1_100 = h->Interpolate(100.);
-    double k1_300 = f1->Eval(300.);
-    double k2_300 = f2->Eval(300.);
+    //double k1_300 = f1->Eval(300.);
+    //double k2_300 = f2->Eval(300.);
     double kjes_300 = k1_300*k2_300;
     f23->SetParameter(0, k2_300*f1->GetParameter(0)); // 1
     f23->SetParameter(1, k1_300*p1); // log10(x/100.)
 
     //double k1_20 = h->Interpolate(20.);
-    double k1_20 = f1->Eval(20.);
-    double k2_20 = f2->Eval(20.);
+    //double k1_20 = f1->Eval(20.);
+    //double k2_20 = f2->Eval(20.);
     double kjes_20 = k2_20*k1_20;
     f23->SetParameter(2, k2_20*(f1->GetParameter(1)/kjes_20 +
 				f1->GetParameter(2)/kjes_20*log10(kjes_20)) +
@@ -568,7 +636,7 @@ void createL2L3ResTextFiles(string set) {
     //double kjes_1500 = k2_1500*k1_1500;
     // "erf" shape for "ecalcc" 
     double k1_4000 = f1->Eval(4000.);
-    double k2_4000 = f2->Eval(4000.);
+    //double k2_4000 = f2->Eval(4000.);
     double kjes_4000 = k2_4000*k1_4000;
     f23->SetParameter(4, k2_4000*f1->GetParameter(3)); // [-1,1] "erf"
     f23->SetParameter(5, f1->GetParameter(4)/kjes_4000); // "erf" position
@@ -594,10 +662,10 @@ void createL2L3ResTextFiles(string set) {
     //f23->SetParLimits(10, -9, +18);
     
     // To avoid division by zero errors
-    f23->SetParameter(5, max(10.,min(6500.,f23->GetParameter(5))));
-    f23->SetParLimits(5, 10., 6500.);
-    f23->SetParameter(6, max(0.,min(10.,f23->GetParameter(6))));
-    f23->SetParLimits(6, 0., 10.);
+    //f23->SetParameter(5, max(10.,min(6500.,f23->GetParameter(5))));
+    //f23->SetParLimits(5, 10., 6500.);
+    //f23->SetParameter(6, max(0.,min(10.,f23->GetParameter(6))));
+    //f23->SetParLimits(6, 0., 10.);
     //if (f23->GetNpar()>8)
     //f23->SetParLimits(10,-10,+10.);
 
@@ -610,7 +678,33 @@ void createL2L3ResTextFiles(string set) {
       f23->FixParameter(5, 1500.);
       f23->FixParameter(6, 0.);
       f23->FixParameter(8, 0.);
-    }	
+    }
+    else {
+      f23->SetParameter(4, max(-0.2,min(0.2,f23->GetParameter(4))));
+      f23->SetParLimits(4, -0.2, 0.2);
+      f23->SetParameter(5, max(1000.,min(2000.,f23->GetParameter(5))));
+      f23->SetParLimits(5, 1000., 2000.);
+      f23->SetParameter(6, max(1.,min(5.,f23->GetParameter(6))));
+      f23->SetParLimits(6, 1., 5.);
+      f23->SetParameter(8, max(-0.2,min(0.2,f23->GetParameter(8))));
+      f23->SetParLimits(8, -0.2, 0.2);
+    }
+
+    // To avoid very weird fits
+    f23->SetParameter(0, max(0.5,min(2.0,f23->GetParameter(0))));
+    f23->SetParLimits(0, 0.5, 2.0);   // 1
+    f23->SetParameter(1, max(-0.25,min(0.25,f23->GetParameter(1))));
+    f23->SetParLimits(1, -0.25, +0.25); // log(x)
+    f23->SetParameter(2, max(-0.5,min(0.5,f23->GetParameter(2))));
+    f23->SetParLimits(2, -0.5, +0.5); // 1/x
+    f23->SetParameter(3, max(-0.5,min(0.5,f23->GetParameter(3))));
+    f23->SetParLimits(3, -0.5, +0.5); // log(x)/x
+    f23->SetParameter(7, max(-0.5,min(0.5,f23->GetParameter(7))));
+    f23->SetParLimits(7, -0.5, +0.5); // x^-0.3
+    f23->SetParameter(9, max(0.,min(0.5,f23->GetParameter(9))));
+    f23->SetParLimits(9, 0., 0.5); // nhf_off
+    f23->SetParameter(10, max(0.5,min(2.0,f23->GetParameter(10))));
+    f23->SetParLimits(10, 0.5, 2.0); // nhf_off peak
     
     string n23[nparnew] =
       {"[0]","[1]*lnx","[2]/x","[3]*l/x","[4]*x^6",
@@ -627,16 +721,17 @@ void createL2L3ResTextFiles(string set) {
       ftxt << endl;
     }
     
-    double p[nparnew];
+    double p23raw[nparnew];
+    assert(nparnew>=f23->GetNpar());
     for (int ip = 0; ip != f23->GetNpar(); ++ip) {
-      p[ip] = f23->GetParameter(ip);
+      p23raw[ip] = f23->GetParameter(ip);
     }
     
     // Input parameters
     if (etamin>=0) {
       ftxt << "  f23->SetParameters(";
       for (int ip = 0; ip != f23->GetNpar(); ++ip) {
-	ftxt << (ip==0 ? "" : ", ") << Form("%+8.3f",p[ip]);
+	ftxt << (ip==0 ? "" : ", ") << Form("%+8.3f",p23raw[ip]);
       }
       ftxt << "); // Pre-set values" << endl;
     }
@@ -648,25 +743,37 @@ void createL2L3ResTextFiles(string set) {
     // Output L2L3Res
     if (etamin>=0) ftxt << "  f23->SetParameters(";
     for (int ip = 0; ip != f23->GetNpar(); ++ip) {
-      p[ip] = f23->GetParameter(ip);
+      p23raw[ip] = f23->GetParameter(ip);
       if (etamin>=0)
-	ftxt << (ip==0 ? "" : ", ") << Form("%+8.3f",p[ip]);
+	ftxt << (ip==0 ? "" : ", ") << Form("%+8.3f",p23raw[ip]);
     }
     if (etamin>=0)
       ftxt << Form("); // %s chi2/NDF=%1.1f/%d [%1.3f,%1.3f]\n", set.c_str(),
 		   f23->GetChisquare(), f23->GetNDF(),etamin,etamax) << flush;
     
-    string s = Form("  %6.3f %6.3f %2d   %2d %4d   "
-		    "%6.4f %+7.4f   %+7.4f %+7.4f   "
-		    "%7.4f %5.1f %6.4f   %+7.3f   %+7.4f   "
-		    "%+7.3f   %+7.4f",
-		    etamin, etamax, nparnew, int(ptminraw), int(ptmaxraw),
-		    p[0],p[1], p[2],p[3], p[4],p[5],p[6],  p[7], p[8],
-		    p[9],p[10]);
+    string s23raw = Form("  %6.3f %6.3f %2d   %2d %4d   "
+			 "%6.4f %+7.4f   %+7.4f %+7.4f   "
+			 "%7.4f %5.1f %6.4f   %+7.3f   %+7.4f   "
+			 "%+7.3f   %+7.4f",
+			 etamin, etamax, nparnew, int(ptminraw), int(ptmaxraw),
+			 p23raw[0],p23raw[1], p23raw[2],p23raw[3],
+			 p23raw[4],p23raw[5],p23raw[6],  p23raw[7], p23raw[8],
+			 p23raw[9],p23raw[10]);
     if (cnt<cntmax && debug)
-      cout << s << endl;
-    fout << s << endl;
+      cout << s23raw << endl;
+    fout23raw << s23raw << endl;
     ++cnt;
+
+    string s22ref = Form("  %6.3f %6.3f %2d   %2d %4d   "
+			 "%6.4f %+7.4f   %+7.4f %+7.4f   "
+			 "%7.4f %5.1f %6.4f   %+7.3f   %+7.4f   "
+			 "%+7.3f   %+7.4f",
+			 etamin, etamax, nparnew, int(ptminraw), int(ptmaxraw),
+			 p22ref[0],p22ref[1], p22ref[2],p22ref[3],
+			 p22ref[4],p22ref[5],p22ref[6],  p22ref[7], p22ref[8],
+			 p22ref[9],p22ref[10]);
+    fout22ref << s22ref << endl;
+    
     
     // Plotting only for positive side (is anyway symmetric)
     if (etamin<0) continue;
