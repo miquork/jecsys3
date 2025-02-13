@@ -56,7 +56,7 @@ bool _gf_fitZjetHDM = true;//false;
 // Permit baseline shift for JES with L2L3Res inputs. Needed for PFcomp fit
 bool _gf_useJESref = false;//true;//false;
 // Alternatively, undo JES completely to show pre-closure plots
-bool _gf_undoJESref = false;//true;
+bool _gf_undoJESref = true;
 
 // Listing of all available 'datasets'
 // {name, type, name2}
@@ -133,8 +133,8 @@ const array<string,29> _gf_shapes_whitelist = {
   "em3",
   "tv402","tv3n1","tv300pn",
   "hhp3",
-  "hhpfc", // Run23
-  "hhnoise", // Run22
+  //"hhpfc", // Run23
+  //"hhnoise", // Run22
   //"x0p5",
   //"x1", // 22Sep2023 V3, not 19Dec2023
   //"g1", // NEF drop above 610 GeV
@@ -144,7 +144,8 @@ const array<string,29> _gf_shapes_whitelist = {
   //"quadlog", // log^2
   //"loglin", // log^1
   //"const", // log^0 constant scale factor
-  "off", // Summer23
+  //"off", // Summer23
+  "off_nhf", // Prompt24, no hhpfc+hhnoise+hbtime+hbsipm+off with this
   "ecalcc", // ECAL cc timing for 2024BCD, not 2024CR/CS/F
   //"qie11"
   //"x1p5",
@@ -154,8 +155,8 @@ const array<string,29> _gf_shapes_whitelist = {
   //"x2p5", // Summer23 high pT? pretty good
   //"x3", // Summer23 hight pT? Slightly too sharp?
   //"x4", // test TeV scale
-  "hbtime", // test adding for Summer23; did nothing really on top of x2p5
-  "hbsipm" // 22Sep2023 V3, not 19Dec2023
+  //"hbtime", // test adding for Summer23; did nothing really on top of x2p5
+  //"hbsipm" // 22Sep2023 V3, not 19Dec2023
   "hhblue103"
 };
 
@@ -210,6 +211,9 @@ const array<array<string,3>, nshp> _gf_shapes = {{
     // R = (0.5*x+1150.)/x
     //{"qie11","Rjet","-0.5*max(x-1150.,0.)/(3000.-1150.)"},
     {"off","Rjet","1./x"},
+    //{"off_nhf","Rjet","18.46*pow(x/15.6,1.840)/(1+0.5*pow(x/15.6,3.679))"},
+    //{"off_nhf","Rjet","19.15*pow(x/15.6,1.912)/(1+0.5*pow(x/15.6,3.824))"},
+    {"off_nhf","Rjet","19.26*pow(x/15.6,1.927)/(1+0.5*pow(x/15.6,3.853))"},
     {"g1","Rjet","-6.5*max(log(x/610.),0.)"},
     {"p5log","Rjet","1.0*pow(log(x/300.),5)"},
     {"p4log","Rjet","1.0*pow(log(x/300.),4)"},
