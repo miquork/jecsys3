@@ -56,45 +56,42 @@ string CorLevel = "L1L2L3Res"; // Closure test for L2L3Res
 // Clean L3Res: Z [30,400], photon [230,1200], multijet [800,1800], PF [15,2450]
 
 // Override settings below to use full range (latest true applies)
-const bool useFullRange(false);//true);
-const bool usePrompt24Range(false);//true);
-const bool usePrompt24RangeV2(true);//false);//true);
+const bool useFullRange(false);
+const bool usePrompt24Range(false);
+const bool usePrompt24RangeV2(true);
 
-// jet+Z
-double fjzptmin(20);//15);//20);//15);
-double fjzptmax(70);//700);//70);//700.);
-// Z+jet average
+// jet+Z vs pT,jet
+double fjzptmin(20);
+double fjzptmax(70);
+// Z+jet vs pT,average
 double fzjaptmin(20);
-double fzjaptmax(400);//70);
+double fzjaptmax(400);
+// Z+jet vs pT,Z
+double fzptmin(70);
+double fzptmax(400);
 
-// Z+jet
-double fzptmin(70);//15);//70);//15);//30);//15.);//30);//(15.);//40.);   // Z+jet pTmin
-double fzptmax(400);//700);//400);//700.);//1300.);  // Z+jet pTmax
-//double fzmpfptmin(15); // Z+jet MPF pTmin
-//double fzmpfptmax(700.);//1300);// Z+jet MPF pTmax
-//double fzbalptmin(15); // Z+jet DB pTmin
-//double fzbalptmax(700.);//1300);// Z+jet DB pTmax
-//double fzbptmax(300.); // Z+b pTmax
+// Photon+jet, pT bins:
+// 15, 20, 25, 30, 35, 40, 50, 60, 75, 90, 110, 130, 175, 230, 300, 400, 500,
+// 600, 700, 850, 1000, 1200, 1450, 1750, 2100, 2500, 
+double fgptmin(175);
+double fgptmax(1000.);
 
-// Photon+jet, pT bins: 700, 850, 1000, 1200, 1450, 1750, 2100, 2500, 3000
-double fgptmin(175);//35);//175);//110);//60);//35);//60);//175);//110);//35);//60);//35);//110);//230);//30.);//110.);//50.);
-double fgptmax(1000.);//2100.);//1200.);//1450.);//1750.); // extend 1750 when can (v22 up to 3000)
-
-
-// Multijet and incjet pT bins (to-do: widen multijet high pT bins?)
-// pT bins: 1497, 1588, 1684, 1784, 1890, 2000, 2116, 2238, 2366, 2500,
-//    2640, 2787, 2941, 3103, 3273, 3450, 3637, 3832, 4037, 4252, 4477, 4713,
-//    4961, 5220, 5492, 5777, 6076, 6389, 6717, 7000
-
-// Multijet, pT bins (800-2500 GeV for V1)
-bool rebinMultijet = true;
-double fmjptmin(49);//30);//49);//97);//196.);//800);//100.);//700);//1000.);//500);//196);   // Multijet pTmin
-double fmjptmax(2500);//2787);//2500.);//1800.);//2400.);//2785.);//3500.);//2000.);//2785.); // Multijet pTmax
-bool doMultijetRecoil = false;//true; // recoil pT binning
+// Multijet and incjet pT bins in relevant range:
+// 10, 12, 15, 18, 21, 24, 28, 32, 37, 43, 49, 56, 64, 74, 84, 97, 114, 133,
+// 153, 174, 196, 220, 245, 272, 300, 330, 362, 395, 430, 468, 507, 548, 592,
+// 638, 686, 737, 790, 846, 905, 967, 1032, 1101, 1172, 1248, 1327, 1410, 1497,
+// 1588, 1684, 1784, 1890, 2000, 2116, 2238, 2366, 2500, 2640, 2787, 2941, 3103,
+// 3273, 3450, 3637, 3832, 4037, 4252, 4477, 4713, 4961,
+// Rebinned from 1032 GeV up:
+// 1248, 1497, 1784, 2116, 2500, 3273,  4252, 5492,
+bool rebinMultijet = true; // use wider pT bins
+double fmjptmin(49);
+double fmjptmax(2500);
+bool doMultijetRecoil = false;//true; // use pT,recoil binning
 
 // PF composition (incjet)
-double fijptmin(15);//50);//97);
-double fijptmax(3103);//2450);
+double fijptmin(15);
+double fijptmax(3103);
 
 
 // Helper functions to handle JEC
@@ -115,54 +112,73 @@ void reprocess(string epoch="") {
 
   setEpoch(epoch);
   TString tepoch = TString(epoch);
+  TString tr = tepoch; tr.ReplaceAll("Run","");
   
   // Set TDR style to have correct graphical settings when storing graphs
   setTDRStyle();
 
   // override range settings to check full range
   if (useFullRange) {
-    fjzptmin = 15; fjzptmax = 700;
-    fzptmin  = 15; fzptmax  = 1000;//700;
-    fgptmin =  35; fgptmax = 1750;//2100;
-    fmjptmin = 30; fmjptmax = 2787;//2000;//2787;
-    fijptmin = 15; fijptmax = 2800;//3103;
+    fjzptmin   = 15; fjzptmax    = 700;
+    fzjaptmin  = 15; fzjaptmax  = 1000;
+    fzptmin    = 15; fzptmax     = 1000;
+    fgptmin =  35; fgptmax = 1750;
+    fmjptmin = 30; fmjptmax = 2787;
+    fijptmin = 15; fijptmax = 2800;
 
-    doMultijetRecoil = (epoch=="Run24CP" || epoch=="Run24BCD" || epoch=="Run24BCDE" || epoch=="Run24C" || epoch=="Run24E" || epoch=="2024B_nib1" || epoch=="2024C_nib1" || epoch=="2024D_nib1" || epoch=="2024Ev1_nib1" || epoch=="2024Ev2_nib1");// || epoch=="Run24F");
+    doMultijetRecoil = (epoch=="Run24CP" || epoch=="Run24BCD" || epoch=="Run24BCDE" || epoch=="Run24C" || epoch=="Run24E" || epoch=="2024B_nib1" || epoch=="2024C_nib1" || epoch=="2024D_nib1" || epoch=="2024Ev1_nib1" || epoch=="2024Ev2_nib1");
   }
   if (usePrompt24Range) {
-    //fjzptmin = 15; //fjzptmax = 300;
     fjzptmin = 15; fjzptmax = 85;
-    //fzptmin  = 40; fzptmax  = 700;
     fzptmin  = 85; fzptmax  = 400;
-    //fgptmin =  35; fgptmax = 1000;
     fgptmin =  230; fgptmax = 1000;
-    //fmjptmin = 30; fmjptmax = 2787;
     fmjptmin = 114; fmjptmax = 2000.;
     fijptmin = 15; fijptmax = 3103;
   }
   if (usePrompt24RangeV2) {
-    fjzptmin = 15; fjzptmax = 70;//15;
-    fzjaptmin = 25; fzjaptmax = 70;//15;
-    fzptmin  = 15; fzptmax  = 1000;//700;
-    fgptmin =  (epoch=="Run24F" || epoch=="Run24G" || epoch=="Run24FG" || epoch=="Run24H" || epoch=="Run24I" || tepoch.Contains("nib") ? 75 : 110);//60;//40;//130;//40;
-    //fgptmin = 175; // w32-33 until QCD included
-    fgptmax = 1750;//300;//1750;
-    //doMultijetRecoil = true;
-    //fmjptmin = 133;//600;//133;
-    fmjptmax = 2500;//2787;//2000.;
-    fijptmin = 15; fijptmax = 2787;//2500;//3103;
-    //if (epoch=="Run24CP" || epoch=="Run24CR" || epoch=="Run24CS") {
-    //fmjptmin = 133;
-    //}
-    //if (epoch=="Run24CR" || epoch=="Run24CS") { // back to jet+Z for low pT
-      //fjzptmax = 70;
-      //fzptmin = 70;
-      //fgptmin = 60;
-      //fmjptmin = 56;
-      //fmjptmax = 2787;
-    //}
-    doMultijetRecoil = (epoch=="Run24CP" || epoch=="Run24BCD" || epoch=="Run24BCDE" || epoch=="Run24C" || epoch=="Run24E" || epoch=="2024B_nib1" || epoch=="2024C_nib1" || epoch=="2024D_nib1" || epoch=="2024Ev1_nib1" || epoch=="2024Ev2_nib1");// || epoch=="Run24F"););// || epoch=="Run24F");
-    fmjptmin = (doMultijetRecoil ? 600 : 133);
+
+    fjzptmin = 15; fjzptmax = 70;
+    fzjaptmin = 25; fzjaptmax = 70;
+    fzptmin  = 15; fzptmax  = 500;//1000;
+
+    //fgptmin =  (epoch=="Run24F" || epoch=="Run24G" || epoch=="Run24FG" || epoch=="Run24H" || epoch=="Run24I" || tepoch.Contains("nib") ? 75 : 110);
+    fgptmin = 230; // TightIso_TightID small discontinuity in MPF?
+    fgptmax = 1200;//1750;
+
+    fijptmin = 15; fijptmax = 2787;
+    doMultijetRecoil = (epoch=="Run24CP" || epoch=="Run24BCD" || epoch=="Run24BCDE" || epoch=="Run24C" || epoch=="Run24E" || epoch=="2024B_nib1" || epoch=="2024C_nib1" || epoch=="2024D_nib1" || epoch=="2024Ev1_nib1" || epoch=="2024Ev2_nib1");
+    fmjptmin = (doMultijetRecoil ? 600 : 220);//133);
+    fmjptmax = 2500;
+
+    // Tuning for nibs to avoid low statistics issues
+    if (tr.Contains("2024") && tr.Contains("nib")) {
+      if (tr.Contains("B")) {
+	fmjptmin = 846;
+	fmjptmax = 1032;//1497;//1784;
+	fgptmax = 600;
+      }
+      if (tr.Contains("C") || tr.Contains("D") ||
+	  tr.Contains("E") ||
+	  tr.Contains("F") || tr.Contains("G") ||
+	  tr.Contains("H") || tr.Contains("I")) {
+	fmjptmax = 1784;
+      }
+      if (tr.Contains("D") || tr.Contains("E")) {
+	fmjptmax = 1784;//2116;
+	fzptmax = 400;
+	fgptmax = 850;
+      }
+      if (tr.Contains("H")) {
+	fzptmax = 300;
+	fgptmax = 850;
+      }
+      if (tr.Contains("F_nib1")) {
+	fmjptmin = 600;
+	fzptmax = 300;
+	fgptmax = 850;//1200;
+	
+      }
+    }
   }
   
   TDirectory *curdir = gDirectory;
@@ -590,8 +606,15 @@ void reprocess(string epoch="") {
     if (fmjm) fmjm = (TFile*)fmjm->GetDirectory("HLT_MC"); // PATCH
   }
   else if (tepoch.Contains("nib")) {
-    fmjd = new TFile(Form("rootfiles/Prompt2024/v113_2024/jmenano_data_cmb_%s_JME_v113_2024.root",epoch.c_str()),"READ"); // V7M closure
-    fmjm = new TFile(Form("rootfiles/Prompt2024/v113_2024/jmenano_mc_out_Winter24MGV14_v113_%s.root",epoch.c_str()),"READ"); // // V7M closure
+    if (tr.Contains("B") || tr.Contains("C") || tr.Contains("D") ||
+	tr.Contains("E"))
+      fmjd = new TFile(Form("rootfiles/Prompt2024/v113_2024/jmenano_data_cmb_%s_JME_v113_2024.root",epoch.c_str()),"READ"); // V7M closure
+    else // 2024FGHI
+      fmjd = new TFile(Form("rootfiles/Prompt2024/v114_2024/jmenano_data_cmb_%s_JME_v114_2024.root",epoch.c_str()),"READ"); // V8M
+    if (tr.Contains("F_nib1"))
+      fmjm = new TFile("rootfiles/Prompt2024/v114_2024/jmenano_mc_out_Winter24MGV14_v114_2024.root","READ"); // PU profiles messed up?
+    else
+      fmjm = new TFile(Form("rootfiles/Prompt2024/v113_2024/jmenano_mc_out_Winter24MGV14_v113_%s.root",epoch.c_str()),"READ");
     if (fmjm) fmjm = (TFile*)fmjm->GetDirectory("HLT_MC"); // PATCH
   }
   else {
