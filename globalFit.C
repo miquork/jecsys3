@@ -389,9 +389,23 @@ void globalFitEtaBin(double etamin, double etamax, string run, string version) {
   // Set parameters
   vector<double> a(ntot, 0);
   vector<string> parnames(ntot); // empty for now, to fill with shapes/sources
-  for (int i = 0; i != ntot; ++i)
+  for (int i = 0; i != ntot; ++i) {
     fitter->SetParameter(i, parnames[i].c_str(), a[i], (i<npar ? 0.01 : 1),
 			 -100, 100);
+
+    // Force parameters for small data sets
+    if (run=="2024B_nib1") {
+
+      vector<fitShape> &v = _mshape["Rjet"];
+      assert(int(v.size())==njesFit);
+      for (unsigned int j = 0; j != v.size(); ++j) {
+	if (v[j].name=="ecalcc" && v[j].idx==i) {
+	  fitter->SetParameter(i, "ecalcc_fix", 1., 0.1, 0.8, 1.0);
+	  //fitter->FixParameter(i);
+	}
+      }
+    }
+  }
 
   // Suppress output
   double printlevel = -1; // Suppress most output
@@ -529,6 +543,7 @@ void globalFitEtaBin(double etamin, double etamax, string run, string version) {
     _fitError_func = _jesFit;
     _fitError_emat = &emat;
     double k = 1;
+    //double k = sqrt(chi2_data_minerr / ndt);
 
     for (int j = 1; j != h->GetNbinsX()+1; ++j) {
       double pt = h->GetBinCenter(j);
@@ -550,6 +565,7 @@ void globalFitEtaBin(double etamin, double etamax, string run, string version) {
     _fitError_func = _jesFit;
     _fitError_emat = &emat;
     double k = 1;
+    //double k = sqrt(chi2_data_minerr / ndt);
     for (int i = 0; i != gr->GetN(); ++i) {
       double pt = gr->GetX()[i];
       gre->SetPoint(i, pt, gr->GetY()[i]);
@@ -648,6 +664,7 @@ void globalFitDraw(string run, string version) {
     _fitError_func = _jesFit;
     _fitError_emat = pemat;
     double k = 1;
+    //double k = sqrt(chi2_data_minerr / ndt);
     for (int i = 0; i != gr->GetN(); ++i) {
       double pt = gr->GetX()[i];
       gre->SetPoint(i, pt, gr->GetY()[i]);
