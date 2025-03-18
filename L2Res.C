@@ -20,8 +20,11 @@ bool fitD = true; // Dijet (pT,ave)
 bool fitP = true; // Dijet (pT,probe)
 bool fitJ = true; // Dijet (pT,tag)
 
+bool drawStat = true; // Draw c0.pdf for statistical uncertainty
+bool doVsEtaPt = true;
+
 bool refitPtRaw = true; // Re-parameterize L2Res vs pTraw instead of pTref
-bool doClosure = false; // Do not undo L2L3Res for closure test
+bool doClosure = false;//true;//false; // Do not undo L2L3Res for closure test
 
 bool flattenHF = false; // Const vs pT for HF
 double flatHFptmin = 80; // If flat, use only high pT
@@ -42,9 +45,11 @@ bool _invertZ(false);
 TProfile2D *TH2DtoTProfile2D(TH2D *h2, string name="");
 
 // Step 1. Slice 1D profile out of 2D in given range and draw it
+// (Step 0. If option=="stat", draw statistical uncertrainty instead)
 TProfile* drawEta(TProfile2D *p2, double ptmin, double ptmax,
 		  string draw, int marker, int color, string label="",
-		  TProfile2D *p2x = 0, TProfile2D *p2xx = 0) {
+		  TProfile2D *p2x = 0, TProfile2D *p2xx = 0,
+		  string option="") {
   
   assert(p2);
   int iy1 = p2->GetYaxis()->FindBin(ptmin);
@@ -85,7 +90,24 @@ TProfile* drawEta(TProfile2D *p2, double ptmin, double ptmax,
     }
   }
 
-  tdrDraw(p,draw,marker,color,kSolid,-1,kNone);
+  if (option=="stat") {
+
+    TH1D *h0 = p->ProjectionX(Form("%s_0",p->GetName()));
+    for (int i = 1; i != h0->GetNbinsX()+1; ++i) {
+      double y = h0->GetBinContent(i);
+      double ey = h0->GetBinError(i);
+      h0->SetBinContent(i, y!=0 ? ey/y*100. : 0.);
+      h0->SetBinError(i, 0.);
+    }
+    tdrDraw(h0,draw,marker,color,kSolid,-1,kNone);
+    
+    // For legend
+    p->SetMarkerStyle(marker);
+    p->SetMarkerColor(color);
+    p->SetLineColor(color);
+  }
+  else
+    tdrDraw(p,draw,marker,color,kSolid,-1,kNone);
 
   if (_leg && label!="") {
     int pt1 = int(p2->GetYaxis()->GetBinLowEdge(iy1));
@@ -424,9 +446,9 @@ void L2Res() {
      //"2022F_19Dec2023","2022G_19Dec2023",
      //"2023Cv123_19Dec2023","2023Cv4_19Dec2023","2023D_19Dec2023",
      //"2024I","2024H","2024G","2024F","2024E","2024BCD"}; // V7M
-      "2024B_nib1","2024C_nib1","2024D_nib1","2024Ev1_nib1","2024Ev2_nib1",
+     /*"2024B_nib1","2024C_nib1","2024D_nib1","2024Ev1_nib1","2024Ev2_nib1",
       "2024F_nib1","2024F_nib2","2024F_nib3","2024G_nib1","2024G_nib2",
-      "2024H_nib1","2024I_nib1"}; // V8M
+      "2024H_nib1",*/"2024I_nib1"}; // V8M
   const int nrun = sizeof(vrun)/sizeof(vrun[0]);
   string vmc[] =
     {//"Summer22","Summer22",
@@ -434,9 +456,9 @@ void L2Res() {
      //"Summer23","Summer23","Summer23BPix",
      //"Winter24","Winter24","Winter24","Winter24","Winter24"};
      //"Winter24","Winter24","Winter24","Winter24","Winter24","Winter24"};//V7M
+     /*"Winter24","Winter24","Winter24","Winter24","Winter24",
       "Winter24","Winter24","Winter24","Winter24","Winter24",
-      "Winter24","Winter24","Winter24","Winter24","Winter24",
-      "Winter24","Winter24"}; // V8M
+      "Winter24",*/"Winter24"}; // V8M
   const int nmc = sizeof(vmc)/sizeof(vmc[0]);
   assert(nmc==nrun);
 
@@ -458,7 +480,7 @@ void L2Res() {
     //if (run!="2024I_nib1") continue;
     
     TString tr(cr), tr2(cr);//, trz(cr);
-    if (!tr.Contains("nib")) {
+    if (!tr.Contains("nib") || doVsEtaPt) {
     isNIB = false;
     gROOT->ProcessLine(Form(".! mkdir pdf/L2Res/%s",cr));
     gROOT->ProcessLine(Form(".! mkdir pdf/L2Res/%s/vsEta",cr));
@@ -515,7 +537,8 @@ void L2Res() {
     }
   }
   else if (tr.Contains("2024") && tr.Contains("nib")) {
-    fz = new TFile(Form("rootfiles/Prompt2024/v93/jme_bplusZ_%s_Zmm_v93.root",cr),"READ"); // V7M->V8M
+    //fz = new TFile(Form("rootfiles/Prompt2024/v93/jme_bplusZ_%s_Zmm_v93.root",cr),"READ"); // V7M->V8M
+    fz = new TFile(Form("rootfiles/Prompt2024/v94_Zmm/jme_bplusZ_%s_Zmm_v94_Summer24.root",cr),"READ"); // V7M->V8M
   }
   else if (tr.Contains("2024")) {
     if (tr.Contains("H") || tr.Contains("I")) {
@@ -567,7 +590,8 @@ void L2Res() {
     // TBD: need to add p2gxx for 22Sep2023 files to scale JES
   }
   else if (tr.Contains("2024") && tr.Contains("nib")) {
-    fg = new TFile(Form("rootfiles/Prompt2024/w43/GamHistosFill_data_%s_w43.root",cr),"READ"); // V7M->V8M
+    //fg = new TFile(Form("rootfiles/Prompt2024/w43/GamHistosFill_data_%s_w43.root",cr),"READ"); // V7M->V8M
+    fg = new TFile(Form("rootfiles/Prompt2024/v45_Gam/GamHistosFill_data_%s_w45.root",cr),"READ"); // V8M closure
     string sr2(cr);
     if (tr.Contains("B")||tr.Contains("C")||tr.Contains("D")) sr2 = "2024BCD";
     if (tr.Contains("E")) sr2 = "2024E";
@@ -622,11 +646,13 @@ void L2Res() {
   else if (tr.Contains("2024") && tr.Contains("nib")) {
     if (tr.Contains("B") || tr.Contains("C") || tr.Contains("D") ||
 	tr.Contains("E")) {
-      fd = new TFile(Form("rootfiles/Prompt2024/v113_2024/jmenano_data_cmb_%s_JME_v113_2024.root",cr),"READ"); // V7M->V8M
+      //fd = new TFile(Form("rootfiles/Prompt2024/v113_2024/jmenano_data_cmb_%s_JME_v113_2024.root",cr),"READ"); // V7M->V8M
+      fd = new TFile(Form("rootfiles/Prompt2024/v116_Jet/jmenano_data_cmb_%s_JME_v116.root",cr),"READ"); // V8M closure
       fdm = new TFile(Form("rootfiles/Prompt2024/v113_2024/jmenano_mc_out_Winter24MGV14_v113_%s.root",cr),"READ"); // Winter24
     }
     else { // FGHI
-      fd = new TFile(Form("rootfiles/Prompt2024/v114_2024/jmenano_data_cmb_%s_JME_v114_2024.root",cr),"READ");
+      //fd = new TFile(Form("rootfiles/Prompt2024/v114_2024/jmenano_data_cmb_%s_JME_v114_2024.root",cr),"READ");
+      fd = new TFile(Form("rootfiles/Prompt2024/v116_Jet/jmenano_data_cmb_%s_JME_v116.root",cr),"READ"); // V8M closure
       //fdm = new TFile("rootfiles/Prompt2024/v114_2024/jmenano_mc_out_Winter24MGV14_v114_2024.root","READ"); // Winter24
       if (tr.Contains("F_nib1"))
 	fdm = new TFile("rootfiles/Prompt2024/v114_2024/jmenano_mc_out_Winter24MGV14_v114_2024.root","READ"); // v113 missing ZeroBias pu reweighing
@@ -1283,7 +1309,8 @@ void L2Res() {
       double pt = g->GetX()[i];
       double jes1 = g->GetY()[i];
       double jes2 = fref2->Eval(pt);
-      gr2->SetPoint(i, pt, jes2/jes1);
+      //gr2->SetPoint(i, pt, jes2/jes1);
+      gr2->SetPoint(i, pt, 1+(jes2/jes1-1)*10);
     }
     
     cx2->cd(ieta);
@@ -1339,7 +1366,7 @@ void L2Res() {
       leg9->AddEntry(g,"JES vs p_{T,raw}","P");
       leg9->AddEntry(fref2,"Fit vs p_{T,raw}","L");
       leg9->AddEntry(gr,"Ratio of JES","L");
-      leg9->AddEntry(gr2,"Ratio of fit/JES","L");
+      leg9->AddEntry(gr2,"Ratio of fit/JES #times 10","L");
 
       cx2->cd(ieta);
       double siz = tex->GetTextSize();
@@ -1356,7 +1383,7 @@ void L2Res() {
   
   // Step 10. Print out text files
   // 10a: Original parameterization vs pTref
-  string ftxtname = Form("textfiles/Prompt24/Prompt24_Run%s_V8M_DATA_L2ResidualVsPtRef_AK4PFPuppi.txt",cr);
+  string ftxtname = Form("textfiles/Prompt24/Prompt24_Run%s_V8N_DATA_L2ResidualVsPtRef_AK4PFPuppi.txt",cr);
   cout << "Writing results to text file " << ftxtname << endl << flush;
   ofstream ftxt(ftxtname.c_str());
 
@@ -1385,7 +1412,7 @@ void L2Res() {
     ftxt << endl;
   }
   // 10b: Re-parameterization vs pTraw
-  string ftxtname2 = Form("textfiles/Prompt24/Prompt24_Run%s_V8M_DATA_L2Residual_AK4PFPuppi.txt",cr);
+  string ftxtname2 = Form("textfiles/Prompt24/Prompt24_Run%s_V8N_DATA_L2Residual_AK4PFPuppi.txt",cr);
   cout << "Writing results to text file " << ftxtname2 << endl << flush;
   ofstream ftxt2(ftxtname2.c_str());
   
@@ -1423,6 +1450,41 @@ void L2Res() {
     if (fabs(ptmin-1174)<1) continue; // why twice?
   // (No indent here for the resf of the loop, maybe function call later)
 
+  // Extra Step 0. Slice pT, raw response uncertainty vs eta.
+  if (drawStat) {
+
+    TH1D *h0 = tdrHist(Form("h0p_%s",cr),"JES Stat. Unc. (%)",0.,10.,
+		       "|#eta|",0,5.2);
+    lumi_136TeV = Form("%s - %s%s",cr,cm,cl);
+    extraText = "Private";
+    TCanvas *c0 = tdrCanvas(Form("c0p_%s",cr),h0,8,33,kSquare);
+    
+    TLine *l = new TLine();
+    l->SetLineStyle(kDashed);
+    l->SetLineColor(kGray+1);
+    l->DrawLine(0,1,5.2,1);
+    
+    TLegend *leg0 = tdrLeg(0.20,0.90,0.45,0.90);
+    _leg = leg0;
+    
+    TProfile *pzm, *pgm, *pdm, *pjm, *ppm;
+    pzm = drawEta(p2zm,ptmin,ptmax,"HISTE",kNone,kRed,"",0,0,"stat");
+    pgm = drawEta(p2gm,ptmin,ptmax,"HISTE",kNone,kBlue,"",0,0,"stat");
+    pjm = drawEta(p2jm,ptmin,ptmax,"HISTE",kNone,kGreen+2,"",0,0,"stat");
+  //ppm = drawEta(p2pm,ptmin,ptmax,"HISTE",kNone,kOrange+2,"",0,0,"stat");
+  //pdm = drawEta(p2dm,ptmin,ptmax,"HISTE",kNone,kBlack,"",0,0,"stat");
+    
+    TProfile *pz, *pg, *pd, *pj, *pp;
+    pz = drawEta(p2z,ptmin,ptmax,"Pz",kFullSquare,kRed,"Z",p2zx,p2zxx,"stat");
+    pg = drawEta(p2g,ptmin,ptmax,"Pz",kFullCircle,kBlue,"#gamma",p2gx,0,"stat");
+    pj = drawEta(p2j,ptmin,ptmax,"Pz",kFullDiamond,kGreen+2,"Tag",p2jx,0,"stat");
+    //pp = drawEta(p2p,ptmin,ptmax,"Pz",kFullDiamond,kOrange+2,"Probe",p2px,0,"stat");
+    //pd = drawEta(p2d,ptmin,ptmax,"Pz",kOpenDiamond,kBlack,"Dijet",p2dx,0,"stat");
+
+    if (!isNIB || doVsEtaPt)
+      c0->SaveAs(Form("pdf/L2Res/%s/vsEta/L2Res_vsEta_%04d_%04d_%s%s_%s.pdf",
+		  cr,int(pt1),int(pt2),cr,cc,"c0"));
+  } // drawStat    
     
   // Step 1. Slice pT, draw response vs eta. No other manipulation yet
   TH1D *h1 = tdrHist(Form("h1p_%s",cr),"JES",0.3,1.5,"|#eta|",0,5.2);
@@ -1452,7 +1514,7 @@ void L2Res() {
   pp = drawEta(p2p,ptmin,ptmax,"Pz",kFullDiamond,kOrange+2,"Probe",p2px);
   pd = drawEta(p2d,ptmin,ptmax,"Pz",kOpenDiamond,kBlack,"Dijet",p2dx);
 
-  if (!isNIB)
+  if (!isNIB || doVsEtaPt)
   c1->SaveAs(Form("pdf/L2Res/%s/vsEta/L2Res_vsEta_%04d_%04d_%s%s_%s.pdf",
 		  cr,int(pt1),int(pt2),cr,cc,"c1"));
     
@@ -1479,7 +1541,7 @@ void L2Res() {
   hp = drawNormEta(pp,"Pz",kFullDiamond,kOrange+2);
   hd = drawNormEta(pd,"Pz",kOpenDiamond,kBlack);
 
-  if (!isNIB)
+  if (!isNIB || doVsEtaPt)
   c2->SaveAs(Form("pdf/L2Res/%s/vsEta/L2Res_vsEta_%04d_%04d_%s%s_%s.pdf",
 		  cr,int(pt1),int(pt2),cr,cc,"c2"));
     
@@ -1500,7 +1562,7 @@ void L2Res() {
   hpr = drawRatio(pp->ProjectionX(),ppm,"Pz",kFullDiamond,kOrange+2);
   hdr = drawRatio(pd->ProjectionX(),pdm,"Pz",kOpenDiamond,kBlack);
 
-  if (!isNIB)
+  if (!isNIB || doVsEtaPt)
   c3->SaveAs(Form("pdf/L2Res/%s/vsEta/L2Res_vsEta_%04d_%04d_%s%s_%s.pdf",
 		  cr,int(pt1),int(pt2),cr,cc,"c3"));
   
@@ -1521,7 +1583,7 @@ void L2Res() {
   hprn = drawRatio(hp,hpm,"Pz",kFullDiamond,kOrange+2);
   hdrn = drawRatio(hd,hdm,"Pz",kOpenDiamond,kBlack);
 
-  if (!isNIB)
+  if (!isNIB || doVsEtaPt)
   c4->SaveAs(Form("pdf/L2Res/%s/vsEta/L2Res_vsEta_%04d_%04d_%s%s_%s.pdf",
 		  cr,int(pt1),int(pt2),cr,cc,"c4"));
 
