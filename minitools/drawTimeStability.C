@@ -11,6 +11,8 @@
 #include "../tdrstyle_mod22.C"
 
 bool debug = false;
+bool addExtraText = false;
+bool addExtraLine = false;
 void rebinProfileCustom(TProfile* p, TProfile* p_new);
 
 void drawTimeStability() {
@@ -42,42 +44,53 @@ void drawTimeStability() {
     // //"2024F_v110","2024G_v110","2024H_v111","2024I_v111",
     //"2024B_v112","2024C_v112","2024D_v112","2024E_v112",
     //"2024F_v112","2024G_v112","2024H_v112","2024I_v112",
-    "2022_v113","2023_v113","2024_v113",
 
-    
+    //"2022_v113","2023_v113","2024_v113",
+    "2024B_nib1","2024C_nib1","2024D_nib1","2024Ev1_nib1","2024Ev2_nib1",
+    "2024F_nib1","2024F_nib2","2024F_nib3","2024G_nib1","2024G_nib2",
+    "2024H_nib1","2024I_nib1",
+
     // gamma+jet
     "GamJet",
-    "2022C","2022D","2022E","2022F","2022G",
-    "2023Cv123","2023Cv4","2023D",
-    "2024B","2024C","2024D","2024Ev1","2024Ev2","2024F","2024G","2024H","2024Iv1","2024Iv2",
+    //"2022C","2022D","2022E","2022F","2022G",
+    //"2023Cv123","2023Cv4","2023D",
+    //"2024B","2024C","2024D","2024Ev1","2024Ev2","2024F","2024G","2024H","2024Iv1","2024Iv2",
+    "2024B_nib1","2024C_nib1","2024D_nib1","2024Ev1_nib1","2024Ev2_nib1",
+    "2024F_nib1","2024F_nib2","2024F_nib3","2024G_nib1","2024G_nib2",
+    "2024H_nib1","2024I_nib1",
+
     //"2022CDE_v32","2022FG_v32",
     //"2023Cv123_w8","2023Cv4_w8","2023D_w8",
     //"2024BCD_w39","2024E_w39","2024F_w39","2024G_w39","2024H_w40","2024I_w40",
 
-    
+
     // Z+jet
-    "ZmmJet",    
-    "2022CD","2022E",//"2022FG",
-    "2022F","2022G",
-    "2023C123","2023C4","2023D",
-    "2024BCD","2024E","2024F","2024G","2024H","2024I"
+    "ZmmJet",
+    //"2022CD","2022E",//"2022FG",
+    //"2022F","2022G",
+    //"2023C123","2023C4","2023D",
+    //"2024BCD","2024E","2024F","2024G","2024H","2024I"
+    "2024B_nib1","2024C_nib1","2024D_nib1","2024Ev1_nib1","2024Ev2_nib1",
+    "2024F_nib1","2024F_nib2","2024F_nib3","2024G_nib1","2024G_nib2",
+    "2024H_nib1","2024I_nib1"
 
   };
   const int nf = sizeof(vf)/sizeof(vf[0]);
 
   // Listing all histograms here. GamJet and ZmmJet switch filetype
   string vh[] = {
-    /*
+
     // Dijet
     "DiJet",
-    "h1jetrate"
-    */
+    "h1jetrate",
+
 
     // Gamma+jet
     "GamJet",
     //"pr50m_eta08hi","pr50m_eta08lo",
     //"pr50m_eta3to4","pr50m_eta4to5",
     //"pr110m_eta3to4","pr110m_eta4to5",
+
     "pr50n","pr110n","pr230n",
  
     "pr230m","pr110m","pr50m",
@@ -94,6 +107,7 @@ void drawTimeStability() {
 
     "mpf_run_zpt30","mpf_run_zpt110","mpf_run_zpt50",
     "db_run_zpt30","db_run_zpt110","db_run_zpt50",
+
     /*
     "chf_run_zpt30","nef_run_zpt30","nhf_run_zpt30",
     "chf_run_zpt50","nef_run_zpt50","nhf_run_zpt50",
@@ -199,7 +213,8 @@ void drawTimeStability() {
 	if (tf.Contains("2023")) f = new TFile(Form("rootfiles/Summer23_L2L3Res/GamHistosFill_data_%s.root",cf),"READ");
 	if (tf.Contains("2022")) f = new TFile(Form("../gamjet/rootfiles/GamHistosFill_data_%s.root",cf),"READ");
 	*/
-	f = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w42.root",cf),"READ");
+	//f = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w42.root",cf),"READ");
+	f = new TFile(Form("rootfiles/Prompt2024/v45_Gam/GamHistosFill_data_%s_w45.root",cf),"READ");
       }
       // Zmm+jet files
       if (useZmm) {
@@ -211,9 +226,12 @@ void drawTimeStability() {
 	*/
 	
 	//if (tf.Contains("2024F")) f = new TFile(Form("rootfiles/Prompt2024/v88/jme_bplusZ_%s_Zmm_sync_v88.root",cf),"READ");
+	/*
 	if (tf.Contains("2024BC") || tf.Contains("2024F") || tf.Contains("2024G") || tf.Contains("2024H")) f = new TFile(Form("rootfiles/Prompt2024/v91/jme_bplusZ_%s_Zmm_sync_v91d.root",cf),"READ");
 	else
 	  f = new TFile(Form("rootfiles/Prompt2024/v91/jme_bplusZ_%s_Zmm_sync_v91.root",cf),"READ");
+	*/
+	f = new TFile(Form("rootfiles/Prompt2024/v94_Zmm/jme_bplusZ_%s_Zmm_v94_Summer24.root",cf),"READ");
       }
       if (useJet) {
 	char cv[256], ce[256];
@@ -232,7 +250,8 @@ void drawTimeStability() {
 	  f = new TFile(Form("rootfiles/Prompt2024/%s_2022/jmenano_data_out_%s_nib1_JME_%s_2022.root",cv,ce,cv),"READ");
 	}
 	*/
-	f = new TFile(Form("rootfiles/Prompt2024/%s_%s/jmenano_data_out_%s_%s.root",cv,ce,ce,cv));
+	//f = new TFile(Form("rootfiles/Prompt2024/%s_%s/jmenano_data_out_%s_%s.root",cv,ce,ce,cv));
+	f = new TFile(Form("rootfiles/Prompt2024/v116_Jet/jmenano_data_out_%s_JME_v116.root",cf),"READ");
       }
       if (!f || f->IsZombie()) cout << "Missing " << cf << endl << flush;
       assert(f && !f->IsZombie());
@@ -528,6 +547,17 @@ void drawTimeStability() {
       eras.push_back(pair<int,string>(385986,"TRK")); // next up => ok!
       //eras.push_back(pair<int,string>(386968,"TRK"));
       //eras.push_back(pair<int,string>(387017,"TRK")); // next up (after I)
+
+      // Tracker optical power changes (Martin Delcourt, CMS-PPD-Muon..., 3 Dec 2024)
+      eras.push_back(pair<int,string>(380029,"TRP"));
+      eras.push_back(pair<int,string>(382209,"TRP"));
+      eras.push_back(pair<int,string>(383417,"TRP"));
+      eras.push_back(pair<int,string>(383900,"TRP")); // big step in TIDplus
+      eras.push_back(pair<int,string>(386278,"TRP")); // ? or 386478?
+
+      // Follow up on BPix_L1 inefficiency (Martin Delcourt, CMS-PPD-Muon, 12 Dec)
+      eras.push_back(pair<int,string>(385260,"TRB")); // BPix_L1 inefficiency
+      
       
       // Keep record of breaks for drawTimeStabilityPairs
       TH1D *hbreaks = new TH1D("hbreaks",";Break point;Cum.Lum. (/fb)",eras.size(),0,eras.size());
@@ -556,19 +586,22 @@ void drawTimeStability() {
 	if (t.Contains("EP")) l->SetLineColor(kBlue);
 	if (t.Contains("XX")) l->SetLineColor(kMagenta+1);
 	if (t.Contains("DJ")) l->SetLineColor(kOrange+1);
-	if (t.Contains("TRK")) l->SetLineColor(kOrange+1);
+	if (t.Contains("TR")) l->SetLineColor(kOrange+1);
 	l->SetLineStyle(kSolid);
 	//if (t.Contains("V")) l->DrawLine(cumlum1,ymin,cumlum1,ymax);
 	//else
-	l->DrawLine(cumlum,ymin,cumlum,ymax);
+	if (addExtraLine || l->GetLineColor()==kGray)
+	  l->DrawLine(cumlum,ymin,cumlum,ymax);
 	if (s=="22"||s=="23"||s=="24") ks = 0;
 	//tex->DrawLatex(cumlum+1,-1.2-0.2*(ks++),cn);
 	//if (t.Contains("V")) tex->DrawLatex(cumlum1+1,-1.6-0.4*(kh++),cn);
-	if (t.Contains("V") || t.Contains("IC") || t.Contains("XX") || t.Contains("EP") || t.Contains("TRK")) {
-	  if (isZmass) tex->DrawLatex(cumlum+1,(-0.12-0.03*(kh++%3))*kf,cn);
-	  else if (isEta) tex->DrawLatex(cumlum+1,(-3.2-0.8*(kh++%3))*kf,cn);
+	if (t.Contains("V") || t.Contains("IC") || t.Contains("XX") || t.Contains("EP") || t.Contains("TR")) {
+	  if (addExtraText) {
+	    if (isZmass) tex->DrawLatex(cumlum+1,(-0.12-0.03*(kh++%3))*kf,cn);
+	    else if (isEta) tex->DrawLatex(cumlum+1,(-3.2-0.8*(kh++%3))*kf,cn);
 	  //else if (isEta) tex->DrawLatex(cumlum+1,(-5.8-1.6*(kh++%3))*kf,cn);
-	  else tex->DrawLatex(cumlum+1,(-1.6-0.4*(kh++%3))*kf,cn);
+	    else tex->DrawLatex(cumlum+1,(-1.6-0.4*(kh++%3))*kf,cn);
+	  }
 	}
 	else {
 	  if (isZmass) tex->DrawLatex(cumlum+1,(+0.15-0.03*(ks++))*kf,cn);
@@ -576,7 +609,6 @@ void drawTimeStability() {
 	  //else if (isEta) tex->DrawLatex(cumlum+1,(+14.0-1.6*(ks++))*kf,cn);
 	  else tex->DrawLatex(cumlum+1,(+3.5-0.4*(ks++))*kf,cn);
 	}
-
 	hbreaks->SetBinContent(i+1,cumlum);
 	hbreaks->GetXaxis()->SetBinLabel(i+1,cn);
       }
