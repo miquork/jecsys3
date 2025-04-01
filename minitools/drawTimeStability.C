@@ -72,14 +72,16 @@ void drawTimeStability() {
     //"2024BCD","2024E","2024F","2024G","2024H","2024I"
     "2024B_nib1","2024C_nib1","2024D_nib1","2024Ev1_nib1","2024Ev2_nib1",
     "2024F_nib1","2024F_nib2","2024F_nib3","2024G_nib1","2024G_nib2",
-    "2024H_nib1","2024I_nib1"
+    "2024H_nib1","2024I_nib1",
 
+    "TTBar",
+    "2024"
   };
   const int nf = sizeof(vf)/sizeof(vf[0]);
 
   // Listing all histograms here. GamJet and ZmmJet switch filetype
   string vh[] = {
-
+    /*
     // Dijet
     "DiJet",
     "h1jetrate",
@@ -108,11 +110,15 @@ void drawTimeStability() {
     "mpf_run_zpt30","mpf_run_zpt110","mpf_run_zpt50",
     "db_run_zpt30","db_run_zpt110","db_run_zpt50",
 
-    /*
-    "chf_run_zpt30","nef_run_zpt30","nhf_run_zpt30",
-    "chf_run_zpt50","nef_run_zpt50","nhf_run_zpt50",
-    "chf_run_zpt110","nef_run_zpt110","nhf_run_zpt110",
+    //"chf_run_zpt30","nef_run_zpt30","nhf_run_zpt30",
+    //"chf_run_zpt50","nef_run_zpt50","nhf_run_zpt50",
+    //"chf_run_zpt110","nef_run_zpt110","nhf_run_zpt110",
     */
+
+    // ttbar
+    "TTBar",
+    "prof_W","prof_W_inWindow",
+    "prof_top","prof_top_inWindow","prof_top_improved"
   };
   const int nh = sizeof(vh)/sizeof(vh[0]);
 
@@ -161,16 +167,19 @@ void drawTimeStability() {
   TH1D *hscales = new TH1D("hscales",";Observable;Scale",2*nh,0,2*nh);
   
   // Loop over files to retrieve stuff
-  bool useGam(false), useZmm(false), useJet(false);
+  bool useGam(false), useZmm(false), useJet(false), useTT(false);
   for (int ih = 0; ih != nh; ++ih) {
 
     string sh = vh[ih];
     const char *ch = sh.c_str();
     TString th(ch);
     cout << "Analyzing " << ch << endl << flush;
-    if (sh=="GamJet") { useGam = true; useZmm = false; useJet=false; continue; }
-    if (sh=="ZmmJet") { useGam = false; useZmm = true; useJet=false; continue; }
-    if (sh=="DiJet")  { useGam = false; useZmm = false; useJet=true; continue; }
+    // Select the correct flag for following profiles/histograms
+    // Then continue to move to next entries (profile/histogram names)
+    if (sh=="GamJet") { useGam = true; useZmm = false; useJet = false; useTT = false; continue; }
+    if (sh=="ZmmJet") { useGam = false; useZmm = true; useJet = false; useTT = false; continue; }
+    if (sh=="DiJet")  { useGam = false; useZmm = false; useJet = true; useTT = false; continue; }
+    if (sh=="TTBar")  { useGam = false; useZmm = false; useJet = false; useTT = true; continue; }
     bool isPF = (th.Contains("nhf") || th.Contains("nef") || th.Contains("chf"));
     bool isZmass = (th.Contains("mz_run"));
     bool isEta = (th.Contains("eta"));
@@ -191,19 +200,21 @@ void drawTimeStability() {
     // Keep track of JES (1=L2L3Res) for gamma+jet MPF
     //TH1D *hjes = new TH1D(Form("hjes_%s",ch),";JES;Cum.Lum(/fb)",hbins->GetNbinsX(),&vx[0]);
 
-    bool isGam(false), isZmm(false), isJet(false);
+    bool isGam(false), isZmm(false), isJet(false), isTT(false);
     for (int iff = 0; iff != nf; ++iff) {
 
       string sf = vf[iff];
       const char *cf = sf.c_str();
       TString tf(cf);
       
-      if (sf=="GamJet") { isGam=true; isZmm=false; isJet=false; continue; }
-      if (sf=="ZmmJet") { isGam=false; isZmm=true; isJet=false; continue; }
-      if (sf=="DiJet")  { isGam=false; isZmm=false; isJet=true; continue; }
+      if (sf=="GamJet") { isGam=true; isZmm=false; isJet=false; isTT=false; continue; }
+      if (sf=="ZmmJet") { isGam=false; isZmm=true; isJet=false; isTT=false; continue; }
+      if (sf=="DiJet")  { isGam=false; isZmm=false; isJet=true; isTT=false; continue; }
+      if (sf=="TTBar")  { isGam=false; isZmm=false; isJet=false; isTT=true; continue; }
       if (useGam && !isGam) continue;
       if (useZmm && !isZmm) continue;
       if (useJet && !isJet) continue;
+      if (useTT  && !isTT) continue;
       
       TFile *f(0);
       // Photon+jet files
@@ -253,6 +264,9 @@ void drawTimeStability() {
 	//f = new TFile(Form("rootfiles/Prompt2024/%s_%s/jmenano_data_out_%s_%s.root",cv,ce,ce,cv));
 	f = new TFile(Form("rootfiles/Prompt2024/v116_Jet/jmenano_data_out_%s_JME_v116.root",cf),"READ");
       }
+      if (useTT) {
+	f = new TFile("rootfiles/Prompt2024/Emilia_tt_2024.root","READ");
+      }
       if (!f || f->IsZombie()) cout << "Missing " << cf << endl << flush;
       assert(f && !f->IsZombie());
       curdir->cd();
@@ -263,6 +277,7 @@ void drawTimeStability() {
       if (useGam) o = f->Get(Form("runs%s/%s",isEta ? "_high-jeteta" : "",ch));
       if (useZmm) o = f->Get(Form("data/%s",ch));
       if (useJet) o = f->Get(Form("HLT_PFJet500/JetsperRuns/%s",ch));
+      if (useTT)  o = f->Get(Form("%s",ch));
       // Detect object type automatically
       if (o) {
 	if (o->InheritsFrom("TProfile"))  p = (TProfile*)o;
@@ -274,6 +289,7 @@ void drawTimeStability() {
       if (useGam) p2res = (TProfile2D*)f->Get("Gamjet2/p2res");
       if (useZmm) p2res = (TProfile2D*)f->Get("data/l2res/p2res");
       if (useJet) p2res = (TProfile2D*)f->Get("HLT_PFJet500/Dijet2/p2res");
+      if (useTT)  { p2res = 0; }
       if (!p2res) cout << "Missing p2res in " << cf << endl << flush;
       double jes(1.);
       if (p2res) {
