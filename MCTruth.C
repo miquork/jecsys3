@@ -8,12 +8,18 @@
 //          3) Additional (small) JER+non-linearity correction to JEC 
 #include "TFile.h"
 #include "TProfile2D.h"
+#include "TF1.h"
 
 #include "tdrstyle_mod22.C"
+
+bool debug = false;
+bool correctLowPtBias = true;//false;
 
 void evalJES(TH1D *h);
 void evalJER(TH1D *h, TProfile *p);
 void evalJET(TH1D *h, const TProfile *p);
+
+void fixJESandJER(TH1D *hjes, TH1D *hjer, TH1D *heff, const TF1 *f1jer);
 
 void MCTruth() {
 
@@ -50,15 +56,28 @@ void MCTruth() {
   TLatex *tex = new TLatex();
   tex->SetNDC(); tex->SetTextSize(0.045*1.5);
 
+  c1eff->cd(42);
+  int nentry = (correctLowPtBias ? 5 : 3);
+  TLegend *legeff = tdrLeg(0.05,0.80-0.05*1.5*nentry,0.50,0.80);
+  legeff->SetTextSize(0.045*1.5);
+  
   c1jes->cd(42);
-  TLegend *legjes = tdrLeg(0.05,0.80-0.05*1.5*3,0.50,0.80);
+  TLegend *legjes = tdrLeg(0.05,0.80-0.05*1.5*nentry,0.50,0.80);
   legjes->SetTextSize(0.045*1.5);
+
+  c1jer->cd(42);
+  TLegend *legjer = tdrLeg(0.05,0.80-0.05*1.5*nentry,0.50,0.80);
+  legjer->SetTextSize(0.045*1.5);
 
   double eps = 1e-4;
   
   for (int i = 1; i != p2r->GetNbinsX()+1; ++i) {
     //for (int j = 1; j != p2r->GetNbinsY()+1; ++j) {
 
+    //////////////////////////////////////////////////////////////////////
+    // Step 1. First round fitting low pT biased results at high pT end //
+    //////////////////////////////////////////////////////////////////////
+    
     // Initial EFF, JES, JER and JET counts
     TProfile *pe = p2e->ProfileY(Form("pe_%d",i),i,i);
     TH1D *he = pe->ProjectionX(Form("he_%d",i));
@@ -72,6 +91,11 @@ void MCTruth() {
     TH1D *hn = pc->ProjectionX(Form("hn_%d",i));
     evalJET(hn, pc);
 
+    
+    ////////////////////////////////////////////
+    // Step 1.1 Jet reconstruction EFFiciency //
+    ////////////////////////////////////////////
+    
     c1eff->cd(i);
     gPad->SetLogx();
 
@@ -88,8 +112,9 @@ void MCTruth() {
     double ptmin = 30.;
     double ptmin_fwd = 30.;
     double ptmax = min(4000.,0.7*6800./cosh(etamax));
-    TF1 *f1eff = new TF1("f1eff","erf((x-[0])/([1]*[0]))",
-			 ptmin,ptmax);
+    TF1 *f1eff = new TF1(Form("f1eff_%d",i),
+			 "0.5*(1+erf((x-[0])/([1]*[0])))",
+			 5.,ptmax);
     f1eff->SetParameters(15.,0.30);
     he->Fit(f1eff,"QRN");
     
@@ -97,24 +122,37 @@ void MCTruth() {
 		   Form("%1.3f<|#eta|<%1.3f",etamin,etamax));
     tdrDraw(he,"Pz",kFullCircle,kBlack,kSolid,-1,kNone,0);
     f1eff->Draw("SAME");
+
+    if (i==1) {
+      legeff->SetHeader("Summer24, MG QCD MC");
+      legeff->AddEntry(hr,"Data","PLE");
+      legeff->AddEntry(f1eff,"Fit","L");
+    }
+
     
+    /////////////////////////////////////
+    // Step 1.2 Jet Energy Scale (JES) //
+    /////////////////////////////////////
+
     c1jes->cd(i);
     gPad->SetLogx();
 
     double jesmin(0.5), jesmax(1.5);
-    if (i<=7)       { jesmin = 0.88; jesmax = 1.02; }
-    else if (i<=14) { jesmin = 0.85; jesmax = 1.02; }
-    else if (i<=21) { jesmin = 0.83; jesmax = 1.03; }
-    else if (i<=28) { jesmin = 0.65; jesmax = 1.07; }
-    else if (i<=35) { jesmin = 0.64; jesmax = 1.15; }
-    else if (i<=42) { jesmin = 0.62; jesmax = 1.10; }
+    // Range after low pT bias correction
+    if (i<=7)       { jesmin = 0.75; jesmax = 1.05; }
+    else if (i<=14) { jesmin = 0.75; jesmax = 1.05; }
+    else if (i<=21) { jesmin = 0.75; jesmax = 1.05; }
+    else if (i<=28) { jesmin = 0.50; jesmax = 1.10; }
+    else if (i<=35) { jesmin = 0.35; jesmax = 1.20; }
+    else if (i<=42) { jesmin = 0.35; jesmax = 1.15; }
     TH1D *hjes = tdrHist(Form("hjes_%d",i),"JES",jesmin+eps,jesmax-eps,
 		      "p_{T,gen} (GeV)",5,5000);
     hjes->GetXaxis()->SetMoreLogLabels(kFALSE);
     hjes->Draw("AXIS");
     l->DrawLine(5,1,5000,1);
     
-    TF1 *f1jes = new TF1("f1jes","[0]+[1]*pow(x,[2])+[3]/x+[4]*1e-5*x",
+    TF1 *f1jes = new TF1(Form("f1jes_%d",i),
+			 "[0]+[1]*pow(x,[2])+[3]/x+[4]*1e-5*x",
 			 ptmin,ptmax);
     // Enforce physical ranges
     f1jes->SetParameters(1,-1,-0.3,0,1);
@@ -137,30 +175,36 @@ void MCTruth() {
 
     if (i==1) {
       legjes->SetHeader("Summer24, MG QCD MC");
-      legjes->AddEntry(hr,"Raw data","PLE");
-      legjes->AddEntry(f1jes,"Raw fit","L");
+      legjes->AddEntry(hr,"Data","PLE");
+      legjes->AddEntry(f1jes,"Fit","L");
     }
 
+    
+    //////////////////////////////////////////
+    // Step 1.3 Jet Energy Resolution (JER) //
+    //////////////////////////////////////////
     
     c1jer->cd(i);
     gPad->SetLogx();
 
     double jermin(0.), jermax(0.5);
-    if (i<=7)       { jermin = 0.; jermax = 0.30; }
-    else if (i<=14) { jermin = 0.; jermax = 0.30; }
-    else if (i<=21) { jermin = 0.; jermax = 0.30; }
-    else if (i<=28) { jermin = 0.; jermax = 0.50; }
-    else if (i<=35) { jermin = 0.; jermax = 0.50; }
-    else if (i<=42) { jermin = 0.; jermax = 0.50; }
+    // Range after low pT bias correction
+    if (i<=7)       { jermin = 0.; jermax = 0.50; }
+    else if (i<=14) { jermin = 0.; jermax = 0.50; }
+    else if (i<=21) { jermin = 0.; jermax = 0.55; }
+    else if (i<=28) { jermin = 0.; jermax = 1.00; }
+    else if (i<=35) { jermin = 0.; jermax = 1.10; }
+    else if (i<=42) { jermin = 0.; jermax = 0.75; }
     TH1D *hjer = tdrHist(Form("hjer_%d",i),"JER",jermin+eps,jermax-eps,
 			 "p_{T,gen} (GeV)",5,5000);
     hjer->GetXaxis()->SetMoreLogLabels(kFALSE);
     hjer->Draw("AXIS");
 
-    TF1 *f1jer = new TF1("f1jer","sqrt([0]*[0]/(x*x)+[1]*[1]/x+[2]*[2])",
+    TF1 *f1jer = new TF1(Form("f1jer_%d",i),
+			 "sqrt([0]*[0]/(x*x)+[1]*[1]/x+[2]*[2])",
 			 ptmin,ptmax);
     f1jer->SetParameters(1,1,0.05);
-    f1jer->SetParLimits(0,0,15.);
+    f1jer->SetParLimits(0,0,10.);
     f1jer->SetParLimits(1,0.5,1.5);
     f1jer->SetParLimits(2,0.03,0.12);
     if (etamin>3.139) {
@@ -168,11 +212,21 @@ void MCTruth() {
     }
     hs->Fit(f1jer,"QRN");
 
-    tex->DrawLatex(i%7==1 ? 0.30 : 0.20, 0.90,
+    tex->DrawLatex(i%7==1 ? 0.50 : 0.40, 0.90,
 		   Form("%1.3f<|#eta|<%1.3f",etamin,etamax));
     tdrDraw(hs,"Pz",kFullCircle,kBlack,kSolid,-1,kNone,0);
     f1jer->Draw("SAME");
 
+    if (i==1) {
+      legjer->SetHeader("Summer24, MG QCD MC");
+      legjer->AddEntry(hr,"Data","PLE");
+      legjer->AddEntry(f1jes,"Fit","L");
+    }
+
+
+    /////////////////////////
+    // Step 1.4 JET counts //
+    /////////////////////////
     
     c1jet->cd(i);
     gPad->SetLogx();
@@ -193,6 +247,72 @@ void MCTruth() {
     
     tdrDraw(hn,"Pz",kFullCircle,kBlack,kSolid,-1,kNone,0);
     f1jet->Draw("SAME");
+
+
+    /////////////////////////////////////////////////////////////////////////
+    // Step 2. Second round with low pT bias correction and extending down //
+    /////////////////////////////////////////////////////////////////////////
+    if (!correctLowPtBias) continue;
+
+    TF1 *f1eff_raw = (TF1*)f1eff->Clone(Form("f1eff_raw_%d",i));
+    TH1D *he_raw = (TH1D*)he->Clone(Form("he_raw_%d",i));
+    TF1 *f1jes_raw = (TF1*)f1jes->Clone(Form("f1jes_raw_%d",i));
+    TH1D *hr_raw = (TH1D*)hr->Clone(Form("hr_raw_%d",i));
+    TF1 *f1jer_raw = (TF1*)f1jer->Clone(Form("f1jer_raw_%d",i));
+    TH1D *hs_raw = (TH1D*)hs->Clone(Form("hs_raw_%d",i));
+    fixJESandJER(hr, hs, he, f1jer);
+
+
+    c1eff->cd(i);
+
+    f1eff->SetRange(15.,ptmax);
+    he->Fit(f1eff,"QRN");
+
+    tdrDraw(he_raw,"Pz",kOpenCircle,kRed+1,kSolid,-1,kNone,0,1.5,1);
+    f1eff_raw->Draw("SAME");
+    tdrDraw(he,"Pz",kFullCircle,kBlack,kSolid,-1,kNone,0,2.0,1);
+    f1eff->SetLineColor(kGreen+2);
+    f1eff->Draw("SAME");
+
+    if (i==1) {
+      legeff->AddEntry(he_raw,"Orig. data","PLE");
+      legeff->AddEntry(f1eff_raw,"Orig. fit","L");
+    }
+
+    
+    c1jes->cd(i);
+
+    f1jes->SetRange(15.,ptmax);
+    hr->Fit(f1jes,"QRN");
+
+    tdrDraw(hr_raw,"Pz",kOpenCircle,kRed+1,kSolid,-1,kNone,0,1.5,1);
+    f1jes_raw->Draw("SAME");
+    tdrDraw(hr,"Pz",kFullCircle,kBlack,kSolid,-1,kNone,0,2.0,1);
+    f1jes->SetLineColor(kGreen+2);
+    f1jes->Draw("SAME");
+
+    if (i==1) {
+      legjes->AddEntry(hr_raw,"Orig. data","PLE");
+      legjes->AddEntry(f1jes_raw,"Orig. fit","L");
+    }
+    
+
+    c1jer->cd(i);
+
+    f1jer->SetRange(15.,ptmax);
+    hs->Fit(f1jer,"QRN");
+
+    tdrDraw(hs_raw,"Pz",kOpenCircle,kRed+1,kSolid,-1,kNone,0,1.5,1);
+    f1jer_raw->Draw("SAME");
+    tdrDraw(hs,"Pz",kFullCircle,kBlack,kSolid,-1,kNone,0,2.0,1);
+    f1jer->SetLineColor(kGreen+2);
+    f1jer->Draw("SAME");
+
+    if (i==1) {
+      legjer->AddEntry(hr_raw,"Orig. data","PLE");
+      legjer->AddEntry(f1jes_raw,"Orig. fit","L");
+    }
+    
     //} // for j
   } // for i
 
@@ -204,6 +324,8 @@ void MCTruth() {
 }
 
 
+// Evaluate JES
+// - add minimum uncertainty to avoid overfitting high statistics
 void evalJES(TH1D *h) {
 
   for (int i = 1; i != h->GetNbinsX()+1; ++i) {
@@ -218,12 +340,16 @@ void evalJES(TH1D *h) {
   return;
 }
 
+// Evaluate JER
+// - assume input histogram projected from JES profile after JEC applied
+// - put bin content to RMS extracted from profile width divided by JES~1
+// - update error to error on the mean over JER
 void evalJER(TH1D *h, TProfile *p) {
 
   for (int i = 1; i != h->GetNbinsX()+1; ++i) {
-    double jer = h->GetBinError(i); // with option "S"
+    double jer = h->GetBinError(i); // RMS with option "S"
     p->SetErrorOption("");
-    double ejer = (p ? p->GetBinError(i) : 0); // with option ""
+    double ejer = (p ? p->GetBinError(i) : 0); // RMS/sqrt(N) with option ""
     double jes = (p ? p->GetBinContent(i) : 1);
     if (jer!=0 && jes!=0) {
       h->SetBinContent(i, jer/jes);
@@ -233,6 +359,9 @@ void evalJER(TH1D *h, TProfile *p) {
   return;
 }
 
+// Evaluate JET counts
+// - get jet counts from profile entries per bin
+// - normalize by bin width in eta and pT
 void evalJET(TH1D *h, const TProfile *p) {
 
   for (int i = 1; i != h->GetNbinsX()+1; ++i) {
@@ -246,5 +375,75 @@ void evalJET(TH1D *h, const TProfile *p) {
       h->SetBinError(i, en / dpt / deta);
     }
   }
+  return;
+}
+
+// Low pT bias correction for JES
+// - fill missing part with Gaussian extension
+// - efficiency as profile to get accurate value per bin
+// - JER as fit to extrapolate robustly to biased region
+//   (also to have eventual JES consistent with JER)
+void fixJESandJER(TH1D *hjes, TH1D *hjer, TH1D *heff, const TF1 *f1jer) {
+
+  for (int i = 1; i != hjes->GetNbinsX()+1; ++i) {
+
+    double pt = hjes->GetBinCenter(i);
+    double ptmin = hjes->GetBinLowEdge(i);
+    double ptmax = hjes->GetBinLowEdge(i+1);
+    double jes_raw = hjes->GetBinContent(i);
+    double ejes = hjes->GetBinError(i);
+    double jer_raw = hjer->GetBinContent(i);
+    double ejer = hjer->GetBinError(i);
+    double eff = heff->GetBinContent(i);
+    double eeff = heff->GetBinError(i);
+    // Cap jer at 100%
+    double jer_fit = min(1.0, f1jer->Eval(pt));
+
+    // Only run the extra correction if efficiency is less than 99%
+    double jes(jes_raw), jer(jer_raw), eff_cut(eff);
+    //if (eff<0.16) { // 1-sided 1-sigma cut
+    //if (eff<0.5) { // cut at peak
+    if (eff<0.25) { // 
+      jes = ejes = jer = ejer = eff_cut = eeff = 0;
+    }
+    else if (eff<0.999) {
+      
+      // Starting points:
+      // 1) we know the relative width sigma/mu of the Gaussian from JER (f1jer)
+      // 2) we know what fraction of the Gaussian is lost from EFF (heff)
+      // 3) we don't know unbiased mean from JES (hjes), but can start with mu=1
+      // => estimate zcut that integrates to eff, 
+      //    then solve for the mean and sigma of the truncated Gaussian
+      double mu(1), sigma(1);
+      double zcut = TMath::ErfInverse(1. - 2.*eff) * sqrt(2.);
+      double phi = TMath::Gaus(zcut, 0, 1, true); // normalized
+      double mu_bias = 1 + jer_fit * phi / eff;
+      double sigma_bias = sqrt(1 + zcut * phi / eff - pow(phi / eff, 2))
+	/ mu_bias;
+      
+      // Correct jes_raw based on mu/mu_raw
+      jes = (mu_bias>0 ? jes_raw * mu / mu_bias : jes_raw);
+      jer = (sigma_bias>0  && mu_bias>0 ?
+	     (jer_raw * sigma / sigma_bias) : jer_raw);
+
+      // Rough place-holder errors for now
+      ejes = sqrt(pow(ejes,2)+pow(jes_raw*(mu/mu_bias-1)*0.5,2));
+      ejer = sqrt(pow(ejer,2)+pow(jer_raw*(sigma/sigma_bias-1)*0.5,2));
+      
+      if (debug)
+	cout << Form("pt=%1.0f [%1.0f,%1.0f] GeV, eff=%1.3f, jer=%1.3f, "
+		     "zcut=%1.3f, phi=%1.3f, mu_bias=%1.3f\n"
+		     "* jes_raw=%1.3f, jes=%1.3f, "
+		     "* jer_raw=%1.3f, jer=%1.3f\n",
+		     pt, ptmin, ptmax, eff, jer, zcut, phi, mu_bias,
+		     jes_raw, jes, jer_raw, jer);
+    }
+    heff->SetBinContent(i, eff_cut);
+    heff->SetBinError(i, eeff);
+    hjes->SetBinContent(i, jes);
+    hjes->SetBinError(i, ejes);
+    hjer->SetBinContent(i, jer);
+    hjer->SetBinError(i, ejer);
+  } // for i
   return;
 }
