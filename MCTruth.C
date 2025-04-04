@@ -34,6 +34,7 @@ void MCTruth() {
   TDirectory *d = gDirectory;
 
   // <pTreco/pTgen> vs (eta_jet, pTgen); 41 bins in X=eta_jet
+  TProfile2D *p2x = (TProfile2D*)d->Get("p2jes");   assert(p2x);
   TProfile2D *p2e = (TProfile2D*)d->Get("p2eff");   assert(p2e);
   TProfile2D *p2r = (TProfile2D*)d->Get("p2r_raw"); assert(p2r);
   TProfile2D *p2c = (TProfile2D*)d->Get("p2r");     assert(p2c);
@@ -57,7 +58,7 @@ void MCTruth() {
   tex->SetNDC(); tex->SetTextSize(0.045*1.5);
 
   c1eff->cd(42);
-  int nentry = (correctLowPtBias ? 5 : 3);
+  int nentry = (correctLowPtBias ? 6 : 3);
   TLegend *legeff = tdrLeg(0.05,0.80-0.05*1.5*nentry,0.50,0.80);
   legeff->SetTextSize(0.045*1.5);
   
@@ -77,6 +78,10 @@ void MCTruth() {
     //////////////////////////////////////////////////////////////////////
     // Step 1. First round fitting low pT biased results at high pT end //
     //////////////////////////////////////////////////////////////////////
+
+    // Prior MC truth JES as applied on MC
+    TProfile *px = p2x->ProfileY(Form("px_%d",i),i,i);
+    TH1D *hx = px->ProjectionX(Form("hx_%d",i));
     
     // Initial EFF, JES, JER and JET counts
     TProfile *pe = p2e->ProfileY(Form("pe_%d",i),i,i);
@@ -277,6 +282,7 @@ void MCTruth() {
     if (i==1) {
       legeff->AddEntry(he_raw,"Orig. data","PLE");
       legeff->AddEntry(f1eff_raw,"Orig. fit","L");
+      legeff->AddEntry(f1eff_raw," "," ");
     }
 
     
@@ -285,6 +291,7 @@ void MCTruth() {
     f1jes->SetRange(15.,ptmax);
     hr->Fit(f1jes,"QRN");
 
+    tdrDraw(hx,"HIST][",kNone,kBlue,kSolid,-1,kNone,0);
     tdrDraw(hr_raw,"Pz",kOpenCircle,kRed+1,kSolid,-1,kNone,0,1.5,1);
     f1jes_raw->Draw("SAME");
     tdrDraw(hr,"Pz",kFullCircle,kBlack,kSolid,-1,kNone,0,2.0,1);
@@ -294,6 +301,7 @@ void MCTruth() {
     if (i==1) {
       legjes->AddEntry(hr_raw,"Orig. data","PLE");
       legjes->AddEntry(f1jes_raw,"Orig. fit","L");
+      legjes->AddEntry(hx,"Previous JEC","F");
     }
     
 
@@ -311,6 +319,7 @@ void MCTruth() {
     if (i==1) {
       legjer->AddEntry(hr_raw,"Orig. data","PLE");
       legjer->AddEntry(f1jes_raw,"Orig. fit","L");
+      legjer->AddEntry(f1jes_raw," ","");
     }
     
     //} // for j
@@ -414,6 +423,7 @@ void fixJESandJER(TH1D *hjes, TH1D *hjer, TH1D *heff, const TF1 *f1jer) {
       // 3) we don't know unbiased mean from JES (hjes), but can start with mu=1
       // => estimate zcut that integrates to eff, 
       //    then solve for the mean and sigma of the truncated Gaussian
+      // Math: https://chatgpt.com/share/67efebc4-0d30-800f-a459-71796a13bdb5
       double mu(1), sigma(1);
       double zcut = TMath::ErfInverse(1. - 2.*eff) * sqrt(2.);
       double phi = TMath::Gaus(zcut, 0, 1, true); // normalized
