@@ -46,7 +46,8 @@ void drawTimeStability() {
     //"2024F_v112","2024G_v112","2024H_v112","2024I_v112",
 
     //"2022_v113","2023_v113","2024_v113",
-    "2024B_nib1","2024C_nib1","2024D_nib1","2024Ev1_nib1","2024Ev2_nib1",
+    //"2024B_nib1","2024C_nib1","2024D_nib1","2024Ev1_nib1","2024Ev2_nib1",
+    "2024C_Rereco","2024D_Rereco","2024E_Rereco",
     "2024F_nib1","2024F_nib2","2024F_nib3","2024G_nib1","2024G_nib2",
     "2024H_nib1","2024I_nib1",
 
@@ -55,14 +56,16 @@ void drawTimeStability() {
     //"2022C","2022D","2022E","2022F","2022G",
     //"2023Cv123","2023Cv4","2023D",
     //"2024B","2024C","2024D","2024Ev1","2024Ev2","2024F","2024G","2024H","2024Iv1","2024Iv2",
-    "2024B_nib1","2024C_nib1","2024D_nib1","2024Ev1_nib1","2024Ev2_nib1",
-    "2024F_nib1","2024F_nib2","2024F_nib3","2024G_nib1","2024G_nib2",
-    "2024H_nib1","2024I_nib1",
-
+    //"2024B_nib1","2024C_nib1","2024D_nib1","2024Ev1_nib1","2024Ev2_nib1",
+    //"2024F_nib1","2024F_nib2","2024F_nib3","2024G_nib1","2024G_nib2",
+    //"2024H_nib1","2024I_nib1",
+    "2024C-rereco","2024D-rereco","2024E-rereco",
+    "2024Fnib1","2024Fnib2","2024Fnib3","2024Gnib1","2024Gnib2",
+    "2024Hnib1","2024Inib1",
+    
     //"2022CDE_v32","2022FG_v32",
     //"2023Cv123_w8","2023Cv4_w8","2023D_w8",
     //"2024BCD_w39","2024E_w39","2024F_w39","2024G_w39","2024H_w40","2024I_w40",
-
 
     // Z+jet
     "ZmmJet",
@@ -70,7 +73,12 @@ void drawTimeStability() {
     //"2022F","2022G",
     //"2023C123","2023C4","2023D",
     //"2024BCD","2024E","2024F","2024G","2024H","2024I"
-    "2024B_nib1","2024C_nib1","2024D_nib1","2024Ev1_nib1","2024Ev2_nib1",
+    //"2024B_nib1","2024C_nib1","2024D_nib1","2024Ev1_nib1","2024Ev2_nib1",
+    //"2024B_nib1",
+    "2024CDEReprocessing_2024C_nib1",
+    "2024CDEReprocessing_2024D_nib1",
+    "2024CDEReprocessing_2024Ev1_nib1",
+    "2024CDEReprocessing_2024Ev2_nib1",
     "2024F_nib1","2024F_nib2","2024F_nib3","2024G_nib1","2024G_nib2",
     "2024H_nib1","2024I_nib1",
 
@@ -81,7 +89,7 @@ void drawTimeStability() {
 
   // Listing all histograms here. GamJet and ZmmJet switch filetype
   string vh[] = {
-    /*
+
     // Dijet
     "DiJet",
     "h1jetrate",
@@ -100,25 +108,26 @@ void drawTimeStability() {
     "pr50nhf","pr50nef","pr50chf",
     "pr110nhf","pr110nef","pr110chf",
     "pr230nhf","pr230nef","pr230chf",
- 
+
 
     // Zmm+jet
     "ZmmJet",
-    //"mz_run_zpt0","mz_run_zpt30","mz_run_zpt50","mz_run_zpt110",
+    "mz_run_zpt0","mz_run_zpt30","mz_run_zpt50","mz_run_zpt110",
     "nz_run_zpt0","nz_run_zpt30","nz_run_zpt50","nz_run_zpt110",
 
     "mpf_run_zpt30","mpf_run_zpt110","mpf_run_zpt50",
     "db_run_zpt30","db_run_zpt110","db_run_zpt50",
 
-    //"chf_run_zpt30","nef_run_zpt30","nhf_run_zpt30",
-    //"chf_run_zpt50","nef_run_zpt50","nhf_run_zpt50",
-    //"chf_run_zpt110","nef_run_zpt110","nhf_run_zpt110",
-    */
+    "chf_run_zpt30","nef_run_zpt30","nhf_run_zpt30",
+    "chf_run_zpt50","nef_run_zpt50","nhf_run_zpt50",
+    "chf_run_zpt110","nef_run_zpt110","nhf_run_zpt110",
+
 
     // ttbar
     "TTBar",
     "prof_W","prof_W_inWindow",
     "prof_top","prof_top_inWindow","prof_top_improved"
+
   };
   const int nh = sizeof(vh)/sizeof(vh[0]);
 
@@ -155,6 +164,9 @@ void drawTimeStability() {
   mhead["pr110chf"] = "#gamma+jet CHF 110EB";
   mhead["pr110nhf"] = "#gamma+jet NHF 110EB";
   mhead["pr110nef"] = "#gamma+jet NEF 110EB";
+  mhead["db_run_zpt30"] = "Z(#mu#mu)+jet DB 30";
+  mhead["db_run_zpt50"] = "Z(#mu#mu)+jet DB 50";
+  mhead["db_run_zpt110"] = "Z(#mu#mu)+jet DB 110";
   mhead["mpf_run_zpt30"] = "Z(#mu#mu)+jet MPF 30";
   mhead["mpf_run_zpt50"] = "Z(#mu#mu)+jet MPF 50";
   mhead["mpf_run_zpt110"] = "Z(#mu#mu)+jet MPF 110";
@@ -195,8 +207,10 @@ void drawTimeStability() {
     double vx[hbins->GetNbinsX()+1];
     for (int i = 1; i != hbins->GetNbinsX()+2; ++i) vx[i-1] = hbins->GetBinLowEdge(i);
     TProfile *psum = new TProfile(Form("psum_%s",ch),"",hbins->GetNbinsX(),&vx[0]);//hsum->GetXaxis()->GetXbins()->GetArray());
+    psum->Sumw2();
     TProfile *psumjes = new TProfile(Form("psumjes_%s",ch),"",hbins->GetNbinsX(),&vx[0]);//hsum->GetXaxis()->GetXbins()->GetArray());
-
+    psumjes->Sumw2();
+    
     // Keep track of JES (1=L2L3Res) for gamma+jet MPF
     //TH1D *hjes = new TH1D(Form("hjes_%s",ch),";JES;Cum.Lum(/fb)",hbins->GetNbinsX(),&vx[0]);
 
@@ -225,7 +239,8 @@ void drawTimeStability() {
 	if (tf.Contains("2022")) f = new TFile(Form("../gamjet/rootfiles/GamHistosFill_data_%s.root",cf),"READ");
 	*/
 	//f = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w42.root",cf),"READ");
-	f = new TFile(Form("rootfiles/Prompt2024/v45_Gam/GamHistosFill_data_%s_w45.root",cf),"READ");
+	//f = new TFile(Form("rootfiles/Prompt2024/v45_Gam/GamHistosFill_data_%s_w45.root",cf),"READ");
+	f = new TFile(Form("rootfiles/Prompt2024/w48_Gam/GamHistosFill_data_%s_w48.root",cf),"READ");
       }
       // Zmm+jet files
       if (useZmm) {
@@ -242,7 +257,8 @@ void drawTimeStability() {
 	else
 	  f = new TFile(Form("rootfiles/Prompt2024/v91/jme_bplusZ_%s_Zmm_sync_v91.root",cf),"READ");
 	*/
-	f = new TFile(Form("rootfiles/Prompt2024/v94_Zmm/jme_bplusZ_%s_Zmm_v94_Summer24.root",cf),"READ");
+	//f = new TFile(Form("rootfiles/Prompt2024/v94_Zmm/jme_bplusZ_%s_Zmm_v94_Summer24.root",cf),"READ");
+	f = new TFile(Form("rootfiles/Prompt2024/v96_Zmm/jme_Zj_%s_Zmm_NoPU_V8M_v96.root",cf),"READ"); // V8M
       }
       if (useJet) {
 	char cv[256], ce[256];
@@ -262,7 +278,9 @@ void drawTimeStability() {
 	}
 	*/
 	//f = new TFile(Form("rootfiles/Prompt2024/%s_%s/jmenano_data_out_%s_%s.root",cv,ce,ce,cv));
-	f = new TFile(Form("rootfiles/Prompt2024/v116_Jet/jmenano_data_out_%s_JME_v116.root",cf),"READ");
+	//if (!tf.Contains("Rereco"))
+	//f = new TFile(Form("rootfiles/Prompt2024/v116_Jet/jmenano_data_out_%s_JME_v116.root",cf),"READ");
+	f = new TFile(Form("rootfiles/Prompt2024/v121_Jet/jmenano_data_out_%s_JME_v121.root",cf),"READ");
       }
       if (useTT) {
 	f = new TFile("rootfiles/Prompt2024/Emilia_tt_2024.root","READ");
@@ -308,7 +326,7 @@ void drawTimeStability() {
 	TProfile *px = p2res->ProfileX("px",ipt1,ipt2);
 	int ieta1 = p2res->GetXaxis()->FindBin(-1.3);
 	int ieta2 = p2res->GetXaxis()->FindBin(+1.3);
-	px->GetXaxis()->SetRangeUser(ieta1,ieta2);
+	px->GetXaxis()->SetRangeUser(0,1.305);//ieta1,ieta2);
 	jes = px->GetMean(2);
 	delete px;
       }
@@ -353,7 +371,7 @@ void drawTimeStability() {
       
 	  // Copy (if needed) bin sum of weight square
 	  if (p->GetBinSumw2()->fN > i) {
-	    psum->Sumw2();
+	    //psum->Sumw2();
 	    (*psum->GetBinSumw2())[j] = (*p->GetBinSumw2())[i] + (*psum->GetBinSumw2())[j]; // sum2
 	  }
 	  

@@ -11,6 +11,9 @@
 
 #include "../tdrstyle_mod22.C"
 
+// pr50pr110 for RCF application
+bool useRCFstyle = true;
+
 // Clean out bins from hd that are empty for ha or hb
 void cleanEmpty(TH1D *hd, TH1D *ha, TH1D *hb);
 // Clean out bins outside given range
@@ -21,14 +24,19 @@ double getScale(TH1D *hscales, string name);
 void drawGamVsZmm(string mode);
 // Draw Central vs Outer Barrel photon scale
 void drawGamVsGam();
+// Draw TTBar vs Gam
+void drawGamVsTTBar();
 // Draw PFcomposition + JES (+ reference run if not 0)
 void drawPFcomp(string ref, double refrun=0);
+
+// To-do:
+// drawDBvsMPF to check stability of HDM inputs wrt each other
 
 // Main call for drawing various pairs
 void drawTimeStabilityPairs() {
 
-  //drawGamVsZmm("MPF");
-  //drawGamVsZmm("DB");
+  drawGamVsZmm("MPF");
+  drawGamVsZmm("DB");
 
   drawPFcomp("pr50pr110");
   /*
@@ -42,6 +50,8 @@ void drawTimeStabilityPairs() {
   drawPFcomp("zpt110");
   */
   //drawGamVsGam();
+
+  drawGamVsTTBar();
 }
 
 void drawGamVsZmm(string mode) {
@@ -63,10 +73,27 @@ void drawGamVsZmm(string mode) {
   double xmin(0), xmax(175), ymin(-2.4), ymax(+3.4), ymind(-1.5), ymaxd(+1.9);
   TH1D *h = tdrHist("h_u","JES-1 (%)",ymin,ymax,"Cumulative luminosity (fb^{-1})",xmin,xmax);
   TH1D *h_d = tdrHist("h_d","#gamma+j - Z+j (%)",ymind,ymaxd,"Cumulative luminosity (fb^{-1})",xmin,xmax);
-  lumi_136TeV = "Run3, 2022-24";
+  lumi_136TeV = "Run 3, 2022-24";
   extraText = "Private";
   TCanvas *c1 = tdrDiCanvas("c1",h,h_d,8,11);
 
+  TCanvas *c1b(0);
+  TLegend *leg1b(0);
+  if (useRCFstyle) {
+    TH1D *h1b = tdrHist("h1b","(#gamma+j - Z+j) vs late 2024 [V2.0] (%)",ymind+1e-3,ymaxd+0.5-1e-3,
+			"Cumulative luminosity (fb^{-1})",xmin,xmax);
+    c1b = tdrCanvas("c1b",h1b,8,11,kSquare);
+
+    l->SetLineStyle(kDotted);
+    l->DrawLine(xmin,-0.5,xmax,-0.5);
+    l->DrawLine(xmin,+0.5,xmax,+0.5);
+    l->SetLineStyle(kDashed);
+    l->DrawLine(xmin,0,xmax,0);
+
+    leg1b = tdrLeg(0.58,0.90-3*0.05,0.83,0.90);
+  }
+
+  
   TH1D *hbreaks = (TH1D*)f->Get("hbreaks"); assert(hbreaks);
 
   TH1D *ha(0), *hb(0);
@@ -119,18 +146,34 @@ void drawGamVsZmm(string mode) {
     double cumlum = hbreaks->GetBinContent(i);
     TString ts(hbreaks->GetXaxis()->GetBinLabel(i));
 
+    ll->SetLineStyle(kSolid);
     ll->SetLineColor(kGray);
-    if (ts.Contains("V")) { ll->SetLineColor(kRed-9); continue; }
+    if (ts.Contains("V")) { ll->SetLineColor(kGreen+1); } //kRed-9); //continue; }
     if (ts.Contains("IC")) ll->SetLineColor(kBlue-9);
-    if (ts.Contains("TRK")) { ll->SetLineColor(kOrange+1); continue; }
-    ll->DrawLine(cumlum,ymin,cumlum,ymax);
+    if (ts.Contains("TR")) { ll->SetLineColor(kOrange+1); continue; }
+    if (ll->GetLineColor()==kBlue-9)
+      ll->DrawLine(cumlum,ymin,cumlum,ymax);
 
     tex->SetTextColor(kGray);
-    if (ts.Contains("V")) tex->SetTextColor(kRed-9);
+    if (ts.Contains("V")) tex->SetTextColor(kGreen+1);//kRed-9);
     if (ts.Contains("IC")) tex->SetTextColor(kBlue-9);
-    if (ts.Contains("TRK")) tex->SetTextColor(kOrange+1);
-    tex->DrawLatex(cumlum+1,ymin+0.4-((i-1)%3)*0.15,ts.Data());
+    if (ts.Contains("TR")) tex->SetTextColor(kOrange+1);
+    if (tex->GetTextColor()==kBlue-9)
+      tex->DrawLatex(cumlum+1,ymin+0.4-((i-1)%3)*0.15,ts.Data());
 
+    if (useRCFstyle) {
+      c1b->cd();
+      if (ts.Contains("2") && ll->GetLineColor()==kGray || ts=="V2.0") {
+	ll->DrawLine(cumlum,ymind,cumlum,ymaxd+0.5);
+	tex->DrawLatex(cumlum+1,ymind+0.2,ts.Data());
+      }
+      if (ll->GetLineColor()==kGray) {
+	ll->SetLineStyle(kDotted);
+	ll->DrawLine(cumlum,ymind,cumlum,ymaxd+0.5);
+      }
+      c1->cd(1);
+    }
+    
     if (ts.Contains("IC"))
       breakset.insert(cumlum);
   }
@@ -167,7 +210,7 @@ void drawGamVsZmm(string mode) {
     ll->SetLineColor(kGray);
     if (ts.Contains("V")) { ll->SetLineColor(kRed-9); continue; }
     if (ts.Contains("IC")) ll->SetLineColor(kBlue-9);
-    if (ts.Contains("TRK")) { ll->SetLineColor(kOrange+1); continue; }
+    if (ts.Contains("TR")) { ll->SetLineColor(kOrange+1); continue; }
     ll->DrawLine(cumlum,ymind,cumlum,ymaxd);
 
     tex->SetTextColor(kGray);
@@ -177,7 +220,7 @@ void drawGamVsZmm(string mode) {
       //tex->DrawLatex(cumlum+1,ymind+0.5,ts.Data());
       tex->DrawLatex(cumlum+1,ymind+0.5-((i-1)%3)*0.20,ts.Data());
     }
-    if (ts.Contains("TRK")) {
+    if (ts.Contains("TR")) {
       tex->SetTextColor(kOrange+1);
       tex->DrawLatex(cumlum+1,ymind+0.5,ts.Data());
     }
@@ -193,6 +236,16 @@ void drawGamVsZmm(string mode) {
   tdrDraw(hd2,"Pz",kOpenSquare,kMagenta-9,kSolid,-1,kNone,0,0.6);
   tdrDraw(hd,"Pz",kFullCircle,kBlue,kSolid,-1,kNone,0,0.6);
 
+  if (useRCFstyle) {
+    c1b->cd();
+    tdrDraw(hd2,"Pz",kOpenSquare,kMagenta-9,kSolid,-1,kNone,0,0.6);
+    tdrDraw(hd,"Pz",kFullCircle,kBlue,kSolid,-1,kNone,0,0.6);
+    leg1b->AddEntry(hd2,"p_{T} > 110 GeV","PLE");
+    leg1b->AddEntry(hd,"p_{T} > 50 GeV","PLE");
+    gPad->RedrawAxis();
+    c1->cd(2);
+  }
+  
   // Fit nibs
   TF1 *f1 = new TF1("f1","[0]",xmin,xmax);
   f1->SetLineColor(kBlue);
@@ -219,6 +272,11 @@ void drawGamVsZmm(string mode) {
       vye[nib] = f1->GetParError(0);
       ++nib;
     }
+    if (useRCFstyle) {
+      c1b->cd();
+      f1->DrawClone("SAME");
+      c1->cd(2);
+    }
   }
   TH1D *hnib = new TH1D(Form("GamJetMinusZmmJet_%s",cm),"",nib,&vx[0]);
   for (int i = 0; i != nib; ++i) {
@@ -230,6 +288,15 @@ void drawGamVsZmm(string mode) {
   
   gPad->RedrawAxis();
 
+  if (useRCFstyle) {
+      c1b->cd();
+      tdrDraw(hnib,"E2",kNone,kBlue,kSolid,-1,1001,kCyan+1);
+      hnib->SetFillColorAlpha(kCyan+1,0.5);
+      leg1b->AddEntry(hnib,"Fit","FL");
+      c1->cd(2);
+      gPad->RedrawAxis();
+  }
+
   c1->SaveAs(Form("pdf/drawTimeStability/drawTimeStabilityPairs_GamVsZmm_%s.pdf",cm));
 
   // Save photon correction
@@ -237,6 +304,11 @@ void drawGamVsZmm(string mode) {
   TFile *fout = new TFile("rootfiles/drawTimeStabilityPairs.root","UPDATE");
   hnib->Write(Form("GamJetMinusZmmJet_%s",cm),TObject::kOverwrite);
   fout->Close();
+
+  // RCF2025 plots
+  if (useRCFstyle) {
+    c1b->SaveAs(Form("pdf/drawTimeStability/drawTimeStabilityPairs_RCF2025_GamVsZmm_%s.pdf",cm));
+  }
 } // drawGamVsZmm
 
 void drawGamVsGam() {
@@ -388,12 +460,173 @@ void drawGamVsGam() {
   c1->SaveAs("pdf/drawTimeStability/drawTimeStabilityPairs_GamVsGam.pdf");
 } // drawTimeStabilityPairs()
 
+void drawGamVsTTBar() {
+
+  setTDRStyle();
+  TDirectory *curdir = gDirectory;
+  
+  TFile *f = new TFile("rootfiles/drawTimeStability.root","READ");
+  assert(f && !f->IsZombie());
+
+  curdir->cd();
+
+  TLine *l = new TLine();
+  l->SetLineStyle(kDashed);
+  l->SetLineColor(kGray+1);
+
+  double xmin(0), xmax(175), ymin(-2.4), ymax(+3.4), ymind(-1.5), ymaxd(+1.9);
+  TH1D *h = tdrHist("h_u","JES-1 (%)",ymin,ymax,"Cumulative luminosity (fb^{-1})",xmin,xmax);
+  TH1D *h_d = tdrHist("h_d","#gamma+j - t#bar{t} (%)",ymind,ymaxd,"Cumulative luminosity (fb^{-1})",xmin,xmax);
+  lumi_136TeV = "Run 3, 2022-24";
+  extraText = "Private";
+  TCanvas *c1 = tdrDiCanvas("c1",h,h_d,8,11);
+
+  TH1D *hbreaks = (TH1D*)f->Get("hbreaks"); assert(hbreaks);
+
+  TH1D *ha(0), *hb(0);
+  ha = (TH1D*)f->Get("pr50m"); assert(ha);
+  //hb = (TH1D*)f->Get("prof_top_inWindow"); assert(hb);
+  hb = (TH1D*)f->Get("prof_W_inWindow"); assert(hb);
+  TH1D *hd = (TH1D*)ha->Clone("hd");
+  hd->Add(hb,-1);
+  cleanEmpty(hd,ha,hb);
+
+  //cleanRange(ha,63.2,200); // noisy
+  //cleanRange(hb,63.2,200); // ok
+  //cleanRange(hd,63.2,200); // noisy
+  
+  c1->cd(1);
+
+  TLine *ll = new TLine();
+  TLatex *tex = new TLatex();
+  tex->SetTextSize(0.045);
+  tex->SetNDC(kFALSE);
+  tex->SetTextSize(0.03);
+  set<double> breakset;
+  breakset.insert(xmin);
+  for (int i = 1; i != hbreaks->GetNbinsX()+1; ++i) {
+    double cumlum = hbreaks->GetBinContent(i);
+    TString ts(hbreaks->GetXaxis()->GetBinLabel(i));
+
+    ll->SetLineStyle(kSolid);
+    ll->SetLineColor(kGray);
+    if (ts.Contains("V")) { ll->SetLineColor(kGreen+1); } //kRed-9); //continue; }
+    if (ts.Contains("IC")) ll->SetLineColor(kBlue-9);
+    if (ts.Contains("TR")) { ll->SetLineColor(kOrange+1); continue; }
+    if (ll->GetLineColor()==kBlue-9)
+      ll->DrawLine(cumlum,ymin,cumlum,ymax);
+
+    tex->SetTextColor(kGray);
+    if (ts.Contains("V")) tex->SetTextColor(kGreen+1);//kRed-9);
+    if (ts.Contains("IC")) tex->SetTextColor(kBlue-9);
+    if (ts.Contains("TR")) tex->SetTextColor(kOrange+1);
+    if (tex->GetTextColor()==kBlue-9)
+      tex->DrawLatex(cumlum+1,ymin+0.4-((i-1)%3)*0.15,ts.Data());
+
+    if (ts.Contains("IC"))
+      breakset.insert(cumlum);
+  }
+  breakset.insert(xmax);
+  
+  l->SetLineStyle(kDashed);
+  l->DrawLine(xmin,0,xmax,0);
+  l->SetLineStyle(kDotted);
+  l->DrawLine(xmin,+1,xmax,+1);
+  l->DrawLine(xmin,-1,xmax,-1);
+  
+  tdrDraw(hb,"Pz",kFullSquare,kRed,kSolid,-1,kNone,0,0.6);
+  tdrDraw(ha,"Pz",kFullCircle,kBlue,kSolid,-1,kNone,0,0.6);
+
+  TLegend *leg = tdrLeg(0.65,0.89-0.05*4,0.90,0.89);
+  leg->SetFillStyle(1001);
+  leg->AddEntry(hb,"t#bar{t} 50","PLE");
+  leg->AddEntry(ha,"#gamma+jet 50","PLE");
+
+  gPad->RedrawAxis();
+  gPad->Update();
+  
+  c1->cd(2);
+
+  tex->SetTextSize(0.03*1.5);
+  for (int i = 1; i != hbreaks->GetNbinsX()+1; ++i) {
+    double cumlum = hbreaks->GetBinContent(i);
+    TString ts(hbreaks->GetXaxis()->GetBinLabel(i));
+
+    ll->SetLineColor(kGray);
+    if (ts.Contains("V")) { ll->SetLineColor(kRed-9); continue; }
+    if (ts.Contains("IC")) ll->SetLineColor(kBlue-9);
+    if (ts.Contains("TR")) { ll->SetLineColor(kOrange+1); continue; }
+    ll->DrawLine(cumlum,ymind,cumlum,ymaxd);
+
+    tex->SetTextColor(kGray);
+    if (ts.Contains("V")) tex->SetTextColor(kRed-9);
+    if (ts.Contains("IC")) {
+      tex->SetTextColor(kBlue-9);
+      //tex->DrawLatex(cumlum+1,ymind+0.5,ts.Data());
+      tex->DrawLatex(cumlum+1,ymind+0.5-((i-1)%3)*0.20,ts.Data());
+    }
+    if (ts.Contains("TR")) {
+      tex->SetTextColor(kOrange+1);
+      tex->DrawLatex(cumlum+1,ymind+0.5,ts.Data());
+    }
+    //tex->DrawLatex(cumlum+1,ymind+0.4-((i-1)%3)*0.15,ts.Data());
+  }
+
+  l->SetLineStyle(kDashed);
+  l->DrawLine(xmin,0,xmax,0);
+  l->SetLineStyle(kDotted);
+  l->DrawLine(xmin,+0.5,xmax,+0.5);
+  l->DrawLine(xmin,-0.5,xmax,-0.5);
+
+  tdrDraw(hd,"Pz",kFullCircle,kBlue,kSolid,-1,kNone,0,0.6);
+
+  // Fit nibs
+  TF1 *f1 = new TF1("f1","[0]",xmin,xmax);
+  f1->SetLineColor(kBlue);
+  TMultiGraph *mg = new TMultiGraph();
+  mg->Add(new TGraphErrors(hd));
+  //mg->Draw("SAMEHIST");
+  typedef set<double>::const_iterator IT;
+  double xfit1(0),xfit2(0);
+  double vx[breakset.size()+2];
+  double vy[breakset.size()+1];
+  double vye[breakset.size()+1];
+  int nib(0);
+  vx[0] = xmin;
+  for (IT it = breakset.begin(); it != breakset.end(); ++it) {
+    xfit1 = xfit2;
+    xfit2 = (*it);
+    f1->SetRange(xfit1,xfit2);
+    mg->Fit(f1,"QRN");
+    f1->DrawClone("SAME");
+    if (xfit2!=xfit1) {
+      vx[nib+1] = xfit2;
+      vy[nib] = f1->GetParameter(0);
+      vye[nib] = f1->GetParError(0);
+      ++nib;
+    }
+  }
+  TH1D *hnib = new TH1D("GamJetMinusTTBar","",nib,&vx[0]);
+  for (int i = 0; i != nib; ++i) {
+    hnib->SetBinContent(i+1, vy[i]);
+    hnib->SetBinError(i+1, vye[i]);
+  }
+  tdrDraw(hnib,"E2",kNone,kCyan+1,kSolid,-1,1001,kCyan+1);
+  hnib->SetFillColorAlpha(kCyan+1,0.5);
+  
+  gPad->RedrawAxis();
+
+  c1->SaveAs("pdf/drawTimeStability/drawTimeStabilityPairs_GamVsTTBar.pdf");
+
+} // drawGamVsTTBar
+
 
 void drawPFcomp(string ref, double refrun) {
   
   setTDRStyle();
   TDirectory *curdir = gDirectory;
 
+  bool isRCFstyle = (useRCFstyle && ref=="pr50pr110");
   const char *cr = (ref=="pr50pr110" ? "pr50" : ref.c_str());
   TString tr(cr);  
 
@@ -531,18 +764,27 @@ void drawPFcomp(string ref, double refrun) {
     TString ts(hbreaks->GetXaxis()->GetBinLabel(i));
 
     ll->SetLineColor(kGray);
+    ll->SetLineStyle(kSolid);
     if (ts.Contains("V")) ll->SetLineColor(kGreen+1);
     if (ts.Contains("IC")) ll->SetLineColor(kBlue-9);
-    if (ts.Contains("TRK")) ll->SetLineColor(kRed-9);
-    if (ll->GetLineColor()==kGray || refrun>=0)
-      ll->DrawLine(cumlum,ymin,cumlum,ymax);
-
+    if (ts.Contains("TR")) ll->SetLineColor(kRed-9);
+    if (ll->GetLineColor()==kGray || refrun>=0) {
+      //if (!isRCFstyle || (ll->GetLineColor()==kGreen+1 || ll->GetLineColor()==kGray))
+      //if (!isRCFstyle || (ll->GetLineColor()==kGray && ts.Contains("2") || ts=="V2.0"))
+      if (isRCFstyle && !ts.Contains("2")) ll->SetLineStyle(kDotted);
+      if (!isRCFstyle || (ll->GetLineColor()==kGray || ts=="V2.0"))
+	ll->DrawLine(cumlum,ymin,cumlum,ymax);
+    }
+	  
     tex->SetTextColor(kGray);
     if (ts.Contains("V")) tex->SetTextColor(kGreen+2);
     if (ts.Contains("IC")) tex->SetTextColor(kBlue);
-    if (ts.Contains("TRK")) tex->SetTextColor(kRed);
-    if (ll->GetLineColor()==kGray || refrun>=0)
-      tex->DrawLatex(cumlum+1,ymin+0.4-((i-1)%3)*0.15,ts.Data());
+    if (ts.Contains("TR")) tex->SetTextColor(kRed);
+    if (ll->GetLineColor()==kGray || refrun>=0) {
+      //if (!isRCFstyle) // || (ll->GetLineColor()==kGreen+1 || ll->GetLineColor()==kGray))
+      if (!isRCFstyle || (ll->GetLineColor()==kGray && ts.Contains("2") || ts=="V2.0"))
+	tex->DrawLatex(cumlum+1,ymin+0.4-((i-1)%3)*0.15,ts.Data());
+    }
 
     breakset.insert(cumlum);
   }
@@ -568,7 +810,15 @@ void drawPFcomp(string ref, double refrun) {
   //TLegend *leg = tdrLeg(0.65,0.89-0.05*4,0.90,0.89);
   TLegend *leg = tdrLeg(0.58,0.89-0.05*4,0.83,0.89);
   leg->SetFillStyle(1001);
-  if (ref=="pr50pr110") {
+  if (isRCFstyle) {
+    h->GetYaxis()->SetTitle("Difference to late 2024 [V2.0] (%)");
+    leg->SetX1(0.43); leg->SetX2(0.68);
+    leg->AddEntry(hjesr,"Jet Energy Scale, split by:","PLE");
+    leg->AddEntry(hjesc,"  Tracking (charged hadrons)","PLE");
+    leg->AddEntry(hjesn,"  HCAL (neutral hadrons)","PLE");
+    leg->AddEntry(hjese,"  ECAL (photons)","PLE");
+  }
+  else if (ref=="pr50pr110") {
     leg->AddEntry(hjesr,"#gamma+jet MPF 50/110","PLE");
     leg->AddEntry(hjesc,"#gamma+jet CHF 50/110","PLE");
     leg->AddEntry(hjesn,"#gamma+jet NHF 50/110","PLE");
@@ -592,7 +842,10 @@ void drawPFcomp(string ref, double refrun) {
   gPad->RedrawAxis();
   gPad->Update();
 
-  if (ref=="pr50pr110")
+  if (isRCFstyle) {
+    c1->SaveAs(Form("pdf/drawTimeStability/drawTimeStabilityPairs_RCF2025_%s.pdf",ref.c_str()));
+  }
+  else if (ref=="pr50pr110")
     c1->SaveAs(Form("pdf/drawTimeStability/drawTimeStabilityPairs_PFcomp_%s.pdf",ref.c_str()));
   else
     c1->SaveAs(Form("pdf/drawTimeStability/drawTimeStabilityPairs_PFcomp_%s.pdf",cr));
