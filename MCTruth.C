@@ -9,6 +9,7 @@
 #include "TFile.h"
 #include "TProfile2D.h"
 #include "TF1.h"
+#include "TH3D.h"
 
 #include "tdrstyle_mod22.C"
 
@@ -18,8 +19,15 @@ bool correctLowPtBias = true;//false;
 void evalJES(TH1D *h);
 void evalJER(TH1D *h, TProfile *p);
 void evalJET(TH1D *h, const TProfile *p);
+void evalJEC(TH1D *h);
 
-void fixJESandJER(TH1D *hjes, TH1D *hjer, TH1D *heff, const TF1 *f1jer);
+void fixJESandJER(TH1D *hjes, TH1D *hjec, TH1D *hjer, TH1D *heff,
+		  const TF1 *f1jer);
+
+void fixMedian(TH1D *hjes, TF1* jes_fit, TF1* jer_fit, double pT_threshold);
+
+double evalXmin(double jes, double jer, double eff);
+TH1D* cutHist(const TH1D *h, const double xmin);
 
 void MCTruth() {
 
@@ -49,6 +57,8 @@ void MCTruth() {
   c1jer->Divide(7,6,0,0);
   TCanvas *c1jet = new TCanvas("c1jet","c1jet",7*size,6*size);
   c1jet->Divide(7,6,0,0);
+  TCanvas *c1jec = new TCanvas("c1jec","c1jec",7*size,6*size);
+  c1jec->Divide(7,6,0,0);
 
   TLine *l = new TLine();
   l->SetLineStyle(kDashed);
@@ -70,8 +80,16 @@ void MCTruth() {
   TLegend *legjer = tdrLeg(0.05,0.80-0.05*1.5*nentry,0.50,0.80);
   legjer->SetTextSize(0.045*1.5);
 
+  c1jec->cd(42);
+  TLegend *legjec = tdrLeg(0.05,0.80-0.05*1.5*3,0.50,0.80);
+  legjec->SetTextSize(0.045*1.5);
+
+
   double eps = 1e-4;
-  
+
+  vector<TF1*> vjer(p2r->GetNbinsX());
+  vector<TF1*> vjes(p2r->GetNbinsX());
+  vector<TH1D*> veff(p2r->GetNbinsX());
   for (int i = 1; i != p2r->GetNbinsX()+1; ++i) {
     //for (int j = 1; j != p2r->GetNbinsY()+1; ++j) {
 
@@ -90,6 +108,8 @@ void MCTruth() {
     TH1D *hr = pr->ProjectionX(Form("hr_%d",i));
     evalJES(hr);
     TProfile *pc = p2c->ProfileY(Form("pc_%d",i),i,i);
+    TH1D *hc = pc->ProjectionX(Form("hc_%d",i));
+    evalJEC(hc);
     pc->SetErrorOption("S");
     TH1D *hs = pc->ProjectionX(Form("hs_%d",i));
     evalJER(hs, pc);
@@ -147,9 +167,9 @@ void MCTruth() {
     if (i<=7)       { jesmin = 0.75; jesmax = 1.05; }
     else if (i<=14) { jesmin = 0.75; jesmax = 1.05; }
     else if (i<=21) { jesmin = 0.75; jesmax = 1.05; }
-    else if (i<=28) { jesmin = 0.50; jesmax = 1.10; }
-    else if (i<=35) { jesmin = 0.35; jesmax = 1.20; }
-    else if (i<=42) { jesmin = 0.35; jesmax = 1.15; }
+    else if (i<=28) { jesmin = 0.45; jesmax = 1.10; }
+    else if (i<=35) { jesmin = 0.25; jesmax = 1.20; }
+    else if (i<=42) { jesmin = 0.25; jesmax = 1.15; }
     TH1D *hjes = tdrHist(Form("hjes_%d",i),"JES",jesmin+eps,jesmax-eps,
 		      "p_{T,gen} (GeV)",5,5000);
     hjes->GetXaxis()->SetMoreLogLabels(kFALSE);
@@ -162,13 +182,14 @@ void MCTruth() {
     // Enforce physical ranges
     f1jes->SetParameters(1,-1,-0.3,0,1);
     f1jes->SetParLimits(0,0.8,1.2);
-    f1jes->SetParLimits(1,-10,0.);
-    f1jes->SetParLimits(2,-0.5,-0.2);
+    f1jes->SetParLimits(1,-2,0.);
+    f1jes->SetParLimits(2,-0.4,-0.2);
     f1jes->SetParLimits(3,-10.,+10.);
     f1jes->SetParLimits(4,-10,+10.);
     // Switch off trk parameters outside tracker
     if (etamin>2.65) {
-      f1jes->FixParameter(4, 0.);
+      //f1jes->FixParameter(4, 0.);
+      f1jes->SetParLimits(4, 0.,+10.);
       f1jes->SetRange(ptmin_fwd,ptmax);
     }
     hr->Fit(f1jes,"QRN");
@@ -249,11 +270,66 @@ void MCTruth() {
     f1jet->SetParameters(1e11,-5,5,13800./cosh(etamin));
     f1jet->FixParameter(3,13800./cosh(etamin));
     hn->Fit(f1jet,"QRN");
-    
+
+    tex->DrawLatex(i%7==1 ? 0.30 : 0.20, 0.90,
+		   Form("%1.3f<|#eta|<%1.3f",etamin,etamax));
     tdrDraw(hn,"Pz",kFullCircle,kBlack,kSolid,-1,kNone,0);
     f1jet->Draw("SAME");
 
+    
+    ///////////////////////////////////////////////////
+    // Step 1.4 Jet Enercy Corrections (JEC) closure //
+    ///////////////////////////////////////////////////
+    
+    c1jec->cd(i);
+    gPad->SetLogx();
 
+    double jecmin(-10), jecmax(10);
+    /*
+    // Range before low pT bias
+    if (i<=7)       { jecmin = -5; jecmax = +10; }
+    else if (i<=14) { jecmin = -5; jecmax = +10; }
+    else if (i<=21) { jecmin = -5; jecmax = +10; }
+    else if (i<=28) { jecmin = -8; jecmax = +16; }
+    else if (i<=35) { jecmin = -10; jecmax = +16; }
+    else if (i<=42) { jecmin = -12; jecmax = +16; }
+    */
+    // Range after low pT bias
+    /*
+    if (i<=7)       { jecmin = -5; jecmax = +10; }
+    else if (i<=14) { jecmin = -5; jecmax = +10; }
+    else if (i<=21) { jecmin = -5; jecmax = +10; }
+    else if (i<=28) { jecmin = -8; jecmax = +16; }
+    else if (i<=35) { jecmin = -10; jecmax = +16; }
+    else if (i<=42) { jecmin = -12; jecmax = +16; }
+    */
+    TH1D *hjec = tdrHist(Form("hjec_%d",i),"JEC closure (%)", jecmin, jecmax,
+			 "p_{T,gen} (GeV)",5,5000);
+    hjec->GetXaxis()->SetMoreLogLabels(kFALSE);
+    hjec->Draw("AXIS");
+
+    l->SetLineStyle(kDotted);
+    l->DrawLine(5,-1,5000,-1);
+    l->DrawLine(5,+1,5000,+1);
+    l->SetLineStyle(kDashed);
+    l->DrawLine(5,0,5000,0);
+
+    tex->DrawLatex(i%7==1 ? 0.50 : 0.40, 0.90,
+		   Form("%1.3f<|#eta|<%1.3f",etamin,etamax));
+    tdrDraw(hc,"Pz",kFullCircle,kBlack,kSolid,-1,kNone,0);
+
+    
+    if (i==1) {
+      legjec->SetHeader("Summer24, MG QCD MC");
+      //legjec->AddEntry(hc,"Data","PLE");
+    }
+
+    // Save fits and efficiency for Step 3.
+    vjer[i-1] = f1jer;
+    vjes[i-1] = f1jes;
+    veff[i-1] = he;
+
+    
     /////////////////////////////////////////////////////////////////////////
     // Step 2. Second round with low pT bias correction and extending down //
     /////////////////////////////////////////////////////////////////////////
@@ -265,8 +341,14 @@ void MCTruth() {
     TH1D *hr_raw = (TH1D*)hr->Clone(Form("hr_raw_%d",i));
     TF1 *f1jer_raw = (TF1*)f1jer->Clone(Form("f1jer_raw_%d",i));
     TH1D *hs_raw = (TH1D*)hs->Clone(Form("hs_raw_%d",i));
-    fixJESandJER(hr, hs, he, f1jer);
 
+    TH1D *hc_raw = hc; hc_raw->SetName(Form("hc_raw_%d",i));
+    pc->SetErrorOption("");
+    hc = pc->ProjectionX(Form("hc_%d",i));
+
+    fixJESandJER(hr, hc, hs, he, f1jer);
+    
+    evalJEC(hc);
 
     c1eff->cd(i);
 
@@ -286,25 +368,6 @@ void MCTruth() {
     }
 
     
-    c1jes->cd(i);
-
-    f1jes->SetRange(15.,ptmax);
-    hr->Fit(f1jes,"QRN");
-
-    tdrDraw(hx,"HIST][",kNone,kBlue,kSolid,-1,kNone,0);
-    tdrDraw(hr_raw,"Pz",kOpenCircle,kRed+1,kSolid,-1,kNone,0,1.5,1);
-    f1jes_raw->Draw("SAME");
-    tdrDraw(hr,"Pz",kFullCircle,kBlack,kSolid,-1,kNone,0,2.0,1);
-    f1jes->SetLineColor(kGreen+2);
-    f1jes->Draw("SAME");
-
-    if (i==1) {
-      legjes->AddEntry(hr_raw,"Orig. data","PLE");
-      legjes->AddEntry(f1jes_raw,"Orig. fit","L");
-      legjes->AddEntry(hx,"Previous JEC","F");
-    }
-    
-
     c1jer->cd(i);
 
     f1jer->SetRange(15.,ptmax);
@@ -321,8 +384,50 @@ void MCTruth() {
       legjer->AddEntry(f1jes_raw,"Orig. fit","L");
       legjer->AddEntry(f1jes_raw," ","");
     }
+
+        
+    c1jes->cd(i);
+
+    f1jes->SetRange(15.,ptmax);
+    hr->Fit(f1jes,"QRN");
+
+    //TH1D *hx_raw = (TH1D*)hx->Clone(Form("hx_raw_%d",i));
+    //fixMedian(hx, f1jes, f1jer, 0.);
+    
+    //tdrDraw(hx_raw,"HIST][",kNone,kCyan+1,kSolid,-1,kNone,0);
+    tdrDraw(hx,"HIST][",kNone,kBlue,kSolid,-1,kNone,0);
+    
+    tdrDraw(hr_raw,"Pz",kOpenCircle,kRed+1,kSolid,-1,kNone,0,1.5,1);
+    f1jes_raw->Draw("SAME");
+    tdrDraw(hr,"Pz",kFullCircle,kBlack,kSolid,-1,kNone,0,2.0,1);
+    f1jes->SetLineColor(kGreen+2);
+    f1jes->Draw("SAME");
+
+    if (i==1) {
+      legjes->AddEntry(hr_raw,"Orig. data","PLE");
+      legjes->AddEntry(f1jes_raw,"Orig. fit","L");
+      legjes->AddEntry(hx,"Previous JEC","F");
+    }
+
+
+    c1jec->cd(i);
+
+    TH1D *hr_ratio = (TH1D*)hr->Clone(Form("hr_ratio_%d",i));
+    //hr_ratio->Divide(hx); evalJEC(hr_ratio);
+    hr_ratio->Divide(f1jes); evalJEC(hr_ratio);
+    
+    tdrDraw(hc_raw,"Pz",kOpenCircle,kRed+1,kSolid,-1,kNone,0,1.5,1);
+    //tdrDraw(hr_ratio,"Pz",kOpenCircle,kBlue,kSolid,-1,kNone,0,2.0,2);
+    tdrDraw(hc,"Pz",kFullCircle,kBlack,kSolid,-1,kNone,0,2.0,1);
+    tdrDraw(hr_ratio,"Pz",kFullDiamond,kGreen+2,kSolid,-1,kNone,0,2.0,1);
+
+    if (i==1) {
+      legjec->AddEntry(hc,"Data","PLE");
+      legjec->AddEntry(hc_raw,"Orig. data","PLE");
+    }
     
     //} // for j
+
   } // for i
 
 
@@ -330,6 +435,186 @@ void MCTruth() {
   c1jes->SaveAs("pdf/MCTruth/MCTruth_JES.pdf");
   c1jer->SaveAs("pdf/MCTruth/MCTruth_JER.pdf");
   c1jet->SaveAs("pdf/MCTruth/MCTruth_JET.pdf");
+  c1jec->SaveAs("pdf/MCTruth/MCTruth_JEC.pdf");
+
+
+  ///////////////////////////////////////////////////////////
+  // Step 3. Add median/CI68 and Gaus mean/sigma from TH3D //
+  ///////////////////////////////////////////////////////////
+
+  //TF1 *fgaus = new TF1("fgaus","TMath::Gaus(x,[0],[1],0)",0,2);
+  TF1 *fgaus = new TF1("fgaus","TMath::Gaus(x,[0],[1],1)",0,2);
+  TH3D *h3r = (TH3D*)d->Get("Response3D_raw"); assert(h3r);
+  TH3D *h3c = (TH3D*)d->Get("Response3D"); assert(h3c);
+
+  TCanvas *c1gaus = new TCanvas("c1gaus","c1gaus",7*size,6*size);
+  c1gaus->Divide(7,6,0,0);
+  
+  // z=eta_gen, y=pTgen, z=pTreco/pTgen
+  for (int i = 1; i != h3r->GetNbinsX()+1; ++i) {
+
+    TH1D *h1r = h3r->ProjectionY(Form("h1r_%d",i)); h1r->Reset();
+    TH1D *h1c = h3c->ProjectionY(Form("h1c_%d",i)); h1c->Reset();
+    TH1D *h1s = h3c->ProjectionY(Form("h1s_%d",i)); h1s->Reset();
+    
+    TH1D *h1r_median = h3r->ProjectionY(Form("h1r_median_%d",i));
+    h1r_median->Reset();
+    TH1D *h1c_median = h3c->ProjectionY(Form("h1c_median_%d",i));
+    h1c_median->Reset();
+    TH1D *h1s_CI68 = h3c->ProjectionY(Form("h1s_CI68_%d",i));
+    h1s_CI68->Reset();
+
+    TH1D *h1r_mu = h3r->ProjectionY(Form("h1r_mu_%d",i));
+    h1r_mu->Reset();
+    TH1D *h1c_mu = h3c->ProjectionY(Form("h1c_mu_%d",i));
+    h1c_mu->Reset();
+    TH1D *h1s_sigma = h3c->ProjectionY(Form("h1s_sigma_%d",i));
+    h1s_sigma->Reset();
+    
+    for (int j = 1; j != h1r->GetNbinsX()+1; ++j) {
+      
+      TH1D *hr = h3r->ProjectionZ(Form("hzr_%d_%d",i,j),i,i,j,j);
+      TH1D *hc = h3c->ProjectionZ(Form("hzc_%d_%d",i,j),i,i,j,j);
+
+      // Arithmetic mean and RMS to compare to TProfile pr, pc
+      double mean = hr->GetMean();
+      double emean = hr->GetMeanError();
+      double meanc = hc->GetMean();
+      double emeanc = hc->GetMeanError();
+      double rms = hc->GetRMS();
+      double erms = hc->GetRMSError();
+      h1r->SetBinContent(j, mean);
+      h1r->SetBinError(j, emean);
+      h1c->SetBinContent(j, meanc);
+      h1c->SetBinError(j, emeanc);
+      // This is weird, rms and mean from hr are closer to TProfile pc
+      h1s->SetBinContent(j, meanc!=0 ? rms/meanc : rms);
+      h1s->SetBinError(j, meanc!=0 ? erms/meanc : erms);
+
+      // Median and CI68
+      // probabilities where to evaluate the quantiles in [0,1]
+      const int nq = 3;
+      Double_t p[nq] = {0.16, 0.5, 0.84};
+      Double_t xpr[nq], xpc[nq];
+      if (hr->GetEntries()>5) {
+	hr->GetQuantiles(nq,xpr,p);
+	hc->GetQuantiles(nq,xpc,p);
+	
+	if (xpr[1]!=0) {
+	  h1r_median->SetBinContent(j, xpr[1]);
+	  h1r_median->SetBinError(j, xpr[1] * (mean!=0 ? emean / mean : 1));
+	  h1c_median->SetBinContent(j, xpc[1]);
+	  h1c_median->SetBinError(j, xpc[1] * (meanc!=0 ? emeanc / meanc : 1));
+	  h1s_CI68->SetBinContent(j, 0.5*(xpc[2]-xpc[0]) / xpr[1]);
+	  h1s_CI68->SetBinError(j, 0.5*(xpc[2]-xpc[0]) / xpr[1] *
+				(meanc!=0 ? erms / meanc : 1));
+	}
+      }
+
+      // Gaussian fits
+      double pt = h1r->GetBinCenter(j);
+      double ptmin = h1r->GetBinLowEdge(j);
+      double ptmax = h1r->GetBinLowEdge(j+1);
+      if (hr->GetEntries()>5 && hr->Integral()>0 && hc->Integral()>0 && pt>20) {
+	TF1 *f1jer = vjer[i-1];
+	TF1 *f1jes = vjes[i-1];
+	TH1D *he = veff[i-1];
+	double eff = he->GetBinContent(j);
+	hr->Scale(100./2.*eff/hr->Integral());
+	hc->Scale(100./2.*eff/hc->Integral());
+
+	double k = 2.5;//2.0;//1.5;
+	double mu = f1jes->Eval(pt);
+	double sigma = f1jer->Eval(pt) * mu;
+	double xmin = evalXmin(mu, sigma/mu, eff);
+	//double xmin = max(20.*mu/ptmin, mu-k*sigma);
+	//fgaus->SetRange(max(0.1,mu-k*sigma), mu+k*sigma);
+	fgaus->SetRange(max(0.1,xmin), mu+k*sigma);
+	fgaus->SetParameters(max(0.1,min(1.9,mu)), max(0.01,min(1.0,sigma)));
+	fgaus->SetParLimits(0, 0.1, 1.9);
+	fgaus->SetParLimits(1, 0.01, 1.0);
+	hr->Fit(fgaus,"QRN");
+	h1r_mu->SetBinContent(j, fgaus->GetParameter(0));
+	h1r_mu->SetBinError(j, fgaus->GetParError(0));
+
+	//if (pt>86 && pt<110) {
+	if (pt>21 && pt<28) {
+	  c1gaus->cd(i);
+	  tdrDraw(hr,"HIST",kNone,kBlue,kSolid,-1,1001,kBlue-9);
+	  hr->SetFillColorAlpha(kBlue-9, 0.3);
+	  TH1D *hr_cut = cutHist(hr, xmin);
+	  tdrDraw(hr_cut,"HIST",kNone,kBlue,kSolid,-1,1001,kBlue-9);
+	  fgaus->DrawClone("SAME");
+	}
+
+	mu = 1;
+	sigma = f1jer->Eval(pt) * mu;
+	double xminc = evalXmin(mu, sigma/mu, eff);
+	//xmin = max(20.*mu/pt, mu-k*sigma);
+	//fgaus->SetRange(max(0.1,mu-k*sigma), mu+k*sigma);
+	fgaus->SetRange(max(0.1,xminc), mu+k*sigma);
+	fgaus->SetParameters(1, max(0.01,min(1.0,sigma)));
+	fgaus->SetParLimits(0, 0.1, 1.9);
+	fgaus->SetParLimits(1, 0.01, 1.0);
+	hc->Fit(fgaus,"QRN");
+	h1c_mu->SetBinContent(j, fgaus->GetParameter(0));
+	h1c_mu->SetBinError(j, fgaus->GetParError(0));
+	h1s_sigma->SetBinContent(j, fgaus->GetParameter(1) /
+				 fgaus->GetParameter(0));
+	h1s_sigma->SetBinError(j, fgaus->GetParError(1) /
+			       fgaus->GetParameter(0));
+
+	if (pt>21 && pt<28) {
+	  c1gaus->cd(i);
+	  tdrDraw(hc,"HIST",kNone,kMagenta+1,kSolid,-1,1001,kMagenta-9);
+	  hc->SetFillColorAlpha(kMagenta-9,0.15);
+	  TH1D *hc_cut = cutHist(hc, xminc);
+	  tdrDraw(hc_cut,"HIST",kNone,kBlue,kSolid,-1,1001,kMagenta-9);
+	  hc_cut->SetFillColorAlpha(kMagenta-9,0.3);
+	  fgaus->DrawClone("SAME");
+	  gPad->RedrawAxis();
+	}
+
+      }
+      
+    } // for j
+
+    if (correctLowPtBias) {
+      TF1 *f1jer = vjer[i-1];
+      TH1D *he = veff[i-1];
+      fixJESandJER(h1r, h1c, h1s, he, f1jer);
+    }
+
+    
+    c1jes->cd(i);
+
+    tdrDraw(h1r,"Pz",kFullDiamond,kOrange+1,kSolid,-1,kNone,0,2.0);
+    tdrDraw(h1r_median,"Pz",kOpenDiamond,kMagenta+1,kSolid,-1,kNone,0,2.0);
+    tdrDraw(h1r_mu,"Pz",kOpenStar,kCyan+1,kSolid,-1,kNone,0,2.0);
+
+    c1jec->cd(i);
+	
+    evalJEC(h1c);
+    evalJEC(h1c_median);
+    evalJEC(h1c_mu);
+    tdrDraw(h1c,"Pz",kFullDiamond,kOrange+1,kSolid,-1,kNone,0,2.0);
+    tdrDraw(h1c_median,"Pz",kOpenDiamond,kMagenta+1,kSolid,-1,kNone,0,2.0);
+    tdrDraw(h1c_mu,"Pz",kOpenStar,kCyan+1,kSolid,-1,kNone,0,2.0);
+
+    
+    c1jer->cd(i);
+
+    tdrDraw(h1s,"Pz",kFullDiamond,kOrange+1,kSolid,-1,kNone,0,2.0);
+    tdrDraw(h1s_CI68,"Pz",kOpenDiamond,kMagenta+1,kSolid,-1,kNone,0,2.0);
+    tdrDraw(h1s_sigma,"Pz",kOpenStar,kCyan+1,kSolid,-1,kNone,0,2.0);
+    
+  } // for i
+
+  c1jes->SaveAs("pdf/MCTruth/MCTruth_JES_xtra.pdf");
+  c1jec->SaveAs("pdf/MCTruth/MCTruth_JEC_xtra.pdf");
+  c1jer->SaveAs("pdf/MCTruth/MCTruth_JER_xtra.pdf");
+  c1gaus->SaveAs("pdf/MCTruth/MCTruth_Gaus.pdf");
+  
 }
 
 
@@ -387,12 +672,28 @@ void evalJET(TH1D *h, const TProfile *p) {
   return;
 }
 
+// Evaluate JEC closure
+// - turn ratio to percentage difference
+void evalJEC(TH1D *h) {
+
+  for (int i = 1; i != h->GetNbinsX()+1; ++i) {
+    double jec = h->GetBinContent(i);
+    if (jec!=0) {
+      double ejec = h->GetBinError(i);
+      h->SetBinContent(i, 100.*(jec-1));
+      h->SetBinError(i, 100.*ejec);
+    }
+  }
+  return;
+}
+
 // Low pT bias correction for JES
 // - fill missing part with Gaussian extension
 // - efficiency as profile to get accurate value per bin
 // - JER as fit to extrapolate robustly to biased region
 //   (also to have eventual JES consistent with JER)
-void fixJESandJER(TH1D *hjes, TH1D *hjer, TH1D *heff, const TF1 *f1jer) {
+void fixJESandJER(TH1D *hjes, TH1D *hjec, TH1D *hjer, TH1D *heff,
+		  const TF1 *f1jer) {
 
   for (int i = 1; i != hjes->GetNbinsX()+1; ++i) {
 
@@ -408,12 +709,15 @@ void fixJESandJER(TH1D *hjes, TH1D *hjer, TH1D *heff, const TF1 *f1jer) {
     // Cap jer at 100%
     double jer_fit = min(1.0, f1jer->Eval(pt));
 
+    double jec_raw = hjec->GetBinContent(i);
+    double ejec = hjec->GetBinError(i);
+    
     // Only run the extra correction if efficiency is less than 99%
-    double jes(jes_raw), jer(jer_raw), eff_cut(eff);
+    double jes(jes_raw), jec(jec_raw), jer(jer_raw), eff_cut(eff);
     //if (eff<0.16) { // 1-sided 1-sigma cut
     //if (eff<0.5) { // cut at peak
     if (eff<0.25) { // 
-      jes = ejes = jer = ejer = eff_cut = eeff = 0;
+      jes = ejes = jec = ejec = jer = ejer = eff_cut = eeff = 0;
     }
     else if (eff<0.999) {
       
@@ -423,23 +727,25 @@ void fixJESandJER(TH1D *hjes, TH1D *hjer, TH1D *heff, const TF1 *f1jer) {
       // 3) we don't know unbiased mean from JES (hjes), but can start with mu=1
       // => estimate zcut that integrates to eff, 
       //    then solve for the mean and sigma of the truncated Gaussian
-      // Math: https://chatgpt.com/share/67efebc4-0d30-800f-a459-71796a13bdb5
+      // Math v1: https://chatgpt.com/share/67efebc4-0d30-800f-a459-71796a13bdb5
       double mu(1), sigma(1);
       double zcut = TMath::ErfInverse(1. - 2.*eff) * sqrt(2.);
       double phi = TMath::Gaus(zcut, 0, 1, true); // normalized
       double mu_bias = 1 + jer_fit * phi / eff;
       double sigma_bias = sqrt(1 + zcut * phi / eff - pow(phi / eff, 2))
 	/ mu_bias;
-      
+
       // Correct jes_raw based on mu/mu_raw
       jes = (mu_bias>0 ? jes_raw * mu / mu_bias : jes_raw);
+      jec = (mu_bias>0 ? jec_raw * mu / mu_bias : jec_raw);
       jer = (sigma_bias>0  && mu_bias>0 ?
 	     (jer_raw * sigma / sigma_bias) : jer_raw);
 
       // Rough place-holder errors for now
       ejes = sqrt(pow(ejes,2)+pow(jes_raw*(mu/mu_bias-1)*0.5,2));
+      ejec = sqrt(pow(ejec,2)+pow(jec_raw*(mu/mu_bias-1)*0.5,2));
       ejer = sqrt(pow(ejer,2)+pow(jer_raw*(sigma/sigma_bias-1)*0.5,2));
-      
+
       if (debug)
 	cout << Form("pt=%1.0f [%1.0f,%1.0f] GeV, eff=%1.3f, jer=%1.3f, "
 		     "zcut=%1.3f, phi=%1.3f, mu_bias=%1.3f\n"
@@ -452,8 +758,59 @@ void fixJESandJER(TH1D *hjes, TH1D *hjer, TH1D *heff, const TF1 *f1jer) {
     heff->SetBinError(i, eeff);
     hjes->SetBinContent(i, jes);
     hjes->SetBinError(i, ejes);
+    hjec->SetBinContent(i, jec);
+    hjec->SetBinError(i, ejec);
     hjer->SetBinContent(i, jer);
     hjer->SetBinError(i, ejer);
   } // for i
   return;
+}
+
+
+void fixMedian(TH1D *hjes, TF1* jes_fit, TF1* jer_fit, double pT_threshold) {
+
+  //double GetMedianBias(double pT, TF1* jes_fit, TF1* jer_fit, double pT_threshold) {
+  for (int i = 1; i != hjes->GetNbinsX()+1; ++i) {
+
+    double pT = hjes->GetBinCenter(i);
+    
+    double jes_mean = jes_fit->Eval(pT);
+    double jer = jer_fit->Eval(pT);
+    double jes_sigma = jes_mean * jer;
+
+    double jes_min = jes_mean * (pT_threshold / pT);
+    double x = (jes_min - jes_mean) / jes_sigma;
+
+    double Fmin = 0.5 * (1.0 + TMath::Erf(x / sqrt(2)));
+    double F_median = 0.5 * (1.0 + Fmin);
+    double quantile = jes_mean + jes_sigma * sqrt(2) * TMath::ErfInverse(2 * F_median - 1);
+
+    double bias = (quantile - jes_mean) / jes_mean;
+    //return bias;
+    
+    double jes_median_raw = hjes->GetBinContent(i);
+    double jes_median_corr = jes_median_raw - bias;
+    if (jes_median_raw>0) {
+      hjes->SetBinContent(i, jes_median_corr);
+    }
+  }
+  return;
+} // fixMedian
+
+double evalXmin(double jes, double jer, double eff) {
+  double zcut = TMath::ErfInverse(1. - 2.*eff) * sqrt(2.);
+  return (jes*(1 + zcut*jer));
+}
+
+TH1D* cutHist(const TH1D *h, const double xmin_out) {
+  TH1D *ho = (TH1D*)h->Clone(Form("%s_cut",h->GetName()));
+  for (int i = 1; i != h->GetNbinsX()+1; ++i) {
+    double xmin = h->GetBinLowEdge(i);
+    double xmax = h->GetBinLowEdge(i+1);
+    if (xmax<=xmin_out) {
+      ho->SetBinContent(i, 0.);
+      ho->SetBinError(i, 0.);
+    }
+  }
+  return ho;
 }
