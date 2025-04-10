@@ -14,6 +14,7 @@ void drawHBcuts_Zmm_sets(string set);
 void drawHBcuts_Zmm() {
   drawHBcuts_Zmm_sets("MPF");
   drawHBcuts_Zmm_sets("DB");
+  drawHBcuts_Zmm_sets("NHF");
 } // drawHBcuts_Zmm
 
 void drawHBcuts_Zmm_sets(string set="MPF") {
@@ -65,6 +66,13 @@ void drawHBcuts_Zmm_sets(string set="MPF") {
   lumi_136TeV = "HB cut variations, 2024I Z(#mu#mu)+jet";
   TCanvas *c2 = tdrCanvas(Form("c2_%s",cs),h_2,8,11,kSquare);
 
+  TH1D *h_3 = tdrHist(Form("h_3_%s",cs),Form("%s (100/Base)",cs),0.001,100.,
+		      "NHF",0,1);
+  extraText = "Private";
+  lumi_136TeV = "HB cut variations, 2024I Z(#mu#mu)+jet";
+  TCanvas *c3 = tdrCanvas(Form("c3_%s",cs),h_3,8,11,kSquare);
+
+  
   TLatex *tex = new TLatex();
   tex->SetNDC(); tex->SetTextSize(0.045);
 
@@ -77,6 +85,7 @@ void drawHBcuts_Zmm_sets(string set="MPF") {
   l->DrawLine(0.522,0.83,0.522,1.35);
 
   if (set=="MPF") tex->DrawLatex(0.18,0.75,"15<p_{T,Z}<28 GeV");
+  if (set=="NHF") tex->DrawLatex(0.18,0.75,"15<p_{T,Z}<28 GeV");
   if (set=="DB")  tex->DrawLatex(0.18,0.75,"28<p_{T,Z}<49 GeV");
   //if (set=="DB")  tex->DrawLatex(0.18,0.75,"28<p_{T,Z}<37 GeV");
   
@@ -89,6 +98,10 @@ void drawHBcuts_Zmm_sets(string set="MPF") {
     l->DrawLine(15,0.87,15,1.05);
     l->DrawLine(28,0.87,28,1.05);
   }
+  if (set=="NHF") {
+    l->DrawLine(15,0.87,15,1.05);
+    l->DrawLine(28,0.87,28,1.05);
+  }
   if (set=="DB") {
     l->DrawLine(28,0.87,28,1.05);
     l->DrawLine(37,0.87,37,1.05);
@@ -96,10 +109,18 @@ void drawHBcuts_Zmm_sets(string set="MPF") {
 
   //tex->DrawLatex(0.18,0.75,"|#eta_{jet}|<1.305");
   tex->DrawLatex(0.18,0.75,"|#eta_{jet}|<0.522");
-  
+
   TLegend *leg2 = tdrLeg(0.55,0.90-0.045*6,0.80,0.90);
 
-  TH1D *hbase(0), *hbase_pt(0);
+  c3->cd();
+  gPad->SetLogy();
+  tex->DrawLatex(0.25,0.34,"|#eta_{jet}|<1.305");
+  tex->DrawLatex(0.25,0.27,"28<p_{T,Z}<49 GeV");
+  //tex->DrawLatex(0.25,0.20,"NHF = p_{T,nh} / p_{T,Z}"); 
+  TLegend *leg3 = tdrLeg(0.55,0.90-0.045*6,0.80,0.90);
+  
+  
+  TH1D *hbase(0), *hbase_pt(0), *hbase_f(0);
   for (int i = 0; i != nf; ++i) {
 
     string sf = vf[i];
@@ -121,14 +142,18 @@ void drawHBcuts_Zmm_sets(string set="MPF") {
 
     TProfile2D *p2(0);
     if (set=="MPF") { p2 = (TProfile2D*)d->Get("l2res/p2m0tc"); assert(p2); }
+    if (set=="NHF") { p2 = (TProfile2D*)d->Get("l2res/p2m0tc"); assert(p2); }
     if (set=="DB")  { p2 = (TProfile2D*)d->Get("l2res/p2m2tc"); assert(p2); }
     assert(p2);
     TProfile2D *p2res = (TProfile2D*)d->Get("l2res/p2res"); assert(p2res);
+
+    TH2D *h2f(0);
+    if (set=="NHF") { h2f = (TH2D*)d->Get("eta_00_13/h_Zpt_neHEF_alpha100"); assert(h2f); }
     
     c1->cd();
 
     int j1(-1), j2(-1);
-    if (set=="MPF") {
+    if (set=="MPF" || set=="NHF") {
       j1 = p2->GetYaxis()->FindBin(15.);
       j2 = p2->GetYaxis()->FindBin(28.)-1;
     }
@@ -161,6 +186,7 @@ void drawHBcuts_Zmm_sets(string set="MPF") {
       leg->AddEntry(h,mleg[sf],mmar[sf]==kNone ? "F" : "PLE");
     }
 
+    
     c2->cd();
 
     int i1 = p2->GetXaxis()->FindBin(0.);
@@ -169,7 +195,7 @@ void drawHBcuts_Zmm_sets(string set="MPF") {
     TProfile *p_pt = p2->ProfileY(Form("p_pt_%s_%s",cs,cf),i1,i2);
     TProfile *pres_pt = p2res->ProfileY(Form("pres_pt_%s_%s",cs,cf),i1,i2);
     TH1D *h_pt = p_pt->ProjectionX(Form("h_pt_%s_%s",cs,cf));
-    TH1D *hres_pt = pres_pt->ProjectionX(Form("hres_pt_%s",cf));
+    TH1D *hres_pt = pres_pt->ProjectionX(Form("hres_pt_%s_%s",cs,cf));
 
     // Undo JEC residuals (only leaves MC JEC)
     h_pt->Multiply(hres_pt);
@@ -187,17 +213,52 @@ void drawHBcuts_Zmm_sets(string set="MPF") {
       tdrDraw(h_pt,mmar[sf]==kNone ? "HIST" : "Pz",mmar[sf],mcol[sf],kSolid,-1,kNone,0);
       leg2->AddEntry(h_pt,mleg[cf],mmar[sf]==kNone ? "F" : "PLE");
     }
+
+
+    if (set!="NHF") continue;
+    
+    c3->cd();
+    int k1 = h2f->GetXaxis()->FindBin(28.);
+    int k2 = h2f->GetXaxis()->FindBin(49.)-1;
+    TH1D *h_f = h2f->ProjectionY(Form("hf_%s_%s",cs,cf),k1,k2);
+
+    if (i==0) cout << Form("NHF p_{T,Z}=[%1.3f,%1.3f] (GeV)\n",
+			   h2f->GetXaxis()->GetBinLowEdge(k1),
+			   h2f->GetXaxis()->GetBinLowEdge(k2+1));
+    if (i==0) hbase_f = (TH1D*)h_f->Clone(Form("hbase_f_%s",cs));
+
+    // Divide by baseline scale
+    assert(hbase_f);
+    //h_f->Divide(h_f,hbase_f,1,1);//,"B");
+    h_f->Rebin(2); h_f->Scale(0.5);
+    //h_f->Rebin(4); h_f->Scale(0.25);
+    //if (sf!="MC") h_f->Scale(100./hbase_f->Integral());
+    //if (sf=="MC") h_f->Scale(100./h_f->Integral());
+    h_f->Scale(100./hbase_f->Integral());
+    if (sf=="MC") h_f->Scale(hbase_f->GetEntries()/h_f->GetEntries());
+    
+    if (i!=0) {
+      tdrDraw(h_f,mmar[sf]==kNone ? "HIST" : "Pz",mmar[sf],mcol[sf],kSolid,-1,kNone,0);
+      leg3->AddEntry(h_f,mleg[cf],mmar[sf]==kNone ? "F" : "PLE");
+    }
   } // for i
 
 
-  c1->cd();
-  gPad->RedrawAxis();
-  c1->SaveAs(Form("pdf/drawHBcuts/drawHBcuts_Zmm_%s_vsEta.pdf",cs));
-
-  c2->cd();
-  gPad->RedrawAxis();
-  c2->SaveAs(Form("pdf/drawHBcuts/drawHBcuts_Zmm_%s_vsPt.pdf",cs));
-  
+  if (set=="MPF" || set=="DB") {
+    c1->cd();
+    gPad->RedrawAxis();
+    c1->SaveAs(Form("pdf/drawHBcuts/drawHBcuts_Zmm_%s_vsEta.pdf",cs));
+    
+    c2->cd();
+    gPad->RedrawAxis();
+    c2->SaveAs(Form("pdf/drawHBcuts/drawHBcuts_Zmm_%s_vsPt.pdf",cs));
+  }
+  if (set=="NHF") {
+    c3->cd();
+    gPad->RedrawAxis();
+    c3->SaveAs(Form("pdf/drawHBcuts/drawHBcuts_Zmm_%s_vsNHF.pdf",cs));
+  }
+    
 } // drawHEscale_Zmm
 
 
