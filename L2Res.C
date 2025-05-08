@@ -446,9 +446,10 @@ void L2Res() {
      //"2022F_19Dec2023","2022G_19Dec2023",
      //"2023Cv123_19Dec2023","2023Cv4_19Dec2023","2023D_19Dec2023",
      //"2024I","2024H","2024G","2024F","2024E","2024BCD"}; // V7M
-     /*"2024B_nib1","2024C_nib1","2024D_nib1","2024Ev1_nib1","2024Ev2_nib1",
+      /*"2024B_nib1",*/"2024C_nib1","2024D_nib1","2024Ev1_nib1","2024Ev2_nib1",
       "2024F_nib1","2024F_nib2","2024F_nib3","2024G_nib1","2024G_nib2",
-      "2024H_nib1",*/"2024I_nib1"}; // V8M
+      "2024H_nib1","2024I_nib1"}; // V8M
+  //"2024E_noRW","2024E_692mb","2024E_753mb"}; 
   const int nrun = sizeof(vrun)/sizeof(vrun[0]);
   string vmc[] =
     {//"Summer22","Summer22",
@@ -458,7 +459,11 @@ void L2Res() {
      //"Winter24","Winter24","Winter24","Winter24","Winter24","Winter24"};//V7M
      /*"Winter24","Winter24","Winter24","Winter24","Winter24",
       "Winter24","Winter24","Winter24","Winter24","Winter24",
-      "Winter24",*/"Winter24"}; // V8M
+      "Winter24","Winter24"*/  // V8M
+      "Summer24","Summer24","Summer24","Summer24",
+      "Summer24","Summer24","Summer24","Summer24","Summer24",
+      "Summer24","Summer24"};  // V8M
+      //"Summer24","Summer24","Summer24"};
   const int nmc = sizeof(vmc)/sizeof(vmc[0]);
   assert(nmc==nrun);
 
@@ -536,9 +541,22 @@ void L2Res() {
     // TBD: need to add p2zxx for 22Sep2023 cases to scale JES
     }
   }
+  else if (run=="2024E_noRW") {
+    fz = new TFile("rootfiles/Prompt2024/v95_Zmm_noPU/jme_Zj_2024E_Zmm_75300_V8M_v95.root");
+  }
+  else if (run=="2024E_692mb") {
+    fz = new TFile("rootfiles/Prompt2024/v95_Zmm/jme_Zj_2024E_Zmm_69200_V8M_v95.root"); // 30% stats?
+  }
+  else if (run=="2024E_753mb") {
+    fz = new TFile("rootfiles/Prompt2024/v95_Zmm/jme_Zj_2024E_Zmm_75300_V8M_v95.root");
+  }
   else if (tr.Contains("2024") && tr.Contains("nib")) {
     //fz = new TFile(Form("rootfiles/Prompt2024/v93/jme_bplusZ_%s_Zmm_v93.root",cr),"READ"); // V7M->V8M
-    fz = new TFile(Form("rootfiles/Prompt2024/v94_Zmm/jme_bplusZ_%s_Zmm_v94_Summer24.root",cr),"READ"); // V7M->V8M
+    //fz = new TFile(Form("rootfiles/Prompt2024/v94_Zmm/jme_bplusZ_%s_Zmm_v94_Summer24.root",cr),"READ"); // V7M->V8M
+    if (tr.Contains("C") || tr.Contains("D") || tr.Contains("E"))
+      fz = new TFile(Form("rootfiles/Prompt2024/v97_Zmm/jme_Zj_2024CDEReprocessing_v1_%s_Zmm_pileup_69200_V8M_v97.root",cr),"READ"); // V9M re-reco
+    else
+      fz = new TFile(Form("rootfiles/Prompt2024/v97_Zmm/jme_Zj_%s_Zmm_pileup_69200_V8M_v97.root",cr),"READ"); // V9M prompt    
   }
   else if (tr.Contains("2024")) {
     if (tr.Contains("H") || tr.Contains("I")) {
@@ -589,7 +607,20 @@ void L2Res() {
     }
     // TBD: need to add p2gxx for 22Sep2023 files to scale JES
   }
+  else if (run=="2024E_noRW") {
+    fg = new TFile("rootfiles/Prompt2024/w43/GamHistosFill_data_2024Ev2_nib1_w43.root");
+    fgm = new TFile("rootfiles/Prompt2024/w48_Gam/minbiasxs69200/GamHistosFill_mc_summer2024P8_no-pu_w48.root");
+  }
+  else if (run=="2024E_692mb") {
+    fg = new TFile("rootfiles/Prompt2024/w43/GamHistosFill_data_2024Ev2_nib1_w43.root");
+    fgm = new TFile("rootfiles/Prompt2024/w48_Gam/minbiasxs69200/GamHistosFill_mc_summer2024P8_pu-2024Ev2nib1-xs69200_w48.root");
+  }
+  else if (run=="2024E_753mb") {
+    fg = new TFile("rootfiles/Prompt2024/w43/GamHistosFill_data_2024Ev2_nib1_w43.root");
+    fgm = new TFile("rootfiles/Prompt2024/w48_Gam/minbiasxs75300/GamHistosFill_mc_summer2024P8_pu-2024Ev2nib1-xs75300_w48.root");
+  }
   else if (tr.Contains("2024") && tr.Contains("nib")) {
+    /*
     //fg = new TFile(Form("rootfiles/Prompt2024/w43/GamHistosFill_data_%s_w43.root",cr),"READ"); // V7M->V8M
     fg = new TFile(Form("rootfiles/Prompt2024/v45_Gam/GamHistosFill_data_%s_w45.root",cr),"READ"); // V8M closure
     string sr2(cr);
@@ -600,7 +631,12 @@ void L2Res() {
     if (tr.Contains("H")) sr2 = "2024H";
     if (tr.Contains("I")) sr2 = "2024I";
     const char *cr2 = sr2.c_str();
-    fgm = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_mc_winter2024P8_%s-pu_w38.root",cr2),"READ"); // Winter24 photon+jet only (many cloned placeholders)
+    fgm = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_mc_winter2024P8_%s-pu_w38.root",cr2),"READ"); // Winter24 photon+jet only (many cloned placeholders)*/
+    fgm = new TFile("rootfiles/Prompt2024/w48_Gam/GamHistosFill_mc_summer2024P8_pu-2024CDEFGHI_w48.root","READ"); // V9M Summer24 (also PTG version?)
+    if (tr.Contains("C") || tr.Contains("D") || tr.Contains("E"))
+      fg = new TFile(Form("rootfiles/Prompt2024/w48_Gam/GamHistosFill_data_%s-rereco_w48.root",cr),"READ"); // V9M re-reco
+    else
+      fg = new TFile(Form("rootfiles/Prompt2024/w48_Gam/GamHistosFill_data_%s_w48.root",cr),"READ"); // V9M prompt
   }
   else if (tr.Contains("2024")) {
     if (run=="2024H" || run=="2024I")
@@ -643,7 +679,20 @@ void L2Res() {
     //fdm = new TFile("rootfiles/Summer23_L2ResOnly/jmenano_mc_cmb_Summer23MGBPix_v39_noRwPU_noSmearJets_25Feb2024_L2Res_v1.root","READ"); // no JER SF
     fdm = new TFile("rootfiles/Prompt2024/v39_2024_Prompt_etabin_DCSOnly/jmenano_mc_out_Summer23MGBPix_v39_2023_etabin_SFv2.root","READ");
   }
+  else if (run=="2024E_noRW") {
+    fd = new TFile("rootfiles/Prompt2024/v116_Jet/jmenano_data_cmb_2024Ev2_nib1_JME_v116.root");
+    fdm = new TFile("rootfiles/Prompt2024/v116_Jet/jmenano_mc_cmb_Summer24MG_v116_2024.root");
+  }
+  else if (run=="2024E_692mb") {
+    fd = new TFile("rootfiles/Prompt2024/v116_Jet/jmenano_data_cmb_2024Ev2_nib1_JME_v116.root");
+    fdm = new TFile("rootfiles/Prompt2024/v116_Jet/jmenano_mc_cmb_Summer24MG_v116_2024Ev2_nib1.root");
+  }
+  else if (run=="2024E_753mb") {
+    fd = new TFile("rootfiles/Prompt2024/v116_Jet/jmenano_data_cmb_2024Ev2_nib1_JME_v116.root");
+    fdm = new TFile("rootfiles/Prompt2024/v119_Jet/jmenano_mc_cmb_Summer24MG_v119_2024Ev2_nib1.root");
+  }
   else if (tr.Contains("2024") && tr.Contains("nib")) {
+    /*
     if (tr.Contains("B") || tr.Contains("C") || tr.Contains("D") ||
 	tr.Contains("E")) {
       //fd = new TFile(Form("rootfiles/Prompt2024/v113_2024/jmenano_data_cmb_%s_JME_v113_2024.root",cr),"READ"); // V7M->V8M
@@ -659,6 +708,14 @@ void L2Res() {
       else
 	fdm = new TFile(Form("rootfiles/Prompt2024/v113_2024/jmenano_mc_out_Winter24MGV14_v113_%s.root",cr),"READ"); // Winter24
     }
+    */
+
+    fdm = new TFile("rootfiles/Prompt2024/v121_v2_Jet/jmenano_mc_cmb_Summer24MG_v121_v2.root","READ");
+    if (tr.Contains("B") || tr.Contains("C") || tr.Contains("D") ||
+	tr.Contains("E"))
+      fd = new TFile(Form("rootfiles/Prompt2024/v121_v2_Jet/jmenano_data_cmb_%s_Rereco_JME_v121_v2.root",cr),"READ"); // V9M re-reco
+    else
+      fd = new TFile(Form("rootfiles/Prompt2024/v121_v2_Jet/jmenano_data_cmb_%s_JME_v121_v2.root",cr),"READ"); // V9M prompt
   }
   else if (tr.Contains("2024")) {
     if (run=="2024H" || run=="2024I")
@@ -685,7 +742,9 @@ void L2Res() {
 
   TDirectory *dd = fd->GetDirectory("Dijet2"); assert(dd);
   //TDirectory *ddm = fdm->GetDirectory("Dijet2");
-  TDirectory *ddm = fdm->GetDirectory("HLT_MC/Dijet2"); assert(ddm);
+  TDirectory *ddm = fdm->GetDirectory("HLT_MC/Dijet2"); //assert(ddm);
+  if (!ddm) ddm = fdm->GetDirectory("Dijet2");
+  assert(ddm);
   
   // Get the TProfile2D inputs. Z+jet, gam+jet, 3x dijet
   
