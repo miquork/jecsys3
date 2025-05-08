@@ -32,7 +32,7 @@ double flatHFetamin = 3.139;
 bool posOffHF = true; // Positive offset for HF (2024BCD,E,CS,CR patch)
 bool posOffEC27 = true; // Positive offset for EC (2024BCD,E,CS,CR patch)
 bool posOffEC25 = true; // Positive offset for EC (2024BCD,E,CS,CR patch)
-double maxOffTrkEC1 = 0.15; // Max off % at pT=10 GeV in EC1 Trk (2024BCD,E,CS,CR patch)
+double maxOffTrkEC1 = 0.15; // Max off % at pT=10 GeV in EC1 Trk (2024BCD,E,CS,CR patch) [0 for off]
 double maxOffTrkBB = 0.30; // Max off % at pT=10 GeV in BB Trk (2024BCD,E,CS,CR patch)
 bool posOffEC20 = true; // Positive offset for EC (2024BCD,E,CS,CR patch)
 bool negLogHF = false; // Positive offset for HF (2024BC,3/fb patch)
@@ -149,9 +149,18 @@ TProfile* drawPt(TProfile2D *p2, double etamin, double etamax,
       //p->SetBinError(i, calculated_error);
     }
   }
+  //else { // V9M patch for doClosure
+  //for (int i = 1; i != p->GetNbinsX()+1; ++i) {
+  //  double mean_value = p->GetBinContent(i) * 1;
+  //  double entries = p->GetBinEntries(i);
+  //  p->SetBinEntries(i, entries);
+  //  p->SetBinContent(i, entries * mean_value);
+  //}
+  //}
 
   // Patch for re-reco. NB: not yet averaging over |eta| properly
   if (p2xx) {
+    assert(false); // V9M
     for (int i = 1; i != p->GetNbinsX()+1; ++i) {
       double pt = max(50., p->GetXaxis()->GetBinCenter(i));
       double eta = p2->GetXaxis()->GetBinCenter(ix1);
@@ -312,7 +321,8 @@ TH1D *drawCleaned(TH1D *h, double eta, string data, string draw,
     if (data=="P") {
 
       // Core range
-      if (ptmin>=15. && ptmax<=110. && eta<2.322) keep = true;
+      //if (ptmin>=15. && ptmax<=110. && eta<2.322) keep = true; // V8M
+      if (ptmin>=15. && ptmax<=110. && eta<2.172) keep = false; // V9M
 
       // Tunable vetoes
       if (eta>1.392 && eta<1.479 && pt<20) keep = false;
@@ -321,7 +331,8 @@ TH1D *drawCleaned(TH1D *h, double eta, string data, string draw,
     if (data=="D") {
 
       // Core range
-      if (ptmin>=59. && ptmax<=110. && emax<3100. && eta<2.853) keep = true;
+      //if (ptmin>=59. && ptmax<=110. && emax<3100. && eta<2.853) keep = true; // V8M
+      if (ptmin>=86. && ptmax<=110. && emax<3100. && eta<2.853) keep = false; // V9M
       
       // Tunable vetoes
       if (eta>2.322) keep = false;
@@ -358,14 +369,24 @@ TH1D *drawCleaned(TH1D *h, double eta, string data, string draw,
     if (h->GetBinContent(i)>1.3 || h->GetBinContent(i)<0.3) {
       keep = false;
     }
-    // Remove BPIX bad point, HF bad point
-    if (data=="J" || data=="P" || data=="D") {
-      if (eta>1.653 && eta < 1.930 && pt>86 && pt<110) keep = false;
-      if (eta>4.018 && eta < 4.583 && pt>279 && pt<302) keep = false;
-    }
+    // Remove BPIX bad point, HF bad point (V8M:on, V9M:off)
+    //if (data=="J" || data=="P" || data=="D") {
+    //if (eta>1.653 && eta < 1.930 && pt>86 && pt<110) keep = false;
+    //if (eta>4.018 && eta < 4.583 && pt>279 && pt<302) keep = false;
+    //}
     // Remove low pT for flat HF fits
     if (flattenHF && eta>flatHFetamin && pt<flatHFptmin) keep = false;
 
+    // Remove points with zero error for closure
+    if (doClosure &&
+	(h->GetBinError(i)==0 ||
+	 (ptmin>1000 && h->GetBinError(i)<0.01) ||
+	 (data=="G" && ptmin>500 && h->GetBinError(i)<0.02) ||
+	 (data=="Z" && ptmin>200 && h->GetBinError(i)<0.02) ||
+	 emax>6800.)) {
+      keep = false;
+    }
+    
     // Remove points we don't want to keep
     if (!keep) {
       hc->SetBinContent(i, 0.);
@@ -446,9 +467,13 @@ void L2Res() {
      //"2022F_19Dec2023","2022G_19Dec2023",
      //"2023Cv123_19Dec2023","2023Cv4_19Dec2023","2023D_19Dec2023",
      //"2024I","2024H","2024G","2024F","2024E","2024BCD"}; // V7M
-      /*"2024B_nib1",*/"2024C_nib1","2024D_nib1","2024Ev1_nib1","2024Ev2_nib1",
+
+      //"2024B_nib1",
+      "2024C_nib1","2024D_nib1","2024Ev1_nib1","2024Ev2_nib1",
       "2024F_nib1","2024F_nib2","2024F_nib3","2024G_nib1","2024G_nib2",
-      "2024H_nib1","2024I_nib1"}; // V8M
+      "2024H_nib1","2024I_nib1"}; // V9M (V8M)
+
+  //"2024D_nib1"};
   //"2024E_noRW","2024E_692mb","2024E_753mb"}; 
   const int nrun = sizeof(vrun)/sizeof(vrun[0]);
   string vmc[] =
@@ -457,12 +482,15 @@ void L2Res() {
      //"Summer23","Summer23","Summer23BPix",
      //"Winter24","Winter24","Winter24","Winter24","Winter24"};
      //"Winter24","Winter24","Winter24","Winter24","Winter24","Winter24"};//V7M
-     /*"Winter24","Winter24","Winter24","Winter24","Winter24",
-      "Winter24","Winter24","Winter24","Winter24","Winter24",
-      "Winter24","Winter24"*/  // V8M
+     //"Winter24","Winter24","Winter24","Winter24","Winter24",
+      //"Winter24","Winter24","Winter24","Winter24","Winter24",
+      //"Winter24","Winter24"  // V8M
+
       "Summer24","Summer24","Summer24","Summer24",
       "Summer24","Summer24","Summer24","Summer24","Summer24",
-      "Summer24","Summer24"};  // V8M
+      "Summer24","Summer24"};  // V9M
+
+  //"Summer24"};  // V9M
       //"Summer24","Summer24","Summer24"};
   const int nmc = sizeof(vmc)/sizeof(vmc[0]);
   assert(nmc==nrun);
@@ -1020,11 +1048,13 @@ void L2Res() {
   TF1 *f3 = new TF1(Form("f3_%d_%s",ieta,cr),
 		    "[0]+[1]*log10(0.01*x)+[2]*pow(log10(0.01*x),2)",15,3500);
   TF1 *f4 = new TF1(Form("f4_%d_%s",ieta,cr),
-		    "[0]+[1]*log10(0.01*x)+[2]*pow(log10(0.01*x),2)"
-		    "+[3]/(x/10.)",15.,3500.);
+  		    "[0]+[1]*log10(0.01*x)+[2]*pow(log10(0.01*x),2)"
+  		    "+[3]/(x/10.)",15.,3500.);
   // Reference JES
   TF1 *fref = new TF1(Form("fref_%d_%s",ieta,cr),
-		      "[0]+[1]*log10(0.01*x)+[2]/(x/10.)",15.,3500.);
+		      //"[0]+[1]*log10(0.01*x)+[2]/(x/10.)",15.,3500.); // V8M
+		      "[0]+[1]*log10(0.01*x)+[2]/(x/10.)"
+		      "+[3]/pow(x/10.,2)",15.,3500.); // V9M
   
   // Sequential fitting with more and more parameters
   // Extra parameters are of size of expected prior uncertainty
@@ -1038,10 +1068,47 @@ void L2Res() {
   f3->SetParameters(f1->GetParameter(0),f1->GetParameter(1),+0.005);
   mg->Fit(f3,"QRN");
   f4->SetParameters(f3->GetParameter(0),f3->GetParameter(1),
-		    f3->GetParameter(2),f2->GetParameter(2));
+  		    f3->GetParameter(2),f2->GetParameter(2));
   f4->SetParLimits(2,-0.5,0.5); // offset no more than 50% at 10 GeV
   mg->Fit(f4,"QRN");
 
+  // V9M
+  // Simplify constraints
+  fref->SetParameters(f2->GetParameter(0), f2->GetParameter(1),
+		      f2->GetParameter(2), 0.);
+  if (!doClosure) {
+  fref->SetParLimits(0, 0.5, 1.5); // constant
+  fref->SetParLimits(1,-0.3, 0.3); // log-lin
+  fref->SetParLimits(2,-0.5, 0.5); // 1/x (large for 2.1<eta<2.5)
+  fref->SetParLimits(3,  0., 0.5); // 1/x^2
+  if (eta<1.305) { fref->FixParameter(3,0.);         } // Barrel 1/x^2 off
+  if (eta<1.305) { fref->SetParLimits(2,-0.02,0.02); } // Barrel 1/x limits
+  if (eta>2.964) { fref->SetParLimits(3, 0., 0.25);  } // HF0 1/x^2 off
+  if (eta>2.964) { fref->SetParLimits(2, 0., 0.25);  } // HF0 1/x limits
+  if (eta>3.139) { fref->FixParameter(3, 0.);        } // HF 1/x^2 off
+  if (eta>3.139) { fref->SetParLimits(2, 0, 0.15);   } // HF 1/x limits
+  if (eta>4.716) { fref->SetParLimits(3, 0, 0.25);   } // HF2 1/x^2 off
+  if (eta>4.716) { fref->SetParLimits(2, 0, 0.25);   } // HF2 1/x limits
+  // EC1-inner stabilization
+  if (eta>1.305 && eta<1.930 && 
+      (tr.Contains("C") || tr.Contains("D") || tr.Contains("E"))) { 
+    //fref->FixParameter(3, 0); // 1/x^2 off
+    fref->SetParLimits(3,  0.0, 0.1); // 1/x^2 limits
+    fref->SetParLimits(2, -0.5, 0.0); // 1/x non-positive
+  }
+  // Special low-lumi nib
+  if (tr.Contains("2024F_nib1")) {
+    fref->FixParameter(3, 0.); // 1/x^2 off
+    if (eta<1.305 || eta>2.964) fref->FixParameter(2, 0.); // BB,HF 1/x off
+  }
+  } // doClosure
+  if (doClosure) {
+    //fref->SetParameters(1, 0, 0, 0);
+    fref->FixParameter(3, 0.);
+  }
+  
+  /*
+  // V8M
   fref->SetParameters(f1->GetParameter(0),f1->GetParameter(1),+0.02);
   fref->SetParLimits(2,-0.5,0.5); // offset no more than 50% at 10 GeV
   if (eta>2.964 && posOffHF && !doClosure) {
@@ -1071,7 +1138,7 @@ void L2Res() {
     fref->FixParameter(1,0.);
     fref->FixParameter(2,0.);
   }
-
+		      
   if (tr.Contains("2024") && tr.Contains("nib")) {
     if (tr.Contains("F_nib1")) {
       if (eta>3.139) {
@@ -1085,7 +1152,8 @@ void L2Res() {
       }
     }
   }
-  
+  */
+
   mg->Fit(fref,"QRN");
 
   // Bonus: constrain barrel f2 fit to flat if not significant
@@ -1114,10 +1182,11 @@ void L2Res() {
   }
   
   // Keep track of log-lin+1/x for text files
-  vf1[ieta-1] = f2;
+  //vf1[ieta-1] = f2; // V8M (bug? although fref~f2)
+  vf1[ieta-1] = fref; // V9M
   
   f0->Draw("SAME"); f0->SetLineColor(kMagenta+2); //f0->SetLineStyle(kDashed);
-  f1->Draw("SAME"); f1->SetLineColor(kBlue);
+  f1->Draw("SAME"); f1->SetLineColor(kBlue-9);// V9M kBlue); // V8M
   f2->Draw("SAME"); f2->SetLineColor(kGreen+1);
   f3->Draw("SAME"); f3->SetLineColor(kOrange+2);
   f4->Draw("SAME"); f4->SetLineColor(kRed);
@@ -1209,8 +1278,9 @@ void L2Res() {
     //double jes = jes4; // quadlog+1/x
     //double jes = jes2; // loglin+1/x
     double jes = jesref; // loglin+1/x
-    double ejes = sqrt(pow(jes1-jes,2) + pow(jes2-jes,2) + 
-		       pow(jes3-jes,2) + pow(jes4-jes,2));
+    //double ejes = sqrt(pow(jes1-jes,2) + pow(jes2-jes,2) +
+    //		       pow(jes3-jes,2) + pow(jes4-jes,2)); // V8M
+    double ejes = sqrt(pow(jes2-jes,2)+pow(jes3-jes,2)+pow(jes4-jes,2)); // V9M
     if (eta>flatHFetamin && flattenHF) {
       ejes = sqrt(pow(jes0-jes,2) + pow(jes1-jes,2));
     }
@@ -1348,9 +1418,9 @@ void L2Res() {
     
     // Reference JES refit vs <pT,jet,uncorr>
     TF1 *fref2 = new TF1(Form("fref2_%d_%s",ieta,cr),
-			 //"[0]+[1]*log10(0.01*x)+[2]/(x/10.)",
 			 "[0]+[1]*log10(0.01*x)+[2]/(x/10.)+"
-			 "[3]*log10(x/10.)/(x/10.)",
+			 "[3]/pow(x/10.,2)+[4]*log10(x/10.)/(x/10.)", // V9M
+			 //"[3]*log10(x/10.)/(x/10.)", // V8M
 			 ptrefmin2*f1->Eval(ptrefmin2),
 			 ptrefmax2*f1->Eval(ptrefmax2));
     for (int ip = 0; ip != f1->GetNpar() && ip != fref2->GetNpar(); ++ip) {
@@ -1442,7 +1512,7 @@ void L2Res() {
   
   // Step 10. Print out text files
   // 10a: Original parameterization vs pTref
-  string ftxtname = Form("textfiles/Prompt24/Prompt24_Run%s_V8N_DATA_L2ResidualVsPtRef_AK4PFPuppi.txt",cr);
+  string ftxtname = Form("textfiles/Prompt24/Prompt24_Run%s_V9M_DATA_L2ResidualVsPtRef_AK4PFPuppi.txt",cr);
   cout << "Writing results to text file " << ftxtname << endl << flush;
   ofstream ftxt(ftxtname.c_str());
 
@@ -1471,7 +1541,7 @@ void L2Res() {
     ftxt << endl;
   }
   // 10b: Re-parameterization vs pTraw
-  string ftxtname2 = Form("textfiles/Prompt24/Prompt24_Run%s_V8N_DATA_L2Residual_AK4PFPuppi.txt",cr);
+  string ftxtname2 = Form("textfiles/Prompt24/Prompt24_Run%s_V9M_DATA_L2Residual_AK4PFPuppi.txt",cr);
   cout << "Writing results to text file " << ftxtname2 << endl << flush;
   ofstream ftxt2(ftxtname2.c_str());
   

@@ -5,32 +5,51 @@
 \usepackage{tikz}
 \usepackage{xstring}
 
+% Try fixing these to avoid differences between laptop and desktop
+%\geometry{paperwidth=128mm,paperheight=96mm} % 4:3aspect ratio
+%\setlength{\textwidth}{120mm}  % match what Beamer used before (?)
+%\setlength{\textwidth}{114mm}  % Beamer default for 4:3 (?)
+%\setlength{\textwidth}{108mm}  % Beamer default for 4:3 (?
+%\usepackage{ragged2e}
+
 % Use \def instead of \newcommand and keep it on one line
 %\def\IOVlist{2024B\_nib1,2024C\_nib1,2024D\_nib1,2024Ev1\_nib1,2024Ev2\_nib1,2024F\_nib1,2024F\_nib2,2024F\_nib3,2024G\_nib1,2024G\_nib2,2024H\_nib1,2024I\_nib1}
-\def\vJECfit{V8M}
-\def\vJECtest{V7M}
+%\def\vJECfit{V8N}
+\def\vJECfit{V9M}
+\def\vJECtest{V8M}
+%\def\vJECtest{V7M}
 \def\IOVlist{2024B_nib1,2024C_nib1,2024D_nib1,2024Ev1_nib1,2024Ev2_nib1,2024F_nib1,2024F_nib2,2024F_nib3,2024G_nib1,2024G_nib2,2024H_nib1,2024I_nib1}
+%\def\IOVlist{2024C_nib1,2024D_nib1,2024Ev1_nib1,2024Ev2_nib1,2024F_nib1,2024F_nib2,2024F_nib3,2024G_nib1,2024G_nib2,2024H_nib1,2024I_nib1}
 \def\ptlist{15,30,100,300,1000,3000}
 
 \begin{document}
 
 \begin{frame}
-  \frametitle{L2Res fits (new: \vJECfit, test: \vJECtest)}
+  \frametitle{L2Res fits on 24CDE re-reco + Prompt24 (new: \vJECfit, test: \vJECtest)}
   Date: \today
   \begin{itemize}
-  \item {\bf First nib-based fits, Prompt24 data}
-  \item 2024B was commissioning era (V7M non-closure, 0.13~fb$^{-1}$)
-  \item 2024F\_nib1 missed HCAL\_DI (V7M non-closure, 0.88~fb$^{-1}$)
-  \item 2024FG have some bins with $\pm1$\% JES shifts in L3Res, but within uncertainty band (mid-era HCAL+ECAL updates)
-  \item $2<|\eta|<3$ region has offset-like non-closure (was $Z/\gamma$+jet pileup reweighing upated after V7M derivation?)
-  \item 2024B and 2024F\_nib1 have large error bars in L2Res due to low statistics ($\le1$~fb$^{-1}$)
-  \item To-do: (i) account for photon scale drifts, (ii) clean out bad fits, (iii) add inclusive jet vs full 2024
+  \item First 24CDE re-reco JEC + Prompt24 vs Summer24 MC
+  \item New $1/p_{T}^{2}$ term added for low $p_T$ to improve fit
+  \item Fit constraints overhauled as much more MC statistics now
+  \item Lots of cleanup for closure plots to improve $\chi^{2}$
+ %\item Explicit re-fit vs $p_{T,raw}$
+  %\item 2024B was commissioning era (V7M non-closure, 0.13~fb$^{-1}$)
+    %\item 2024F\_nib1 missed HCAL\_DI (V7M non-closure, 0.88~fb$^{-1}$)
+  \item 2024F\_nib1 still has HCAL\_DD (0.88~fb$^{-1}$)
+  %\item 2024FG have some bins with $\pm1$\% JES shifts in L3Res, but within uncertainty band (mid-era HCAL+ECAL updates)
+    %\item $2<|\eta|<3$ region has offset-like non-closure (was $Z/\gamma$+jet pileup reweighing upated after V7M derivation?)
+  %\item $2<|\eta|<3$ region consistency significantly improved at low $p_T$ by remapping $p_{T,ref}$ to $p_{T,raw}$ in V8M
+    %\item 2024B and 2024F\_nib1 have large error bars in L2Res due to low statistics ($\le1$~fb$^{-1}$)
+  \item 2024F\_nib1 has large error bars in L2Res due to low statistics ($\le1$~fb$^{-1}$). 2024B\_nib1 excluded as non-physics run
+  \item To-do: (i) correct photon scale drifts, (ii) add inclusive jets + Wqq', (iii) test RandomCone for low $p_{T}$, (iv) fix stat errs
   \end{itemize}
 \end{frame}
 
 \begin{frame}
 \frametitle{JES L2Res fits (\vJECfit)}
 \foreach \era [count=\x from 1] in \IOVlist{
+  %\raggedright
+  %\justifying
   \includegraphics[width=0.22\textwidth]{L2Res/L2Res_Summary_\era.pdf}
   \ifnum\x=4\newline\fi
   \ifnum\x=8\newline\fi
@@ -63,6 +82,14 @@
   \ifnum\x=8\newline\fi
 }
 \end{frame}
+
+\foreach \era [count=\x from 1] in \IOVlist{%
+  \StrSubstitute{\era}{_}{\_}[\eraTitle]%
+  \begin{frame}
+    \frametitle{JES L2Res re-fits (\vJECfit): \eraTitle}
+    \includegraphics[width=0.99\textwidth]{L2Res/L2Res_AllRefit_\era.pdf}
+  \end{frame}
+}
 
 \foreach \era [count=\x from 1] in \IOVlist{%
   \StrSubstitute{\era}{_}{\_}[\eraTitle]%
