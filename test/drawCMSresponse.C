@@ -35,6 +35,7 @@ Double_t fJECPt(Double_t *x, Double_t *p) {
 
   _jec->setJetPt(ptmeas);
   _jec->setJetEta(eta);
+  _jec->setJetPhi(0.);
   _jec->setJetA(jeta);
   _jec->setRho(rho);
 
@@ -82,7 +83,10 @@ void drawCMSresponse(string era, string id="", bool isl2 = false) {
     //const char *sd = "textFiles/Prompt24";
     //const char *sd = "textFiles/Prompt24_V5M";
     //const char *sd = "textFiles/Prompt24_V6M";
-    const char *sd = "textFiles/Prompt24_V7M";
+    //const char *sd = "textFiles/Prompt24_V7M";
+    const char *sd = "textFiles/Prompt24_V8M";
+    //const char *sd = "CondFormats/JetMETObjects/data";
+    
     //const char *sd = "textFiles/HFscale";
     //const char *st = "2017BCDEF_DATA";
     const char *st = era.c_str();
@@ -90,6 +94,7 @@ void drawCMSresponse(string era, string id="", bool isl2 = false) {
 
     //s = Form("%s/%s_L1FastJet_AK4PFchs.txt",sd,st); cout << s << endl;
     //s = Form("%s/%s_L2Relative_AK4PFchs.txt",sd,st); cout << s << endl;
+    //s = Form("%s/%s_L2Relative_AK4PUPPI.txt",sd,st); cout << s << endl;
     //s = Form("%s/%s_L3Absolute_AK4PFchs.txt",sd,st); cout << s << endl;
     //s = Form("%s/%s_L2L3Residual_AK4PFchs.txt",sd,st); cout << s << endl;
     if (isl2) s = Form("%s/%s_DATA_L2Residual_AK4PFPuppi.txt",sd,st);
