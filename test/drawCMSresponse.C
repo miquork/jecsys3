@@ -80,11 +80,12 @@ void drawCMSresponse(string era, string id="", bool isl2 = false) {
     //const char *sd = "textFiles/Run3_22Sep2023_v3";
     //const char *sd = "textFiles/Summer23_noL2L3Res";
     //const char *sd = "textFiles/Summer23_L2ResOnly";
-    //const char *sd = "textFiles/Prompt24";
+    const char *sd = "textFiles/Prompt24";
     //const char *sd = "textFiles/Prompt24_V5M";
     //const char *sd = "textFiles/Prompt24_V6M";
     //const char *sd = "textFiles/Prompt24_V7M";
-    const char *sd = "textFiles/Prompt24_V8M";
+    //const char *sd = "textFiles/Prompt24_V8M";
+    //const char *sd = "textFiles/Prompt24_V9M";
     //const char *sd = "CondFormats/JetMETObjects/data";
     
     //const char *sd = "textFiles/HFscale";
@@ -232,6 +233,12 @@ void drawCMSresponse(string era, string id="", bool isl2 = false) {
   l->DrawLine(3.2,0.7,3.2,1.1);
   */
   // Run II
+  l->SetLineStyle(kDashed);
+  l->SetLineColor(kGray+1);
+  l->DrawLine(0,1,5.191,1);
+
+  l->SetLineStyle(kSolid);
+  l->SetLineColor(kBlack);
   //l->DrawLine(1.305,0.78,1.305,1.12); // BB
   l->DrawLine(1.305,0.78,1.305,1.18); // BB
   //l->DrawLine(2.5,0.78,2.5,1.06); // EC1

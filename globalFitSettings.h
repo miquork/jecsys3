@@ -56,7 +56,7 @@ bool _gf_fitZjetHDM = true;//false;
 // Permit baseline shift for JES with L2L3Res inputs. Needed for PFcomp fit
 bool _gf_useJESref = false;//true;//false;
 // Alternatively, undo JES completely to show pre-closure plots
-bool _gf_undoJESref = true;
+bool _gf_undoJESref = true; // "*_closure.pdf"
 
 // Listing of all available 'datasets'
 // {name, type, name2}
@@ -102,8 +102,8 @@ const array<array<string,3>,ndt> _gf_datasets = {{
 const array<string,29> _gf_datasets_whitelist = {
   //"ptchs_zjet_a100",
   //"mpfchs1_zjet_a100",
-  "hdm_mpfchs1_jetz",
-  "hdm_mpfchs1_zjav",
+  //"hdm_mpfchs1_jetz", // V8M
+  //"hdm_mpfchs1_zjav", // V8M
   "hdm_mpfchs1_zjet",
   "chf_zjet_a100",
   "nhf_zjet_a100",
@@ -146,7 +146,7 @@ const array<string,29> _gf_shapes_whitelist = {
   //"const", // log^0 constant scale factor
   //"off", // Summer23
   "off_nhf", // Prompt24, no hhpfc+hhnoise+hbtime+hbsipm+off with this
-  "ecalcc", // ECAL cc timing for 2024BCD, not 2024CR/CS/F
+  //"ecalcc", // ECAL cc timing for 2024BCD, not 2024CR/CS/F
   //"qie11"
   //"x1p5",
   //"x1v4", // Summer23 variant
@@ -213,7 +213,8 @@ const array<array<string,3>, nshp> _gf_shapes = {{
     {"off","Rjet","1./x"},
     //{"off_nhf","Rjet","18.46*pow(x/15.6,1.840)/(1+0.5*pow(x/15.6,3.679))"},
     //{"off_nhf","Rjet","19.15*pow(x/15.6,1.912)/(1+0.5*pow(x/15.6,3.824))"},
-    {"off_nhf","Rjet","19.26*pow(x/15.6,1.927)/(1+0.5*pow(x/15.6,3.853))"},
+  //{"off_nhf","Rjet","19.26*pow(x/15.6,1.927)/(1+0.5*pow(x/15.6,3.853))"},//V8M
+    {"off_nhf","Rjet","15.49*pow(x/15.1,1.939)/(1+0.5*pow(x/15.1,3.877))"},//V9M
     {"g1","Rjet","-6.5*max(log(x/610.),0.)"},
     {"p5log","Rjet","1.0*pow(log(x/300.),5)"},
     {"p4log","Rjet","1.0*pow(log(x/300.),4)"},

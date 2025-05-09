@@ -156,7 +156,8 @@ void globalFitEtaBin(double etamin, double etamax, string run, string version) {
   // (make configurable in globalFitSettings later)
   if (run=="Run24F" || run=="Run24G" || run=="Run24H" || run=="Run24I" ||
       trun.Contains("2024F") || trun.Contains("2024G") ||
-      trun.Contains("2024H") || trun.Contains("2024I")) {
+      trun.Contains("2024H") || trun.Contains("2024I") ||
+      trun.Contains("rereco")) {
     if (whitelistshape.find("ecalcc")!=whitelistshape.end())
       whitelistshape.erase(whitelistshape.find("ecalcc"));
   }

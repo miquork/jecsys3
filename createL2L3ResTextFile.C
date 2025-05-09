@@ -88,17 +88,17 @@ void createL2L3ResTextFile() {
   createL2L3ResTextFiles("2024D_nib1");
 
   createL2L3ResTextFiles("2024C_nib1");
-  createL2L3ResTextFiles("2024B_nib1");
+  //createL2L3ResTextFiles("2024B_nib1");
 
   c1->cd();
   gPad->RedrawAxis();
   c1->Update();
-  c1->SaveAs("pdf/createL2L3ResTextFile_Prompt24_V8M_VsPtRef.pdf");
+  c1->SaveAs("pdf/createL2L3ResTextFile_Prompt24_V9M_VsPtRef.pdf");
   
   c3->cd();
   gPad->RedrawAxis();
   c3->Update();
-  c3->SaveAs("pdf/createL2L3ResTextFile_Prompt24_V8M_VsPtRaw.pdf");
+  c3->SaveAs("pdf/createL2L3ResTextFile_Prompt24_V9M_VsPtRaw.pdf");
 
 } // createL2L3ResTextFile
 
@@ -128,11 +128,13 @@ void createL2L3ResTextFiles(string set) {
   assert(h);
   curdir->cd();
 
-  bool isECALCC = (ts.Contains("24B") || ts.Contains("24C") ||
-		   ts.Contains("24D") || ts.Contains("24E"));
-  bool isHBoff = (ts.Contains("24F_nib2") || ts.Contains("24F_nib3") ||
-		  ts.Contains("24G") || ts.Contains("24H") ||
-		  ts.Contains("24I"));
+  //bool isECALCC = (ts.Contains("24B") || ts.Contains("24C") ||
+  //		   ts.Contains("24D") || ts.Contains("24E"));
+  bool isECALCC = false;
+  //bool isHBoff = (ts.Contains("24F_nib2") || ts.Contains("24F_nib3") ||
+  //		  ts.Contains("24G") || ts.Contains("24H") ||
+  //		  ts.Contains("24I"));
+  bool isHBoff = true;
   
   TF1 *f1 = new TF1(Form("f1_%s",set.c_str()),"[0]+[1]/(0.1*x)+[2]*log10(x)/(0.1*x)+[3]*(1+(pow(x/[4],[5])-1)/(pow(x/[4],[5])+1))+[6]*pow(x,-0.3051)+[7]*(0.001*x)+[8]*pow(x*[9]/15.,2.)/(1+0.5*pow(x*[9]/15.,4.))",15,4500);
   TF1 *f1raw = new TF1(Form("f1_%s",set.c_str()),"[0]+[1]/(0.1*x)+[2]*log10(x)/(0.1*x)+[3]*(1+(pow(x/[4],[5])-1)/(pow(x/[4],[5])+1))+[6]*pow(x,-0.3051)+[7]*(0.001*x)+[8]*pow((x*[9])/15.,2.)/(1+0.5*pow((x*[9])/15.,4.))",15,4500);
@@ -338,9 +340,12 @@ void createL2L3ResTextFiles(string set) {
   const char *run = set.c_str();
 
   string sin(""), sout2(""), sout3("");
-  sin = Form("textFiles/Prompt24/Prompt24_Run%s_V8M_DATA_L2ResidualVsPtRef_AK4PFPuppi.txt",cs);
-  sout2 = Form("textFiles/Prompt24/Prompt24_Run%s_V8M_DATA_L2L3ResidualVsPtRef_AK4PFPuppi.txt",cs);
-  sout3 = Form("textFiles/Prompt24/Prompt24_Run%s_V8M_DATA_L2L3Residual_AK4PFPuppi.txt",cs);
+  // Remember to copy L2Res .txt files by hand to output directory
+  // Hand-copying reduces risk of accidental overwriting after L2Res closed
+  sin = Form("textFiles/Prompt24_V9M/Prompt24_Run%s_V9M_DATA_L2ResidualVsPtRef_AK4PFPuppi.txt",cs);
+  // Output files go to generic directory. Copy by hand to final output
+  sout2 = Form("textFiles/Prompt24/Prompt24_Run%s_V9M_DATA_L2L3ResidualVsPtRef_AK4PFPuppi.txt",cs);
+  sout3 = Form("textFiles/Prompt24/Prompt24_Run%s_V9M_DATA_L2L3Residual_AK4PFPuppi.txt",cs);
   
   assert(sin!="");
   assert(sout2!="");
@@ -364,7 +369,8 @@ void createL2L3ResTextFiles(string set) {
   getline(fin, header);
   if (debug) cout << "Input L2Residual header:" << endl;
   if (debug) cout << header << endl;
-  const int nparold = 2 + 3 + 3; // 8
+  const bool isOffSqr(true);
+  const int nparold = (isOffSqr ? 2 + 3 + 4 : 2 + 3 + 3); // 8
 
   if (debug) cout << "Input L3Residual function(s):" << endl;
   if (debug) cout << "1./("<<f1->GetExpFormula().Data()<<")" << endl;
@@ -397,7 +403,7 @@ void createL2L3ResTextFiles(string set) {
   string line;
   double etamin(0), etamax(0);
   int npar(0), xmin(0), xmax(0), ptmin0(0), ptmax1(0);
-  double p0(0), p1(0), p2(0);
+  double p0(0), p1(0), p2(0), p3(0);
   int cnt(0), ieta(0), cntmax(0);
 
   const int nxy = 41;
@@ -408,15 +414,30 @@ void createL2L3ResTextFiles(string set) {
 
     // Read in L2Res
     if (cnt<cntmax && debug) cout << line << endl;
-    assert(sscanf(line.c_str(),"%lf %lf  %d  %d %d  %lf %lf %lf",
-		  &etamin, &etamax, &npar, &xmin, &xmax,
-		  &p0, &p1, &p2)==nparold);
-    assert(npar==2+3);
+    TF1 *f2(0);
+    if (isOffSqr) { // V9M
+      assert(sscanf(line.c_str(),"%lf %lf  %d  %d %d  %lf %lf %lf %lf",
+		    &etamin, &etamax, &npar, &xmin, &xmax,
+		    &p0, &p1, &p2, &p3)==nparold);
+      assert(npar==2+4);
       
-    // TF1 for relative JES (1./L2Residual)
-    TF1 *f2 = new TF1(Form("f2_%s_%d",cs,cnt),
-		      "[0]+[1]*log10(0.01*x)+[2]/(x/10.)",xmin,xmax);
-    f2->SetParameters(p0, p1, p2);
+      // TF1 for relative JES (1./L2Residual)
+      f2 = new TF1(Form("f2_%s_%d",cs,cnt),
+		   "[0]+[1]*log10(0.01*x)+[2]/(x/10.)+[3]/pow(x/10.,2)",
+		   xmin,xmax);
+      f2->SetParameters(p0, p1, p2, p3);
+    }
+    else { // V8M
+      assert(sscanf(line.c_str(),"%lf %lf  %d  %d %d  %lf %lf %lf",
+		    &etamin, &etamax, &npar, &xmin, &xmax,
+		    &p0, &p1, &p2)==nparold);
+      assert(npar==2+3);
+      
+      // TF1 for relative JES (1./L2Residual)
+      f2 = new TF1(Form("f2_%s_%d",cs,cnt),
+		   "[0]+[1]*log10(0.01*x)+[2]/(x/10.)",xmin,xmax);
+      f2->SetParameters(p0, p1, p2);
+    }
     
     // Generate graphs with 100 points logarithmically distributed between
     // pTref=15 GeV / 1.40 (JER 40%*1) and E=sqrt(s)/2. * 1.2 (JER 10%*2)

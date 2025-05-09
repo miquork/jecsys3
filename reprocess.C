@@ -146,12 +146,14 @@ void reprocess(string epoch="") {
     fgptmax = 1200;//1750;
 
     fijptmin = 15; fijptmax = 2787;
-    doMultijetRecoil = (epoch=="Run24CP" || epoch=="Run24BCD" || epoch=="Run24BCDE" || epoch=="Run24C" || epoch=="Run24E" || epoch=="2024B_nib1" || epoch=="2024C_nib1" || epoch=="2024D_nib1" || epoch=="2024Ev1_nib1" || epoch=="2024Ev2_nib1");
+    //doMultijetRecoil = (epoch=="Run24CP" || epoch=="Run24BCD" || epoch=="Run24BCDE" || epoch=="Run24C" || epoch=="Run24E");// || epoch=="2024B_nib1" || epoch=="2024C_nib1" || epoch=="2024D_nib1" || epoch=="2024Ev1_nib1" || epoch=="2024Ev2_nib1");
+    doMultijetRecoil = (epoch=="Run24CP"); // Fixed in 24CDE re-reco now
     fmjptmin = (doMultijetRecoil ? 600 : 220);//133);
     fmjptmax = 2500;
 
     // Tuning for nibs to avoid low statistics issues
-    if (tr.Contains("2024") && tr.Contains("nib")) {
+    if (tr.Contains("2024") && (tr.Contains("nib") ||
+				tr.Contains("rereco"))) {
       if (tr.Contains("B")) {
 	fmjptmin = 846;
 	fmjptmax = 1032;//1497;//1784;
@@ -163,11 +165,13 @@ void reprocess(string epoch="") {
 	  tr.Contains("H") || tr.Contains("I")) {
 	fmjptmax = 1784;
       }
+      /*
       if (tr.Contains("D") || tr.Contains("E")) {
 	fmjptmax = 1784;//2116;
 	fzptmax = 400;
 	fgptmax = 850;
       }
+      */
       if (tr.Contains("H")) {
 	fzptmax = 300;
 	fgptmax = 850;
@@ -177,6 +181,12 @@ void reprocess(string epoch="") {
 	fzptmax = 300;
 	fgptmax = 850;//1200;
 	
+      }
+      if (tr.Contains("rereco")) {
+	fgptmin = 120;
+	fgptmax = 1500;
+	fzptmax = 700;
+	fmjptmax = 2500;
       }
     }
   }
@@ -275,8 +285,26 @@ void reprocess(string epoch="") {
     //fz = new TFile(Form("%s/jme_bplusZ_Run3_Zmm_sync_v59.root",cdz58p1),"READ"); // Sami's combo
     fz = new TFile("rootfiles/jecdataRun3Data.root","READ"); // manual combo
   }
-  if (tepoch.Contains("nib")) {
-    fz = new TFile(Form("rootfiles/Prompt2024/v93/jme_bplusZ_%s_Zmm_v93.root",epoch.c_str()), "READ");
+  if (epoch=="2024E_noRW") {
+    //fz = new TFile("rootfiles/Prompt2024/v95_Zmm_noPU/jme_Zj_2024E_Zmm_75300_V8M_v95.root");
+    fz = new TFile("rootfiles/Prompt2024/v95_Zmm_noPU/jme_Zj_2024E_Zmm_NoPU_V8M_v95.root"); // 30% stats
+  }
+  else if (epoch=="2024E_692mb") {
+    fz = new TFile("rootfiles/Prompt2024/v95_Zmm/jme_Zj_2024E_Zmm_69200_V8M_v95.root"); // 30% stats
+  }
+  else if (epoch=="2024E_753mb") {
+    fz = new TFile("rootfiles/Prompt2024/v95_Zmm/jme_Zj_2024E_Zmm_75300_V8M_v95.root"); // 30% stats
+  }
+  else if (epoch=="2024E-rereco") {
+    fz = new TFile("rootfiles/Prompt2024/v95_Zmm/jme_Zj_2024E_Reprocessing_Zmm_NoPU_V8M_v95.root");
+  }
+  else if (tepoch.Contains("nib")) {
+    //fz = new TFile(Form("rootfiles/Prompt2024/v93/jme_bplusZ_%s_Zmm_v93.root",epoch.c_str()), "READ");
+    //fz = new TFile(Form("rootfiles/Prompt2024/v94_Zmm/jme_bplusZ_%s_Zmm_v94_Summer24.root",epoch.c_str()), "READ");
+    if (tr.Contains("C") || tr.Contains("D") || tr.Contains("E"))
+      fz = new TFile(Form("rootfiles/Prompt2024/v97_Zmm/jme_Zj_2024CDEReprocessing_v1_%s_Zmm_pileup_69200_V8M_v97.root",epoch.c_str()), "READ"); // V9M rereco
+    else
+      fz = new TFile(Form("rootfiles/Prompt2024/v97_Zmm/jme_Zj_%s_Zmm_pileup_69200_V8M_v97.root",epoch.c_str()), "READ"); // V9M prompt
   }
 
   assert(fz && !fz->IsZombie());
@@ -291,6 +319,7 @@ void reprocess(string epoch="") {
   TH1D *hcounts(0);
   TH1D *hmz_dt(0), *hmz_mc(0);
   if (tepoch.Contains("UL") || tepoch.Contains("nib") ||
+      tepoch.Contains("rereco") ||
       epoch=="RunCD" ||
       epoch=="Run22C" || epoch=="Run22D" || epoch=="Run22CD" ||
       epoch=="Run22E" || epoch=="Run22F" || epoch=="Run22G"||
@@ -388,7 +417,7 @@ void reprocess(string epoch="") {
 
   // 22Sep2023 V3 used v32 files
   //TFile *fp = new TFile(Form("../gamjet/rootfiles/GamHistosRatio_%s_P8QCD_v32.root",mp[epoch]),"READ"); // L2L3Res_V3
-  TFile *fp(0), *fp0(0);
+  TFile *fp(0), *fp0(0), *fpm(0);
   if (epoch=="Run22FG") {
     //fp = new TFile(Form("../gamjet/rootfiles/GamHistosRatio_%s_P8QCD_19Dec_v33.root",mp[epoch]),"READ"); // 19Dec2023
     assert(false);
@@ -440,9 +469,38 @@ void reprocess(string epoch="") {
   else if (epoch=="Run24CP") {
     fp = new TFile(Form("rootfiles/Prompt2024/GamHistosRatio_%s_P8BPixQCD_w29.root","2024C"),"READ");
   }
+  else if (epoch=="2024E_noRW") {
+    fp0 = new TFile("rootfiles/Prompt2024/v43_Gam/GamHistosFill_data_2024Ev2_nib1_w45.root");
+    fpm = new TFile("rootfiles/Prompt2024/w48_Gam/minbiasxs69200/GamHistosFill_mc_summer2024P8_no-pu_w48.root");
+  }
+  else if (epoch=="2024E_692mb") {
+    fp0 = new TFile("rootfiles/Prompt2024/v45_Gam/GamHistosFill_data_2024Ev2_nib1_w45.root");
+    fpm = new TFile("rootfiles/Prompt2024/w48_Gam/minbiasxs69200/GamHistosFill_mc_summer2024P8_pu-2024Ev2nib1-xs69200_w48.root");
+  }
+  else if (epoch=="2024E_753mb") {
+    fp0 = new TFile("rootfiles/Prompt2024/v45_Gam/GamHistosFill_data_2024Ev2_nib1_w45.root");
+    fpm = new TFile("rootfiles/Prompt2024/w48_Gam/minbiasxs75300/GamHistosFill_mc_summer2024P8_pu-2024Ev2nib1-xs75300_w48.root");
+  }
+  else if (epoch=="2024E-rereco") {
+    fp = new TFile("rootfiles/Prompt2024/w48_Gam/GamHistosRatio_2024E-rereco_summer2024P8-noQCD_no-pu_w48.root");
+    fp0 = new TFile("rootfiles/Prompt2024/w48_Gam/GamHistosFill_data_2024E-rereco_w48.root");
+    //fpm = new TFile("rootfiles/Prompt2024/w48_Gam/minbiasxs75300/GamHistosFill_mc_summer2024P8_pu-2024Ev2nib1-xs75300_w48.root");
+    fpm = new TFile("rootfiles/Prompt2024/w48_Gam/minbiasxs75300/GamHistosFill_mc_summer2024P8_no-pu_w48.root");
+  }
   else if (tepoch.Contains("nib")) {
-    fp = new TFile(Form("rootfiles/Prompt2024/w43/GamHistosRatio_%s_w43.root",epoch.c_str()),"READ");
-    fp0 = new TFile(Form("rootfiles/Prompt2024/w43/GamHistosFill_data_%s_w43.root",epoch.c_str()),"READ"); assert(fp0); // for JES 
+    //fp = new TFile(Form("rootfiles/Prompt2024/w43/GamHistosRatio_%s_w43.root",epoch.c_str()),"READ");
+    //fp = new TFile(Form("rootfiles/Prompt2024/v45_Gam/GamHistosRatio_%s_winter2024P8-noQCD_pu_w45.root",epoch.c_str()),"READ");
+    if (tr.Contains("C") || tr.Contains("D") || tr.Contains("E"))
+      fp = new TFile(Form("rootfiles/Prompt2024/w48_Gam/GamHistosRatio_%s-rereco_summer2024P8-noQCD_no-pu_w48.root",epoch.c_str()),"READ"); // V9M re-reco
+    else 
+      fp = new TFile(Form("rootfiles/Prompt2024/w48_Gam/GamHistosRatio_%s_summer2024P8-noQCD_no-pu_w48.root",epoch.c_str()),"READ"); // V9M prompt
+    
+    //fp0 = new TFile(Form("rootfiles/Prompt2024/w43/GamHistosFill_data_%s_w43.root",epoch.c_str()),"READ"); assert(fp0); // for JES
+    //fp0 = new TFile(Form("rootfiles/Prompt2024/v45_Gam/GamHistosFill_data_%s_w45.root",epoch.c_str()),"READ"); assert(fp0); // for JES
+    if (tr.Contains("C") || tr.Contains("D") || tr.Contains("E"))
+      fp0 = new TFile(Form("rootfiles/Prompt2024/w48_Gam/GamHistosFill_data_%s-rereco_w48.root",epoch.c_str()),"READ"); // V9M re-reco
+    else
+      fp0 = new TFile(Form("rootfiles/Prompt2024/w48_Gam/GamHistosFill_data_%s_w48.root",epoch.c_str()),"READ"); // V9M prompt
   }
   else {
     fp = new TFile(Form("../gamjet/rootfiles/GamHistosRatio_%s_P8QCD_v32.root",mp[epoch]),"READ"); // L2L3Res_V3
@@ -605,16 +663,40 @@ void reprocess(string epoch="") {
       fmjm = new TFile(Form("rootfiles/Prompt2024/v109_2024/jmenano_mc_out_%s_v109_%s.root",mmjm[epoch],mmjd[epoch]),"READ"); // with JER SF V5M, V5M->V6M (TMP out)
     if (fmjm) fmjm = (TFile*)fmjm->GetDirectory("HLT_MC"); // PATCH
   }
+  else if (epoch=="2024E_noRW") {
+    fmjd = new TFile("rootfiles/Prompt2024/v116_Jet/jmenano_data_cmb_2024Ev2_nib1_JME_v116.root");
+    fmjm = new TFile("rootfiles/Prompt2024/v116_Jet/jmenano_mc_cmb_Summer24MG_v116_2024.root");
+  }
+  else if (epoch=="2024E_692mb") {
+    fmjd = new TFile("rootfiles/Prompt2024/v116_Jet/jmenano_data_cmb_2024Ev2_nib1_JME_v116.root");
+    fmjm = new TFile("rootfiles/Prompt2024/v116_Jet/jmenano_mc_cmb_Summer24MG_v116_2024Ev2_nib1.root");
+  }
+  else if (epoch=="2024E_753mb") {
+    fmjd = new TFile("rootfiles/Prompt2024/v116_Jet/jmenano_data_cmb_2024Ev2_nib1_JME_v116.root");
+    fmjm = new TFile("rootfiles/Prompt2024/v119_Jet/jmenano_mc_cmb_Summer24MG_v119_2024Ev2_nib1.root");
+  }
+  else if (epoch=="2024E-rereco") {
+    fmjd = new TFile("rootfiles/Prompt2024/v121_Jet/jmenano_data_cmb_2024E_Rereco_JME_v121.root");
+    //fmjm = new TFile("rootfiles/Prompt2024/v119_Jet/jmenano_mc_cmb_Summer24MG_v119_2024Ev2_nib1.root");
+    fmjm = new TFile("rootfiles/Prompt2024/v116_Jet/jmenano_mc_cmb_Summer24MG_v116_2024.root"); // NoPU
+  }
   else if (tepoch.Contains("nib")) {
     if (tr.Contains("B") || tr.Contains("C") || tr.Contains("D") ||
 	tr.Contains("E"))
-      fmjd = new TFile(Form("rootfiles/Prompt2024/v113_2024/jmenano_data_cmb_%s_JME_v113_2024.root",epoch.c_str()),"READ"); // V7M closure
+      //fmjd = new TFile(Form("rootfiles/Prompt2024/v113_2024/jmenano_data_cmb_%s_JME_v113_2024.root",epoch.c_str()),"READ"); // V7M closure
+      //fmjd = new TFile(Form("rootfiles/Prompt2024/v116_Jet/jmenano_data_cmb_%s_JME_v116.root",epoch.c_str()),"READ"); // V8M closure
+      fmjd = new TFile(Form("rootfiles/Prompt2024/v121_v2_Jet/jmenano_data_cmb_%s_Rereco_JME_v121_v2.root",epoch.c_str()),"READ"); // V9M re-reco
     else // 2024FGHI
-      fmjd = new TFile(Form("rootfiles/Prompt2024/v114_2024/jmenano_data_cmb_%s_JME_v114_2024.root",epoch.c_str()),"READ"); // V8M
-    if (tr.Contains("F_nib1"))
-      fmjm = new TFile("rootfiles/Prompt2024/v114_2024/jmenano_mc_out_Winter24MGV14_v114_2024.root","READ"); // PU profiles messed up?
-    else
-      fmjm = new TFile(Form("rootfiles/Prompt2024/v113_2024/jmenano_mc_out_Winter24MGV14_v113_%s.root",epoch.c_str()),"READ");
+      //fmjd = new TFile(Form("rootfiles/Prompt2024/v114_2024/jmenano_data_cmb_%s_JME_v114_2024.root",epoch.c_str()),"READ"); // V8M
+      //fmjd = new TFile(Form("rootfiles/Prompt2024/v116_Jet/jmenano_data_cmb_%s_JME_v116.root",epoch.c_str()),"READ"); // V8M closure
+      fmjd = new TFile(Form("rootfiles/Prompt2024/v121_v2_Jet/jmenano_data_cmb_%s_JME_v121_v2.root",epoch.c_str()),"READ"); // V9M prompt
+    //if (tr.Contains("F_nib1"))
+    //fmjm = new TFile("rootfiles/Prompt2024/v114_2024/jmenano_mc_out_Winter24MGV14_v114_2024.root","READ"); // PU profiles messed up?
+    //else
+    //fmjm = new TFile(Form("rootfiles/Prompt2024/v113_2024/jmenano_mc_out_Winter24MGV14_v113_%s.root",epoch.c_str()),"READ");
+    //if (fmjm) fmjm = (TFile*)fmjm->GetDirectory("HLT_MC"); // PATCH
+    //fmjm = new TFile("rootfiles/Prompt2024/v121_v2_Jet/jmenano_mc_cmb_Summer24MG_v121_v2.root","READ");
+    fmjm = new TFile("rootfiles/Prompt2024/v121_v2_Jet/jmenano_mc_out_Summer24MG_PU69_v121_v2.root","READ");
     if (fmjm) fmjm = (TFile*)fmjm->GetDirectory("HLT_MC"); // PATCH
   }
   else {
@@ -673,6 +755,7 @@ void reprocess(string epoch="") {
 
   // Results from Sami's Z+b analysis
   if (tepoch.Contains("UL") || tepoch.Contains("nib") ||
+      tepoch.Contains("rereco") ||
       epoch=="RunCD" ||
       epoch=="Run22C" || epoch=="Run22D" || epoch=="Run22CD" ||
       epoch=="Run22E" || epoch=="Run22F" || epoch=="Run22G" ||
@@ -932,6 +1015,7 @@ void reprocess(string epoch="") {
   types.push_back("ptchs");
   // for pfjet only (activate puf, cef, muf later?)
   if (tepoch.Contains("UL") || tepoch.Contains("nib") ||
+      tepoch.Contains("rereco") ||
       epoch=="RunCD" || 
       epoch=="Run22C" || epoch=="Run22D" || epoch=="Run22CD" ||
       epoch=="Run22E" || epoch=="Run22F" || epoch=="Run22G" ||
@@ -958,6 +1042,7 @@ void reprocess(string epoch="") {
   types.push_back("mpfu");
   types.push_back("crecoil");
   if (tepoch.Contains("UL") || tepoch.Contains("nib") ||
+      tepoch.Contains("rereco") ||
       epoch=="RunCD" || 
       epoch=="Run22C" || epoch=="Run22D" || epoch=="Run22CD" ||
       epoch=="Run22E" || epoch=="Run22F" || epoch=="Run22G" ||
@@ -978,6 +1063,7 @@ void reprocess(string epoch="") {
 
   // <pT,reco> and <pT,gen> vs ref pT (MC only)
   if (tepoch.Contains("UL") || tepoch.Contains("nib") ||
+      tepoch.Contains("rereco") ||
       epoch=="RunCD" ||
       epoch=="Run22C" || epoch=="Run22D" || epoch=="Run22CD" ||
       epoch=="Run22E" || epoch=="Run22F" || epoch=="Run22G" ||
@@ -1158,6 +1244,7 @@ void reprocess(string epoch="") {
 	  } // "zjav"
 	  if (s=="zjet") {
 	    if (tepoch.Contains("UL") || tepoch.Contains("nib") ||
+		tepoch.Contains("rereco") ||
 		epoch=="RunCD" ||
 		epoch=="Run22C" || epoch=="Run22D" || epoch=="Run22CD" ||
 		epoch=="Run22E" || epoch=="Run22F" || epoch=="Run22G" ||
@@ -1612,7 +1699,9 @@ void reprocess(string epoch="") {
     // New method 2024-12-13 of using stored JES
     TProfile2D *p2jes(0), *p2res(0);
     TProfile *pjes(0), *pres(0);
-    if (tepoch.Contains("nib")) {
+    if (tepoch.Contains("nib") ||
+	tepoch.Contains("rereco") ||
+	(epoch=="2024E_noRW" || epoch=="2024E_692mb" || epoch=="2024E_753mb")) {
       TProfile2D *p2jesp(0), *p2jesz(0);//, *p2jesm(0);
       TProfile *pjesp(0), *pjesz(0);//, *pjesm(0);
     //pjesp = (TProfile*)fp0->Get("resp_JES_DATA_a100_eta00_13"); assert(pjesp);
@@ -2250,6 +2339,7 @@ void reprocess(string epoch="") {
   fout->Close();
   if (fz) fz->Close();
   if (fp) fp->Close();
+  if (fpm) fpm->Close();
   if (fmjd) fmjd->Close();
   if (fmjm) fmjm->Close();
   curdir->cd();
