@@ -231,7 +231,7 @@ void JERSF() {
   //string vrun[] = {"2024BC"};
 
   // Grand scan of all eras and recos
-  string vrun[] = {"2022C_Prompt2022","2022D_Prompt2022", //Pr22
+  string vrun[] = {/*"2022C_Prompt2022","2022D_Prompt2022", //Pr22
                    "2022C_22Sep2023","2022D_22Sep2023","2022E_22Sep2023",//22Sep
 		   "2022F_22Sep2023","2022G_22Sep2023", //22Sep
 		   "2023Cv123_Prompt2023","2023Cv4_Prompt2023", //Pr23
@@ -242,9 +242,12 @@ void JERSF() {
 		   "2023D_19Dec2023", //19Dec
 		   //"2024BC", //Pr24
 		   "2024BCD","2024E","2024F","2024G","2024H","2024I"
-		   //"2024B_nib1","2024C_nib1","2024D_nib1","2024E_nib1",
-		   //"2024F_nib1","2024F_nib2","2024F_nib3",
-		   //"2024G_nib1","2024G_nib2","2024H_nib1","2024I_nib1"
+		   //"2024B_nib1",*/
+                   "2024CDEFGHI_nib","2024CDE_nib","2024FGHI_nib",
+		   "2024C_nib1","2024D_nib1","2024Ev1_nib1","2024Ev2_nib1",
+		   "2024F_nib1","2024F_nib2","2024F_nib3",
+		   "2024G_nib1","2024G_nib2","2024H_nib1","2024I_nib1"
+		   //"2024E_noRW","2024E_692mb","2024E_753mb"
   };
 
   //string vrun[] = {"2024C","2024D","2024CD"};
@@ -274,7 +277,7 @@ void JERSF() {
   //string vmc[] = {"Summer23MGBPix"};
 
   // Grand scan of all eras and re-recos
-  string vmc[] = {"Summer23MGBPix","Summer23MGBPix", //Pr22
+  string vmc[] = {/*"Summer23MGBPix","Summer23MGBPix", //Pr22
 		  "Summer23MGBPix","Summer23MGBPix","Summer23MGBPix", //22Sep
 		  "Summer23MGBPix","Summer23MGBPix", //22Sep
 		  "Summer23MGBPix","Summer23MGBPix", //Pr23
@@ -283,12 +286,18 @@ void JERSF() {
 		  "Summer23MGBPix","Summer23MGBPix", //19Dec
 		  "Summer23MGBPix","Summer23MGBPix", //19Dec
 		  "Summer23MGBPix", //19Dec
-		  //"Summer23MGBPix"}; //Pr24
+		  //"Summer23MGBPix"
 		  //"Winter24","Winter24","Winter24","Winter24","Winter24","Winter24"
 		  "Summer23MGBPix","Summer23MGBPix","Summer23MGBPix","Summer23MGBPix","Summer23MGBPix","Summer23MGBPix"
 		  //"Winter24","Winter24","Winter24","Winter24",
 		  //"Winter24","Winter24","Winter24","Winter24","Winter24",
 		  //"Winter24","Winter24"
+		  */
+    "Summer24","Summer24","Summer24",
+    "Summer24","Summer24","Summer24","Summer24",
+    "Summer24","Summer24","Summer24",
+    "Summer24","Summer24","Summer24","Summer24"
+    //"2024E_noRW","2024E_692mb","2024E_753mb" //Pr24
   };
   //string vmc[] = {"Summer23MGBPix","Summer23MGBPix","Summer23MGBPix"};
   //string vmc[] = {"Summer23MGBPix","Summer23MGBPix","Summer23MGBPix"};
@@ -450,7 +459,29 @@ void JERSF() {
   //fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w33.root",cr),"READ");
   //fgm = new TFile("rootfiles/Prompt2024/GamHistosFill_mc_winter2024P8_w33.root","READ"); // Winter24 photon+jet only
   //}
+  else if (run=="2024E_noRW") {
+    f = new TFile("rootfiles/Prompt2024/v116_Jet/jmenano_data_cmb_2024Ev2_nib1_JME_v116.root");
+    fm = new TFile("rootfiles/Prompt2024/v116_Jet/jmenano_mc_cmb_Summer24MG_v116_2024.root");
+    fz = new TFile("rootfiles/Prompt2024/v95_Zmm_noPU/jme_Zj_2024E_Zmm_75300_V8M_v95.root");
+    fg = new TFile("rootfiles/Prompt2024/w43/GamHistosFill_data_2024Ev2_nib1_w43.root");
+    fgm = new TFile("rootfiles/Prompt2024/w48_Gam/minbiasxs69200/GamHistosFill_mc_summer2024P8_no-pu_w48.root");
+  }
+  else if (run=="2024E_692mb") {
+    f = new TFile("rootfiles/Prompt2024/v116_Jet/jmenano_data_cmb_2024Ev2_nib1_JME_v116.root");
+    fm = new TFile("rootfiles/Prompt2024/v116_Jet/jmenano_mc_cmb_Summer24MG_v116_2024Ev2_nib1.root");
+    fz = new TFile("rootfiles/Prompt2024/v95_Zmm/jme_Zj_2024E_Zmm_69200_V8M_v95.root"); // 30% stats?
+    fg = new TFile("rootfiles/Prompt2024/w43/GamHistosFill_data_2024Ev2_nib1_w43.root");
+    fgm = new TFile("rootfiles/Prompt2024/w48_Gam/minbiasxs69200/GamHistosFill_mc_summer2024P8_pu-2024Ev2nib1-xs69200_w48.root");
+  }
+  else if (run=="2024E_753mb") {
+    f = new TFile("rootfiles/Prompt2024/v116_Jet/jmenano_data_cmb_2024Ev2_nib1_JME_v116.root");
+    fm = new TFile("rootfiles/Prompt2024/v119_Jet/jmenano_mc_cmb_Summer24MG_v119_2024Ev2_nib1.root");
+    fz = new TFile("rootfiles/Prompt2024/v95_Zmm/jme_Zj_2024E_Zmm_75300_V8M_v95.root");
+    fg = new TFile("rootfiles/Prompt2024/w43/GamHistosFill_data_2024Ev2_nib1_w43.root");
+    fgm = new TFile("rootfiles/Prompt2024/w48_Gam/minbiasxs75300/GamHistosFill_mc_summer2024P8_pu-2024Ev2nib1-xs75300_w48.root");    
+  }
   else if (TString(cr).Contains("2024")) {
+    TString tr = cr;
     //f = new TFile(Form("rootfiles/Prompt2024/v39_2024_Prompt_etabin_DCSOnly/jmenano_data_cmb_%s_v39_2024_Prompt_etabin_DCSOnly.root",cr),"READ");
     //f = new TFile(Form("rootfiles/Prompt2024/v39_2024_Prompt_etabin_DCSOnly/jmenano_data_cmb_%s_JME_v39_2024_Prompt_etabin_DCSOnly.root",cr),"READ"); // no ZB
     //f = new TFile(Form("rootfiles/Prompt2024/v39_2024_Prompt_eta_SFD_DCSOnly_Filter_HLT_MPF/jmenano_data_cmb_%s_JME_v39_2024_Prompt_eta_SFD_DCSOnly_Filter_HLT_MPF.root",cr),"READ"); // MET/sumET<0.3
@@ -464,19 +495,25 @@ void JERSF() {
     //f = new TFile(Form("rootfiles/Prompt2024/v83_2024/jmenano_data_cmb_%s_JME_v83_2024.root",cr),"READ");
     //f = new TFile(Form("rootfiles/Prompt2024/v89_2024/jmenano_data_cmb_%s_JME_v89_2024.root",cr),"READ"); // Aug 8 hybrid, V5M JEC
     //f = new TFile(Form("rootfiles/Prompt2024/v109_2024/jmenano_data_cmb_%s_JME_v109_2024.root",cr),"READ"); // V5M->V6M JEC
-    if (run=="2024H" || run=="2024I")
-      f = new TFile(Form("rootfiles/Prompt2024/v111_2024/jmenano_data_cmb_%s_JME_v111_2024.root",cr),"READ"); // V6M->V7M
+    //if (run=="2024H" || run=="2024I")
+    //f = new TFile(Form("rootfiles/Prompt2024/v111_2024/jmenano_data_cmb_%s_JME_v111_2024.root",cr),"READ"); // V6M->V7M
+    //else
+    //f = new TFile(Form("rootfiles/Prompt2024/v110_2024/jmenano_data_cmb_%s_JME_v110_2024.root",cr),"READ"); // V6M closure
+    if (tr.Contains("B") || tr.Contains("C") || tr.Contains("D") ||
+	tr.Contains("E"))
+      f = new TFile(Form("rootfiles/Prompt2024/v121_v2_Jet/jmenano_data_cmb_%s_Rereco_JME_v121_v2.root",cr),"READ"); // V9M re-reco
     else
-      f = new TFile(Form("rootfiles/Prompt2024/v110_2024/jmenano_data_cmb_%s_JME_v110_2024.root",cr),"READ"); // V6M closure
+      f = new TFile(Form("rootfiles/Prompt2024/v121_v2_Jet/jmenano_data_cmb_%s_JME_v121_v2.root",cr),"READ"); // V9M prompt
     //f = new TFile(Form("rootfiles/Prompt2024/v113_2024/jmenano_data_cmb_%s_JME_v113_2024.root",cr),"READ"); // V7M closure (cmb still missing)
     //fm = new TFile("rootfiles/Prompt2024/v39_2024_Prompt_etabin_DCSOnly/jmenano_mc_cmb_Summer23MGBPix_v39_2023_etabin_SFv2.root","READ"); // with JER SF?
     //fm = new TFile("rootfiles/Summer23_L2ResOnly/jmenano_mc_cmb_Summer23MGBPix_v39_noRwPU_noSmearJets_25Feb2024_L2Res_v1.root","READ"); // no JER SF
     //fm = new TFile("rootfiles/Prompt2024/v83_2024/jmenano_mc_cmb_Winter24MG_v83_2024.root","READ"); // no JER SF?
     //fm = new TFile(Form("rootfiles/Prompt2024/v109_2024/jmenano_mc_out_Winter24MGV14_v109_%s.root",cr),"READ"); // no JER SF?
-    if (run=="2024H" || run=="2024I")
-      fm = new TFile(Form("rootfiles/Prompt2024/v111_2024/jmenano_mc_out_Winter24MGV14_v111_%s.root",cr),"READ"); // Winter24
-    else
-      fm = new TFile(Form("rootfiles/Prompt2024/v109_2024/jmenano_mc_out_Winter24MGV14_v109_%s.root",cr),"READ"); // Winter24
+    //if (run=="2024H" || run=="2024I")
+    //fm = new TFile(Form("rootfiles/Prompt2024/v111_2024/jmenano_mc_out_Winter24MGV14_v111_%s.root",cr),"READ"); // Winter24
+    //else
+    //fm = new TFile(Form("rootfiles/Prompt2024/v109_2024/jmenano_mc_out_Winter24MGV14_v109_%s.root",cr),"READ"); // Winter24
+    fm = new TFile("rootfiles/Prompt2024/v121_v2_Jet/jmenano_mc_out_Summer24MG_PU69_v121_v2.root","READ"); // V9M
     fm = (TFile*)fm->GetDirectory("HLT_MC");
     //fm = new TFile("rootfiles/Prompt2024/v89_2024/jmenano_mc_cmb_Winter24MG_v89_2024.root","READ"); // MCV14, JER SF
     //if (run=="2024BCD") {
@@ -493,10 +530,16 @@ void JERSF() {
     //fz = new TFile(Form("rootfiles/Prompt2024/jme_bplusZ_%s_Zmm_sync_v85.root",cr),"READ");
     //fz = new TFile(Form("rootfiles/Prompt2024/jme_bplusZ_%s_Zmm_sync_v86.root",cr),"READ"); // Aug 8 hybrid, V5M
     //fz = new TFile(Form("rootfiles/Prompt2024/v87/jme_bplusZ_%s_Zmm_sync_v87.root",cr),"READ"); // V5M->V6M
-    if (run=="2024H" || run=="2024I")
-      fz = new TFile(Form("rootfiles/Prompt2024/v88/jme_bplusZ_%s_Zmm_sync_v88b.root",cr),"READ"); // V6M->V7M
+    //if (run=="2024H" || run=="2024I")
+    //fz = new TFile(Form("rootfiles/Prompt2024/v88/jme_bplusZ_%s_Zmm_sync_v88b.root",cr),"READ"); // V6M->V7M
+    //else
+    //fz = new TFile(Form("rootfiles/Prompt2024/v88/jme_bplusZ_%s_Zmm_sync_v88.root",cr),"READ"); // V6M closure
+    if (tr.Contains("CDEFGHI"))
+      fz = new TFile(Form("rootfiles/Prompt2024/v97_Zmm/jme_Zj_%s_Zmm_pileup_69200_V8M_v97.root","2024G_nib2"),"READ"); // V9M re-reco
+    else if (tr.Contains("C") || tr.Contains("D") || tr.Contains("E"))
+      fz = new TFile(Form("rootfiles/Prompt2024/v97_Zmm/jme_Zj_2024CDEReprocessing_v1_%s_Zmm_pileup_69200_V8M_v97.root",cr),"READ"); // V9M re-reco
     else
-      fz = new TFile(Form("rootfiles/Prompt2024/v88/jme_bplusZ_%s_Zmm_sync_v88.root",cr),"READ"); // V6M closure
+      fz = new TFile(Form("rootfiles/Prompt2024/v97_Zmm/jme_Zj_%s_Zmm_pileup_69200_V8M_v97.root",cr),"READ"); // V9M prompt  
     //fz = new TFile("rootfiles/Prompt2024/jme_bplusZ_2024BC_Zmm_sync_v80golden.root","READ"); // 3/fb closure
     //fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w12.root",cr),"READ"); // DCSOnly
     //fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w13.root",cr),"READ"); // DCSOnly
@@ -509,17 +552,24 @@ void JERSF() {
     //fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w33.root",cr),"READ");
     //fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w35.root",cr),"READ"); // Aug 8 hybrid, V5M
     //fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w38.root",cr),"READ"); // V5M->V6M
-    if (run=="2024H" || run=="2024I")
-      fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%sskim_w40.root",cr),"READ"); // V6M->V7M
+    //if (run=="2024H" || run=="2024I")
+    //fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%sskim_w40.root",cr),"READ"); // V6M->V7M
+    //else
+    //fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w39.root",cr),"READ"); // // V6M closure
+    if (tr.Contains("CDEFGHI"))
+      fg = new TFile(Form("rootfiles/Prompt2024/w48_Gam/GamHistosFill_data_%s_w48.root","2024BCDEFGHI"),"READ"); // V9M re-reco
+    else if (tr.Contains("C") || tr.Contains("D") || tr.Contains("E"))
+      fg = new TFile(Form("rootfiles/Prompt2024/w48_Gam/GamHistosFill_data_%s-rereco_w48.root",cr),"READ"); // V9M re-reco
     else
-      fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w39.root",cr),"READ"); // // V6M closure
+      fg = new TFile(Form("rootfiles/Prompt2024/w48_Gam/GamHistosFill_data_%s_w48.root",cr),"READ"); // V9M prompt
     //fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w18.root",cr),"READ"); // 3/fb closure
     //fgm = new TFile("rootfiles/Prompt2024/GamHistosFill_mc_2023P8-BPix_w12.root","READ");
     //fgm = new TFile("rootfiles/Prompt2024/GamHistosFill_mc_2023QCD-BPix_w12.root","READ");
     //fgm = new TFile("rootfiles/Prompt2024/GamHistosFill_mc_2023P8-BPix_w16.root","READ");
     //fgm = new TFile("rootfiles/Prompt2024/GamHistosFill_mc_winter2024P8_w33.root","READ"); // Winter24 photon+jet only
     //fgm = new TFile("rootfiles/Prompt2024/GamHistosFill_mc_winter2024P8_w35.root","READ"); // Winter24 photon+jet only
-    fgm = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_mc_winter2024P8_%s-pu_w38.root",cr),"READ"); // Winter24 photon+jet only
+    //fgm = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_mc_winter2024P8_%s-pu_w38.root",cr),"READ"); // Winter24 photon+jet only
+    fgm = new TFile("rootfiles/Prompt2024/w48_Gam/GamHistosFill_mc_summer2024P8_pu-2024CDEFGHI_w48.root","READ"); // V9M Summer24 (also PTG version?)
   }
   else if (TString(cr).Contains("2023")) {
     f = new TFile(Form("rootfiles/Summer23_L2ResOnly/jmenano_data_cmb_%s_JME_v39_noRwPU_noSmearJets_25Feb2024_L2Res_v1.root",cr),"READ");
@@ -599,7 +649,9 @@ void JERSF() {
   // Draw reference region JER
   double eps = 1e-4;
   TH1D *h0 = tdrHist("h0","JER",0.+eps,0.3-eps);
-  TH1D *h0d = tdrHist("h0d","JER SF",0.5+eps,3.0-eps);
+  //TH1D *h0d = tdrHist("h0d","JER SF",0.5+eps,3.0-eps);
+  TH1D *h0d = tdrHist("h0d","JER SF",0.5+eps,2.0-eps);
+  if (skipG) h0d->GetYaxis()->SetRangeUser(0.75+eps,1.5-eps);
   lumi_136TeV = Form("%s - %s",cr,cm);
   extraText = "Private";
   TCanvas *c0 = tdrDiCanvas(Form("c13_%s",cr),h0,h0d,8,11);
@@ -617,25 +669,25 @@ void JERSF() {
   f13->SetLineColor(kBlack);
   f13->Draw("SAME");
 
+  TLegend *leg0 = tdrLeg(0.65,0.90-(skipG ? 2 : skipZ ? 3 : 4)*0.05,0.90,0.90);
   if (!skipG) {
     tdrDraw(hjer13gm,"HISTE",kNone,kBlue,kSolid,-1,kNone,0);
     tdrDraw(hjer13g,"Pz",kOpenCircle,kBlue);
 
-    TLegend *leg0 = tdrLeg(0.65,0.90-(skipZ ? 3 : 4)*0.05,0.90,0.90);
+    //TLegend *leg0 = tdrLeg(0.65,0.90-(skipZ ? 3 : 4)*0.05,0.90,0.90);
 
     if (!skipZ) {
-      //tdrDraw(hjer13zm,"HISTE",kNone,kRed,kSolid,-1,kNone,0);
-      //tdrDraw(hjer13z,"Pz",kOpenDiamond,kRed,kSolid,-1,kNone,0);
+      tdrDraw(hjer13zm,"HISTE",kNone,kRed,kSolid,-1,kNone,0);
+      tdrDraw(hjer13z,"Pz",kOpenDiamond,kRed,kSolid,-1,kNone,0);
       //leg0->AddEntry(hjer13z,"Z(#mu#mu) + jet", "PLE");
       c0->cd(2);
       tdrDraw(hsf13z,"Pz",kOpenDiamond,kRed);
       leg0->AddEntry(hsf13z,"Z(#mu#mu) + jet", "PLE");
     }
     leg0->AddEntry(hjer13g,"#gamma + jet", "PLE");
-    leg0->AddEntry(hjer13,"Dijet", "PLE");
-    leg0->AddEntry(hjer13m,"MC", "L");
-
   }
+  leg0->AddEntry(hjer13,"Dijet", "PLE");
+  leg0->AddEntry(hjer13m,"MC", "L");
 
   c0->cd(2);
   gPad->SetLogx();
