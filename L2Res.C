@@ -19,6 +19,7 @@ bool fitG = true; // gamma+jet
 bool fitD = true; // Dijet (pT,ave)
 bool fitP = true; // Dijet (pT,probe)
 bool fitJ = true; // Dijet (pT,tag)
+bool fitRC = true; // Random Cone (rootfiles/randomConeL2L3Res.root)
 
 bool drawStat = true; // Draw c0.pdf for statistical uncertainty
 bool doVsEtaPt = true;
@@ -469,9 +470,9 @@ void L2Res() {
      //"2024I","2024H","2024G","2024F","2024E","2024BCD"}; // V7M
 
       //"2024B_nib1",
-      "2024C_nib1","2024D_nib1","2024Ev1_nib1","2024Ev2_nib1",
-      "2024F_nib1","2024F_nib2","2024F_nib3","2024G_nib1","2024G_nib2",
-      "2024H_nib1","2024I_nib1"}; // V9M (V8M)
+      //"2024C_nib1","2024D_nib1","2024Ev1_nib1","2024Ev2_nib1",
+      //"2024F_nib1","2024F_nib2","2024F_nib3","2024G_nib1","2024G_nib2",
+      /*"2024H_nib1",*/"2024I_nib1"}; // V9M (V8M)
 
   //"2024D_nib1"};
   //"2024E_noRW","2024E_692mb","2024E_753mb"}; 
@@ -486,9 +487,9 @@ void L2Res() {
       //"Winter24","Winter24","Winter24","Winter24","Winter24",
       //"Winter24","Winter24"  // V8M
 
-      "Summer24","Summer24","Summer24","Summer24",
-      "Summer24","Summer24","Summer24","Summer24","Summer24",
-      "Summer24","Summer24"};  // V9M
+      //"Summer24","Summer24","Summer24","Summer24",
+      //"Summer24","Summer24","Summer24","Summer24","Summer24",
+      /*"Summer24",*/"Summer24"};  // V9M
 
   //"Summer24"};  // V9M
       //"Summer24","Summer24","Summer24"};
@@ -738,7 +739,9 @@ void L2Res() {
     }
     */
 
-    fdm = new TFile("rootfiles/Prompt2024/v121_v2_Jet/jmenano_mc_cmb_Summer24MG_v121_v2.root","READ");
+    //fdm = new TFile("rootfiles/Prompt2024/v121_v2_Jet/jmenano_mc_cmb_Summer24MG_v121_v2.root","READ"); // V9M_draft1
+    fdm = new TFile("rootfiles/Prompt2024/v121_v2_Jet/jmenano_mc_out_Summer24MG_PU69_v121_v2.root","READ"); // V9M
+    fdm = (TFile*)fdm->GetDirectory("HLT_MC");
     if (tr.Contains("B") || tr.Contains("C") || tr.Contains("D") ||
 	tr.Contains("E"))
       fd = new TFile(Form("rootfiles/Prompt2024/v121_v2_Jet/jmenano_data_cmb_%s_Rereco_JME_v121_v2.root",cr),"READ"); // V9M re-reco
@@ -773,7 +776,22 @@ void L2Res() {
   TDirectory *ddm = fdm->GetDirectory("HLT_MC/Dijet2"); //assert(ddm);
   if (!ddm) ddm = fdm->GetDirectory("Dijet2");
   assert(ddm);
+
   
+  // Load Random Cone
+  TFile *frc(0);
+  if (tr.Contains("2024") && tr.Contains("nib") &&
+      (tr.Contains("F") || tr.Contains("G") || tr.Contains("H") ||
+       tr.Contains("I"))) {
+    frc = new TFile("rootfiles/randomConeL2L3Res.root","READ");
+  }
+  TH1D *hrc_vsEta(0);
+  if (frc) {
+    hrc_vsEta = (TH1D*)frc->Get(Form("hrc13jes_%s",cr));
+    assert(hrc_vsEta);
+  }
+  double ptmin = 9;//(fitRC ? 9. : 15.);
+
   // Get the TProfile2D inputs. Z+jet, gam+jet, 3x dijet
   
   // Z+jet: x:eta, y:pT,avp (others p2m0tc for pT,tag, p2m0pf for pT,probe )
@@ -826,7 +844,8 @@ void L2Res() {
   TProfile *p13zm(0), *p13gm(0), *p13dm(0), *p13jm(0), *p13pm(0);
   TProfile *p13z(0), *p13g(0), *p13d(0), *p13j(0), *p13p(0);
 
-  TH1D *h13 = tdrHist("h13","JES",0.65,1.85);//0.65,1.45);
+  TH1D *h13 = tdrHist("h13","JES",0.65,1.85,//0.65,1.45);
+		      "p_{T} (GeV)", ptmin, 3500.);
   lumi_136TeV = Form("%s - %s%s",cr,cm,cl);
   extraText = "Private";
   TCanvas *c13 = tdrCanvas(Form("c13_%s",cr),h13,8,33,kSquare);
@@ -887,7 +906,8 @@ void L2Res() {
     double eta2 = p2d->GetXaxis()->GetBinLowEdge(ieta+1);
   // (No indent here for the resf of the loop, maybe function call later)
     
-  TH1D *h1 = tdrHist(Form("h1_%s",cr),"JES",0.65,1.85);
+    TH1D *h1 = tdrHist(Form("h1_%s",cr),"JES",0.65,1.85,
+		       "p_{T} (GeV)", ptmin, 3500.);
   lumi_136TeV = Form("%s - %s%s",cr,cm,cl);
   extraText = "Private";
   TCanvas *c1 = tdrCanvas(Form("c1_%s",cr),h1,8,33,kSquare);
@@ -923,7 +943,8 @@ void L2Res() {
 
   
   // Step 2. Project profile to histogram, normalize by |eta|<1.3
-  TH1D *h2 = tdrHist(Form("h2_%s",cr),"Rel. JES",0.65,1.85);
+  TH1D *h2 = tdrHist(Form("h2_%s",cr),"Rel. JES",0.65,1.85,
+		     "p_{T} (GeV)", ptmin, 3500.);
   TCanvas *c2 = tdrCanvas(Form("c2_%s",cr),h2,8,33,kSquare);
   c2->SetLogx();
 
@@ -952,7 +973,8 @@ void L2Res() {
 		  cr,int(1000.*eta1),int(1000*eta2),cr,cc,"c2"));
 
   // Step 3. Draw data/MC ratio before normalization
-  TH1D *h3 = tdrHist(Form("h3_%s",cr),"JES Data/MC",0.5,1.3);//0.80,1.15);
+  TH1D *h3 = tdrHist(Form("h3_%s",cr),"JES Data/MC",0.5,1.3,//0.80,1.15);
+		     "p_{T} (GeV)", ptmin, 3500.);
   TCanvas *c3 = tdrCanvas(Form("c3_%s",cr),h3,8,33,kSquare);
   c3->SetLogx();
 
@@ -974,11 +996,12 @@ void L2Res() {
 		  cr,int(1000.*eta1),int(1000.*eta2),cr,cc,"c3"));
 
   // Step 4. Draw data/MC ratio of normalized JES
-  TH1D *h4 = tdrHist(Form("h4_%s",cr),"Rel. JES Data/MC",0.50,1.35);
+  TH1D *h4 = tdrHist(Form("h4_%s",cr),"Rel. JES Data/MC",0.50,1.35,
+		     "p_{T} (GeV)", ptmin, 3500.);
   TCanvas *c4 = tdrCanvas(Form("c4_%s",cr),h4,8,33,kSquare);
   c4->SetLogx();
 
-  l->DrawLine(15.,1,3500.,1);
+  l->DrawLine(ptmin,1,3500.,1);
 
   leg1->Draw("SAME");
 	     
@@ -998,7 +1021,8 @@ void L2Res() {
 
   // Step 5. Curate data and do final fit of response
   // Options: flat, log-linear, quadratic, +1/x
-  TH1D *h5 = tdrHist(Form("h5_%s",cr),"Rel. JES Data/MC",0.50,1.35);
+  TH1D *h5 = tdrHist(Form("h5_%s",cr),"Rel. JES Data/MC",0.50,1.35,
+		     "p_{T} (GeV)", ptmin, 3500.);
   TCanvas *c5 = tdrCanvas(Form("c5_%s",cr),h5,8,33,kSquare);
   c5->SetLogx();
 
@@ -1007,7 +1031,7 @@ void L2Res() {
   l->SetLineStyle(kDotted);
   l->DrawLine(ptmaxe,0.50,ptmaxe,1.35);
   l->SetLineStyle(kDashed);
-  l->DrawLine(15.,1,3500.,1);
+  l->DrawLine(ptmin,1,3500.,1);
 
   leg1->Draw("SAME");
 
@@ -1032,29 +1056,51 @@ void L2Res() {
   if (fitP) g_p = cleanGraph(new TGraphErrors(hprf));
   if (fitJ) g_j = cleanGraph(new TGraphErrors(hjrf));
 
+  TGraphErrors *g_rc(0);
+  if (fitRC && frc && hrc_vsEta) {
+    double i = hrc_vsEta->GetXaxis()->FindBin(eta);
+    double r = hrc_vsEta->GetBinContent(i);
+    double er = hrc_vsEta->GetBinError(i);
+    double pt = 10;
+    double ept = 1;
+    g_rc = new TGraphErrors(1);
+    g_rc->SetPoint(0, pt, r);
+    double k_err = 1.0;//0.5; // add chi2 penalty to constrain fit more
+    g_rc->SetPointError(0, ept, k_err*er);
+    //g_rc->SetLineWidth(2);
+    g_rc->SetLineColor(kMagenta+2);
+    g_rc->SetMarkerColor(kMagenta+2);
+    g_rc->SetMarkerStyle(kFullSquare);
+    //g_rc->SetMarkerSize(0.5);
+  }
+  
+
+  
   TMultiGraph *mg = new TMultiGraph(Form("mg_%s",cr),"mg");
   if (fitZ && g_z && g_z->GetN()>0) mg->Add(g_z,"SAMEP");
   if (fitG && g_g && g_g->GetN()>0) mg->Add(g_g,"SAMEP");
   if (fitD && g_d && g_d->GetN()>0) mg->Add(g_d,"SAMEP");
   if (fitP && g_p && g_p->GetN()>0) mg->Add(g_p,"SAMEP");
   if (fitJ && g_j && g_j->GetN()>0) mg->Add(g_j,"SAMEP");
+  if (fitRC && g_rc && g_rc->GetN()>0) mg->Add(g_rc,"SAMEP");
   mg->Draw("Pz");//"SAME Pz");
 
-  TF1 *f0 = new TF1(Form("f0_%d_%s",ieta,cr),"[0]",15.,3500.);
+  TF1 *f0 = new TF1(Form("f0_%d_%s",ieta,cr),"[0]",ptmin,3500.);
   TF1 *f1 = new TF1(Form("f1_%d_%s",ieta,cr),
-		    "[0]+[1]*log10(0.01*x)",15.,3500.);
+		    "[0]+[1]*log10(0.01*x)",ptmin,3500.);
   TF1 *f2 = new TF1(Form("f2_%d_%s",ieta,cr),
-		    "[0]+[1]*log10(0.01*x)+[2]/(x/10.)",15.,3500.);
+		    "[0]+[1]*log10(0.01*x)+[2]/(x/10.)",ptmin,3500.);
   TF1 *f3 = new TF1(Form("f3_%d_%s",ieta,cr),
-		    "[0]+[1]*log10(0.01*x)+[2]*pow(log10(0.01*x),2)",15,3500);
+		    "[0]+[1]*log10(0.01*x)+[2]*pow(log10(0.01*x),2)",
+		    ptmin,3500);
   TF1 *f4 = new TF1(Form("f4_%d_%s",ieta,cr),
   		    "[0]+[1]*log10(0.01*x)+[2]*pow(log10(0.01*x),2)"
-  		    "+[3]/(x/10.)",15.,3500.);
+  		    "+[3]/(x/10.)",ptmin,3500.);
   // Reference JES
   TF1 *fref = new TF1(Form("fref_%d_%s",ieta,cr),
 		      //"[0]+[1]*log10(0.01*x)+[2]/(x/10.)",15.,3500.); // V8M
 		      "[0]+[1]*log10(0.01*x)+[2]/(x/10.)"
-		      "+[3]/pow(x/10.,2)",15.,3500.); // V9M
+		      "+[3]/pow(x/10.,2)",ptmin,3500.); // V9M
   
   // Sequential fitting with more and more parameters
   // Extra parameters are of size of expected prior uncertainty
@@ -1204,7 +1250,8 @@ void L2Res() {
   cx->cd(ieta);
   double eps = 1e-4;
   TH1D *h6 = tdrHist(Form("h6_%s_%d",cr,ieta),"Rel. JES Data/MC",
-		     0.65+eps,1.35-eps);
+		     0.65+eps,1.35-eps,
+		     "p_{T} (GeV)", ptmin, 3500.);
   //if      (eta<1.653) h6->GetYaxis()->SetRangeUser(0.8+eps,1.2-eps);
   //else if (eta<2.964) h6->GetYaxis()->SetRangeUser(0.7+eps,1.3-eps);
   //else if (eta<5.191) h6->GetYaxis()->SetRangeUser(0.3+eps,1.3-eps);
@@ -1221,7 +1268,7 @@ void L2Res() {
   l->SetLineStyle(kDotted);
   l->DrawLine(ptmaxe,0.30,ptmaxe,1.35);
   l->SetLineStyle(kDashed);
-  l->DrawLine(15.,1,3500.,1);
+  l->DrawLine(ptmin,1,3500.,1);
 
   // Draw full range at the back
   tdrDraw(hzrn,"Pz",kOpenSquare,kRed-9);
