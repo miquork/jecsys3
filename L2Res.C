@@ -21,6 +21,7 @@ bool fitP = true; // Dijet (pT,probe)
 bool fitJ = true; // Dijet (pT,tag)
 bool fitRC = true; // Random Cone (rootfiles/randomConeL2L3Res.root)
 
+bool drawUncleaned = false; // Draw uncleaned data in *AllEta*.pdf
 bool drawStat = true; // Draw c0.pdf for statistical uncertainty
 bool doVsEtaPt = true;
 
@@ -253,30 +254,42 @@ TH1D *drawCleaned(TH1D *h, double eta, string data, string draw,
     //{0, 0.087, 0.174, 0.261, 0.348, 0.435, 0.522, 0.609, 0.696, 0.783, 0.879, 0.957, 1.044, 1.131, 1.218, 1.305, 1.392, 1.479, 1.566, 1.653, 1.74, 1.83, 1.93, 2.043, 2.172, 2.322, 2.5, 2.65, 2.853, 2.964, 3.139, 3.314, 3.489, 3.664, 3.839, 4.013, 4.191, 4.363, 4.538, 4.716, 4.889, 5.191};
 
     TString tr = TString(_run);
-    if (tr.Contains("2024")) {
+    if (tr.Contains("2024") || tr.Contains("2025")) {
 	
     // Prompt24
     if (data=="Z") { // Zmm+jet
 
-      // Core range
-      if      (ptmin>=15. && ptmax<550 && emax<1550. && eta<2.500) keep = true;
-      else if (ptmin>=15. && ptmax<550 && emax<1550. && eta<2.964) keep = true;
+      // Core range (V9Md1->V9M: 15->20)
+      if      (ptmin>=20. && ptmax<550 && emax<1550. && eta<2.500) keep = true;
+      else if (ptmin>=20. && ptmax<550 && emax<1550. && eta<2.964) keep = true;
       else if (ptmin>=30. && ptmax<300 && eta>2.964  && eta<3.314) keep = true;
       else if (ptmin>=30. && ptmax<250 && eta>3.314  && eta<3.489) keep = true;
-      else if (ptmin>=15. && ptmax<200 && eta>3.489  && eta<3.839) keep = true;
-      else if (ptmin>=15. && ptmax<100 && eta>3.839  && eta<5.191) keep = true;
+      else if (ptmin>=20. && ptmax<200 && eta>3.489  && eta<3.839) keep = true;
+      else if (ptmin>=20. && ptmax<100 && eta>3.839  && eta<5.191) keep = true;
 
       // Tunable vetoes
-      if (tr.Contains("B") || tr.Contains("C") || tr.Contains("D") ||
-	  tr.Contains("E")){
+      if (tr.Contains("24") &&
+	  (tr.Contains("B") || tr.Contains("C") || tr.Contains("D") ||
+	   tr.Contains("E"))) {
 	if (eta>2.500 && eta<2.964 && pt<70)  keep = false;
       }
       if (tr.Contains("F") || tr.Contains("G") || tr.Contains("H") ||
 	  tr.Contains("I")) {
-	if (eta>2.500 && eta<2.650 && ptmin<30) keep = false;
+	//if (eta>2.500 && eta<2.650 && ptmin<30) keep = false;
+	if (eta>2.500 && eta<2.650 && ptmin<50) keep = false;
 	if (eta>2.650 && eta<2.964 && ptmin<59) keep = false;
       }
+      if (tr.Contains("25B")) {
+	if (ptmax>200.) keep = false;
+	if (eta>4.538) keep = false;
+      }
       if (eta>3.139 && ptmax<70) keep = false;
+
+      // Large error filtering. Also skip any higher pT points in case bad stat
+      if (eta<2.650 && ptmin>600.) {
+	if (h->GetBinError(i)>0.05 || hc->GetBinError(i-1)==0) keep = false;
+      }
+
     } // data=="Z"
     
     if (data=="G") { // HLT_Photon50EB_TightId_TightIso, HLT_Photon30EB...
@@ -295,8 +308,16 @@ TH1D *drawCleaned(TH1D *h, double eta, string data, string draw,
 	if (eta>4.363 && eta<4.538 && ptmin<60) keep = false;
 	if (eta>4.538 && eta<4.716 && ptmin<50) keep = false;
       }
+      if (tr.Contains("25B")) {
+	if (pt>400) keep = false;
+      }
       // Additional veto for 2024BC 3.3/fb golden closure (errors bad)
       //if (doClosure && ptmin>500) keep = false;
+
+      // Large error filtering. Also skip any higher pT points in case bad stat
+      if (eta<2.650 && ptmin>600.) {
+	if (h->GetBinError(i)>0.05 || hc->GetBinError(i-1)==0) keep = false;
+      }
     } // data=="G"
     
     if (data=="J") {
@@ -311,10 +332,25 @@ TH1D *drawCleaned(TH1D *h, double eta, string data, string draw,
       // Tunable vetoes
       if (eta>1.392 && eta<1.479 && pt<20) keep = false;
       //if (eta>2.500 && eta<2.650 && pt<30) keep = false;
+      //if (tr.Contains("F") || tr.Contains("G") || tr.Contains("H") ||
+      //  tr.Contains("I")) {
+      //if (eta>2.500 && eta<2.650 && ptmin<20) keep = false;
+      //}
       //if (tr.Contains("F_nib1")) {
 	//if (eta>4.363 && eta<4.538 && emax>6800.*1.2) keep = false;
 	//if (eta>4.538 && eta<4.716 && emax>6800.*1.2) keep = false;
       //}
+
+      // Single bad outlier points across all IOVs
+      if (tr.Contains("Ev2_nib1")) { 
+	if (eta>4.716 && eta<4.889 && pt>50 && pt<60) keep = false;
+      }
+      if (tr.Contains("25B")) {
+	if (pt*cosh(eta)>1500. && eta<0.783) keep = false;
+	if (pt*cosh(eta)>2000. && eta<1.566) keep = false;
+	if (pt*cosh(eta)>3000. && eta<2.655) keep = false;
+	if (pt*cosh(eta)>4000. && eta<4.191) keep = false;
+      }
       // Additional veto for 2024BC 3.3/fb golden closure (bad errors?)
       //if (doClosure && emax>0.5*sqrts) keep = false;
     } // data=="J"
@@ -441,6 +477,10 @@ void L2Res() {
   //gROOT->ProcessLine(".! mkdir pdf/L2Res/vsEta");
   //gROOT->ProcessLine(".! mkdir pdf/L2Res/vsPt");
 
+  // Update time+date flag for the directories (useful for Mac OS X)
+  gROOT->ProcessLine(".! touch pdf");
+  gROOT->ProcessLine(".! touch pdf/L2Res");
+  
   #include "Config.C"
   /*
   map<string, string> mlum;
@@ -472,7 +512,11 @@ void L2Res() {
       //"2024B_nib1",
       //"2024C_nib1","2024D_nib1","2024Ev1_nib1","2024Ev2_nib1",
       //"2024F_nib1","2024F_nib2","2024F_nib3","2024G_nib1","2024G_nib2",
-      /*"2024H_nib1",*/"2024I_nib1"}; // V9M (V8M)
+      //"2024H_nib1",
+      "2024I_nib1",  // V9M (V8M)
+
+      "2025B", "2025C"
+    };
 
   //"2024D_nib1"};
   //"2024E_noRW","2024E_692mb","2024E_753mb"}; 
@@ -486,10 +530,13 @@ void L2Res() {
      //"Winter24","Winter24","Winter24","Winter24","Winter24",
       //"Winter24","Winter24","Winter24","Winter24","Winter24",
       //"Winter24","Winter24"  // V8M
-
-      //"Summer24","Summer24","Summer24","Summer24",
-      //"Summer24","Summer24","Summer24","Summer24","Summer24",
-      /*"Summer24",*/"Summer24"};  // V9M
+      /*
+      "Summer24","Summer24","Summer24","Summer24",
+      "Summer24","Summer24","Summer24","Summer24","Summer24",
+      "Summer24",*/
+      "Summer24",
+      "Winter25", "Winter25"
+    };  // V9M
 
   //"Summer24"};  // V9M
       //"Summer24","Summer24","Summer24"};
@@ -579,6 +626,12 @@ void L2Res() {
   else if (run=="2024E_753mb") {
     fz = new TFile("rootfiles/Prompt2024/v95_Zmm/jme_Zj_2024E_Zmm_75300_V8M_v95.root");
   }
+  else if (tr.Contains("2025")) {
+    if (tr.Contains("25B"))
+	fz = new TFile("rootfiles/Prompt2025/Zmm_v97/jme_Zj_2025B_Zmm_v97.root","READ");
+    else
+      fz = new TFile("rootfiles/Prompt2025/Zmm_v98/jme_Zj_2025C_27052025_Zmm_v98_ddjson.root","READ");
+  }
   else if (tr.Contains("2024") && tr.Contains("nib")) {
     //fz = new TFile(Form("rootfiles/Prompt2024/v93/jme_bplusZ_%s_Zmm_v93.root",cr),"READ"); // V7M->V8M
     //fz = new TFile(Form("rootfiles/Prompt2024/v94_Zmm/jme_bplusZ_%s_Zmm_v94_Summer24.root",cr),"READ"); // V7M->V8M
@@ -647,6 +700,12 @@ void L2Res() {
   else if (run=="2024E_753mb") {
     fg = new TFile("rootfiles/Prompt2024/w43/GamHistosFill_data_2024Ev2_nib1_w43.root");
     fgm = new TFile("rootfiles/Prompt2024/w48_Gam/minbiasxs75300/GamHistosFill_mc_summer2024P8_pu-2024Ev2nib1-xs75300_w48.root");
+  }
+  else if (tr.Contains("2025")) {
+    //fg = new TFile(Form("rootfiles/Prompt2025/Gam_w50/GamHistosFill_data_%s_noL2L3Res_w50_21May2025.root",cr),"READ"); // no L2L3Res
+    //fg = new TFile(Form("rootfiles/Prompt2025/Gam_w51/GamHistosFill_data_%s_noL2L3Res_w51_21May2025.root",cr),"READ"); // no L2L3Res, Winter25 MC JEC
+    fg = new TFile(Form("rootfiles/Prompt2025/Gam_w53/GamHistosFill_data_%s_noL2L3Res_w53_28May2025.root",cr),"READ"); // no L2L3Res, Winter25 MC JEC
+    fgm = new TFile("rootfiles/Prompt2024/w48_Gam/minbiasxs69200/GamHistosFill_mc_summer2024P8_pu-2024CDEFGHI-xs69200_w48.root","READ");
   }
   else if (tr.Contains("2024") && tr.Contains("nib")) {
     /*
@@ -720,6 +779,15 @@ void L2Res() {
     fd = new TFile("rootfiles/Prompt2024/v116_Jet/jmenano_data_cmb_2024Ev2_nib1_JME_v116.root");
     fdm = new TFile("rootfiles/Prompt2024/v119_Jet/jmenano_mc_cmb_Summer24MG_v119_2024Ev2_nib1.root");
   }
+  else if (tr.Contains("2025")) {
+    //fd = new TFile(Form("rootfiles/Prompt2025/Jet_v128/jmenano_data_cmb_%s_JME_v128.root",cr),"READ"); // 2024I L2L3Res
+    if (tr.Contains("2025B"))
+      fd = new TFile(Form("rootfiles/Prompt2025/Jet_v128_v2/jmenano_data_cmb_%s_JME_v128_v2.root",cr),"READ"); // No L2L3Res
+    else
+      fd = new TFile(Form("rootfiles/Prompt2025/Jet_v129/jmenano_data_cmb_%s_JME_v129.root",cr),"READ"); // No L2L3Res
+    fdm = new TFile("rootfiles/Prompt2025/Jet_v128/jmenano_mc_out_Winter25MG_v128.root","READ");
+    if (fdm) fdm = (TFile*)fdm->GetDirectory("HLT_MC"); // PATCH
+  }
   else if (tr.Contains("2024") && tr.Contains("nib")) {
     /*
     if (tr.Contains("B") || tr.Contains("C") || tr.Contains("D") ||
@@ -780,10 +848,11 @@ void L2Res() {
   
   // Load Random Cone
   TFile *frc(0);
-  if (tr.Contains("2024") && tr.Contains("nib") &&
-      (tr.Contains("F") || tr.Contains("G") || tr.Contains("H") ||
-       tr.Contains("I"))) {
-    frc = new TFile("rootfiles/randomConeL2L3Res.root","READ");
+  if (tr.Contains("2024") && tr.Contains("nib")) {// &&
+    //(tr.Contains("F") || tr.Contains("G") || tr.Contains("H") ||
+    //tr.Contains("I"))) {
+    //frc = new TFile("rootfiles/randomConeL2L3Res.root","READ");
+    frc = new TFile("rootfiles/randomConeL2L3Res_for_V9M.root","READ");
   }
   TH1D *hrc_vsEta(0);
   if (frc) {
@@ -892,6 +961,11 @@ void L2Res() {
   TCanvas *cx = new TCanvas(Form("cx_%s",cr),"cx",9*300,5*300);
   cx->Divide(9,5,0,0);
   TH2D *h2jes = p2d->ProjectionXY(Form("h2jes_%s",cr)); h2jes->Reset();
+
+  // Another giant canvas to show final results:
+  // merged cleaned data, final fit, uncertainty band, deviations from fit
+  TCanvas *cxf = new TCanvas(Form("cxf_%s",cr),"cxf",9*300,5*300);
+  cxf->Divide(9,5,0,0);
   
   // Loop over the ieta bins
   vector<TF1*> vf1(p2d->GetNbinsX()+1);
@@ -1035,6 +1109,14 @@ void L2Res() {
 
   leg1->Draw("SAME");
 
+  // Remove very low pT photons from full range to not clutter plots
+  for (int i = 1; i != hgrn->GetNbinsX()+1; ++i) {
+    if (hgrn->GetBinLowEdge(i)<40.) {
+      hgrn->SetBinContent(i, 0.);
+      hgrn->SetBinError(i, 0.);
+    }
+  }
+
   // Draw full range at the back
   tdrDraw(hzrn,"Pz",kOpenSquare,kRed-9);
   tdrDraw(hgrn,"Pz",kOpenCircle,kBlue-9);
@@ -1072,56 +1154,125 @@ void L2Res() {
     g_rc->SetMarkerColor(kMagenta+2);
     g_rc->SetMarkerStyle(kFullSquare);
     //g_rc->SetMarkerSize(0.5);
+    g_rc->SetDrawOption("SAMEPz");
+    
+    leg1->AddEntry(g_rc,"Random Cone","PLE");
   }
   
 
   
   TMultiGraph *mg = new TMultiGraph(Form("mg_%s",cr),"mg");
-  if (fitZ && g_z && g_z->GetN()>0) mg->Add(g_z,"SAMEP");
-  if (fitG && g_g && g_g->GetN()>0) mg->Add(g_g,"SAMEP");
-  if (fitD && g_d && g_d->GetN()>0) mg->Add(g_d,"SAMEP");
-  if (fitP && g_p && g_p->GetN()>0) mg->Add(g_p,"SAMEP");
-  if (fitJ && g_j && g_j->GetN()>0) mg->Add(g_j,"SAMEP");
+  if (fitZ && g_z && g_z->GetN()>0) mg->Add(g_z,"SAMEPz");
+  if (fitG && g_g && g_g->GetN()>0) mg->Add(g_g,"SAMEPz");
+  if (fitD && g_d && g_d->GetN()>0) mg->Add(g_d,"SAMEPz");
+  if (fitP && g_p && g_p->GetN()>0) mg->Add(g_p,"SAMEPz");
+  if (fitJ && g_j && g_j->GetN()>0) mg->Add(g_j,"SAMEPz");
   if (fitRC && g_rc && g_rc->GetN()>0) mg->Add(g_rc,"SAMEP");
   mg->Draw("Pz");//"SAME Pz");
 
+  // f0: const
   TF1 *f0 = new TF1(Form("f0_%d_%s",ieta,cr),"[0]",ptmin,3500.);
+  // f1: log-lin
   TF1 *f1 = new TF1(Form("f1_%d_%s",ieta,cr),
 		    "[0]+[1]*log10(0.01*x)",ptmin,3500.);
+  // f2: log-lin + 1/pt
   TF1 *f2 = new TF1(Form("f2_%d_%s",ieta,cr),
 		    "[0]+[1]*log10(0.01*x)+[2]/(x/10.)",ptmin,3500.);
+  // f3: log-quad
   TF1 *f3 = new TF1(Form("f3_%d_%s",ieta,cr),
 		    "[0]+[1]*log10(0.01*x)+[2]*pow(log10(0.01*x),2)",
 		    ptmin,3500);
+  // f4: log-quad + 1/pt
   TF1 *f4 = new TF1(Form("f4_%d_%s",ieta,cr),
   		    "[0]+[1]*log10(0.01*x)+[2]*pow(log10(0.01*x),2)"
   		    "+[3]/(x/10.)",ptmin,3500.);
+  // f5: log-quad + 1/pt + 1/pt^2 (for HB depth1 noise issues)
+  TF1 *f5 = new TF1(Form("f5_%d_%s",ieta,cr),
+  		    "[0]+[1]*log10(0.01*x)+[2]*pow(log10(0.01*x),2)"
+  		    "+[3]/(x/10.)+[4]/pow(x/10.,2)",ptmin,3500.);
   // Reference JES
-  TF1 *fref = new TF1(Form("fref_%d_%s",ieta,cr),
+  //TF1 *fref = new TF1(Form("fref_%d_%s",ieta,cr),
 		      //"[0]+[1]*log10(0.01*x)+[2]/(x/10.)",15.,3500.); // V8M
-		      "[0]+[1]*log10(0.01*x)+[2]/(x/10.)"
-		      "+[3]/pow(x/10.,2)",ptmin,3500.); // V9M
+  //		      "[0]+[1]*log10(0.01*x)+[2]/(x/10.)"
+  //		      "+[3]/pow(x/10.,2)",ptmin,3500.); // V9M_draft1
+  // fref=f5: log-quad + 1/pt + 1/pt^2 (for HB depth1 noise issues)
+  TF1 *fref = new TF1(Form("fref_%d_%s",ieta,cr),
+		      "[0]+[1]*log10(0.01*x)+[2]*pow(log10(0.01*x),2)"
+		      "+[3]/(x/10.)+[4]/pow(x/10.,2)",ptmin,3500.); // V9M
   
   // Sequential fitting with more and more parameters
   // Extra parameters are of size of expected prior uncertainty
+  // f0: const
   f0->SetParameter(0,1.000);
   mg->Fit(f0,"QRN");
+  // f1: log-lin
   f1->SetParameters(f0->GetParameter(0),-0.01);
   mg->Fit(f1,"QRN");
+  // f2: log-lin + 1/pt
   f2->SetParameters(f1->GetParameter(0),f1->GetParameter(1),+0.02);
   f2->SetParLimits(2,-0.5,0.5); // offset no more than 50% at 10 GeV
   mg->Fit(f2,"QRN");
+  // f3: log-quad
   f3->SetParameters(f1->GetParameter(0),f1->GetParameter(1),+0.005);
   mg->Fit(f3,"QRN");
+  // f3: log-quad + 1/pt
   f4->SetParameters(f3->GetParameter(0),f3->GetParameter(1),
   		    f3->GetParameter(2),f2->GetParameter(2));
-  f4->SetParLimits(2,-0.5,0.5); // offset no more than 50% at 10 GeV
+  f4->SetParLimits(3,-0.5,0.5); // offset no more than 50% at 10 GeV
   mg->Fit(f4,"QRN");
+  // f5: log-quad + 1/pt + 1/pt^2
+  f5->SetParameters(f4->GetParameter(0),f4->GetParameter(1),
+  		    f4->GetParameter(2),f4->GetParameter(3),0.);
+  f5->SetParLimits(3,-0.5,0.5); // offset no more than 50% at 10 GeV
+  f5->SetParLimits(4,0.,0.25); // 1/x^2
+  mg->Fit(f5,"QRN");
 
   // V9M
   // Simplify constraints
-  fref->SetParameters(f2->GetParameter(0), f2->GetParameter(1),
-		      f2->GetParameter(2), 0.);
+  fref->SetParameters(f5->GetParameter(0), f5->GetParameter(1),
+		      f5->GetParameter(2), f5->GetParameter(3),
+		      f5->GetParameter(4));
+  if (!doClosure) {
+  fref->SetParLimits(0, 0.5, 1.5); // constant
+  fref->SetParLimits(1,-0.3, 0.3); // log-lin
+  fref->SetParLimits(2,-0.05, 0.05); // log-quad
+  fref->SetParLimits(3,-0.5, 0.5); // 1/x (large for 2.1<eta<2.5)
+  fref->SetParLimits(4,  0., 0.25); // 1/x^2
+  // With addition of RC offset at low pT, this might be stabilized enough
+  /*
+  if (eta<1.305) { fref->FixParameter(4,0.);         } // Barrel 1/x^2 off
+  if (eta<1.305) { fref->SetParLimits(3,-0.02,0.02); } // Barrel 1/x limits
+  */
+  if (eta>2.964) { fref->SetParLimits(4, 0., 0.25);  } // HF0 1/x^2 off
+  if (eta>2.964) { fref->SetParLimits(3, 0., 0.25);  } // HF0 1/x limits
+  if (eta>3.139) { fref->FixParameter(4, 0.);        } // HF 1/x^2 off
+  if (eta>3.139) { fref->SetParLimits(3, 0, 0.15);   } // HF 1/x limits
+  if (eta>4.716) { fref->SetParLimits(4, 0, 0.25);   } // HF2 1/x^2 off
+  if (eta>4.716) { fref->SetParLimits(3, 0, 0.25);   } // HF2 1/x limits
+  /*
+  // EC1-inner stabilization
+  if (eta>1.305 && eta<1.930 && 
+      (tr.Contains("C") || tr.Contains("D") || tr.Contains("E"))) { 
+    fref->SetParLimits(4,  0.0, 0.1); // 1/x^2 limits
+    //fref->SetParLimits(3, -0.5, 0.0); // 1/x non-positive
+  }
+  */
+  // Special low-lumi nib
+  if (tr.Contains("2024F_nib1")) {
+    fref->FixParameter(4, 0.); // 1/x^2 off
+    if (eta<1.305 || eta>2.964) fref->FixParameter(2, 0.); // BB,HF log^2 off
+    if (eta<1.305 || eta>2.964) fref->FixParameter(3, 0.); // BB,HF 1/x off
+  }
+  } // doClosure
+  if (doClosure) {
+    fref->FixParameter(4, 0.);
+  }
+  
+  // V9M_draft1
+  /*
+  // Simplify constraints
+    fref->SetParameters(f2->GetParameter(0), f2->GetParameter(1),
+			f2->GetParameter(2), 0.);
   if (!doClosure) {
   fref->SetParLimits(0, 0.5, 1.5); // constant
   fref->SetParLimits(1,-0.3, 0.3); // log-lin
@@ -1152,6 +1303,7 @@ void L2Res() {
     //fref->SetParameters(1, 0, 0, 0);
     fref->FixParameter(3, 0.);
   }
+  */
   
   /*
   // V8M
@@ -1236,6 +1388,7 @@ void L2Res() {
   f2->Draw("SAME"); f2->SetLineColor(kGreen+1);
   f3->Draw("SAME"); f3->SetLineColor(kOrange+2);
   f4->Draw("SAME"); f4->SetLineColor(kRed);
+  f5->Draw("SAME"); f5->SetLineColor(kCyan+1);
 
   fref->Draw("SAME"); fref->SetLineColor(kBlack);
 
@@ -1251,7 +1404,7 @@ void L2Res() {
   double eps = 1e-4;
   TH1D *h6 = tdrHist(Form("h6_%s_%d",cr,ieta),"Rel. JES Data/MC",
 		     0.65+eps,1.35-eps,
-		     "p_{T} (GeV)", ptmin, 3500.);
+		     "p_{T,ref} (GeV)", ptmin, 3500.);
   //if      (eta<1.653) h6->GetYaxis()->SetRangeUser(0.8+eps,1.2-eps);
   //else if (eta<2.964) h6->GetYaxis()->SetRangeUser(0.7+eps,1.3-eps);
   //else if (eta<5.191) h6->GetYaxis()->SetRangeUser(0.3+eps,1.3-eps);
@@ -1266,16 +1419,19 @@ void L2Res() {
   gPad->SetLogx();
 
   l->SetLineStyle(kDotted);
+  l->DrawLine(15.,0.30,15.,1.35); // type-I threshold
   l->DrawLine(ptmaxe,0.30,ptmaxe,1.35);
   l->SetLineStyle(kDashed);
   l->DrawLine(ptmin,1,3500.,1);
 
   // Draw full range at the back
-  tdrDraw(hzrn,"Pz",kOpenSquare,kRed-9);
-  tdrDraw(hgrn,"Pz",kOpenCircle,kBlue-9);
-  tdrDraw(hdrn,"Pz",kOpenDiamond,kGray);
-  tdrDraw(hprn,"Pz",kOpenDiamond,kOrange-9);
-  tdrDraw(hjrn,"Pz",kOpenDiamond,kGreen-9);
+  if (drawUncleaned) {
+    tdrDraw(hzrn,"Pz",kOpenSquare,kRed-9);
+    tdrDraw(hgrn,"Pz",kOpenCircle,kBlue-9);
+    tdrDraw(hdrn,"Pz",kOpenDiamond,kGray);
+    tdrDraw(hprn,"Pz",kOpenDiamond,kOrange-9);
+    tdrDraw(hjrn,"Pz",kOpenDiamond,kGreen-9);
+  }
 
   if (eta>flatHFetamin && flattenHF) {
     f0->Draw("SAME");
@@ -1284,13 +1440,18 @@ void L2Res() {
   f2->Draw("SAME");
   f3->Draw("SAME");
   f4->Draw("SAME");
+  f5->Draw("SAME");
   //f2->Draw("SAME");
 
   fref->Draw("SAME");
   
   mg->Draw("Pz");//"SAME Pz");
 
+  double siz0 = tex->GetTextSize();
+  tex->SetTextSize(1.5*0.045);
   tex->DrawLatex(0.50,0.85,Form("[%1.3f,%1.3f]",eta1,eta2));
+  tex->SetTextSize(siz0);
+  
   //if (ieta==1) leg1->Draw("SAME");
   //if (ieta==nxy) { cx->cd(ieta+1); leg1->Draw("SAME"); }
   if (ieta==nxy) {
@@ -1300,6 +1461,7 @@ void L2Res() {
     leg1->Draw("SAME");
     //leg1->SetTextSize(0.045);
     //leg1->SetY2(leg1->GetY1()-0.5*fabs(leg1->GetY1()-leg1->GetY2()));
+
     cx->cd(ieta+2);
     double siz = tex->GetTextSize();
     tex->SetTextSize(siz*2.5);
@@ -1308,14 +1470,26 @@ void L2Res() {
     tex->DrawLatex(0.05,0.65,cm);
     tex->DrawLatex(0.05,0.50,mlum[run].c_str());
     tex->SetTextSize(siz);
+
+    cx->cd(ieta+3);
+    TLegend *leg2 = tdrLeg(0.05,0.90-0.05*6*2.5,0.55,0.90);
+    leg2->SetTextSize(2.5*0.045);
+    //leg2->AddEntry(f0,"const","L");
+    leg2->AddEntry(f1,"log-lin","L");
+    leg2->AddEntry(f2,"log-lin+1/x","L");
+    leg2->AddEntry(f3,"log-quad","L");
+    leg2->AddEntry(f4,"log-quad+1/x","L");
+    leg2->AddEntry(f5,"log-quad+1/x+1/x^{2}","L");
+    leg2->AddEntry(fref,"Ref. fit","L");
+    leg2->Draw("SAME");
   }
 
-
-  // Store results with uncertainty to output histogram
+  // Calculate fit uncertainty band
   for (int ipt = 1; ipt != h2jes->GetNbinsY()+1; ++ipt) {
     double pt = h2jes->GetYaxis()->GetBinCenter(ipt);
     double pt1 = h2jes->GetYaxis()->GetBinLowEdge(ipt);
     double emax1 = pt1*cosh(eta1);
+    double jes5 = f5->Eval(pt); //quadlog+1/x+1/x^2
     double jes4 = f4->Eval(pt); //quadlog+1/x
     double jes3 = f3->Eval(pt); //quadlog
     double jes2 = f2->Eval(pt); //loglin+1/x
@@ -1324,10 +1498,11 @@ void L2Res() {
     double jesref = fref->Eval(pt); //loglin+1/x, loglin or const (vs eta)
     //double jes = jes4; // quadlog+1/x
     //double jes = jes2; // loglin+1/x
-    double jes = jesref; // loglin+1/x
+    double jes = jesref; // loglin+1/x+1/x^2
     //double ejes = sqrt(pow(jes1-jes,2) + pow(jes2-jes,2) +
     //		       pow(jes3-jes,2) + pow(jes4-jes,2)); // V8M
-    double ejes = sqrt(pow(jes2-jes,2)+pow(jes3-jes,2)+pow(jes4-jes,2)); // V9M
+    double ejes = sqrt(pow(jes2-jes,2)+pow(jes3-jes,2)+pow(jes4-jes,2)
+		       +pow(jes5-jes,2)); // V9M
     if (eta>flatHFetamin && flattenHF) {
       ejes = sqrt(pow(jes0-jes,2) + pow(jes1-jes,2));
     }
@@ -1336,12 +1511,82 @@ void L2Res() {
       h2jes->SetBinError(ieta, ipt, ejes); 
     }
   }
+
+  // Draw final results in a single canvas: merged data, fit, error, residual
+  cxf->cd(ieta);
+  TH1D *h6f = (TH1D*)h6->Clone(Form("%sf",h6->GetName()));
+
+  h6f->Draw();
+  gPad->SetLogx();
+
+  TH1D *hjes = h2jes->ProjectionY(Form("hjes_%s_%d",cr,ieta),ieta,ieta);
+  tdrDraw(hjes,"E2",kNone,kYellow+2,kSolid,-1,1001,kYellow+1);
+
+  l->SetLineStyle(kDotted);
+  l->DrawLine(15.,0.30,15.,1.35); // type-I threshold
+  l->DrawLine(ptmaxe,0.30,ptmaxe,1.35);
+  l->SetLineStyle(kDashed);
+  l->DrawLine(ptmin,1,3500.,1);
+  
+  fref->Draw("SAME");
+
+  TH1D *hmerged = (TH1D*)hjrf->Clone(Form("hmerged_%s_%d",cr,ieta));
+  hmerged->Reset();
+  // loop over all graphs in the multigraph
+  for (auto gObj : *(mg->GetListOfGraphs())) {
+    auto g = static_cast<TGraphErrors*>(gObj);
+    const int n = g->GetN();
+    const double* xs = g->GetX();
+    const double* ys = g->GetY();
+    const double* eys = g->GetEY();
+
+    for (int i = 0; i != n; ++i) {
+      int ib = hmerged->FindBin(xs[i]);
+      double y = hmerged->GetBinContent(ib); 
+      double ey = hmerged->GetBinError(ib); 
+      double W = (ey> 0) ? 1.0 / pow(ey, 2) : 0.;
+      double w = (eys[i]>0) ? 1.0 / (eys[i] * eys[i]) : 0;
+      double Y  = W+w>0 ? (y * W + ys[i] * w) / (W + w) : 0;
+      hmerged->SetBinContent(ib, Y);
+      hmerged->SetBinError(ib, W+w>0 ? 1.0 / sqrt(W + w) : 0); 
+    }
+  }
+  tdrDraw(hmerged,"Pz",kFullCircle,kBlack,kSolid,-1,kNone,0,1);
+
+  double sizf = tex->GetTextSize();
+  tex->SetTextSize(1.5*0.045);
+  tex->DrawLatex(0.50,0.85,Form("[%1.3f,%1.3f]",eta1,eta2));
+  tex->SetTextSize(sizf);
+  
+  if (ieta==nxy) {
+    cxf->cd(ieta+1);
+    TLegend *legf = tdrLeg(0.05,0.90-0.05*3*2.5,0.55,0.90);
+    legf->SetTextSize(2.5*0.045);
+    legf->AddEntry(hmerged,"Merged data","PLE");
+    legf->AddEntry(hjes,"Fit uncertainty","F");
+    legf->AddEntry(fref,"Reference fit","L");
+    legf->Draw("SAME");
+
+    cxf->cd(ieta+2);
+    double siz = tex->GetTextSize();
+    tex->SetTextSize(siz*2.5);
+    tex->DrawLatex(0.05,0.80,Form("%s vs",cr));
+    tex->DrawLatex(0.05,0.65,cm);
+    tex->DrawLatex(0.05,0.50,mlum[run].c_str());
+    tex->SetTextSize(siz);
+  }
+  
+  gPad->RedrawAxis();
+
+  
   //hmin->SetBinContent(ieta, f2->Eval(10.));
   //hmax->SetBinContent(ieta, f2->Eval(6800./cosh(eta1)));
   hmin->SetBinContent(ieta, fref->Eval(10.));
   hmax->SetBinContent(ieta, fref->Eval(6800./cosh(eta1)));
   hchi2->SetBinContent(ieta, fref->GetChisquare() / max(fref->GetNDF(),1));
   hchi2->SetBinError(ieta, 1. / sqrt(max(fref->GetNDF(),1)));
+
+  // Store results with uncertainty to output histogram
   
   // Rename to avoid loop leakage and errors
   h1->SetName(Form("h1pt_%s_%d",cr,ieta));
@@ -1367,6 +1612,9 @@ void L2Res() {
 
   cx->SaveAs(Form("pdf/L2res/L2Res_AllEta_%s%s.pdf",cr,cc));
   cx->SetName(Form("cx_%s",cr));
+
+  cxf->SaveAs(Form("pdf/L2res/L2Res_AllFinal_%s%s.pdf",cr,cc));
+  cxf->SetName(Form("cx_%s",cr));
 
   // Step 7. Draw summary of final results in a single plot
   TH1D *hy = tdrHist(Form("hy_%s",cr),"JES",0.5,1.45,"|#eta|",0,5.2);
@@ -1464,10 +1712,13 @@ void L2Res() {
     }
     
     // Reference JES refit vs <pT,jet,uncorr>
+    //TF1 *fref2 = new TF1(Form("fref2_%d_%s",ieta,cr),
+    //			 "[0]+[1]*log10(0.01*x)+[2]/(x/10.)+"
+    //			 "[3]/pow(x/10.,2)+[4]*log10(x/10.)/(x/10.)", // V9Md1
+    //			 //"[3]*log10(x/10.)/(x/10.)", // V8M
     TF1 *fref2 = new TF1(Form("fref2_%d_%s",ieta,cr),
-			 "[0]+[1]*log10(0.01*x)+[2]/(x/10.)+"
-			 "[3]/pow(x/10.,2)+[4]*log10(x/10.)/(x/10.)", // V9M
-			 //"[3]*log10(x/10.)/(x/10.)", // V8M
+			 "[0]+[1]*log10(0.01*x)+[2]*pow(log10(0.01*x),2)"
+			 "+[3]/(x/10.)+[4]/pow(x/10.,2)", // V9M
 			 ptrefmin2*f1->Eval(ptrefmin2),
 			 ptrefmax2*f1->Eval(ptrefmax2));
     for (int ip = 0; ip != f1->GetNpar() && ip != fref2->GetNpar(); ++ip) {
@@ -1508,10 +1759,12 @@ void L2Res() {
     else if (eta<4.013) h9->GetYaxis()->SetRangeUser(0.70+eps,1.25-eps);
     else if (eta<5.191) h9->GetYaxis()->SetRangeUser(0.70+eps,1.25-eps);
     // Adjust HF for 2024BCD (and earlier)
-    if (tr.Contains("B") || tr.Contains("C") || tr.Contains("D")) {
+    if (tr.Contains("24") && 
+	(tr.Contains("B") || tr.Contains("C") || tr.Contains("D"))) {
       if (eta>4.013 && eta<5.191) h9->GetYaxis()->SetRangeUser(0.30+eps,1.25-eps);
     }
-    if (tr.Contains("E") || tr.Contains("F_nib1")) {
+    if (tr.Contains("24") &&
+	(tr.Contains("E") || tr.Contains("F_nib1"))) {
       if (eta>2.853 && eta<4.013) h9->GetYaxis()->SetRangeUser(0.30+eps,1.30-eps);
     }
 

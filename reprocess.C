@@ -142,8 +142,9 @@ void reprocess(string epoch="") {
     fzptmin  = 15; fzptmax  = 500;//1000;
 
     //fgptmin =  (epoch=="Run24F" || epoch=="Run24G" || epoch=="Run24FG" || epoch=="Run24H" || epoch=="Run24I" || tepoch.Contains("nib") ? 75 : 110);
-    fgptmin = 230; // TightIso_TightID small discontinuity in MPF?
-    fgptmax = 1200;//1750;
+    fgptmin = 230; // V8M; TightIso_TightID small discontinuity in MPF?
+    //fgptmin = 50; // V9M, if can get QCD background to help JES below 230 GeV
+    fgptmax = 1750;//1200;//1750;
 
     fijptmin = 15; fijptmax = 2787;
     //doMultijetRecoil = (epoch=="Run24CP" || epoch=="Run24BCD" || epoch=="Run24BCDE" || epoch=="Run24C" || epoch=="Run24E");// || epoch=="2024B_nib1" || epoch=="2024C_nib1" || epoch=="2024D_nib1" || epoch=="2024Ev1_nib1" || epoch=="2024Ev2_nib1");
@@ -151,6 +152,12 @@ void reprocess(string epoch="") {
     fmjptmin = (doMultijetRecoil ? 600 : 220);//133);
     fmjptmax = 2500;
 
+    if (tr.Contains("2025")) {
+      fgptmax = 1000;
+      fgptmin = 40;
+      fmjptmin = 114;
+    }
+    
     // Tuning for nibs to avoid low statistics issues
     if (tr.Contains("2024") && (tr.Contains("nib") ||
 				tr.Contains("rereco"))) {
@@ -159,22 +166,10 @@ void reprocess(string epoch="") {
 	fmjptmax = 1032;//1497;//1784;
 	fgptmax = 600;
       }
-      if (tr.Contains("C") || tr.Contains("D") ||
-	  tr.Contains("E") ||
+      if (tr.Contains("C") || tr.Contains("D") || tr.Contains("E") ||
 	  tr.Contains("F") || tr.Contains("G") ||
 	  tr.Contains("H") || tr.Contains("I")) {
-	fmjptmax = 1784;
-      }
-      /*
-      if (tr.Contains("D") || tr.Contains("E")) {
-	fmjptmax = 1784;//2116;
-	fzptmax = 400;
-	fgptmax = 850;
-      }
-      */
-      if (tr.Contains("H")) {
-	fzptmax = 300;
-	fgptmax = 850;
+	fmjptmax = 2500;//1784;
       }
       if (tr.Contains("F_nib1")) {
 	fmjptmin = 600;
@@ -306,6 +301,15 @@ void reprocess(string epoch="") {
     else
       fz = new TFile(Form("rootfiles/Prompt2024/v97_Zmm/jme_Zj_%s_Zmm_pileup_69200_V8M_v97.root",epoch.c_str()), "READ"); // V9M prompt
   }
+  else if (tepoch.Contains("2025")) {
+    //fz = new TFile(Form("rootfiles/Prompt2025/Zmm_v97/jme_Zj_%s_Zmm_pileup_69200_v97_19052025.root",epoch.c_str()),"READ"); // Wrong MC JEC for MC
+    if (tepoch.Contains("2025C"))
+      fz = new TFile("rootfiles/Prompt2025/Zmm_v98/jme_Zj_2025C_27052025_Zmm_v98_ddjson.root","READ");
+    else
+      fz = new TFile(Form("rootfiles/Prompt2025/Zmm_v97/jme_Zj_%s_Zmm_v97.root",
+			  "2025B"),"READ");
+    //epoch.c_str()),"READ");
+  }
 
   assert(fz && !fz->IsZombie());
   
@@ -319,6 +323,7 @@ void reprocess(string epoch="") {
   TH1D *hcounts(0);
   TH1D *hmz_dt(0), *hmz_mc(0);
   if (tepoch.Contains("UL") || tepoch.Contains("nib") ||
+      tepoch.Contains("2025") ||
       tepoch.Contains("rereco") ||
       epoch=="RunCD" ||
       epoch=="Run22C" || epoch=="Run22D" || epoch=="Run22CD" ||
@@ -417,7 +422,7 @@ void reprocess(string epoch="") {
 
   // 22Sep2023 V3 used v32 files
   //TFile *fp = new TFile(Form("../gamjet/rootfiles/GamHistosRatio_%s_P8QCD_v32.root",mp[epoch]),"READ"); // L2L3Res_V3
-  TFile *fp(0), *fp0(0), *fpm(0);
+  TFile *fp(0), *fp0(0), *fpm(0), *fpd(0);
   if (epoch=="Run22FG") {
     //fp = new TFile(Form("../gamjet/rootfiles/GamHistosRatio_%s_P8QCD_19Dec_v33.root",mp[epoch]),"READ"); // 19Dec2023
     assert(false);
@@ -491,9 +496,11 @@ void reprocess(string epoch="") {
     //fp = new TFile(Form("rootfiles/Prompt2024/w43/GamHistosRatio_%s_w43.root",epoch.c_str()),"READ");
     //fp = new TFile(Form("rootfiles/Prompt2024/v45_Gam/GamHistosRatio_%s_winter2024P8-noQCD_pu_w45.root",epoch.c_str()),"READ");
     if (tr.Contains("C") || tr.Contains("D") || tr.Contains("E"))
-      fp = new TFile(Form("rootfiles/Prompt2024/w48_Gam/GamHistosRatio_%s-rereco_summer2024P8-noQCD_no-pu_w48.root",epoch.c_str()),"READ"); // V9M re-reco
+      //fp = new TFile(Form("rootfiles/Prompt2024/w48_Gam/GamHistosRatio_%s-rereco_summer2024P8-noQCD_no-pu_w48.root",epoch.c_str()),"READ"); // V9M re-reco
+      fp = new TFile(Form("rootfiles/Prompt2024/w48_Gam/minbiasxs69200/GamHistosRatio_%s-rereco_summer2024P8-noQCD_pu-2024CDEFGHI_xs69200_w48.root",epoch.c_str()),"READ"); // V9M re-reco
     else 
-      fp = new TFile(Form("rootfiles/Prompt2024/w48_Gam/GamHistosRatio_%s_summer2024P8-noQCD_no-pu_w48.root",epoch.c_str()),"READ"); // V9M prompt
+      //fp = new TFile(Form("rootfiles/Prompt2024/w48_Gam/GamHistosRatio_%s_summer2024P8-noQCD_no-pu_w48.root",epoch.c_str()),"READ"); // V9M prompt
+      fp = new TFile(Form("rootfiles/Prompt2024/w48_Gam/minbiasxs69200/GamHistosRatio_%s_summer2024P8-noQCD_pu-2024CDEFGHI_xs69200_w48.root",epoch.c_str()),"READ"); // V9M prompt
     
     //fp0 = new TFile(Form("rootfiles/Prompt2024/w43/GamHistosFill_data_%s_w43.root",epoch.c_str()),"READ"); assert(fp0); // for JES
     //fp0 = new TFile(Form("rootfiles/Prompt2024/v45_Gam/GamHistosFill_data_%s_w45.root",epoch.c_str()),"READ"); assert(fp0); // for JES
@@ -501,12 +508,24 @@ void reprocess(string epoch="") {
       fp0 = new TFile(Form("rootfiles/Prompt2024/w48_Gam/GamHistosFill_data_%s-rereco_w48.root",epoch.c_str()),"READ"); // V9M re-reco
     else
       fp0 = new TFile(Form("rootfiles/Prompt2024/w48_Gam/GamHistosFill_data_%s_w48.root",epoch.c_str()),"READ"); // V9M prompt
+  } // nib
+  else if (tepoch.Contains("2025")) {
+    //fp = new TFile(Form("rootfiles/Prompt2024/w48_Gam/minbiasxs69200/GamHistosRatio_%s_summer2024P8-noQCD_pu-2024CDEFGHI_xs69200_w48.root","2024I_nib1"),"READ");
+    //fp = 0;
+    fpm = new TFile("rootfiles/Prompt2024/w48_Gam/minbiasxs69200/GamHistosFill_mc_summer2024P8_pu-2024CDEFGHI-xs69200_w48.root","READ");
+    //fp0 = new TFile(Form("rootfiles/Prompt2024/w48_Gam/GamHistosFill_data_%s_w48.root","2024I_nib1"),"READ");
+    //fp0 = new TFile(Form("rootfiles/Prompt2025/Gam_w50/GamHistosFill_data_%s_w50_20May2025.root","2025B"),"READ"); // old L2L3Res
+    //fp0 = new TFile(Form("rootfiles/Prompt2025/Gam_w50/GamHistosFill_data_%s_noL2L3Res_w50_21May2025.root","2025B"),"READ"); // no L2L3Res
+    //fp0 = new TFile(Form("rootfiles/Prompt2025/Gam_w51/GamHistosFill_data_%s_noL2L3Res_w51_21May2025.root",epoch.c_str()),"READ"); // no L2L3Res
+    fp0 = new TFile(Form("rootfiles/Prompt2025/Gam_w53/GamHistosFill_data_%s_noL2L3Res_w53_28May2025.root",epoch.c_str()),"READ"); // no L2L3Res
+    fpd = fp0;
   }
   else {
     fp = new TFile(Form("../gamjet/rootfiles/GamHistosRatio_%s_P8QCD_v32.root",mp[epoch]),"READ"); // L2L3Res_V3
     assert(false);
   }
-  assert(fp && !fp->IsZombie());
+  assert((fp && !fp->IsZombie()) ||
+	 (fpd && !fpd->IsZombie() && fpm && !fpm->IsZombie()));
 
   ////////////////////////////
   // Multijet               //
@@ -699,6 +718,16 @@ void reprocess(string epoch="") {
     fmjm = new TFile("rootfiles/Prompt2024/v121_v2_Jet/jmenano_mc_out_Summer24MG_PU69_v121_v2.root","READ");
     if (fmjm) fmjm = (TFile*)fmjm->GetDirectory("HLT_MC"); // PATCH
   }
+  else if (tepoch.Contains("2025")) {
+    //fmjd = new TFile(Form("rootfiles/Prompt2025/Jet_v128/jmenano_data_cmb_%s_JME_v128.root","2025B"),"READ"); // 2024I L2L3Res
+    if (tr.Contains("2025B"))
+      fmjd = new TFile(Form("rootfiles/Prompt2025/Jet_v128_v2/jmenano_data_cmb_%s_JME_v128_v2.root",epoch.c_str()),"READ"); // No L2L3Res
+    else
+      fmjd = new TFile(Form("rootfiles/Prompt2025/Jet_v129/jmenano_data_cmb_%s_JME_v129.root",epoch.c_str()),"READ"); // No L2L3Res
+    //"2025B"),"READ");
+    fmjm = new TFile("rootfiles/Prompt2025/Jet_v128/jmenano_mc_out_Winter25MG_v128.root","READ");
+    if (fmjm) fmjm = (TFile*)fmjm->GetDirectory("HLT_MC"); // PATCH
+  }
   else {
     assert(false);
   // 22Sep2023_V3 used v35a files
@@ -743,18 +772,22 @@ void reprocess(string epoch="") {
   files["zjav"] = fz;
   files["zjet"] = fz;
   files["gamjet"] = fp;
+  files["gamjet_data"] = fpd;
+  files["gamjet_mc"] = fpm;
+  files["gamjet_ratio"] = fpd;
   files["multijet_data"] = fmjd;
   files["multijet_mc"] = fmjm;
   files["multijet_ratio"] = fmjd;
   files["incjet_data"] = fijd;
   files["incjet_mc"] = fijm;
-  files["incjet_ratio"] = fijm;
+  files["incjet_ratio"] = fijm; // => should be fijd? or doesn't matter
 
   // Map variable names used in different files to common scheme
   map<string, map<string, const char*> > rename;
 
   // Results from Sami's Z+b analysis
   if (tepoch.Contains("UL") || tepoch.Contains("nib") ||
+      tepoch.Contains("2025") ||
       tepoch.Contains("rereco") ||
       epoch=="RunCD" ||
       epoch=="Run22C" || epoch=="Run22D" || epoch=="Run22CD" ||
@@ -1015,6 +1048,7 @@ void reprocess(string epoch="") {
   types.push_back("ptchs");
   // for pfjet only (activate puf, cef, muf later?)
   if (tepoch.Contains("UL") || tepoch.Contains("nib") ||
+      tepoch.Contains("2025") ||
       tepoch.Contains("rereco") ||
       epoch=="RunCD" || 
       epoch=="Run22C" || epoch=="Run22D" || epoch=="Run22CD" ||
@@ -1042,6 +1076,7 @@ void reprocess(string epoch="") {
   types.push_back("mpfu");
   types.push_back("crecoil");
   if (tepoch.Contains("UL") || tepoch.Contains("nib") ||
+      tepoch.Contains("2025") ||
       tepoch.Contains("rereco") ||
       epoch=="RunCD" || 
       epoch=="Run22C" || epoch=="Run22D" || epoch=="Run22CD" ||
@@ -1063,6 +1098,7 @@ void reprocess(string epoch="") {
 
   // <pT,reco> and <pT,gen> vs ref pT (MC only)
   if (tepoch.Contains("UL") || tepoch.Contains("nib") ||
+      tepoch.Contains("2025") ||
       tepoch.Contains("rereco") ||
       epoch=="RunCD" ||
       epoch=="Run22C" || epoch=="Run22D" || epoch=="Run22CD" ||
@@ -1244,6 +1280,7 @@ void reprocess(string epoch="") {
 	  } // "zjav"
 	  if (s=="zjet") {
 	    if (tepoch.Contains("UL") || tepoch.Contains("nib") ||
+		tepoch.Contains("2025") ||
 		tepoch.Contains("rereco") ||
 		epoch=="RunCD" ||
 		epoch=="Run22C" || epoch=="Run22D" || epoch=="Run22CD" ||
@@ -1283,20 +1320,23 @@ void reprocess(string epoch="") {
 		     d=="ratio" ? rename[s]["data"] : rename[s][d],
 		     100.*alpha, 10.*eta1, 10.*eta2, rename[s][t]);
 	  }
-	  //else if (s=="gamjet" && (ismpfc||t=="mpfchs1"||t=="ptchs") &&
-	  //	   d=="ratio") { // patch missing => in v21 now
-	  //  c = Form("%s%s_a%1.0f_eta%02.0f_%02.0f",
-	  //           rename[s][t], rename[s]["data"], // ratio->data
-	  //           100.*alpha, 10.*eta1, 10.*eta2);
-	  //} // gamjet
+	  // "2025" addition for early days
+	  else if (s=="gamjet" &&(ismpfc||t=="mpfchs1"||t=="ptchs"||t=="rho") &&
+	  	   d=="ratio" && fp==0) { // patch missing => in v21 now
+	    c = Form("%s%s_a%1.0f_eta%02.0f_%02.0f",
+	             rename[s][t], rename[s]["data"], // ratio->data
+	             100.*alpha, 10.*eta1, 10.*eta2);
+	  } // gamjet
 	  else if (s=="gamjet" && isfrac) { // new PF composition
-	    c = Form("pf/p%s_%s",tt,dd);
+	    if (fp==0) c = Form("pf/p%s",tt);
+	    else       c = Form("pf/p%s_%s",tt,dd);
 	  }
 	  else if (s=="gamjet") {
 	    c = Form("%s%s_a%1.0f_eta%02.0f_%02.0f",//%s",
 		     rename[s][t], rename[s][d],
 		     100.*alpha, 10.*eta1, 10.*eta2);//,
 	    //(d!="data" ? sPSWgtG.c_str() : ""));
+	    //assert(fp!=0);
 	  } // gamjet
 	  if (s=="multijet") {
 	    // Override file selection from files[s]
@@ -1329,7 +1369,8 @@ void reprocess(string epoch="") {
 	  
 	  // Calculate data/MC ratio
 	  if ((s=="jetz" || s=="zjav" || s=="zjet" || sp=="zjet" ||
-	       s=="multijet") &&
+	       s=="multijet" ||
+	       (s=="gamjet" && fp==0)) &&
 	      d=="ratio" && (t=="mpfchs1"||t=="ptchs")) {
 	    TGraphErrors *gd = grs["data"][t][s][ieta];
 	    TGraphErrors *gm = grs["mc"][t][s][ieta];
@@ -1340,7 +1381,8 @@ void reprocess(string epoch="") {
 	    obj = (TObject*)g;
 	  }
 	  if ((s=="jetz" || s=="zjav" || s=="zjet" ||
-	       s=="multijet" || s=="incjet") &&
+	       s=="multijet" || s=="incjet" ||
+	       (s=="gamjet" && fp==0)) &&
 	      d=="ratio" &&
 	      // bug: 20231114...
 	      //(isfrac || t=="rmpf1" || t=="rmpfn" || t=="rpmfu")) {
@@ -1699,7 +1741,9 @@ void reprocess(string epoch="") {
     // New method 2024-12-13 of using stored JES
     TProfile2D *p2jes(0), *p2res(0);
     TProfile *pjes(0), *pres(0);
+    TProfile *presp(0), *presz(0), *presm(0);
     if (tepoch.Contains("nib") ||
+	tepoch.Contains("2025") ||
 	tepoch.Contains("rereco") ||
 	(epoch=="2024E_noRW" || epoch=="2024E_692mb" || epoch=="2024E_753mb")) {
       TProfile2D *p2jesp(0), *p2jesz(0);//, *p2jesm(0);
@@ -1718,7 +1762,7 @@ void reprocess(string epoch="") {
       //pjes->Add(pjesm);
 
       TProfile2D *p2resp(0), *p2resz(0), *p2resm(0);
-      TProfile *presp(0), *presz(0), *presm(0);
+      //TProfile *presp(0), *presz(0), *presm(0);
     //presp = (TProfile*)fp0->Get("resp_RES_DATA_a100_eta00_13"); assert(presp);
       p2resp = (TProfile2D*)fp0->Get("Gamjet2/p2res"); assert(p2resp);
       presp = p2resp->ProfileY(Form("presp_%s",epoch.c_str()),1,15);//|eta|<1.3
@@ -2340,6 +2384,7 @@ void reprocess(string epoch="") {
   if (fz) fz->Close();
   if (fp) fp->Close();
   if (fpm) fpm->Close();
+  if (fpd) fpd->Close();
   if (fmjd) fmjd->Close();
   if (fmjm) fmjm->Close();
   curdir->cd();
