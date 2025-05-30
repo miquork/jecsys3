@@ -240,6 +240,8 @@ void globalFitEtaBin(double etamin, double etamax, string run, string version) {
       if (scaleJZperEra && trun.Contains("24D")) scaleJZ = 0.989; // 16+11/fb
       if (scaleJZperEra && trun.Contains("24C")) scaleJZ = 0.989; // 16+11/fb
       if (scaleJZperEra && trun.Contains("24B")) scaleJZ = 0.989; // 16+11/fb
+
+      if (scaleJZperEra && trun.Contains("25")) scaleJZ = 1.000;
       
       scaleGraph(data.input, scaleJZ);
     }
@@ -253,6 +255,8 @@ void globalFitEtaBin(double etamin, double etamax, string run, string version) {
       if (scaleJZAperEra && trun.Contains("24D")) scaleJZA = 0.9945;
       if (scaleJZAperEra && trun.Contains("24C")) scaleJZA = 0.9945;
       if (scaleJZAperEra && trun.Contains("24B")) scaleJZA = 0.9945;
+
+      if (scaleJZAperEra && trun.Contains("25")) scaleJZA = 1.000;
       
       scaleGraph(data.input, scaleJZA);
     }

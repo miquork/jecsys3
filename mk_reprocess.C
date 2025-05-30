@@ -75,7 +75,11 @@
   //globalFitEtaBin(0.0, 1.3, epoch, "Prompt24_V6M");
   //globalFitEtaBin(0.0, 1.3, epoch, "Prompt24_V7M");
   //globalFitEtaBin(0.0, 1.3, epoch, "Prompt24_V8N");
-  globalFitEtaBin(0.0, 1.3, epoch, "Prompt24_V9M");
+  if (TString(epoch.c_str()).Contains("25"))
+    globalFitEtaBin(0.0, 1.3, epoch, "Prompt25_V1M");
+  else
+    globalFitEtaBin(0.0, 1.3, epoch, "Prompt24_V9M");
+
   
   exit(0); // Avoid page full of THastList::Delete errors
 }

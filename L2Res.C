@@ -279,7 +279,7 @@ TH1D *drawCleaned(TH1D *h, double eta, string data, string draw,
 	if (eta>2.500 && eta<2.650 && ptmin<50) keep = false;
 	if (eta>2.650 && eta<2.964 && ptmin<59) keep = false;
       }
-      if (tr.Contains("25B")) {
+      if (tr.Contains("25B") || tr.Contains("25C")) {
 	if (ptmax>200.) keep = false;
 	if (eta>4.538) keep = false;
       }
@@ -310,6 +310,10 @@ TH1D *drawCleaned(TH1D *h, double eta, string data, string draw,
       }
       if (tr.Contains("25B")) {
 	if (pt>400) keep = false;
+      }
+      if (tr.Contains("25C")) {
+	if (pt>800) keep = false;
+	if (eta>1.218 && pt>600) keep = false;
       }
       // Additional veto for 2024BC 3.3/fb golden closure (errors bad)
       //if (doClosure && ptmin>500) keep = false;
@@ -350,6 +354,12 @@ TH1D *drawCleaned(TH1D *h, double eta, string data, string draw,
 	if (pt*cosh(eta)>2000. && eta<1.566) keep = false;
 	if (pt*cosh(eta)>3000. && eta<2.655) keep = false;
 	if (pt*cosh(eta)>4000. && eta<4.191) keep = false;
+      }
+      if (tr.Contains("25C")) {
+	if (pt*cosh(eta)>2000. && eta<0.783) keep = false;
+	if (pt*cosh(eta)>2500. && eta<1.566) keep = false;
+	if (pt*cosh(eta)>3500. && eta<2.655) keep = false;
+	if (pt*cosh(eta)>4500. && eta<4.191) keep = false;
       }
       // Additional veto for 2024BC 3.3/fb golden closure (bad errors?)
       //if (doClosure && emax>0.5*sqrts) keep = false;
@@ -848,11 +858,13 @@ void L2Res() {
   
   // Load Random Cone
   TFile *frc(0);
-  if (tr.Contains("2024") && tr.Contains("nib")) {// &&
+  if (tr.Contains("2024") && tr.Contains("nib") ||
+      tr.Contains("2025")) {// &&
     //(tr.Contains("F") || tr.Contains("G") || tr.Contains("H") ||
     //tr.Contains("I"))) {
     //frc = new TFile("rootfiles/randomConeL2L3Res.root","READ");
-    frc = new TFile("rootfiles/randomConeL2L3Res_for_V9M.root","READ");
+    //frc = new TFile("rootfiles/randomConeL2L3Res_for_V9M.root","READ");
+    frc = new TFile("rootfiles/randomConeL2L3Res_for_V9M_plus_2025C.root","READ");
   }
   TH1D *hrc_vsEta(0);
   if (frc) {
@@ -1812,7 +1824,7 @@ void L2Res() {
   
   // Step 10. Print out text files
   // 10a: Original parameterization vs pTref
-  string ftxtname = Form("textfiles/Prompt24/Prompt24_Run%s_V9M_DATA_L2ResidualVsPtRef_AK4PFPuppi.txt",cr);
+  string ftxtname = (tr.Contains("25") ? Form("textfiles/Prompt25/Prompt25_Run%s_V1M_DATA_L2ResidualVsPtRef_AK4PFPuppi.txt",cr) : Form("textfiles/Prompt24/Prompt24_Run%s_V9M_DATA_L2ResidualVsPtRef_AK4PFPuppi.txt",cr));
   cout << "Writing results to text file " << ftxtname << endl << flush;
   ofstream ftxt(ftxtname.c_str());
 
@@ -1841,7 +1853,7 @@ void L2Res() {
     ftxt << endl;
   }
   // 10b: Re-parameterization vs pTraw
-  string ftxtname2 = Form("textfiles/Prompt24/Prompt24_Run%s_V9M_DATA_L2Residual_AK4PFPuppi.txt",cr);
+  string ftxtname2 = (tr.Contains("25") ? Form("textfiles/Prompt25/Prompt25_Run%s_V1M_DATA_L2Residual_AK4PFPuppi.txt",cr) : Form("textfiles/Prompt24/Prompt24_Run%s_V9M_DATA_L2Residual_AK4PFPuppi.txt",cr));
   cout << "Writing results to text file " << ftxtname2 << endl << flush;
   ofstream ftxt2(ftxtname2.c_str());
   

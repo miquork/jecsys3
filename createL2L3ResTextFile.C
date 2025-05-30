@@ -41,7 +41,8 @@ void createL2L3ResTextFile() {
   double ptmax = 4500;
   TH1D *h = tdrHist("h","Absolute response at |#eta| < 1.3",
 		    0.88+1e-4,1.21-1e-4,"p_{T,ref} (GeV)",ptmin,ptmax);
-  lumi_136TeV = Form("2024, %s","109 fb^{-1}");
+  //lumi_136TeV = Form("2024, %s","109 fb^{-1}");
+  lumi_136TeV = Form("2025, %s","X fb^{-1}");
   TCanvas *c1 = tdrCanvas("c1",h,8,11,kSquare);
   c1->SetLeftMargin(0.17);
   c1->SetRightMargin(0.03);
@@ -74,6 +75,7 @@ void createL2L3ResTextFile() {
   
 
   // Listing of individual IOVs
+  /*
   createL2L3ResTextFiles("2024I_nib1");
 
   createL2L3ResTextFiles("2024H_nib1");
@@ -89,16 +91,20 @@ void createL2L3ResTextFile() {
 
   createL2L3ResTextFiles("2024C_nib1");
   //createL2L3ResTextFiles("2024B_nib1");
-
+  */
+  createL2L3ResTextFiles("2025C");
+  
   c1->cd();
   gPad->RedrawAxis();
   c1->Update();
-  c1->SaveAs("pdf/createL2L3ResTextFile_Prompt24_V9M_VsPtRef.pdf");
+  //c1->SaveAs("pdf/createL2L3ResTextFile_Prompt24_V9M_VsPtRef.pdf");
+  c1->SaveAs("pdf/createL2L3ResTextFile_Prompt25_V1M_VsPtRef.pdf");
   
   c3->cd();
   gPad->RedrawAxis();
   c3->Update();
-  c3->SaveAs("pdf/createL2L3ResTextFile_Prompt24_V9M_VsPtRaw.pdf");
+  //c3->SaveAs("pdf/createL2L3ResTextFile_Prompt24_V9M_VsPtRaw.pdf");
+  c3->SaveAs("pdf/createL2L3ResTextFile_Prompt24_V1M_VsPtRaw.pdf");
 
 } // createL2L3ResTextFile
 
@@ -134,7 +140,7 @@ void createL2L3ResTextFiles(string set) {
   //bool isHBoff = (ts.Contains("24F_nib2") || ts.Contains("24F_nib3") ||
   //		  ts.Contains("24G") || ts.Contains("24H") ||
   //		  ts.Contains("24I"));
-  bool isHBoff = true;
+  //bool isHBoff = true;
   
   TF1 *f1 = new TF1(Form("f1_%s",set.c_str()),"[0]+[1]/(0.1*x)+[2]*log10(x)/(0.1*x)+[3]*(1+(pow(x/[4],[5])-1)/(pow(x/[4],[5])+1))+[6]*pow(x,-0.3051)+[7]*(0.001*x)+[8]*pow(x*[9]/15.,2.)/(1+0.5*pow(x*[9]/15.,4.))",15,4500);
   TF1 *f1raw = new TF1(Form("f1_%s",set.c_str()),"[0]+[1]/(0.1*x)+[2]*log10(x)/(0.1*x)+[3]*(1+(pow(x/[4],[5])-1)/(pow(x/[4],[5])+1))+[6]*pow(x,-0.3051)+[7]*(0.001*x)+[8]*pow((x*[9])/15.,2.)/(1+0.5*pow((x*[9])/15.,4.))",15,4500);
@@ -152,6 +158,16 @@ void createL2L3ResTextFiles(string set) {
     f1->FixParameter(4, 1500.);
     f1->FixParameter(5, 0.);
     f1->FixParameter(7, 0.);
+  }
+  else if (ts.Contains("25")) {
+    f1->SetParameters(0.94, 0.,0., -0.06,1600,3, -0.12, 0.01, 0.00, 0.);
+
+    f1->SetParLimits(3, -0.2, 0.2);
+    f1->SetParLimits(4, 1000., 2000.);
+    f1->SetParLimits(5, 1., 5.);
+    f1->SetParLimits(7, -0.2, 0.2);
+    //f1->FixParameter(8, 0.);
+    //f1->FixParameter(9, 0.);
   }
   else {
     f1->SetParameters(0.94, 0.,0., -0.06,1600,3, -0.12, 0.01, 0.04, 1.);
@@ -193,6 +209,7 @@ void createL2L3ResTextFiles(string set) {
   color["2024G_nib2"] = kMagenta+1;
   color["2024H_nib1"] = kMagenta+2;
   color["2024I_nib1"] = kPink;
+  color["2025C"] = kRed;
   
   h->Fit(f1,"QRN");
   h->Fit(f1,"QRNM");
@@ -265,6 +282,14 @@ void createL2L3ResTextFiles(string set) {
     f1raw->FixParameter(5,0.);
     f1raw->FixParameter(7,0.);
   }
+  else if (ts.Contains("25")) {
+    f1raw->SetParLimits(3, -0.2, 0.);
+    f1raw->SetParLimits(4, 1000., 6500.);
+    f1raw->SetParLimits(5, 1., 10.);
+    f1raw->SetParLimits(7, -0.2, 0.2);
+    //f1raw->FixParameter(8, 0.);
+    //f1raw->FixParameter(9, 0.);
+  }
   else {
     f1raw->SetParLimits(3, -0.2, 0.);
     f1raw->SetParLimits(4, 1000., 6500.);
@@ -277,8 +302,14 @@ void createL2L3ResTextFiles(string set) {
   f1raw->SetParLimits(1, -0.5, +0.5); // 1/x
   f1raw->SetParLimits(2, -0.5, +0.5); // log(x)/x
   f1raw->SetParLimits(6, -0.5, +0.5); // x^-0.3
+  //if (ts.Contains("25")) {
+  //f1raw->FixParameter(8, 0.); // nhf_off
+  //f1raw->FixParameter(9, 0.); // nhf_off peak
+  //}
+  //else {
   f1raw->SetParLimits(8, 0., 0.5); // nhf_off
   f1raw->SetParLimits(9, 0.5, 2.0); // nhf_off peak
+  //}
 
   
   _c3->cd();
@@ -338,14 +369,15 @@ void createL2L3ResTextFiles(string set) {
   // Generate input and output file names semi-automatically  //
   //////////////////////////////////////////////////////////////
   const char *run = set.c_str();
-
+  TString tr(run);
+  
   string sin(""), sout2(""), sout3("");
   // Remember to copy L2Res .txt files by hand to output directory
   // Hand-copying reduces risk of accidental overwriting after L2Res closed
-  sin = Form("textFiles/Prompt24_V9M/Prompt24_Run%s_V9M_DATA_L2ResidualVsPtRef_AK4PFPuppi.txt",cs);
+  sin = (tr.Contains("25") ? Form("textFiles/Prompt25_V1M/Prompt25_Run%s_V1M_DATA_L2ResidualVsPtRef_AK4PFPuppi.txt",cs) : Form("textFiles/Prompt24_V9M/Prompt24_Run%s_V9M_DATA_L2ResidualVsPtRef_AK4PFPuppi.txt",cs));
   // Output files go to generic directory. Copy by hand to final output
-  sout2 = Form("textFiles/Prompt24/Prompt24_Run%s_V9M_DATA_L2L3ResidualVsPtRef_AK4PFPuppi.txt",cs);
-  sout3 = Form("textFiles/Prompt24/Prompt24_Run%s_V9M_DATA_L2L3Residual_AK4PFPuppi.txt",cs);
+  sout2 = (tr.Contains("25") ? Form("textFiles/Prompt25/Prompt25_Run%s_V1M_DATA_L2L3ResidualVsPtRef_AK4PFPuppi.txt",cs) : Form("textFiles/Prompt24/Prompt24_Run%s_V9M_DATA_L2L3ResidualVsPtRef_AK4PFPuppi.txt",cs));
+  sout3 = (tr.Contains("25") ? Form("textFiles/Prompt25/Prompt25_Run%s_V1M_DATA_L2L3Residual_AK4PFPuppi.txt",cs) : Form("textFiles/Prompt24/Prompt24_Run%s_V9M_DATA_L2L3Residual_AK4PFPuppi.txt",cs));
   
   assert(sin!="");
   assert(sout2!="");
@@ -370,7 +402,8 @@ void createL2L3ResTextFiles(string set) {
   if (debug) cout << "Input L2Residual header:" << endl;
   if (debug) cout << header << endl;
   const bool isOffSqr(true);
-  const int nparold = (isOffSqr ? 2 + 3 + 4 : 2 + 3 + 3); // 8
+  //const int nparold = (isOffSqr ? 2 + 3 + 4 : 2 + 3 + 3); // 8
+  const int nparold = (isOffSqr ? 2 + 3 + 5 : 2 + 3 + 3); // 8
 
   if (debug) cout << "Input L3Residual function(s):" << endl;
   if (debug) cout << "1./("<<f1->GetExpFormula().Data()<<")" << endl;
@@ -379,7 +412,8 @@ void createL2L3ResTextFiles(string set) {
   // New combined function(s) and header(s)
   //string func = "[0]+[1]*log10(0.01*x)+[2]/(0.1*x)+[3]*log10(x)/(0.1*x)+[4]*(1+(pow(x/[5],[6])-1)/(pow(x/[5],[6])+1))+[7]*pow(x,-0.3051)+[8]*(0.001*x)+[9]*pow(x/15.,2.)/(1+0.5*pow(x/15.,4.))";
   //string func3 = "[0]+[1]*log10(0.01*x)+[2]/(0.1*x)+[3]*log10(x)/(0.1*x)+[4]*(1+(pow(x/[5],[6])-1)/(pow(x/[5],[6])+1))+[7]*pow(x,-0.3051)+[8]*(0.001*x)+[9]*pow((x+[10])/15.,2.)/(1+0.5*pow((x+[10])/15.,4.))";
-  string func3 = "[0]+[1]*log10(0.01*x)+[2]/(0.1*x)+[3]*log10(x)/(0.1*x)+[4]*(1+(pow(x/[5],[6])-1)/(pow(x/[5],[6])+1))+[7]*pow(x,-0.3051)+[8]*(0.001*x)+[9]*pow(x*[10]/15.,2.)/(1+0.5*pow(x*[10]/15.,4.))";
+  string func3 = "[0]+[1]*log10(0.01*x)+[2]/(0.1*x)+[3]*log10(x)/(0.1*x)+[4]*(1+(pow(x/[5],[6])-1)/(pow(x/[5],[6])+1))+[7]*pow(x,-0.3051)+[8]*(0.001*x)+[9]*pow(x*[10]/15.,2.)/(1+0.5*pow(x*[10]/15.,4.))"; // V8M?
+  // New L2Res: "[0]+[1]*log10(0.01*x)+[2]*pow(log10(0.01*x),2)+[3]/(x/10.)+[4]/pow(x/10.,2)"
 
   header2 = "{ 1 JetEta 1 JetPt 1./("+func3+") Correction L2Relative }";
   header3 = "{ 1 JetEta 1 JetPt 1./("+func3+") Correction L2Relative }";
@@ -403,7 +437,7 @@ void createL2L3ResTextFiles(string set) {
   string line;
   double etamin(0), etamax(0);
   int npar(0), xmin(0), xmax(0), ptmin0(0), ptmax1(0);
-  double p0(0), p1(0), p2(0), p3(0);
+  double p0(0), p1(0), p2(0), p3(0), p4(0);
   int cnt(0), ieta(0), cntmax(0);
 
   const int nxy = 41;
@@ -415,17 +449,23 @@ void createL2L3ResTextFiles(string set) {
     // Read in L2Res
     if (cnt<cntmax && debug) cout << line << endl;
     TF1 *f2(0);
-    if (isOffSqr) { // V9M
-      assert(sscanf(line.c_str(),"%lf %lf  %d  %d %d  %lf %lf %lf %lf",
+    if (isOffSqr) { // V9M (draft1 commented out)
+      //assert(sscanf(line.c_str(),"%lf %lf  %d  %d %d  %lf %lf %lf %lf",
+      //	    &etamin, &etamax, &npar, &xmin, &xmax,
+      //	    &p0, &p1, &p2, &p3)==nparold);
+      //assert(npar==2+4);
+      assert(sscanf(line.c_str(),"%lf %lf  %d  %d %d  %lf %lf %lf %lf %lf",
 		    &etamin, &etamax, &npar, &xmin, &xmax,
-		    &p0, &p1, &p2, &p3)==nparold);
-      assert(npar==2+4);
+		    &p0, &p1, &p2, &p3, &p4)==nparold);
+      assert(npar==2+5);
       
       // TF1 for relative JES (1./L2Residual)
       f2 = new TF1(Form("f2_%s_%d",cs,cnt),
-		   "[0]+[1]*log10(0.01*x)+[2]/(x/10.)+[3]/pow(x/10.,2)",
+		 //"[0]+[1]*log10(0.01*x)+[2]/(x/10.)+[3]/pow(x/10.,2)",
+		   "[0]+[1]*log10(0.01*x)+[2]*pow(log10(0.01*x),2)+[3]/(x/10.)+[4]/pow(x/10.,2)",
 		   xmin,xmax);
-      f2->SetParameters(p0, p1, p2, p3);
+      //f2->SetParameters(p0, p1, p2, p3);
+      f2->SetParameters(p0, p1, p2, p3, p4);
     }
     else { // V8M
       assert(sscanf(line.c_str(),"%lf %lf  %d  %d %d  %lf %lf %lf",
@@ -671,6 +711,10 @@ void createL2L3ResTextFiles(string set) {
     f23->SetParameter(9, k2_20*f1->GetParameter(8));
     //f23->SetParameter(10, 20*(kjes_20-1));
     f23->SetParameter(10, kjes_20);
+    //if (ts.Contains("25")) {
+    //f23->FixParameter(9, 0.);
+    //f23->FixParameter(10, 0.);
+    //}
     
     // To avoid very weird fits
     //f23->SetParameter(0, max(0.3,min(0.25,f23->GetParameter(0))));
@@ -888,7 +932,8 @@ void createL2L3ResTextFiles(string set) {
        #include "Config.C"
 
       tex->DrawLatex(0.50,0.65,Form("%s vs",cs));
-      tex->DrawLatex(0.50,0.50,"Winter 24");
+      //tex->DrawLatex(0.50,0.50,"Winter 24");
+      tex->DrawLatex(0.50,0.50,"Summer24");
       tex->DrawLatex(0.50,0.35,mlum[cs].c_str());
       //tex->SetTextSize(siz);
     }
