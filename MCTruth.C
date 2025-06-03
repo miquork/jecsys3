@@ -29,36 +29,57 @@ void fixMedian(TH1D *hjes, TF1* jes_fit, TF1* jer_fit, double pT_threshold);
 double evalXmin(double jes, double jer, double eff);
 TH1D* cutHist(const TH1D *h, const double xmin);
 
-void MCTruth() {
+void MCTruth(string set="Winter25") {
 
   setTDRStyle();
   TDirectory *curdir = gDirectory;
-  
-  TFile *f = new TFile("rootfiles/Prompt2024/v121_Jet/jmenano_mc_out_Summer24MG_v121_2024CDEFGHI.root","READ");
+
+  TFile *f(0);
+  if (set=="Summer24JME") f = new TFile("rootfiles/Prompt2024/v124_Jet/jmenano_mc_out_Summer24MC_FlatJMEN_v124.root","READ");
+  if (set=="Summer24") f = new TFile("rootfiles/Prompt2024/v121_Jet/jmenano_mc_out_Summer24MG_v121_2024CDEFGHI.root","READ");
+  // v4->v6: remove _Athens, count 3 leading gen (was 4), Jet_neMultiplicity for reco (was gen)
+  // v6->v8: add p2eff_recEta hybrid map
+  if (set=="Winter25") f = new TFile("rootfiles/Prompt2025/v123_v8_Jet/jmenano_mc_out_Winter25MC_Flat2022_v123_v8.root","READ");
+  if (set=="Winter24") f = new TFile("rootfiles/Prompt2025/v123_v8_Jet/jmenano_mc_out_Winter24MCFlat_v123_v8.root","READ");
   assert(f && !f->IsZombie());
 
   gDirectory->cd("HLT_MC");
   gDirectory->cd("MCtruth");
+  //gDirectory->cd("LeadingJ");
   TDirectory *d = gDirectory;
 
   // <pTreco/pTgen> vs (eta_jet, pTgen); 41 bins in X=eta_jet
   TProfile2D *p2x = (TProfile2D*)d->Get("p2jes");   assert(p2x);
-  TProfile2D *p2e = (TProfile2D*)d->Get("p2eff");   assert(p2e);
+  //TProfile2D *p2e = (TProfile2D*)d->Get("p2eff");   assert(p2e);
+  //TProfile2D *p2e = (TProfile2D*)d->Get("p2eff_recEta");   assert(p2e);
+  TProfile2D *p2e = (TProfile2D*)d->Get("p2eff_recEta");
+  if (!p2e) p2e = (TProfile2D*)d->Get("p2eff");   assert(p2e);
   TProfile2D *p2r = (TProfile2D*)d->Get("p2r_raw"); assert(p2r);
   TProfile2D *p2c = (TProfile2D*)d->Get("p2r");     assert(p2c);
 
+  //if (set=="Winter25") {
+  //p2r = (TProfile2D*)d->Get("LeadingJ/p2r_Athens"); assert(p2r);
+  //}
+    
   // 7*6=42>41 pads; last one for legend
   int size = 600;
   TCanvas *c1eff = new TCanvas("c1eff","c1eff",7*size,6*size);
   c1eff->Divide(7,6,0,0);
   TCanvas *c1jes = new TCanvas("c1jes","c1jes",7*size,6*size);
   c1jes->Divide(7,6,0,0);
+  TCanvas *c1jesx = new TCanvas("c1jesx","c1jesx",7*size,6*size);
+  c1jesx->Divide(7,6,0,0);
   TCanvas *c1jer = new TCanvas("c1jer","c1jer",7*size,6*size);
   c1jer->Divide(7,6,0,0);
+  TCanvas *c1jerx = new TCanvas("c1jerx","c1jerx",7*size,6*size);
+  c1jerx->Divide(7,6,0,0);
   TCanvas *c1jet = new TCanvas("c1jet","c1jet",7*size,6*size);
   c1jet->Divide(7,6,0,0);
   TCanvas *c1jec = new TCanvas("c1jec","c1jec",7*size,6*size);
   c1jec->Divide(7,6,0,0);
+  TCanvas *c1jecx = new TCanvas("c1jecx","c1jecx",7*size,6*size);
+  c1jecx->Divide(7,6,0,0);
+
 
   TLine *l = new TLine();
   l->SetLineStyle(kDashed);
@@ -76,13 +97,25 @@ void MCTruth() {
   TLegend *legjes = tdrLeg(0.05,0.80-0.05*1.5*nentry,0.50,0.80);
   legjes->SetTextSize(0.045*1.5);
 
+  c1jesx->cd(42);
+  TLegend *legjesx = tdrLeg(0.05,0.90-0.05*1.5*9,0.50,0.90);
+  legjesx->SetTextSize(0.045*1.5);
+  
   c1jer->cd(42);
   TLegend *legjer = tdrLeg(0.05,0.80-0.05*1.5*nentry,0.50,0.80);
   legjer->SetTextSize(0.045*1.5);
 
+  c1jerx->cd(42);
+  TLegend *legjerx = tdrLeg(0.05,0.80-0.05*1.5*9,0.50,0.80);
+  legjerx->SetTextSize(0.045*1.5);
+
   c1jec->cd(42);
   TLegend *legjec = tdrLeg(0.05,0.80-0.05*1.5*3,0.50,0.80);
   legjec->SetTextSize(0.045*1.5);
+
+  c1jecx->cd(42);
+  TLegend *legjecx = tdrLeg(0.05,0.90-0.05*1.5*9,0.50,0.90);
+  legjecx->SetTextSize(0.045*1.5);
 
 
   double eps = 1e-4;
@@ -116,6 +149,8 @@ void MCTruth() {
     TH1D *hn = pc->ProjectionX(Form("hn_%d",i));
     evalJET(hn, pc);
 
+    if (set=="Winter25") hn->Scale(1000.); // Flat2022QCD
+    if (set=="Winter24") hn->Scale(1000.); // Flat2022QCD
     
     ////////////////////////////////////////////
     // Step 1.1 Jet reconstruction EFFiciency //
@@ -149,7 +184,10 @@ void MCTruth() {
     f1eff->Draw("SAME");
 
     if (i==1) {
-      legeff->SetHeader("Summer24, MG QCD MC");
+      if (set=="Summer24JME") legeff->SetHeader("Summer24, JME QCDFlat MC");
+      if (set=="Summer24") legeff->SetHeader("Summer24, MG QCD MC");
+      if (set=="Winter25") legeff->SetHeader("Winter25, QCDFlat MC");
+      if (set=="Winter24") legeff->SetHeader("Winter24, QCDFlat MC");
       legeff->AddEntry(hr,"Data","PLE");
       legeff->AddEntry(f1eff,"Fit","L");
     }
@@ -168,8 +206,8 @@ void MCTruth() {
     else if (i<=14) { jesmin = 0.75; jesmax = 1.05; }
     else if (i<=21) { jesmin = 0.75; jesmax = 1.05; }
     else if (i<=28) { jesmin = 0.45; jesmax = 1.10; }
-    else if (i<=35) { jesmin = 0.25; jesmax = 1.20; }
-    else if (i<=42) { jesmin = 0.25; jesmax = 1.15; }
+    else if (i<=35) { jesmin = 0.25; jesmax = 1.25; }
+    else if (i<=42) { jesmin = 0.25; jesmax = 1.20; }
     TH1D *hjes = tdrHist(Form("hjes_%d",i),"JES",jesmin+eps,jesmax-eps,
 		      "p_{T,gen} (GeV)",5,5000);
     hjes->GetXaxis()->SetMoreLogLabels(kFALSE);
@@ -200,11 +238,20 @@ void MCTruth() {
     f1jes->Draw("SAME");
 
     if (i==1) {
-      legjes->SetHeader("Summer24, MG QCD MC");
+      if (set=="Summer24JME") legjes->SetHeader("Summer24, JME QCDFlat MC");
+      if (set=="Summer24") legjes->SetHeader("Summer24, MG QCD MC");
+      if (set=="Winter25") legjes->SetHeader("Winter25, QCDFlat MC");
+      if (set=="Winter24") legjes->SetHeader("Winter24, QCDFlat MC");
       legjes->AddEntry(hr,"Data","PLE");
       legjes->AddEntry(f1jes,"Fit","L");
     }
 
+    
+    c1jesx->cd(i);
+    gPad->SetLogx();
+    hjes->Draw("AXIS");
+    l->DrawLine(5,1,5000,1);
+    
     
     //////////////////////////////////////////
     // Step 1.3 Jet Energy Resolution (JER) //
@@ -244,10 +291,22 @@ void MCTruth() {
     f1jer->Draw("SAME");
 
     if (i==1) {
-      legjer->SetHeader("Summer24, MG QCD MC");
+      if (set=="Summer24JME") legjer->SetHeader("Summer24, JME QCDFlat MC");
+      if (set=="Summer24") legjer->SetHeader("Summer24, MG QCD MC");
+      if (set=="Winter25") legjer->SetHeader("Winter25, QCDFlat MC");
+      if (set=="Winter24") legjer->SetHeader("Winter24, QCDFlat MC");
       legjer->AddEntry(hr,"Data","PLE");
       legjer->AddEntry(f1jes,"Fit","L");
     }
+
+
+    c1jerx->cd(i);
+    gPad->SetLogx();
+    hjer->Draw("AXIS");
+
+    tdrDraw(hs,"Pz",kFullCircle,kBlack,kSolid,-1,kNone,0);
+    f1jer->Draw("SAME");
+
 
 
     /////////////////////////
@@ -320,7 +379,10 @@ void MCTruth() {
 
     
     if (i==1) {
-      legjec->SetHeader("Summer24, MG QCD MC");
+      if (set=="Summer24JME") legjec->SetHeader("Summer24, JME QCDFlat MC");
+      if (set=="Summer24") legjec->SetHeader("Summer24, MG QCD MC");
+      if (set=="Winter25") legjec->SetHeader("Winter25, QCDFlat MC");
+      if (set=="Winter24") legjec->SetHeader("Winter24, QCDFlat MC");
       //legjec->AddEntry(hc,"Data","PLE");
     }
 
@@ -380,9 +442,28 @@ void MCTruth() {
     f1jer->Draw("SAME");
 
     if (i==1) {
-      legjer->AddEntry(hr_raw,"Orig. data","PLE");
-      legjer->AddEntry(f1jes_raw,"Orig. fit","L");
-      legjer->AddEntry(f1jes_raw," ","");
+      legjer->AddEntry(hs_raw,"Orig. data","PLE");
+      legjer->AddEntry(f1jer_raw,"Orig. fit","L");
+      legjer->AddEntry(f1jer_raw," ","");
+    }
+
+
+    c1jerx->cd(i);
+	
+    tdrDraw(hs_raw,"Pz",kOpenCircle,kRed+1,kSolid,-1,kNone,0,1.5,1);
+    f1jer_raw->Draw("SAME");
+    tdrDraw(hs,"Pz",kFullCircle,kBlack,kSolid,-1,kNone,0,2.0,1);
+    f1jer->Draw("SAME");
+
+    if (i==1) {
+      if (set=="Summer24JME") legjerx->SetHeader("Summer24, JME QCDFlat MC");
+      if (set=="Summer24") legjerx->SetHeader("Summer24, MG QCD MC");
+      if (set=="Winter25") legjerx->SetHeader("Winter25, QCDFlat MC");
+      if (set=="Winter24") legjerx->SetHeader("Winter24, QCDFlat MC");
+      legjerx->AddEntry(hs_raw,"Raw RMS","PLE");
+      legjerx->AddEntry(f1jer_raw,"Raw fit","L");
+      legjerx->AddEntry(hs,"Corrected RMS","PLE");
+      legjerx->AddEntry(f1jer_raw,"Corrected fit","L");
     }
 
         
@@ -409,6 +490,31 @@ void MCTruth() {
       legjes->AddEntry(hx,"Previous JEC","F");
     }
 
+    
+    c1jesx->cd(i);
+    gPad->SetLogx();
+
+    tex->DrawLatex(i%7==1 ? 0.35 : 0.25, 0.90,
+		   Form("%1.3f<|#eta_{rec}|<%1.3f",etamin,etamax));
+    tdrDraw(hx,"HIST][",kNone,kBlue,kSolid,-1,kNone,0);
+    f1jes_raw->Draw("SAME");
+    f1jes->Draw("SAME");
+
+    tdrDraw(hr_raw,"Pz",kOpenCircle,kRed+1,kSolid,-1,kNone,0,1.5,1);
+    tdrDraw(hr,"Pz",kFullCircle,kBlack,kSolid,-1,kNone,0,2.0,1);
+
+    if (i==1) {
+      if (set=="Summer24JME") legjesx->SetHeader("Summer24, JME QCDFlat MC");
+      if (set=="Summer24") legjesx->SetHeader("Summer24, MG QCD MC");
+      if (set=="Winter25") legjesx->SetHeader("Winter25, QCDFlat MC");
+      if (set=="Winter24") legjesx->SetHeader("Winter24, QCDFlat MC");
+      legjesx->AddEntry(hx,"Official JEC","F");
+      legjesx->AddEntry(hr_raw,"Raw Mean","PLE");
+      legjesx->AddEntry(f1jes_raw,"Raw Mean fit (p_{T}>30 GeV)","L");
+      legjesx->AddEntry(hr,"Corrected Mean","PLE");
+      legjesx->AddEntry(f1jes,"Corrected Mean fit (p_{T}>15 GeV)","L");
+    }
+
 
     c1jec->cd(i);
 
@@ -419,11 +525,35 @@ void MCTruth() {
     tdrDraw(hc_raw,"Pz",kOpenCircle,kRed+1,kSolid,-1,kNone,0,1.5,1);
     //tdrDraw(hr_ratio,"Pz",kOpenCircle,kBlue,kSolid,-1,kNone,0,2.0,2);
     tdrDraw(hc,"Pz",kFullCircle,kBlack,kSolid,-1,kNone,0,2.0,1);
-    tdrDraw(hr_ratio,"Pz",kFullDiamond,kGreen+2,kSolid,-1,kNone,0,2.0,1);
+    tdrDraw(hr_ratio,"Pz",kFullDotSmall,kGreen+2,kSolid,-1,kNone,0,2.0,1);
 
     if (i==1) {
       legjec->AddEntry(hc,"Data","PLE");
       legjec->AddEntry(hc_raw,"Orig. data","PLE");
+    }
+
+
+    c1jecx->cd(i);
+    gPad->SetLogx();
+    hjec->Draw("AXIS");
+    l->DrawLine(5,0,5000,0);
+    
+    tex->DrawLatex(i%7==1 ? 0.35 : 0.25, 0.90,
+		   Form("%1.3f<|#eta_{rec}|<%1.3f",etamin,etamax));
+
+
+    tdrDraw(hc_raw,"Pz",kOpenCircle,kRed+1,kSolid,-1,kNone,0,1.5,1);
+    tdrDraw(hc,"Pz",kFullCircle,kBlack,kSolid,-1,kNone,0,2.0,1);
+    tdrDraw(hr_ratio,"Pz",kFullDiamond,kGreen+2,kSolid,-1,kNone,0,2.0,1);
+
+    if (i==1) {
+      if (set=="Summer24JME") legjecx->SetHeader("Summer24, JME QCDFlat MC");
+      if (set=="Summer24") legjecx->SetHeader("Summer24, MG QCD MC");
+      if (set=="Winter25") legjecx->SetHeader("Winter25, QCDFlat MC");
+      if (set=="Winter24") legjecx->SetHeader("Winter24, QCDFlat MC");
+      legjecx->AddEntry(hc_raw,"Raw Mean","PLE");
+      legjecx->AddEntry(hc,"Corrected Mean","PLE");
+      legjecx->AddEntry(hr_ratio,"Corr. Mean  / Fit","PLE");
     }
     
     //} // for j
@@ -431,11 +561,12 @@ void MCTruth() {
   } // for i
 
 
-  c1eff->SaveAs("pdf/MCTruth/MCTruth_EFF.pdf");
-  c1jes->SaveAs("pdf/MCTruth/MCTruth_JES.pdf");
-  c1jer->SaveAs("pdf/MCTruth/MCTruth_JER.pdf");
-  c1jet->SaveAs("pdf/MCTruth/MCTruth_JET.pdf");
-  c1jec->SaveAs("pdf/MCTruth/MCTruth_JEC.pdf");
+  const char *cs = set.c_str();
+  c1eff->SaveAs(Form("pdf/MCTruth/MCTruth_EFF_%s.pdf",cs));
+  c1jes->SaveAs(Form("pdf/MCTruth/MCTruth_JES_%s.pdf",cs));
+  c1jer->SaveAs(Form("pdf/MCTruth/MCTruth_JER_%s.pdf",cs));
+  c1jet->SaveAs(Form("pdf/MCTruth/MCTruth_JET_%s.pdf",cs));
+  c1jec->SaveAs(Form("pdf/MCTruth/MCTruth_JEC_%s.pdf",cs));
 
 
   ///////////////////////////////////////////////////////////
@@ -449,10 +580,17 @@ void MCTruth() {
 
   TCanvas *c1gaus = new TCanvas("c1gaus","c1gaus",7*size,6*size);
   c1gaus->Divide(7,6,0,0);
+
+  c1gaus->cd(42);
+  TLegend *leggaus = tdrLeg(0.05,0.80-0.05*1.5*4,0.50,0.80);
+  leggaus->SetTextSize(0.045*1.5);
   
-  // z=eta_gen, y=pTgen, z=pTreco/pTgen
+  // x=eta_gen, y=pTgen, z=pTreco/pTgen
   for (int i = 1; i != h3r->GetNbinsX()+1; ++i) {
 
+    double etamin = h3r->GetXaxis()->GetBinLowEdge(i);
+    double etamax = h3r->GetXaxis()->GetBinLowEdge(i+1);
+    
     TH1D *h1r = h3r->ProjectionY(Form("h1r_%d",i)); h1r->Reset();
     TH1D *h1c = h3c->ProjectionY(Form("h1c_%d",i)); h1c->Reset();
     TH1D *h1s = h3c->ProjectionY(Form("h1s_%d",i)); h1s->Reset();
@@ -512,9 +650,12 @@ void MCTruth() {
       }
 
       // Gaussian fits
-      double pt = h1r->GetBinCenter(j);
-      double ptmin = h1r->GetBinLowEdge(j);
-      double ptmax = h1r->GetBinLowEdge(j+1);
+      double pt = h3r->GetYaxis()->GetBinCenter(j);
+      double ptmin = h3r->GetYaxis()->GetBinLowEdge(j);
+      double ptmax = h3r->GetYaxis()->GetBinLowEdge(j+1);
+      //double pt = h1r->GetBinCenter(j);
+      //double ptmin = h1r->GetBinLowEdge(j);
+      //double ptmax = h1r->GetBinLowEdge(j+1);
       if (hr->GetEntries()>5 && hr->Integral()>0 && hc->Integral()>0 && pt>20) {
 	TF1 *f1jer = vjer[i-1];
 	TF1 *f1jes = vjes[i-1];
@@ -533,18 +674,41 @@ void MCTruth() {
 	fgaus->SetParameters(max(0.1,min(1.9,mu)), max(0.01,min(1.0,sigma)));
 	fgaus->SetParLimits(0, 0.1, 1.9);
 	fgaus->SetParLimits(1, 0.01, 1.0);
-	hr->Fit(fgaus,"QRN");
+	if (pt<100.)
+	  fgaus->FixParameter(1, fgaus->GetParameter(1)); // fixed width
+	else
+	  fgaus->ReleaseParameter(1);
+	//hr->Fit(fgaus,"QRN");
 	h1r_mu->SetBinContent(j, fgaus->GetParameter(0));
 	h1r_mu->SetBinError(j, fgaus->GetParError(0));
 
 	//if (pt>86 && pt<110) {
 	if (pt>21 && pt<28) {
+	  //if (pt>=10 && pt<15) {
 	  c1gaus->cd(i);
+
+	  if (set=="Summer24JME") { hr->Rebin(4); hr->Scale(0.25); }
+	  hr->GetYaxis()->SetRangeUser(0,2.9);//3.);
+	  hr->UseCurrentStyle();
+	  hr->SetYTitle("dN/dR");
+	  
 	  tdrDraw(hr,"HIST",kNone,kBlue,kSolid,-1,1001,kBlue-9);
 	  hr->SetFillColorAlpha(kBlue-9, 0.3);
 	  TH1D *hr_cut = cutHist(hr, xmin);
-	  tdrDraw(hr_cut,"HIST",kNone,kBlue,kSolid,-1,1001,kBlue-9);
-	  fgaus->DrawClone("SAME");
+	  tdrDraw(hr_cut,"HIST",kNone,kBlue+1,kSolid,-1,1001,kBlue-9);
+	  fgaus->SetLineColor(kCyan+2);
+	  TF1 *f1r = (TF1*)fgaus->DrawClone("SAME");
+
+	  tex->DrawLatex(i%7==1 ? 0.30 : 0.20, 0.90,
+			 Form("%1.3f<|#eta_{rec}|<%1.3f",etamin,etamax));
+	  if (i==1) {
+	    leggaus->AddEntry(f1r,"Raw parameterization","L");
+	    leggaus->AddEntry(hr_cut,"Raw response","F");
+
+	    c1gaus->cd(42);
+	    tex->DrawLatex(0.20, 0.90,
+			   Form("%1.0f<p_{T,gen}<%1.0f GeV",ptmin,ptmax));
+	  }
 	}
 
 	mu = 1;
@@ -556,7 +720,11 @@ void MCTruth() {
 	fgaus->SetParameters(1, max(0.01,min(1.0,sigma)));
 	fgaus->SetParLimits(0, 0.1, 1.9);
 	fgaus->SetParLimits(1, 0.01, 1.0);
-	hc->Fit(fgaus,"QRN");
+	if (pt<100.)
+	  fgaus->FixParameter(1, fgaus->GetParameter(1)); // fixed width
+	else
+	  fgaus->ReleaseParameter(1);
+	//hc->Fit(fgaus,"QRN");
 	h1c_mu->SetBinContent(j, fgaus->GetParameter(0));
 	h1c_mu->SetBinError(j, fgaus->GetParError(0));
 	h1s_sigma->SetBinContent(j, fgaus->GetParameter(1) /
@@ -565,13 +733,21 @@ void MCTruth() {
 			       fgaus->GetParameter(0));
 
 	if (pt>21 && pt<28) {
+	  //if (pt>15 && pt<20 && false) {
 	  c1gaus->cd(i);
+	  if (set=="Summer24JME") { hc->Rebin(4); hc->Scale(0.25); }
 	  tdrDraw(hc,"HIST",kNone,kMagenta+1,kSolid,-1,1001,kMagenta-9);
-	  hc->SetFillColorAlpha(kMagenta-9,0.15);
+	  hc->SetFillColorAlpha(kMagenta-9,0.3);
 	  TH1D *hc_cut = cutHist(hc, xminc);
-	  tdrDraw(hc_cut,"HIST",kNone,kBlue,kSolid,-1,1001,kMagenta-9);
+	  tdrDraw(hc_cut,"HIST",kNone,kMagenta+2,kSolid,-1,1001,kMagenta-9);
 	  hc_cut->SetFillColorAlpha(kMagenta-9,0.3);
-	  fgaus->DrawClone("SAME");
+	  fgaus->SetLineColor(kMagenta+2);
+	  TF1 *f1c = (TF1*)fgaus->DrawClone("SAME");
+
+	  if (i==1) {
+	    leggaus->AddEntry(f1c,"Corrected parameterization","L");
+	    leggaus->AddEntry(hc_cut,"Corrected response","F");
+	  }
 	  gPad->RedrawAxis();
 	}
 
@@ -586,34 +762,53 @@ void MCTruth() {
     }
 
     
-    c1jes->cd(i);
+    c1jesx->cd(i);
 
-    tdrDraw(h1r,"Pz",kFullDiamond,kOrange+1,kSolid,-1,kNone,0,2.0);
     tdrDraw(h1r_median,"Pz",kOpenDiamond,kMagenta+1,kSolid,-1,kNone,0,2.0);
-    tdrDraw(h1r_mu,"Pz",kOpenStar,kCyan+1,kSolid,-1,kNone,0,2.0);
+    tdrDraw(h1r,"Pz",kFullDiamond,kOrange+1,kSolid,-1,kNone,0,2.0);
+    //tdrDraw(h1r_mu,"Pz",kOpenStar,kCyan+1,kSolid,-1,kNone,0,2.0);
+    tdrDraw(h1r_mu,"Pz",kFullDotSmall,kCyan+1,kSolid,-1,kNone,0,2.0);
 
-    c1jec->cd(i);
+    if (i==1) {
+      legjesx->AddEntry(h1r_median,"Raw Median","PLE");
+      legjesx->AddEntry(h1r,"Corrected Median","PLE");
+      legjesx->AddEntry(h1r_mu,"Gauss Mean (fixed)","PLE");
+    }
+
+    
+    c1jecx->cd(i);
 	
     evalJEC(h1c);
     evalJEC(h1c_median);
     evalJEC(h1c_mu);
     tdrDraw(h1c,"Pz",kFullDiamond,kOrange+1,kSolid,-1,kNone,0,2.0);
     tdrDraw(h1c_median,"Pz",kOpenDiamond,kMagenta+1,kSolid,-1,kNone,0,2.0);
-    tdrDraw(h1c_mu,"Pz",kOpenStar,kCyan+1,kSolid,-1,kNone,0,2.0);
+    tdrDraw(h1c_mu,"Pz",kFullDotSmall,kCyan+1,kSolid,-1,kNone,0,2.0);
+
+    if (i==1) {
+      legjecx->AddEntry(h1c_median,"Raw Median","PLE");
+      legjecx->AddEntry(h1c,"Corrected Median","PLE");
+      legjecx->AddEntry(h1c_mu,"Gauss Mean (fixed)","PLE");
+    }
 
     
-    c1jer->cd(i);
+    c1jerx->cd(i);
 
     tdrDraw(h1s,"Pz",kFullDiamond,kOrange+1,kSolid,-1,kNone,0,2.0);
     tdrDraw(h1s_CI68,"Pz",kOpenDiamond,kMagenta+1,kSolid,-1,kNone,0,2.0);
-    tdrDraw(h1s_sigma,"Pz",kOpenStar,kCyan+1,kSolid,-1,kNone,0,2.0);
-    
+    tdrDraw(h1s_sigma,"Pz",kFullDotSmall,kCyan+1,kSolid,-1,kNone,0,2.0);
+
+    if (i==1) {
+      legjerx->AddEntry(h1s_CI68,"Raw CI68","PLE");
+      legjerx->AddEntry(h1s,"Corrected CI68","PLE");
+      legjerx->AddEntry(h1s_sigma,"Gauss Sigma (fixed)","PLE");
+    }
   } // for i
 
-  c1jes->SaveAs("pdf/MCTruth/MCTruth_JES_xtra.pdf");
-  c1jec->SaveAs("pdf/MCTruth/MCTruth_JEC_xtra.pdf");
-  c1jer->SaveAs("pdf/MCTruth/MCTruth_JER_xtra.pdf");
-  c1gaus->SaveAs("pdf/MCTruth/MCTruth_Gaus.pdf");
+  c1jesx->SaveAs(Form("pdf/MCTruth/MCTruth_JES_xtra_%s.pdf",cs));
+  c1jecx->SaveAs(Form("pdf/MCTruth/MCTruth_JEC_xtra_%s.pdf",cs));
+  c1jerx->SaveAs(Form("pdf/MCTruth/MCTruth_JER_xtra_%s.pdf",cs));
+  c1gaus->SaveAs(Form("pdf/MCTruth/MCTruth_Gaus_%s.pdf",cs));
   
 }
 
