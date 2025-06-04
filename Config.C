@@ -21,6 +21,7 @@ mlum["2024G"] = "37.8 fb^{-1}";
 mlum["2024H"] = "5.4 fb^{-1}";
 mlum["2024I"] = "11.6 fb^{-1}";
 
+/*
 mlum["2024B_nib1"] = "0.13 fb^{-1}";
 mlum["2024C_nib1"] = "7.5 fb^{-1}";
 mlum["2024D_nib1"] = "8.3 fb^{-1}";
@@ -36,7 +37,7 @@ mlum["2024G_nib1"] = "X.X fb^{-1}";
 mlum["2024G_nib2"] = "X.X fb^{-1}";
 mlum["2024H_nib1"] = "5.4 fb^{-1}";
 mlum["2024I_nib1"] = "11.6 fb^{-1}";
-
+*/
 // rootfiles/brilcalc/sumfibs.py
 
 // NIB-level:
@@ -83,9 +84,13 @@ mlum["2024G"] = "37.8 fb^{-1}";
 mlum["2024H"] = "5.4 fb^{-1}";
 mlum["2024I"] = "11.5 fb^{-1}";
 
+mlum["2025C"] = "X.X fb^{-1}";
+
 // YEAR-level:
 mlum["2022"] = "34.8 fb^{-1}";
 mlum["2023"] = "28.4 fb^{-1}";
 mlum["2024"] = "109 fb^{-1}";
+
+mlum["2025"] = "X.X fb^{-1}";
 
 #endif

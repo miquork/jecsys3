@@ -29,7 +29,7 @@ void fixMedian(TH1D *hjes, TF1* jes_fit, TF1* jer_fit, double pT_threshold);
 double evalXmin(double jes, double jer, double eff);
 TH1D* cutHist(const TH1D *h, const double xmin);
 
-void MCTruth(string set="Winter25") {
+void MCTruth(string set="Winter25MG") {
 
   setTDRStyle();
   TDirectory *curdir = gDirectory;
@@ -40,6 +40,7 @@ void MCTruth(string set="Winter25") {
   // v4->v6: remove _Athens, count 3 leading gen (was 4), Jet_neMultiplicity for reco (was gen)
   // v6->v8: add p2eff_recEta hybrid map
   if (set=="Winter25") f = new TFile("rootfiles/Prompt2025/v123_v8_Jet/jmenano_mc_out_Winter25MC_Flat2022_v123_v8.root","READ");
+  if (set=="Winter25MG") f = new TFile("rootfiles/Prompt2025/Jet_v128/jmenano_mc_out_Winter25MG_v128.root","READ");
   if (set=="Winter24") f = new TFile("rootfiles/Prompt2025/v123_v8_Jet/jmenano_mc_out_Winter24MCFlat_v123_v8.root","READ");
   assert(f && !f->IsZombie());
 
@@ -544,7 +545,7 @@ void MCTruth(string set="Winter25") {
 
     tdrDraw(hc_raw,"Pz",kOpenCircle,kRed+1,kSolid,-1,kNone,0,1.5,1);
     tdrDraw(hc,"Pz",kFullCircle,kBlack,kSolid,-1,kNone,0,2.0,1);
-    tdrDraw(hr_ratio,"Pz",kFullDiamond,kGreen+2,kSolid,-1,kNone,0,2.0,1);
+    //tdrDraw(hr_ratio,"Pz",kFullDiamond,kGreen+2,kSolid,-1,kNone,0,2.0,1);
 
     if (i==1) {
       if (set=="Summer24JME") legjecx->SetHeader("Summer24, JME QCDFlat MC");
@@ -553,7 +554,7 @@ void MCTruth(string set="Winter25") {
       if (set=="Winter24") legjecx->SetHeader("Winter24, QCDFlat MC");
       legjecx->AddEntry(hc_raw,"Raw Mean","PLE");
       legjecx->AddEntry(hc,"Corrected Mean","PLE");
-      legjecx->AddEntry(hr_ratio,"Corr. Mean  / Fit","PLE");
+      //legjecx->AddEntry(hr_ratio,"Corr. Mean  / Fit","PLE");
     }
     
     //} // for j
@@ -678,17 +679,20 @@ void MCTruth(string set="Winter25") {
 	  fgaus->FixParameter(1, fgaus->GetParameter(1)); // fixed width
 	else
 	  fgaus->ReleaseParameter(1);
-	//hr->Fit(fgaus,"QRN");
+	hr->Fit(fgaus,"QRN"); // not fixed
 	h1r_mu->SetBinContent(j, fgaus->GetParameter(0));
 	h1r_mu->SetBinError(j, fgaus->GetParError(0));
 
+	double ptmin_gaus(86), ptmax_gaus(110);
+	if (pt>ptmin_gaus && pt<ptmax_gaus) {
 	//if (pt>86 && pt<110) {
-	if (pt>21 && pt<28) {
+	  //if (pt>21 && pt<28) {
 	  //if (pt>=10 && pt<15) {
 	  c1gaus->cd(i);
 
 	  if (set=="Summer24JME") { hr->Rebin(4); hr->Scale(0.25); }
 	  hr->GetYaxis()->SetRangeUser(0,2.9);//3.);
+	  if (ptmin_gaus>30) hr->GetYaxis()->SetRangeUser(0,4.9);
 	  hr->UseCurrentStyle();
 	  hr->SetYTitle("dN/dR");
 	  
@@ -707,7 +711,9 @@ void MCTruth(string set="Winter25") {
 
 	    c1gaus->cd(42);
 	    tex->DrawLatex(0.20, 0.90,
-			   Form("%1.0f<p_{T,gen}<%1.0f GeV",ptmin,ptmax));
+			   Form("%1.0f<p_{T,gen}<%1.0f GeV",
+				ptmin_gaus,ptmax_gaus));
+			   //Form("%1.0f<p_{T,gen}<%1.0f GeV",ptmin,ptmax));
 	  }
 	}
 
@@ -724,7 +730,7 @@ void MCTruth(string set="Winter25") {
 	  fgaus->FixParameter(1, fgaus->GetParameter(1)); // fixed width
 	else
 	  fgaus->ReleaseParameter(1);
-	//hc->Fit(fgaus,"QRN");
+	hc->Fit(fgaus,"QRN"); // not fixed
 	h1c_mu->SetBinContent(j, fgaus->GetParameter(0));
 	h1c_mu->SetBinError(j, fgaus->GetParError(0));
 	h1s_sigma->SetBinContent(j, fgaus->GetParameter(1) /
@@ -732,10 +738,13 @@ void MCTruth(string set="Winter25") {
 	h1s_sigma->SetBinError(j, fgaus->GetParError(1) /
 			       fgaus->GetParameter(0));
 
-	if (pt>21 && pt<28) {
+	if (pt>ptmin_gaus && pt<ptmax_gaus) {
+	  //if (pt>86 && pt<110) {
+	//if (pt>21 && pt<28) {
 	  //if (pt>15 && pt<20 && false) {
 	  c1gaus->cd(i);
 	  if (set=="Summer24JME") { hc->Rebin(4); hc->Scale(0.25); }
+	  //if (set=="Winter25MG") hc->Scale(1.5);
 	  tdrDraw(hc,"HIST",kNone,kMagenta+1,kSolid,-1,1001,kMagenta-9);
 	  hc->SetFillColorAlpha(kMagenta-9,0.3);
 	  TH1D *hc_cut = cutHist(hc, xminc);
@@ -772,7 +781,8 @@ void MCTruth(string set="Winter25") {
     if (i==1) {
       legjesx->AddEntry(h1r_median,"Raw Median","PLE");
       legjesx->AddEntry(h1r,"Corrected Median","PLE");
-      legjesx->AddEntry(h1r_mu,"Gauss Mean (fixed)","PLE");
+      //legjesx->AddEntry(h1r_mu,"Gauss Mean (fixed)","PLE");
+      legjesx->AddEntry(h1r_mu,"Gauss Mean","PLE");
     }
 
     
@@ -788,7 +798,8 @@ void MCTruth(string set="Winter25") {
     if (i==1) {
       legjecx->AddEntry(h1c_median,"Raw Median","PLE");
       legjecx->AddEntry(h1c,"Corrected Median","PLE");
-      legjecx->AddEntry(h1c_mu,"Gauss Mean (fixed)","PLE");
+      //legjecx->AddEntry(h1c_mu,"Gauss Mean (fixed)","PLE");
+      legjecx->AddEntry(h1c_mu,"Gauss Mean","PLE");
     }
 
     
@@ -801,7 +812,8 @@ void MCTruth(string set="Winter25") {
     if (i==1) {
       legjerx->AddEntry(h1s_CI68,"Raw CI68","PLE");
       legjerx->AddEntry(h1s,"Corrected CI68","PLE");
-      legjerx->AddEntry(h1s_sigma,"Gauss Sigma (fixed)","PLE");
+      //legjerx->AddEntry(h1s_sigma,"Gauss Sigma (fixed)","PLE");
+      legjerx->AddEntry(h1s_sigma,"Gauss Sigma","PLE");
     }
   } // for i
 

@@ -76,7 +76,7 @@
   //globalFitEtaBin(0.0, 1.3, epoch, "Prompt24_V7M");
   //globalFitEtaBin(0.0, 1.3, epoch, "Prompt24_V8N");
   if (TString(epoch.c_str()).Contains("25"))
-    globalFitEtaBin(0.0, 1.3, epoch, "Prompt25_V1M");
+    globalFitEtaBin(0.0, 1.3, epoch, "Prompt25_V2M");
   else
     globalFitEtaBin(0.0, 1.3, epoch, "Prompt24_V9M");
 

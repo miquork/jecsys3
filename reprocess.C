@@ -304,7 +304,8 @@ void reprocess(string epoch="") {
   else if (tepoch.Contains("2025")) {
     //fz = new TFile(Form("rootfiles/Prompt2025/Zmm_v97/jme_Zj_%s_Zmm_pileup_69200_v97_19052025.root",epoch.c_str()),"READ"); // Wrong MC JEC for MC
     if (tepoch.Contains("2025C"))
-      fz = new TFile("rootfiles/Prompt2025/Zmm_v98/jme_Zj_2025C_27052025_Zmm_v98_ddjson.root","READ");
+      //fz = new TFile("rootfiles/Prompt2025/Zmm_v98/jme_Zj_2025C_27052025_Zmm_v98_ddjson.root","READ");
+      fz = new TFile("rootfiles/Prompt2025/Zmm_v99/jme_Zj_2025C_02062025_Zmm_v99_ddjson.root","READ");
     else
       fz = new TFile(Form("rootfiles/Prompt2025/Zmm_v97/jme_Zj_%s_Zmm_v97.root",
 			  "2025B"),"READ");
@@ -512,12 +513,14 @@ void reprocess(string epoch="") {
   else if (tepoch.Contains("2025")) {
     //fp = new TFile(Form("rootfiles/Prompt2024/w48_Gam/minbiasxs69200/GamHistosRatio_%s_summer2024P8-noQCD_pu-2024CDEFGHI_xs69200_w48.root","2024I_nib1"),"READ");
     //fp = 0;
-    fpm = new TFile("rootfiles/Prompt2024/w48_Gam/minbiasxs69200/GamHistosFill_mc_summer2024P8_pu-2024CDEFGHI-xs69200_w48.root","READ");
+    //fpm = new TFile("rootfiles/Prompt2024/w48_Gam/minbiasxs69200/GamHistosFill_mc_summer2024P8_pu-2024CDEFGHI-xs69200_w48.root","READ");
+    fpm = new TFile("rootfiles/Prompt2025/Gam_w54/GamHistosMix_mc_winter2025P8_Winter2025QCD_no-pu_w54.root","READ");
     //fp0 = new TFile(Form("rootfiles/Prompt2024/w48_Gam/GamHistosFill_data_%s_w48.root","2024I_nib1"),"READ");
     //fp0 = new TFile(Form("rootfiles/Prompt2025/Gam_w50/GamHistosFill_data_%s_w50_20May2025.root","2025B"),"READ"); // old L2L3Res
     //fp0 = new TFile(Form("rootfiles/Prompt2025/Gam_w50/GamHistosFill_data_%s_noL2L3Res_w50_21May2025.root","2025B"),"READ"); // no L2L3Res
     //fp0 = new TFile(Form("rootfiles/Prompt2025/Gam_w51/GamHistosFill_data_%s_noL2L3Res_w51_21May2025.root",epoch.c_str()),"READ"); // no L2L3Res
-    fp0 = new TFile(Form("rootfiles/Prompt2025/Gam_w53/GamHistosFill_data_%s_noL2L3Res_w53_28May2025.root",epoch.c_str()),"READ"); // no L2L3Res
+    //fp0 = new TFile(Form("rootfiles/Prompt2025/Gam_w53/GamHistosFill_data_%s_noL2L3Res_w53_28May2025.root",epoch.c_str()),"READ"); // no L2L3Res
+    fp0 = new TFile(Form("rootfiles/Prompt2025/Gam_w54/GamHistosFill_data_%s_w54.root",epoch.c_str()),"READ"); // V1M
     fpd = fp0;
   }
   else {
@@ -723,7 +726,7 @@ void reprocess(string epoch="") {
     if (tr.Contains("2025B"))
       fmjd = new TFile(Form("rootfiles/Prompt2025/Jet_v128_v2/jmenano_data_cmb_%s_JME_v128_v2.root",epoch.c_str()),"READ"); // No L2L3Res
     else
-      fmjd = new TFile(Form("rootfiles/Prompt2025/Jet_v129/jmenano_data_cmb_%s_JME_v129.root",epoch.c_str()),"READ"); // No L2L3Res
+      fmjd = new TFile(Form("rootfiles/Prompt2025/Jet_v131/jmenano_data_cmb_%s_JME_v131.root",epoch.c_str()),"READ"); // No L2L3Res
     //"2025B"),"READ");
     fmjm = new TFile("rootfiles/Prompt2025/Jet_v128/jmenano_mc_out_Winter25MG_v128.root","READ");
     if (fmjm) fmjm = (TFile*)fmjm->GetDirectory("HLT_MC"); // PATCH

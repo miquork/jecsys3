@@ -34,6 +34,9 @@ void randomConeL2L3Res() {
   randomConeL2L3Res_era("2024G_nib2");
   randomConeL2L3Res_era("2024H_nib1");
   randomConeL2L3Res_era("2024I_nib1");
+
+  randomConeL2L3Res_era("2025B");
+  randomConeL2L3Res_era("2025C");
   
   //exit(0);
 }
@@ -52,6 +55,10 @@ void randomConeL2L3Res_era(string era) {
   TFile *frc = new TFile("rootfiles/Hirak_compare_sf_Run2024_Summer24MC-merge3.root","READ");
   assert(frc && !frc->IsZombie());
 
+  TFile *frc25 = new TFile("rootfiles/Hirak_2025B/compare_sf_Run2024GHI-Summer24MC_Run2025B-Winter25MC.root","READ");
+  assert(frc25 && !frc25->IsZombie());
+
+  
   curdir->cd();
 
   const char *cr = era.c_str();
@@ -72,8 +79,13 @@ void randomConeL2L3Res_era(string era) {
   cout << "Reading RC for era " << cr2 << endl << flush;
   //TH1D *hrc = (TH1D*)frc->Get("Run2024I"); assert(hrc);
   //TH1D *hrc = (TH1D*)frc->Get(Form("Run%s",cr)); assert(hrc);
-  TH1D *hrc = (TH1D*)frc->Get(Form("Run%s",cr2)); assert(hrc);
-
+  //TH1D *hrc = (TH1D*)frc->Get(Form("Run%s",cr2)); assert(hrc);
+  TH1D *hrc(0);
+  if (s.Contains("2024")) hrc = (TH1D*)frc->Get(Form("Run%s",cr2));
+  if (s.Contains("2025")) hrc = (TH1D*)frc25->Get(Form("Run%s",cr2));
+  if (s.Contains("2025C") && !hrc) hrc = (TH1D*)frc25->Get("Run2025B");
+  assert(hrc);
+  
   // Correct for sigmaMB=69.2mb->75.3mb
   TH1D *hrc753 = (TH1D*)hrc->Clone(Form("hrc753_%s",cr));
   hrc753->Scale(69.2/75.3);
@@ -104,6 +116,15 @@ void randomConeL2L3Res_era(string era) {
 	hrc753jes->SetBinContent(i, (r-1)*0.7+1);
     }
     else if (s.Contains("2024F-nib1")) {
+      // do nothing
+    }
+    else if (s.Contains("2025")) {
+      if (fabs(eta)<1.044)
+	hrc753jes->SetBinContent(i, (r-1)*0.8+1);
+      else if (fabs(eta)<1.305)
+	hrc753jes->SetBinContent(i, (r-1)*0.7+1);
+      else if (fabs(eta)<2.65)
+	hrc753jes->SetBinContent(i, (r-1)*0.6+1);
       // do nothing
     }
     else if (fabs(eta)<2.65)
@@ -153,7 +174,9 @@ void randomConeL2L3Res_era(string era) {
   // Get L2Res
   //TFile *fl2 = new TFile("rootfiles/L2Res.root","READ");
   //TFile *fl2 = new TFile("rootfiles/L2Res_Prompt2024_V8M.root","READ");
-  TFile *fl2 = new TFile("rootfiles/L2Res_V9M_draft1.root","READ");
+  TFile *fl2(0);
+  if (s.Contains("24")) fl2=new TFile("rootfiles/L2Res_V9M_draft1.root","READ");
+  if (s.Contains("25")) fl2=new TFile("rootfiles/L2Res.root","READ");
   assert(fl2 && !fl2->IsZombie());
 
   //map<string, const char*> m;
@@ -311,6 +334,7 @@ void randomConeL2L3Res_era(string era) {
   fout->Close();
   
   frc->Close();
+  frc25->Close();
   fl2->Close();
   fl3->Close();
   

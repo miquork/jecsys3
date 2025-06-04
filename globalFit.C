@@ -232,7 +232,8 @@ void globalFitEtaBin(double etamin, double etamax, string run, string version) {
 
     // Jet+Z special
     if (TString(name).Contains("jetz")) { // default: 0.985, 16/fb
-      if (scaleJZperEra && trun.Contains("24I")) scaleJZ = 1.0050;
+      //if (scaleJZperEra && trun.Contains("24I")) scaleJZ = 1.0050;
+      if (scaleJZperEra && trun.Contains("24I")) scaleJZ = 0.979;
       if (scaleJZperEra && trun.Contains("24H")) scaleJZ = 1.0050;
       if (scaleJZperEra && trun.Contains("24G")) scaleJZ = 1.0050; // 30/fb 
       if (scaleJZperEra && trun.Contains("24F")) scaleJZ = 1.0050; // 30/fb 
@@ -247,7 +248,8 @@ void globalFitEtaBin(double etamin, double etamax, string run, string version) {
     }
     // Z+jet ave special
     if (TString(name).Contains("zjav")) { // default: 0.9925, half of JZ
-      if (scaleJZAperEra && trun.Contains("24I")) scaleJZA = 1.0025;
+      //if (scaleJZAperEra && trun.Contains("24I")) scaleJZA = 1.0025;
+      if (scaleJZAperEra && trun.Contains("24I")) scaleJZA = 0.9945;
       if (scaleJZAperEra && trun.Contains("24H")) scaleJZA = 1.0025;
       if (scaleJZAperEra && trun.Contains("24G")) scaleJZA = 1.0025;
       if (scaleJZAperEra && trun.Contains("24F")) scaleJZA = 1.0025;
@@ -420,6 +422,7 @@ void globalFitEtaBin(double etamin, double etamax, string run, string version) {
   int nfit = 1;
   if (run=="Run24F") nfit = 2;//1;
   if (run=="Run24BCD") nfit = 3;//1;
+  if (run=="Run24I_nib1") nfit = 3;//1;
   cnt = 0;
   for (int i = 0; i != nfit; ++i)
     fitter->ExecuteCommand("MINI", 0, 0);

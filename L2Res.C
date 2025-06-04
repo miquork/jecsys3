@@ -19,6 +19,7 @@ bool fitG = true; // gamma+jet
 bool fitD = true; // Dijet (pT,ave)
 bool fitP = true; // Dijet (pT,probe)
 bool fitJ = true; // Dijet (pT,tag)
+// NB: automatically switched off for closure
 bool fitRC = true; // Random Cone (rootfiles/randomConeL2L3Res.root)
 
 bool drawUncleaned = false; // Draw uncleaned data in *AllEta*.pdf
@@ -474,6 +475,8 @@ TH1D *drawH2JES(TH2D *h2, double pt, string draw, int marker, int color) {
 
 void L2Res() {
 
+  if (doClosure) fitRC = false;
+  
   // Set graphical styles
   setTDRStyle();
   TDirectory *curdir = gDirectory;
@@ -525,7 +528,8 @@ void L2Res() {
       //"2024H_nib1",
       "2024I_nib1",  // V9M (V8M)
 
-      "2025B", "2025C"
+      //"2025B",
+      "2025C"
     };
 
   //"2024D_nib1"};
@@ -545,7 +549,8 @@ void L2Res() {
       "Summer24","Summer24","Summer24","Summer24","Summer24",
       "Summer24",*/
       "Summer24",
-      "Winter25", "Winter25"
+      //"Winter25",
+      "Winter25"
     };  // V9M
 
   //"Summer24"};  // V9M
@@ -640,7 +645,8 @@ void L2Res() {
     if (tr.Contains("25B"))
 	fz = new TFile("rootfiles/Prompt2025/Zmm_v97/jme_Zj_2025B_Zmm_v97.root","READ");
     else
-      fz = new TFile("rootfiles/Prompt2025/Zmm_v98/jme_Zj_2025C_27052025_Zmm_v98_ddjson.root","READ");
+      //fz = new TFile("rootfiles/Prompt2025/Zmm_v98/jme_Zj_2025C_27052025_Zmm_v98_ddjson.root","READ");
+      fz = new TFile("rootfiles/Prompt2025/Zmm_v99/jme_Zj_2025C_02062025_Zmm_v99_ddjson.root","READ");
   }
   else if (tr.Contains("2024") && tr.Contains("nib")) {
     //fz = new TFile(Form("rootfiles/Prompt2024/v93/jme_bplusZ_%s_Zmm_v93.root",cr),"READ"); // V7M->V8M
@@ -714,8 +720,11 @@ void L2Res() {
   else if (tr.Contains("2025")) {
     //fg = new TFile(Form("rootfiles/Prompt2025/Gam_w50/GamHistosFill_data_%s_noL2L3Res_w50_21May2025.root",cr),"READ"); // no L2L3Res
     //fg = new TFile(Form("rootfiles/Prompt2025/Gam_w51/GamHistosFill_data_%s_noL2L3Res_w51_21May2025.root",cr),"READ"); // no L2L3Res, Winter25 MC JEC
-    fg = new TFile(Form("rootfiles/Prompt2025/Gam_w53/GamHistosFill_data_%s_noL2L3Res_w53_28May2025.root",cr),"READ"); // no L2L3Res, Winter25 MC JEC
-    fgm = new TFile("rootfiles/Prompt2024/w48_Gam/minbiasxs69200/GamHistosFill_mc_summer2024P8_pu-2024CDEFGHI-xs69200_w48.root","READ");
+    //fg = new TFile(Form("rootfiles/Prompt2025/Gam_w53/GamHistosFill_data_%s_noL2L3Res_w53_28May2025.root",cr),"READ"); // no L2L3Res, Winter25 MC JEC
+    fg = new TFile(Form("rootfiles/Prompt2025/Gam_w54/GamHistosFill_data_%s_w54.root",cr),"READ"); // no L2L3Res, Winter25 MC JEC
+    //fgm = new TFile("rootfiles/Prompt2024/w48_Gam/minbiasxs69200/GamHistosFill_mc_summer2024P8_pu-2024CDEFGHI-xs69200_w48.root","READ");
+    //fgm = new TFile("rootfiles/Prompt2025/Gam_w54/GamHistosMix_mc_winter2025P8_Winter2025QCD_no-pu_w54.root","READ"); // not working?
+    fgm = new TFile("rootfiles/Prompt2025/Gam_w54/GamHistosFill_mc_winter2025P8_no-pu_w54.root","READ");
   }
   else if (tr.Contains("2024") && tr.Contains("nib")) {
     /*
@@ -794,7 +803,8 @@ void L2Res() {
     if (tr.Contains("2025B"))
       fd = new TFile(Form("rootfiles/Prompt2025/Jet_v128_v2/jmenano_data_cmb_%s_JME_v128_v2.root",cr),"READ"); // No L2L3Res
     else
-      fd = new TFile(Form("rootfiles/Prompt2025/Jet_v129/jmenano_data_cmb_%s_JME_v129.root",cr),"READ"); // No L2L3Res
+      //fd = new TFile(Form("rootfiles/Prompt2025/Jet_v129/jmenano_data_cmb_%s_JME_v129.root",cr),"READ"); // No L2L3Res
+      fd = new TFile(Form("rootfiles/Prompt2025/Jet_v131/jmenano_data_cmb_%s_JME_v131.root",cr),"READ"); // V1M
     fdm = new TFile("rootfiles/Prompt2025/Jet_v128/jmenano_mc_out_Winter25MG_v128.root","READ");
     if (fdm) fdm = (TFile*)fdm->GetDirectory("HLT_MC"); // PATCH
   }
@@ -1824,7 +1834,7 @@ void L2Res() {
   
   // Step 10. Print out text files
   // 10a: Original parameterization vs pTref
-  string ftxtname = (tr.Contains("25") ? Form("textfiles/Prompt25/Prompt25_Run%s_V1M_DATA_L2ResidualVsPtRef_AK4PFPuppi.txt",cr) : Form("textfiles/Prompt24/Prompt24_Run%s_V9M_DATA_L2ResidualVsPtRef_AK4PFPuppi.txt",cr));
+  string ftxtname = (tr.Contains("25") ? Form("textfiles/Prompt25/Prompt25_Run%s_V2M_DATA_L2ResidualVsPtRef_AK4PFPuppi.txt",cr) : Form("textfiles/Prompt24/Prompt24_Run%s_V9M_DATA_L2ResidualVsPtRef_AK4PFPuppi.txt",cr));
   cout << "Writing results to text file " << ftxtname << endl << flush;
   ofstream ftxt(ftxtname.c_str());
 
@@ -1853,7 +1863,7 @@ void L2Res() {
     ftxt << endl;
   }
   // 10b: Re-parameterization vs pTraw
-  string ftxtname2 = (tr.Contains("25") ? Form("textfiles/Prompt25/Prompt25_Run%s_V1M_DATA_L2Residual_AK4PFPuppi.txt",cr) : Form("textfiles/Prompt24/Prompt24_Run%s_V9M_DATA_L2Residual_AK4PFPuppi.txt",cr));
+  string ftxtname2 = (tr.Contains("25") ? Form("textfiles/Prompt25/Prompt25_Run%s_V2M_DATA_L2Residual_AK4PFPuppi.txt",cr) : Form("textfiles/Prompt24/Prompt24_Run%s_V9M_DATA_L2Residual_AK4PFPuppi.txt",cr));
   cout << "Writing results to text file " << ftxtname2 << endl << flush;
   ofstream ftxt2(ftxtname2.c_str());
   

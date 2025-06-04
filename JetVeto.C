@@ -68,9 +68,11 @@ void JetVeto(string run = "", string version = "vx") {
   //JetVetos("2024BCDE",version);
   //JetVetos("2024FG",version);
   
-  JetVetos("2024BCDEFG",version);
-  JetVetos("2024HI",version);
-  JetVetos("2024BCDEFGHI",version);
+  //JetVetos("2024BCDEFG",version);
+  //JetVetos("2024HI",version);
+  //JetVetos("2024BCDEFGHI",version);
+
+  JetVetos("2025C",version);
 }
 
 void JetVetos(string run, string version) {
@@ -147,6 +149,14 @@ void JetVetos(string run, string version) {
     f = new TFile("rootfiles/Prompt2024/v111_2024/jmenano_data_out_2024BCDEFG_JME_v110_2024HI_JME_v111_2024.root","READ"); // V6M closure + V6M
     fg = new TFile("rootfiles/Prompt2024/GamHistosFill_data_2024BCDEFG_w39_2024HIskim_w40.root","READ"); // V6M closure + V6M
     nMinTowers = 50; // for BPix hole
+  }
+  if (run=="2025C") {
+    lumi_136TeV = "Run2025C, X.X fb^{-1}";
+    f = new TFile("rootfiles/Prompt2025/Jet_v131/jmenano_data_out_2025C_JME_v131.root","READ"); // V1M
+    fg = new TFile("rootfiles/Prompt2025/Gam_w54/GamHistosFill_data_2025C_w54.root","READ"); // V1M
+    nMinTowers = 50; // for BPix hole
+    pullThreshold = 70;
+    //pullThresholdHF45 = 250;
   }
 
   // Don't use *cmb* files, trigger folder uncertainties messed up!!
@@ -551,6 +561,10 @@ void JetVetos(string run, string version) {
     h2veto->SetTitle("JME recommended map. Hot+Cold+FPIX(+not BPIX)");
     h2all->SetTitle("Union of all maps, used for JEC. Hot+cold+FPIX+BPIX");
   }
+  if (run=="2025C") {
+    h2veto->SetTitle("JME recommended map. Hot+Cold+FPIX(+not BPIX)");
+    h2all->SetTitle("Union of all maps, used for JEC. Hot+cold+FPIX+BPIX");
+  }
   h2nomsums->SetTitle("Raw nominal pull map. NomPull=(x_i-mu)/sigma. Summed over triggers");
   h2abssums->SetTitle("Raw absolute pull map. AbsPull=|(x_i-mu)/sigma|-1. Summed over triggers");
   h2nomrefsum->SetTitle("Nominal pull map from dijet asymmetry. Used for hot vs cold classification");
@@ -618,6 +632,12 @@ void JetVetos(string run, string version) {
 	  h2bpix->SetBinContent(i,j,100); // drop
 	  h2all->SetBinContent(i,j,100);  // drop
 	}
+	if (run=="2025C") {
+	  // Keep BPix for recommended, drop for JEC
+	  h2veto->SetBinContent(i,j,0);   // keep!
+	  h2bpix->SetBinContent(i,j,100); // drop
+	  h2all->SetBinContent(i,j,100);  // drop
+	}
       } // BPIX
 
       // FPIX reference region (2024F and later)
@@ -630,7 +650,12 @@ void JetVetos(string run, string version) {
 	  h2fpix->SetBinContent(i,j,100);
 	  h2all->SetBinContent(i,j,100);
 	}
-      } // BPIX
+	if (run=="2025C"){
+	  h2veto->SetBinContent(i,j,100);
+	  h2fpix->SetBinContent(i,j,100);
+	  h2all->SetBinContent(i,j,100);
+	}
+      } // FPIX
 
     } // for j
   } // for j
