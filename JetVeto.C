@@ -21,6 +21,11 @@ double pullThresholdHF45 = 70; // default: 70
 
 // Minimum of non-empty towers to consider eta strip
 int nMinTowers = 70; // default: 70 (out of 72)
+int nMinTowersJES = 70; // default: 70 (out of 72)
+
+// Minimum events to consider bin for Pull and JES average calculation
+int nMinPull = 4; // default: 4
+int nMinJES = 5; // default: 5
 
 // Use pulls instead of relative changes
 bool doPull = true; // default: true
@@ -50,6 +55,8 @@ string oneHist = ""; // default: ""
 //string oneHist = "p2chf";
 //string oneHist = "p2nhf";
 
+// Helper script to clean out unreliable ranges
+void cleanHist(TH2D *h2, string hist, string trg, string run);
 
 void JetVetos(string run, string version);
 void JetVeto(string run = "", string version = "vx") {
@@ -70,7 +77,9 @@ void JetVeto(string run = "", string version = "vx") {
   
   //JetVetos("2024BCDEFG",version);
   //JetVetos("2024HI",version);
+
   //JetVetos("2024BCDEFGHI",version);
+  JetVetos("2024",version);
 
   JetVetos("2025C",version);
 }
@@ -79,12 +88,14 @@ void JetVetos(string run, string version) {
 
   setTDRStyle();
   TDirectory *curdir = gDirectory;
+  string sr = (run+"_"+version);
+  const char *cr = sr.c_str();
 
   TFile *fout = new TFile(Form("rootfiles/jetveto%s.root",run.c_str()),
 			  "RECREATE");
   fout->mkdir("trigs");
   
-  TFile *f(0), *fg(0);
+  TFile *f(0), *fg(0), *fpark(0);
   if (run=="2022CD") { // Summer22
     lumi_136TeV = "Run2022CD, 8.1 fb^{-1}";
     f = new TFile("rootfiles/Iita_20230816/jmenano_data_out_2022CD_v1.root","READ");
@@ -148,13 +159,20 @@ void JetVetos(string run, string version) {
     lumi_136TeV = "Run2024BCDEFGHI, 109.2 fb^{-1}";
     f = new TFile("rootfiles/Prompt2024/v111_2024/jmenano_data_out_2024BCDEFG_JME_v110_2024HI_JME_v111_2024.root","READ"); // V6M closure + V6M
     fg = new TFile("rootfiles/Prompt2024/GamHistosFill_data_2024BCDEFG_w39_2024HIskim_w40.root","READ"); // V6M closure + V6M
-    nMinTowers = 50; // for BPix hole
+    fpark = new TFile("rootfiles/vbfparking/vbfparking_data_2024.root","READ");
+    //nMinTowers = 50; // for BPix hole
+  }
+  //
+  if (run=="2024") {
+    lumi_136TeV = "Run2024 partial re-reco, 109.2 fb^{-1}";
+    f = new TFile("rootfiles/Prompt2024/v121_v2_Jet/jmenano_data_out_2024CDEFGHI_nib_Rereco_JME_v121_v2.root","READ"); // V8M
+    fg = new TFile("rootfiles/Prompt2024/w48_Gam/GamHistosFill_data_2024BCDEFGHI_w48.root","READ"); // V8M
+    fpark = new TFile("rootfiles/vbfparking/vbfparking_data_2024.root","READ");
   }
   if (run=="2025C") {
     lumi_136TeV = "Run2025C, X.X fb^{-1}";
     f = new TFile("rootfiles/Prompt2025/Jet_v131/jmenano_data_out_2025C_JME_v131.root","READ"); // V1M
     fg = new TFile("rootfiles/Prompt2025/Gam_w54/GamHistosFill_data_2025C_w54.root","READ"); // V1M
-    nMinTowers = 50; // for BPix hole
     pullThreshold = 70;
     //pullThresholdHF45 = 250;
   }
@@ -214,6 +232,9 @@ void JetVetos(string run, string version) {
   vtrg.push_back("HLT_DiPFJetAve300_HFJEC");
 
   if (fg) vtrg.push_back("HLT_Photon50EB_TightID_TightIso");
+
+  // VBF Parking data from Carlos Francisco Erice Cid
+  if (fpark) vtrg.push_back("HLT_VBF_DiPFJet125_45_Mjj1050");
   
   if (oneTrig!="") {
     vtrg.clear();
@@ -222,10 +243,10 @@ void JetVetos(string run, string version) {
   int ntrg = vtrg.size();
 
   vector<string> vh;
+  vh.push_back("h2phieta");//h2pt");
   //vh.push_back("p2mpf"); // for GamJet instead of p2asymm?
   //vh.push_back("p2asymm");
   vh.push_back("p2asymm_noveto");
-  vh.push_back("h2phieta");//h2pt");
   vh.push_back("p2nef");
   vh.push_back("p2chf");
   vh.push_back("p2nhf");
@@ -235,11 +256,13 @@ void JetVetos(string run, string version) {
   }
   int nh = vh.size();
 
+  map<string,TH2D*> mh2phieta;
   TH2D *h2nomsums(0), *h2nomrefsum(0), *h2jes(0);
   TH2D *h2abssums(0), *h2absrefsum(0);
   for (int ih = 0; ih != nh; ++ih) {
 
     string hname = vh[ih];
+    const char *ch = hname.c_str();
     TH2D *h2nomsum(0), *h2abssum(0);
   
     for (int itrg = 0; itrg != ntrg; ++itrg) {
@@ -250,13 +273,15 @@ void JetVetos(string run, string version) {
       //string hname = "p2nef";
       //isProfile2D = (hname[0]='p' && hname[1]='2');
 
-      // Enable photon+jet as well
+      // Enable photon+jet and VBF parking as well
       const char *ct = trg.c_str();
-      TFile *fs = (TString(ct).Contains("Photon") ? fg : f);
+      TString tt(ct);
+      TFile *fs = (tt.Contains("Photon") ? fg : tt.Contains("VBF") ? fpark : f);
+
       // Patch: until separate photon triggers enabled, use root path
-      const char *cts = (TString(ct).Contains("Photon") ? "" : ct);
+      const char *cts = (tt.Contains("Photon") ? "" : ct);
       
-      string objname = Form("%s/Jetveto/%s",cts,hname.c_str());
+      string objname = Form("%s/Jetveto/%s",cts,ch);
       TObject *obj = fs->Get(objname.c_str());
       if (!obj) {
 	cout << "Missing " << objname << endl << flush;
@@ -264,45 +289,71 @@ void JetVetos(string run, string version) {
       assert(obj);
       assert(obj->InheritsFrom("TH2D"));
       bool isProf2D = obj->InheritsFrom("TProfile2D");
+
+      TH2D *h2 = (isProf2D ? ((TProfile2D*)obj)->ProjectionXY(Form("p2raw_%s_%s_%s",cr,ct,ch)) : (TH2D*)obj);
+
+      // Clone h2 to avoid changing original, then clean eta range
+      h2 = (TH2D*)h2->Clone(Form("h2raw_%s_%s_%s",cr,ct,ch));
+
+      // Clean out unreliable parts of histograms and/or triggers
+      cleanHist(h2, ch, ct, cr);
       
-      TH2D *h2 = (isProf2D ? ((TProfile2D*)obj)->ProjectionXY() : (TH2D*)obj);
       h2->UseCurrentStyle();
-      TH2D *h2nom = (TH2D*)h2->Clone(Form("h2nom_%s",hname.c_str()));
-      TH2D *h2abs = (TH2D*)h2->Clone(Form("h2abs_%s",hname.c_str()));
+      TH2D *h2nom = (TH2D*)h2->Clone(Form("h2nom_%s_%s_%s",cr,ct,ch));
+      TH2D *h2abs = (TH2D*)h2->Clone(Form("h2abs_%s_%s_%s",cr,ct,ch));
+
+      // Store h2phieta for later filtering out low-statistics bins
+      if (hname=="h2phieta") {
+	mh2phieta[ct] = h2;
+      }
       
-      // Calculate average JES shift
-      if (hname=="p2asymm" || hname=="p2asymm_noveto") {
+      // Calculate average JES shift (don't use VBF for this)
+      if ((hname=="p2asymm" || hname=="p2asymm_noveto") &&
+	  !tt.Contains("VBF")) {
+	
 	if (!h2jes) {
-	  h2jes = (TH2D*)h2->Clone("h2jes");
+	  h2jes = (TH2D*)h2->Clone(Form("h2jes_%s",cr)); h2jes->Reset();
 	}
-	else {
-	  for (int i = 1; i != h2->GetNbinsX()+1; ++i) {
-	    for (int j = 1; j != h2->GetNbinsY()+1; ++j) {
-	      if (h2->GetBinError(i, j)!=0) {
-		if (h2jes->GetBinError(i, j)!=0) {
-		  double val1 = h2jes->GetBinContent(i,j);
-		  double err1 = h2jes->GetBinError(i,j);
-		  double n1 = 1./pow(err1,2);
-		  double val2 = h2->GetBinContent(i,j);
-		  double err2 = h2->GetBinError(i,j);
-		  double n2 = 1./pow(err2,2);
-		  double val = (n1*val1 + n2*val2) / (n1+n2);
-		  double err = (n1*err1 + n2*err2) / (n1+n2);
-		  h2jes->SetBinContent(i,j,val);
-		  h2jes->SetBinError(i,j,err);
-		}
-		else if (h2->GetBinContent(i,j)!=0) {
-		  h2jes->SetBinContent(i,j,h2->GetBinContent(i,j));
-		  h2jes->SetBinError(i,j,h2->GetBinError(i,j));
-		}
+	//else {
+	TH2D *h2phieta = mh2phieta[ct];
+	for (int i = 1; i != h2->GetNbinsX()+1; ++i) {
+
+	  // Check that eta strip well covered before using it
+	  int ntower(0);
+	  for (int j = 0; j != h2->GetNbinsY()+1; ++j) {
+	    if (h2->GetBinError(i,j)!=0) {
+	      if (!h2phieta || h2phieta->GetBinContent(i,j)>=nMinJES) {
+		++ntower;
 	      }
-	    } // for j
-	  } // for i
-	}
+	    }
+	  } // for j
+	  if (ntower<=nMinTowersJES) continue;
+	    
+	  for (int j = 1; j != h2->GetNbinsY()+1; ++j) {
+	    //if (h2->GetBinError(i, j)!=0) {
+	    double val1 = h2jes->GetBinContent(i,j);
+	    double err1 = h2jes->GetBinError(i,j);
+	    double n1 = (err1!=0 ? 1./pow(err1,2) : 0);
+	    double val2 = h2->GetBinContent(i,j);
+	    double err2 = h2->GetBinError(i,j);
+	    double n2 = (err2!=0 ? 1./pow(err2,2) : 0);
+	    double val = (n1+n2!=0 ? (n1*val1 + n2*val2) / (n1+n2) : 0);
+	    double err = (n1+n2!=0 ? (n1*err1 + n2*err2) / (n1+n2) : 0);
+
+	    // Check that tower has enough entries to not mess with err
+	    if (h2phieta && h2phieta->GetBinContent(i,j)<nMinJES)
+	      continue;
+	    
+	    h2jes->SetBinContent(i,j,val);
+	    h2jes->SetBinError(i,j,err);
+	    //}
+	  } // for j
+	} // for i
+	//}
 	
 	// JES with normalized eta strips
 	// Useful for later phi symmetry studies and jet substructure
-	TH2D *h2jesnorm = (TH2D*)h2->Clone(Form("h2jesnorm_%s",cts));
+	TH2D *h2jesnorm = (TH2D*)h2->Clone(Form("h2jesnorm_%s_%s",cr,cts));
 	for (int i = 1; i != h2jesnorm->GetNbinsX()+1; ++i) {
 	  double norm = h2jesnorm->Integral(i,i,1,72) / 72.;
 	  for (int j = 1; j != h2jesnorm->GetNbinsY()+1; ++j) {
@@ -310,6 +361,8 @@ void JetVetos(string run, string version) {
 	    h2jesnorm->SetBinError(i,j,h2jesnorm->GetBinError(i,j)/(1+norm));
 	  }
 	}
+
+	// Save JES results to output file
 	fout->cd("trigs");
 	h2->Write(Form("jetasymmetrymap_%s",ct));
 	h2jesnorm->Write(Form("jetasymmetrymap_norm_%s",ct));
@@ -323,13 +376,17 @@ void JetVetos(string run, string version) {
 	// Recreate histogram with automatic binning for each eta bin
 	TH1D *htmp = new TH1D("htmp","Distribution of values",100,-1,-1);
 	htmp->SetBuffer(72.);
-    
+
+	TH2D *h2phieta = mh2phieta[ct];
 	int ny = h2->GetNbinsY();
 	int n(0);
+	// Check that eta strip is well covered before using it
 	for (int j = 1; j != ny+1; ++j) {
 	  if (h2->GetBinError(i,j)!=0) {
-	    htmp->Fill(h2->GetBinContent(i, j));	
-	    ++n;
+	    if (!h2phieta || h2phieta->GetBinContent(i,j)>=nMinPull) {
+	      htmp->Fill(h2->GetBinContent(i, j));
+	      ++n;
+	    }
 	  }
 	} // for j
 	//htmp->Draw();
@@ -354,7 +411,8 @@ void JetVetos(string run, string version) {
 	  
 	  // Determine pull width
 	  for (int j = 1; j != ny+1; ++j) {
-	    if (h2->GetBinError(i,j)!=0 && q68!=0) {
+	    if (h2->GetBinError(i,j)!=0 && q68!=0 &&
+		(!h2phieta || h2phieta->GetBinContent(i,j)>nMinPull)) {
 	      if (doPull) {
 		h2abs->SetBinContent(i, j, fabs(h2->GetBinContent(i, j)-median) / q68 - 1); // -1 to model the normal cancellation of +1 and -1 fluctuations
 		h2abs->SetBinError(i, j, h2->GetBinError(i, j) / q68);
@@ -392,27 +450,29 @@ void JetVetos(string run, string version) {
       
       //h2->Draw("COLZ");
       if (!h2nomsum && !h2abssum) {
-	h2nomsum = (TH2D*)h2nom->Clone(Form("h2nomsum_%s",hname.c_str()));
-	h2abssum = (TH2D*)h2abs->Clone(Form("h2abssum_%s",hname.c_str()));
+	h2nomsum = (TH2D*)h2nom->Clone(Form("h2nomsum_%s_%s",cr,ch));
+	h2abssum = (TH2D*)h2abs->Clone(Form("h2abssum_%s_%s",cr,ch));
       }
       else {
 	h2nomsum->Add(h2nom);
 	h2abssum->Add(h2abs);
       }
+
+      // Save results to output file
       fout->cd("trigs");
       h2nom->Write(Form("jetpullmap_nom_%s_%s",hname.c_str(),trg.c_str()));
       curdir->cd();
-      delete h2;
+      //delete h2;
 					
     } // for itrg
 
     double ntrg2 = (oneTrig!="" ? 1 : max(1, ntrg/2));
 
-    const char *c1nomname = Form("c1nom_%s",hname.c_str());
-    TH1D *h1nom = tdrHist(Form("h1nom_%s_%s",oneTrig.c_str(),hname.c_str()),
+    const char *c1nomname = Form("c1nom_%s_%s",cr,ch);
+    TH1D *h1nom = tdrHist(Form("h1nom_%s_%s_%s",cr,oneTrig.c_str(),ch),
 			  "#phi",-TMath::Pi(),TMath::Pi(),"#eta",-5.2,5.2);
-    if (doPull) h1nom->GetZaxis()->SetRangeUser(-5*ntrg2,5*ntrg2);
-    else        h1nom->GetZaxis()->SetRangeUser(-0.50,0.50);
+    //if (doPull) h1nom->GetZaxis()->SetRangeUser(-5*ntrg2,5*ntrg2);
+    //else        h1nom->GetZaxis()->SetRangeUser(-0.50,0.50);
 
     TCanvas *c1nom = tdrCanvas(c1nomname,h1nom,8,11,kRectangular);
     c1nom->SetRightMargin(0.15);
@@ -432,11 +492,9 @@ void JetVetos(string run, string version) {
 		       hname.c_str(), doPull ? "nompull" : "nomrel", run.c_str()));
 
 
-    const char *c1absname = Form("c1abs_%s",hname.c_str());
-    TH1D *h1abs = tdrHist(Form("h1abs_%s_%s",oneTrig.c_str(),hname.c_str()),
+    const char *c1absname = Form("c1abs_%s_%s",cr,ch);
+    TH1D *h1abs = tdrHist(Form("h1abs_%s_%s_%s",cr,oneTrig.c_str(),ch),
 			  "#phi",-TMath::Pi(),TMath::Pi(),"#eta",-5.2,5.2);
-    if (doPull) h1nom->GetZaxis()->SetRangeUser(-5*ntrg2,5*ntrg2);
-    else        h1nom->GetZaxis()->SetRangeUser(-0.50,0.50);
     //if (doPull) h1abs->GetZaxis()->SetRangeUser(0,5*ntrg2);
     //else        h1abs->GetZaxis()->SetRangeUser(0.,0.50);
 
@@ -476,8 +534,11 @@ void JetVetos(string run, string version) {
     }
   } // for ih
 
-  TH1D *h1nom = tdrHist("h1nom","#phi",-TMath::Pi(),TMath::Pi(),"#eta",-5.2,5.2);
-  TH1D *h1abs = tdrHist("h1abs","#phi",-TMath::Pi(),TMath::Pi(),"#eta",-5.2,5.2);
+  TH1D *h1nom = tdrHist(Form("h1nom_%s",cr),
+			"#phi",-TMath::Pi(),TMath::Pi(),"#eta",-5.2,5.2);
+  TH1D *h1abs = tdrHist(Form("h1abs_%s",cr),
+			"#phi",-TMath::Pi(),TMath::Pi(),"#eta",-5.2,5.2);
+  /*
   if (doPull) {
     h1nom->GetZaxis()->SetRangeUser(-100,100);
     h1abs->GetZaxis()->SetRangeUser(0,100);
@@ -490,12 +551,13 @@ void JetVetos(string run, string version) {
     h1nom->GetZaxis()->SetRangeUser(-0.50,0.50);
     h1abs->GetZaxis()->SetRangeUser(0.,0.50);
   }
+  */
 
-  TCanvas *c1nom = tdrCanvas("c1nom",h1nom,8,11,kRectangular);
+  TCanvas *c1nom = tdrCanvas(Form("c1nom_%s",cr),h1nom,8,11,kRectangular);
   gPad->SetRightMargin(0.15);
   h2nomsums->Draw("COLZ SAME");
 
-  TCanvas *c1abs = tdrCanvas("c1abs",h1abs,8,11,kRectangular);
+  TCanvas *c1abs = tdrCanvas(Form("c1abs_%s",cr),h1abs,8,11,kRectangular);
   gPad->SetRightMargin(0.15);
   h2abssums->Draw("COLZ SAME");
 
@@ -557,7 +619,8 @@ void JetVetos(string run, string version) {
     h2all->SetTitle("Union of all maps, used for JEC. Hot+cold+BPIX");
   }
   if (run=="2024F" || run=="2024G" || run=="2024FG" ||
-      run=="2024BCDEFG" || run=="2024HI" || run=="2024BCDEFGHI") {
+      run=="2024BCDEFG" || run=="2024HI" || run=="2024BCDEFGHI" ||
+      run=="2024") {
     h2veto->SetTitle("JME recommended map. Hot+Cold+FPIX(+not BPIX)");
     h2all->SetTitle("Union of all maps, used for JEC. Hot+cold+FPIX+BPIX");
   }
@@ -626,7 +689,8 @@ void JetVetos(string run, string version) {
 	}
 	if (run=="2024BCD" || run=="2024BCDE" || run=="2024F" ||
 	    run=="2024G" || run=="2024FG" ||
-	    run=="2024BCDEFG" || run=="2024HI" || run=="2024BCDEFGHI") {
+	    run=="2024BCDEFG" || run=="2024HI" || run=="2024BCDEFGHI" ||
+	    run=="2024") {
 	  // Keep BPix for recommended, drop for JEC
 	  h2veto->SetBinContent(i,j,0);   // keep!
 	  h2bpix->SetBinContent(i,j,100); // drop
@@ -644,7 +708,8 @@ void JetVetos(string run, string version) {
       if (eta>-2.043 && phi>2.53 &&
 	  eta<-1.653 && phi<2.71) {
 	if (run=="2024F" || run=="2024G" || run=="2024FG" ||
-	    run=="2024BCDEFG" || run=="2024HI" || run=="2024BCDEFGHI") {
+	    run=="2024BCDEFG" || run=="2024HI" || run=="2024BCDEFGHI" ||
+	    run=="2024") {
 	  // Remove FPIX
 	  h2veto->SetBinContent(i,j,100);
 	  h2fpix->SetBinContent(i,j,100);
@@ -693,10 +758,11 @@ void JetVetos(string run, string version) {
 
   TH2D *h2jesnorm(0);
   if (h2jes) {
-    TH1D *h2 = tdrHist("h2","#phi",-TMath::Pi(),+TMath::Pi(),"#eta",-5.2,5.2);
-    h2->GetZaxis()->SetRangeUser(-0.50,0.50);
+    TH1D *h2 = tdrHist(Form("h2_%s",cr),
+		       "#phi",-TMath::Pi(),+TMath::Pi(),"#eta",-5.2,5.2);
+    //h2->GetZaxis()->SetRangeUser(-0.50,0.50);
 
-    TCanvas *c2 = tdrCanvas("c2",h2,8,11,kRectangular);
+    TCanvas *c2 = tdrCanvas(Form("c2_%s",cr),h2,8,11,kRectangular);
     gPad->SetRightMargin(0.15);
     h2jes->Draw("SAME COLZ");
     h2jes->GetZaxis()->SetRangeUser(-0.15,0.15);
@@ -714,7 +780,7 @@ void JetVetos(string run, string version) {
 
 
     // Normalize eta strips
-    h2jesnorm = (TH2D*)h2jes->Clone("h2jesnorm");
+    h2jesnorm = (TH2D*)h2jes->Clone(Form("h2jesnorm_%s",cr));
     for (int i = 1; i != h2jes->GetNbinsX()+1; ++i) {
       double norm = h2jes->Integral(i,i,1,72) / 72.;
       for (int j = 1; j != h2jes->GetNbinsY()+1; ++j) {
@@ -723,11 +789,11 @@ void JetVetos(string run, string version) {
       }
     }
     
-    TH1D *h2norm = tdrHist("h2norm","#phi",-TMath::Pi(),+TMath::Pi(),
-			   "#eta",-5.2,5.2);
-    h2norm->GetZaxis()->SetRangeUser(-0.50,0.50);
+    TH1D *h2norm = tdrHist(Form("h2norm_%s",cr),
+			   "#phi",-TMath::Pi(),+TMath::Pi(),"#eta",-5.2,5.2);
+    //h2norm->GetZaxis()->SetRangeUser(-0.50,0.50);
 
-    TCanvas *c2norm = tdrCanvas("c2norm",h2norm,8,11,kRectangular);
+    TCanvas *c2norm = tdrCanvas(Form("c2norm_%s",cr),h2norm,8,11,kRectangular);
     gPad->SetRightMargin(0.15);
     h2jesnorm->Draw("SAME COLZ");
     h2jesnorm->GetZaxis()->SetRangeUser(-0.15,0.15);
@@ -762,3 +828,82 @@ void JetVetos(string run, string version) {
   fout->Write();
   fout->Close();
 } // JetVeto
+
+
+// Clean out unreliable ranges of histograms, e.g. NHF in HF
+void cleanHist(TH2D *h2, string hist, string trg, string run) {
+
+  TString th(hist.c_str());
+  TString tt(trg.c_str());
+  TString tr(run.c_str());
+  for (int i = 1; i != h2->GetNbinsX()+1; ++i) {
+    for (int j = 1; j != h2->GetNbinsY()+1; ++j) {
+      double eta = h2->GetXaxis()->GetBinCenter(i);
+      double abseta = fabs(eta);
+      if ((th.Contains("p2nhf") && abseta>2.964) ||
+	  (th.Contains("p2nef") && abseta>2.964) ||
+	  (th.Contains("p2chf") && abseta>2.650) ||
+	  
+	  (tt.Contains("HFJEC") && abseta<2.964) ||
+	  (tt.Contains("Fwd") && abseta<2.964) ||
+
+	  // Trigger ranges assessed from jetpullmap_nom_h2phieta
+	  (tt.Contains("PFJet40") && abseta>2.964) ||
+	  (tt.Contains("PFJet60") && abseta>2.964) ||
+	  (tt.Contains("PFJet80") && abseta>2.964) ||
+	  (tt.Contains("PFJet140") && abseta>2.964) ||
+	  (tt.Contains("PFJet200") && abseta>2.964) ||
+	  (tt.Contains("PFJet260") && abseta>2.964) ||
+	  (tt.Contains("PFJet320") && abseta>2.964) ||
+	  (tt.Contains("PFJet450") && abseta>2.853) ||
+	  (tt.Contains("PFJet500") && abseta>2.853) ||
+
+	  (tt.Contains("PFJetFwd60") && abseta>4.716) ||
+	  (tt.Contains("PFJetFwd80") && abseta>4.538) ||
+	  (tt.Contains("PFJetFwd140") && abseta>4.191) ||
+	  (tt.Contains("PFJetFwd200") && abseta>4.013) ||
+	  (tt.Contains("PFJetFwd260") && abseta>3.664) ||
+	  (tt.Contains("PFJetFwd320") && abseta>3.314) ||
+	  (tt.Contains("PFJetFwd400") && abseta>3.139) ||
+	  (tt.Contains("PFJetFwd450") && abseta>3.139) ||
+	  (tt.Contains("PFJetFwd500") && abseta>2.964) ||
+
+	  // ZeroBias ok
+	  // DiPFJetAve 40 ok
+	  (tt.Contains("DiPFJetAve60") && abseta>4.538) ||
+	  (tt.Contains("DiPFJetAve80") && abseta>4.538) ||
+	  (tt.Contains("DiPFJetAve140") && abseta>4.013) ||
+	  (tt.Contains("DiPFJetAve200") && abseta>3.839) ||
+	  (tt.Contains("DiPFJetAve260") && abseta>3.489) ||
+	  (tt.Contains("DiPFJetAve320") && abseta>2.853) ||
+	  (tt.Contains("DiPFJetAve400") && abseta>2.853) ||
+	  (tt.Contains("DiPFJetAve500") && abseta>2.853) ||
+	  
+	  (tt.Contains("DiPFJetAve60_HFJEC") && abseta>4.716) ||
+	  (tt.Contains("DiPFJetAve80_HFJEC") && abseta>4.538) ||
+	  (tt.Contains("DiPFJetAve100_HFJEC") && abseta>4.538) ||
+	  (tt.Contains("DiPFJetAve160_HFJEC") && abseta>4.191) ||
+	  (tt.Contains("DiPFJetAve220_HFJEC") && abseta>3.839) ||
+	  (tt.Contains("DiPFJetAve300_HFJEC") && abseta>3.664) ||
+
+	  (tr.Contains("2025") && tt.Contains("Photon") && abseta>4.716) ||
+	  (tr.Contains("2025") && tt.Contains("PFJet140") && abseta>2.853) ||
+	  (tr.Contains("2025") && tt.Contains("PFJet200") && abseta>2.853) ||
+	  (tr.Contains("2025") && tt.Contains("PFJet260") && abseta>2.853) ||
+	  (tr.Contains("2025") && tt.Contains("PFJetFwd40") && abseta>4.716) ||
+	  (tr.Contains("2025") && tt.Contains("PFJetFwd60") && abseta>4.191) ||
+	  (tr.Contains("2025") && tt.Contains("PFJetFwd80") && abseta>4.191) ||
+	  (tr.Contains("2025") && tt.Contains("Ave40") && abseta>4.716) ||
+	  (tr.Contains("2025") && tt.Contains("Ave200") && abseta>2.853) ||
+	  (tr.Contains("2025") && tt.Contains("Ave260") && abseta>2.853) ||
+	  (tr.Contains("2025") && tt.Contains("Ave60_HFJEC") && abseta>4.191) ||
+	  (tr.Contains("2025") && tt.Contains("Ave80_HFJEC") && abseta>4.191) ||
+	  (tr.Contains("2025") && tt.Contains("Ave100_HFJEC") && abseta>4.191)
+	  
+	  ) {
+	h2->SetBinContent(i,j,0);
+	h2->SetBinError(i,j,0);
+      }
+    } // for j
+  } // for i
+}
