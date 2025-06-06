@@ -79,9 +79,9 @@ void JetVeto(string run = "", string version = "vx") {
   //JetVetos("2024HI",version);
 
   //JetVetos("2024BCDEFGHI",version);
-  JetVetos("2024",version);
+  JetVetos("2024","V9M");
 
-  JetVetos("2025C",version);
+  JetVetos("2025C","V2M");
 }
 
 void JetVetos(string run, string version) {
@@ -91,7 +91,7 @@ void JetVetos(string run, string version) {
   string sr = (run+"_"+version);
   const char *cr = sr.c_str();
 
-  TFile *fout = new TFile(Form("rootfiles/jetveto%s.root",run.c_str()),
+  TFile *fout = new TFile(Form("rootfiles/jetveto%s.root",cr),
 			  "RECREATE");
   fout->mkdir("trigs");
   
