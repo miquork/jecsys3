@@ -15,36 +15,85 @@
 % Use \def instead of \newcommand and keep it on one line
 %\def\IOVlist{2024B\_nib1,2024C\_nib1,2024D\_nib1,2024Ev1\_nib1,2024Ev2\_nib1,2024F\_nib1,2024F\_nib2,2024F\_nib3,2024G\_nib1,2024G\_nib2,2024H\_nib1,2024I\_nib1}
 %\def\vJECfit{V8N}
+\def\vJECclosure{V8M}
 \def\vJECfit{V9M}
-\def\vJECtest{V8M}
-%\def\vJECtest{V7M}
-\def\IOVlist{2024B_nib1,2024C_nib1,2024D_nib1,2024Ev1_nib1,2024Ev2_nib1,2024F_nib1,2024F_nib2,2024F_nib3,2024G_nib1,2024G_nib2,2024H_nib1,2024I_nib1}
-%\def\IOVlist{2024C_nib1,2024D_nib1,2024Ev1_nib1,2024Ev2_nib1,2024F_nib1,2024F_nib2,2024F_nib3,2024G_nib1,2024G_nib2,2024H_nib1,2024I_nib1}
+\def\vJECdraft{V9M\_draft1}
+\def\vJECref{V8M}
+%\def\IOVlist{2024B_nib1,2024C_nib1,2024D_nib1,2024Ev1_nib1,2024Ev2_nib1,2024F_nib1,2024F_nib2,2024F_nib3,2024G_nib1,2024G_nib2,2024H_nib1,2024I_nib1}
+\def\IOVlistOld{2024C_nib1,2024D_nib1,2024Ev1_nib1,2024Ev2_nib1,2024F_nib1,2024F_nib2,2024F_nib3,2024G_nib1,2024G_nib2,2024H_nib1,2024I_nib1}
+\def\IOVlist{2024C_nib1,2024D_nib1,2024E_nib1,2024E_nib1,2024F_nib1,2024F_nib2,2024F_nib3,2024G_nib1,2024G_nib2,2024H_nib1,2024I_nib1}
 \def\ptlist{15,30,100,300,1000,3000}
 
 \begin{document}
 
 \begin{frame}
-  \frametitle{L2Res fits on 24CDE re-reco + Prompt24 (new: \vJECfit, test: \vJECtest)}
+  %  \frametitle{L2Res fits on 24CDE re-reco + Prompt24 (new: \vJECfit, draft: \vJECdraft, ref: \vJECref)}
+  \frametitle{L2Res for 24C re-reco + prompt (new: \vJECfit, ref: \vJECref)}
   Date: \today
   \begin{itemize}
-  \item First 24CDE re-reco JEC + Prompt24 vs Summer24 MC
-  \item New $1/p_{T}^{2}$ term added for low $p_T$ to improve fit
-  \item Fit constraints overhauled as much more MC statistics now
-  \item Lots of cleanup for closure plots to improve $\chi^{2}$
- %\item Explicit re-fit vs $p_{T,raw}$
-  %\item 2024B was commissioning era (V7M non-closure, 0.13~fb$^{-1}$)
-    %\item 2024F\_nib1 missed HCAL\_DI (V7M non-closure, 0.88~fb$^{-1}$)
-  \item 2024F\_nib1 still has HCAL\_DD (0.88~fb$^{-1}$)
-  %\item 2024FG have some bins with $\pm1$\% JES shifts in L3Res, but within uncertainty band (mid-era HCAL+ECAL updates)
-    %\item $2<|\eta|<3$ region has offset-like non-closure (was $Z/\gamma$+jet pileup reweighing upated after V7M derivation?)
-  %\item $2<|\eta|<3$ region consistency significantly improved at low $p_T$ by remapping $p_{T,ref}$ to $p_{T,raw}$ in V8M
-    %\item 2024B and 2024F\_nib1 have large error bars in L2Res due to low statistics ($\le1$~fb$^{-1}$)
-  \item 2024F\_nib1 has large error bars in L2Res due to low statistics ($\le1$~fb$^{-1}$). 2024B\_nib1 excluded as non-physics run
-  \item To-do: (i) correct photon scale drifts, (ii) add inclusive jets + Wqq', (iii) test RandomCone for low $p_{T}$, (iv) fix stat errs
+  \item 24CDE re-reco + 24FGHI Prompt vs Summer24 MC
+  \item Random Cone offset now constraints low $p_T$ range
+  \item Less fit constraints as much more MC statistics now
+  \item New $1/p_{T}^{2}$ and $1/p_{T}$ terms added for low $p_T$ to improve fit
+  \item Lots of cleanup for (closure) plots to improve $\chi^{2}$
+  \item Manual ad-hoc correction of photon scale drifts
+  \item 24CDE re-reco + 24FGHI Prompt vs Summer24 MC
+  \item 2024F\_nib1 is HCAL\_DD (0.88~fb$^{-1}$), 2024B\_nib1 excluded
+  \item To-do: (i) correct photon scale drifts, (ii) add inclusive jets + Wqq', (iii) fix stat errs
   \end{itemize}
 \end{frame}
 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%                        Summaries                       %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\newpage
+\begin{frame}
+  \frametitle{JEC L2Res fits}
+  \begin{itemize}
+  \item Random Cone inputs
+  \item Summary plots of final fits
+  \item One for closure of latest officially-implemented JEC (\vJECref)
+    %  \item One each for: (i) draft JEC from previous iteration (\vJECdraft), (ii) on-going fits (\vJECfit), (iii) last stable release as reference (\vJECref)
+  \item One each for: (i) on-going fits (\vJECfit), (ii) last stable release as reference (\vJECref)
+  \end{itemize}
+\end{frame}
+\newpage
+
+% Random Cone inpits
+\begin{frame}
+\frametitle{RandomCone inputs for \vJECfit}
+\foreach \era [count=\x from 1] in \IOVlist{
+  \includegraphics[width=0.18\textwidth]{randomConeL2L3Res/randomConeL2L3Res_\era.pdf}
+  \ifnum\x=4\newline\fi
+  \ifnum\x=8\newline\fi
+}
+\end{frame}
+
+% Closure of the latest officially-implemented JEC
+\begin{frame}
+\frametitle{JES L2Res closure (\vJECfit\ with \vJECclosure)}
+\foreach \era [count=\x from 1] in \IOVlist{
+  \includegraphics[width=0.22\textwidth]{L2Res/L2Res_Summary_\era_closure.pdf}
+  \ifnum\x=4\newline\fi
+  \ifnum\x=8\newline\fi
+}
+\end{frame}
+
+% Draft JEC from previous iteration
+%\begin{frame}
+%\frametitle{JES L2Res fits (\vJECdraft)}
+%\foreach \era [count=\x from 1] in \IOVlistOld{
+  %\raggedright
+  %\justifying
+%  \includegraphics[width=0.22\textwidth]{L2Res/\vJECdraft/L2Res_Summary_\era.pdf}
+%  \ifnum\x=4\newline\fi
+%  \ifnum\x=8\newline\fi
+%}
+%\end{frame}
+
+% Current on-going JEC fit to compare to draft and reference
 \begin{frame}
 \frametitle{JES L2Res fits (\vJECfit)}
 \foreach \era [count=\x from 1] in \IOVlist{
@@ -56,15 +105,56 @@
 }
 \end{frame}
 
+% Last stable JEC as baseline reference
 \begin{frame}
-\frametitle{JES L2Res closure (with \vJECtest)}
-\foreach \era [count=\x from 1] in \IOVlist{
-  \includegraphics[width=0.22\textwidth]{L2Res/L2Res_Summary_\era_closure.pdf}
+\frametitle{JES L2Res fits (\vJECref)}
+\foreach \era [count=\x from 1] in \IOVlistOld{
+  %\raggedright
+  %\justifying
+  \includegraphics[width=0.22\textwidth]{L2Res/\vJECref/L2Res_Summary_\era.pdf}
   \ifnum\x=4\newline\fi
   \ifnum\x=8\newline\fi
 }
 \end{frame}
 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%                        Chisquare                       %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\newpage
+\begin{frame}
+  \frametitle{JEC L2Res chisquare}
+  \begin{itemize}
+  \item Summary plots of fit chisquare
+  \item One for closure of latest officially-implemented JEC (\vJECref)
+    %  \item One each for: (i) draft JEC from previous iteration (\vJECdraft), (ii) on-going fits (\vJECfit), (iii) last stable release as reference (\vJECref)
+  \item One each for: (i) on-going fits (\vJECfit), (ii) last stable release as reference (\vJECref)
+  \end{itemize}
+\end{frame}
+\newpage
+
+% Chisquare from the latest closure test
+\begin{frame}
+\frametitle{JES L2Res closure (\vJECfit\ with \vJECclosure): Chisquare}
+\foreach \era [count=\x from 1] in \IOVlist{
+  \includegraphics[width=0.22\textwidth]{L2Res/L2Res_Chi2_\era_closure.pdf}
+  \ifnum\x=4\newline\fi
+  \ifnum\x=8\newline\fi
+}
+\end{frame}
+
+% Draft JEC from previous iteration
+%\begin{frame}
+%\frametitle{JES L2Res fits (\vJECdraft): Chisquare}
+%\foreach \era [count=\x from 1] in \IOVlistOld{
+%  \includegraphics[width=0.22\textwidth]{L2Res/\vJECdraft/L2Res_Chi2_\era.pdf}
+%  \ifnum\x=4\newline\fi
+%  \ifnum\x=8\newline\fi
+%}
+%\end{frame}
+
+% Current on-going JEC fit to compare to draft and reference
 \begin{frame}
 \frametitle{JES L2Res fits (\vJECfit): Chisquare}
 \foreach \era [count=\x from 1] in \IOVlist{
@@ -74,20 +164,65 @@
 }
 \end{frame}
 
+% Last stable JEC as baseline reference
 \begin{frame}
-\frametitle{JES L2Res closure (with \vJECtest): Chisquare}
-\foreach \era [count=\x from 1] in \IOVlist{
-  \includegraphics[width=0.22\textwidth]{L2Res/L2Res_Chi2_\era_closure.pdf}
+\frametitle{JES L2Res fits (\vJECref): Chisquare}
+\foreach \era [count=\x from 1] in \IOVlistOld{
+  \includegraphics[width=0.22\textwidth]{L2Res/\vJECref/L2Res_Chi2_\era.pdf}
   \ifnum\x=4\newline\fi
   \ifnum\x=8\newline\fi
 }
 \end{frame}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%                        Refit                           %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\newpage
+\begin{frame}
+  \frametitle{JEC L2Res refits}
+  \begin{itemize}
+  \item Re-parameterize L2Res vs $p_{T,raw}$ instead of $p_{T,ref}$
+  \item Results provided as text file, but not used in final L2L3Res, because proper mapping has to consider L3Res at the same footing (so re-parameterized there)
+  \item Main value here is to check that fits are somewhat reasonable and can be inverted with at least L3Res==1 special case
+  \end{itemize}
+\end{frame}
+\newpage
 
 \foreach \era [count=\x from 1] in \IOVlist{%
   \StrSubstitute{\era}{_}{\_}[\eraTitle]%
   \begin{frame}
     \frametitle{JES L2Res re-fits (\vJECfit): \eraTitle}
     \includegraphics[width=0.99\textwidth]{L2Res/L2Res_AllRefit_\era.pdf}
+  \end{frame}
+}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%                  All of raw data                       %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\newpage
+\begin{frame}
+  \frametitle{JEC L2Res fits with all data)}
+  \begin{itemize}
+  \item Summary plots of all fit data and more
+  \item One for closure of latest officially-implemented JEC (\vJECref)
+    %  \item One each for: (i) draft JEC from previous iteration (\vJECdraft), (ii) on-going fits (\vJECfit), (iii) last stable release as reference (\vJECref)
+  \item One each for: (i) on-going fits (\vJECfit), (ii) last stable release as reference (\vJECref)
+  \item Flip back and forth to check stability vs preceding and succeeding era
+  \item Goal 1: check changes over time vs known effects
+  \item Goal 2: catch unstable fits producing unexpected changes (sometimes points with e.g. bad error bars biasing things)
+  \end{itemize}
+\end{frame}
+\newpage
+
+\foreach \era [count=\x from 1] in \IOVlist{
+  \StrSubstitute{\era}{_}{\_}[\eraTitle]
+  \begin{frame}
+    \frametitle{JES L2Res closure (\vJECfit\ with \vJECclosure): \eraTitle}
+    \includegraphics[width=0.99\textwidth]{L2Res/L2Res_AllEta_\era_closure.pdf}
   \end{frame}
 }
 
@@ -99,11 +234,45 @@
   \end{frame}
 }
 
-\foreach \era [count=\x from 1] in \IOVlist{
-  \StrSubstitute{\era}{_}{\_}[\eraTitle]
+\foreach \era [count=\x from 1] in \IOVlist{%
+  \StrSubstitute{\era}{_}{\_}[\eraTitle]%
   \begin{frame}
-    \frametitle{JES L2Res closure (\vJECtest): \eraTitle}
-    \includegraphics[width=0.99\textwidth]{L2Res/L2Res_AllEta_\era_closure.pdf}
+    \frametitle{Merged L2Res data+fits (\vJECfit): \eraTitle}
+    \includegraphics[width=0.99\textwidth]{L2Res/L2Res_AllFinal_\era.pdf}
+  \end{frame}
+}
+
+
+\newpage
+\begin{frame}
+  %  \frametitle{JEC L2Res fits vs era for \vJECfit, \vJECdraft, \vJECref}
+  \frametitle{JEC L2Res fits vs era for \vJECfit, \vJECref}
+  \begin{itemize}
+    %  \item Flip back and forth to check stability of \vJECfit vs previous draft version \vJECdraft and baseline reference \vJECref
+  \item Flip back and forth to check stability of \vJECfit vs baseline reference \vJECref
+  \item Goal 1: check changes with respect to previous version
+  \item Goal 2: catch unstable fits producing unexpected changes (sometimes points with e.g. bad error bars biasing things)
+  \end{itemize}
+\end{frame}
+\newpage
+
+\foreach \era [count=\x from 1] in \IOVlist{%
+  \StrSubstitute{\era}{_}{\_}[\eraTitle]%
+%  \begin{frame}
+%    \frametitle{JES L2Res fits (\vJECdraft): \eraTitle}
+%    \includegraphics[width=0.99\textwidth]{L2Res/\vJECdraft/L2Res_AllEta_\era.pdf}
+%  \end{frame}
+%  \newpage
+  \StrSubstitute{\era}{_}{\_}[\eraTitle]%
+  \begin{frame}
+    \frametitle{JES L2Res fits (\vJECfit): \eraTitle}
+    \includegraphics[width=0.99\textwidth]{L2Res/L2Res_AllEta_\era.pdf}
+  \end{frame}
+\newpage
+  \StrSubstitute{\era}{_}{\_}[\eraTitle]%
+  \begin{frame}
+    \frametitle{JES L2Res fits (\vJECref): \eraTitle}
+    \includegraphics[width=0.99\textwidth]{L2Res/\vJECref/L2Res_AllEta_\era.pdf}
   \end{frame}
 }
 

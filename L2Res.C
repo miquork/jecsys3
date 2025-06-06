@@ -272,7 +272,9 @@ TH1D *drawCleaned(TH1D *h, double eta, string data, string draw,
       if (tr.Contains("24") &&
 	  (tr.Contains("B") || tr.Contains("C") || tr.Contains("D") ||
 	   tr.Contains("E"))) {
+	if (eta>2.322 && eta<2.500 && pt<30)  keep = false;
 	if (eta>2.500 && eta<2.964 && pt<70)  keep = false;
+	if (eta>4.716) keep = false; // Q vs G issue wrt dijets?
       }
       if (tr.Contains("F") || tr.Contains("G") || tr.Contains("H") ||
 	  tr.Contains("I")) {
@@ -285,7 +287,7 @@ TH1D *drawCleaned(TH1D *h, double eta, string data, string draw,
 	if (eta>4.538) keep = false;
       }
       if (eta>3.139 && ptmax<70) keep = false;
-
+      
       // Large error filtering. Also skip any higher pT points in case bad stat
       if (eta<2.650 && ptmin>600.) {
 	if (h->GetBinError(i)>0.05 || hc->GetBinError(i-1)==0) keep = false;
@@ -345,9 +347,11 @@ TH1D *drawCleaned(TH1D *h, double eta, string data, string draw,
 	//if (eta>4.363 && eta<4.538 && emax>6800.*1.2) keep = false;
 	//if (eta>4.538 && eta<4.716 && emax>6800.*1.2) keep = false;
       //}
+      // Somehow odd point at 2.5-2.65, trend change wrt neighbouring eta, RC
+      if (eta>2.500 && eta<2.650 && pt<20) keep = false;
 
       // Single bad outlier points across all IOVs
-      if (tr.Contains("Ev2_nib1")) { 
+      if (tr.Contains("Ev2_nib1") || tr.Contains("E_nib1")) { 
 	if (eta>4.716 && eta<4.889 && pt>50 && pt<60) keep = false;
       }
       if (tr.Contains("25B")) {
@@ -523,9 +527,10 @@ void L2Res() {
      //"2024I","2024H","2024G","2024F","2024E","2024BCD"}; // V7M
 
       //"2024B_nib1",
-      //"2024C_nib1","2024D_nib1","2024Ev1_nib1","2024Ev2_nib1",
-      //"2024F_nib1","2024F_nib2","2024F_nib3","2024G_nib1","2024G_nib2",
-      //"2024H_nib1",
+      "2024C_nib1","2024D_nib1",//"2024Ev1_nib1","2024Ev2_nib1",
+      "2024E_nib1",
+      "2024F_nib1","2024F_nib2","2024F_nib3","2024G_nib1","2024G_nib2",
+      "2024H_nib1",
       "2024I_nib1",  // V9M (V8M)
 
       //"2025B",
@@ -544,11 +549,13 @@ void L2Res() {
      //"Winter24","Winter24","Winter24","Winter24","Winter24",
       //"Winter24","Winter24","Winter24","Winter24","Winter24",
       //"Winter24","Winter24"  // V8M
-      /*
-      "Summer24","Summer24","Summer24","Summer24",
-      "Summer24","Summer24","Summer24","Summer24","Summer24",
-      "Summer24",*/
+
+      "Summer24","Summer24",//"Summer24","Summer24",
       "Summer24",
+      "Summer24","Summer24","Summer24","Summer24","Summer24",
+      "Summer24",
+      "Summer24",
+      
       //"Winter25",
       "Winter25"
     };  // V9M
@@ -739,7 +746,8 @@ void L2Res() {
     if (tr.Contains("I")) sr2 = "2024I";
     const char *cr2 = sr2.c_str();
     fgm = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_mc_winter2024P8_%s-pu_w38.root",cr2),"READ"); // Winter24 photon+jet only (many cloned placeholders)*/
-    fgm = new TFile("rootfiles/Prompt2024/w48_Gam/GamHistosFill_mc_summer2024P8_pu-2024CDEFGHI_w48.root","READ"); // V9M Summer24 (also PTG version?)
+    //fgm = new TFile("rootfiles/Prompt2024/w48_Gam/GamHistosFill_mc_summer2024P8_pu-2024CDEFGHI_w48.root","READ"); // V9M Summer24 (also PTG version?)
+    fgm = new TFile("rootfiles/Prompt2024/w48_Gam/minbiasxs69200/GamHistosFill_mc_summer2024P8_pu-2024CDEFGHI-xs69200_w48.root","READ"); // V9M Summer24
     if (tr.Contains("C") || tr.Contains("D") || tr.Contains("E"))
       fg = new TFile(Form("rootfiles/Prompt2024/w48_Gam/GamHistosFill_data_%s-rereco_w48.root",cr),"READ"); // V9M re-reco
     else
@@ -879,6 +887,8 @@ void L2Res() {
   TH1D *hrc_vsEta(0);
   if (frc) {
     hrc_vsEta = (TH1D*)frc->Get(Form("hrc13jes_%s",cr));
+    if (!hrc_vsEta && tr.Contains("2024E_nib1"))
+      hrc_vsEta = (TH1D*)frc->Get(Form("hrc13jes_%s","2024Ev1_nib1"));
     assert(hrc_vsEta);
   }
   double ptmin = 9;//(fitRC ? 9. : 15.);
@@ -1255,9 +1265,10 @@ void L2Res() {
 		      f5->GetParameter(2), f5->GetParameter(3),
 		      f5->GetParameter(4));
   if (!doClosure) {
-  fref->SetParLimits(0, 0.5, 1.5); // constant
-  fref->SetParLimits(1,-0.3, 0.3); // log-lin
-  fref->SetParLimits(2,-0.05, 0.05); // log-quad
+    fref->SetParLimits(0, 0.5, 1.5); // constant
+    fref->SetParLimits(1,-0.3, 0.3); // log-lin
+    //fref->SetParLimits(2,-0.05, 0.05); // log-quad
+    fref->SetParLimits(2,-0.1, 0.1); // log-quad, 2024E
   fref->SetParLimits(3,-0.5, 0.5); // 1/x (large for 2.1<eta<2.5)
   fref->SetParLimits(4,  0., 0.25); // 1/x^2
   // With addition of RC offset at low pT, this might be stabilized enough
@@ -1376,6 +1387,11 @@ void L2Res() {
 
   mg->Fit(fref,"QRN");
 
+  //if (fref->GetChisquare()>10.*fref->GetNDF()) {
+  //mg->Fit(fref,"QRNW");
+  //mg->Fit(fref,"QRN");
+  //}
+  
   // Bonus: constrain barrel f2 fit to flat if not significant
   if (eta<1.3 && false) {
     if (fabs(f2->GetParameter(1))<2.*f2->GetParError(1)) {
@@ -1431,18 +1447,23 @@ void L2Res() {
   //else if (eta<2.964) h6->GetYaxis()->SetRangeUser(0.7+eps,1.3-eps);
   //else if (eta<5.191) h6->GetYaxis()->SetRangeUser(0.3+eps,1.3-eps);
   //if      (eta<1.466) h6->GetYaxis()->SetRangeUser(0.8+eps,1.2-eps);
-  if      (eta<1.566) h6->GetYaxis()->SetRangeUser(0.8+eps,1.2-eps);
-  else if (eta<2.650) h6->GetYaxis()->SetRangeUser(0.65+eps,1.3-eps);
+  //if      (eta<1.566) h6->GetYaxis()->SetRangeUser(0.8+eps,1.2-eps); // V8M
+  if      (eta<0.783) h6->GetYaxis()->SetRangeUser(0.95+eps,1.10-eps); // V9M
+  else if (eta<1.566) h6->GetYaxis()->SetRangeUser(0.75+eps,1.15-eps); // V9M
+  //else if (eta<2.650) h6->GetYaxis()->SetRangeUser(0.65+eps,1.3-eps); // V8M
+  else if (eta<2.650) h6->GetYaxis()->SetRangeUser(0.50+eps,1.20-eps); // V9M
   //else if (eta<4.013) h6->GetYaxis()->SetRangeUser(0.55+eps,1.35-eps);
   //else if (eta<4.191) h6->GetYaxis()->SetRangeUser(0.55+eps,1.35-eps);
-  else if (eta<4.191) h6->GetYaxis()->SetRangeUser(0.30+eps,1.35-eps);
-  else if (eta<5.191) h6->GetYaxis()->SetRangeUser(0.30+eps,1.35-eps);
+  //else if (eta<4.191) h6->GetYaxis()->SetRangeUser(0.30+eps,1.35-eps); // V8M
+  else if (eta<4.191) h6->GetYaxis()->SetRangeUser(0.30+eps,1.45-eps); // V9M
+  //else if (eta<5.191) h6->GetYaxis()->SetRangeUser(0.30+eps,1.35-eps); // V8M
+  else if (eta<5.191) h6->GetYaxis()->SetRangeUser(0.50+eps,1.65-eps); // V9M
   h6->Draw();
   gPad->SetLogx();
 
   l->SetLineStyle(kDotted);
-  l->DrawLine(15.,0.30,15.,1.35); // type-I threshold
-  l->DrawLine(ptmaxe,0.30,ptmaxe,1.35);
+  l->DrawLine(15.,0.30,15.,1.65);//1.35); // type-I threshold
+  l->DrawLine(ptmaxe,0.30,ptmaxe,1.65);//1.35);
   l->SetLineStyle(kDashed);
   l->DrawLine(ptmin,1,3500.,1);
 
@@ -1545,8 +1566,8 @@ void L2Res() {
   tdrDraw(hjes,"E2",kNone,kYellow+2,kSolid,-1,1001,kYellow+1);
 
   l->SetLineStyle(kDotted);
-  l->DrawLine(15.,0.30,15.,1.35); // type-I threshold
-  l->DrawLine(ptmaxe,0.30,ptmaxe,1.35);
+  l->DrawLine(15.,0.30,15.,1.65);//1.35); // type-I threshold
+  l->DrawLine(ptmaxe,0.30,ptmaxe,1.65);//1.35);
   l->SetLineStyle(kDashed);
   l->DrawLine(ptmin,1,3500.,1);
   
@@ -1639,24 +1660,27 @@ void L2Res() {
   cxf->SetName(Form("cx_%s",cr));
 
   // Step 7. Draw summary of final results in a single plot
-  TH1D *hy = tdrHist(Form("hy_%s",cr),"JES",0.5,1.45,"|#eta|",0,5.2);
+  //TH1D *hy = tdrHist(Form("hy_%s",cr),"JES",0.5,1.45,"|#eta|",0,5.2);
+  TH1D *hy = tdrHist(Form("hy_%s",cr),"JES",0.40+1e-4,1.40-1e-4,"|#eta|",0,5.2);
   lumi_136TeV = Form("%s - %s%s",cr,cm,cl);
   extraText = "Private";
   TCanvas *cy = tdrCanvas(Form("cy_%s",cr),hy,8,33,kSquare);
 
   l->SetLineStyle(kDotted);
-  l->DrawLine(1.3,0.6,1.3,1.1);
-  l->DrawLine(2.5,0.6,2.5,1.1);
-  l->DrawLine(2.964,0.6,2.964,1.35);
+  l->DrawLine(1.305,0.55,1.305,1.1);
+  l->DrawLine(2.500,0.45,2.500,1.1);
+  l->DrawLine(2.964,0.45,2.964,1.35);
   l->SetLineStyle(kDashed);
   l->DrawLine(0,1,5.2,1);
 
   tdrDraw(hmin,"HIST",kNone,kMagenta+2,kSolid,-1,kNone,kMagenta+2);
   tdrDraw(hmax,"HIST",kNone,kBlack,kSolid,-1,kNone,kBlack);
 
-  TLegend *legy0 = tdrLeg(0.20,0.20,0.45,0.20+2*0.045);
-  legy0->AddEntry(hmax,"E < #sqrt{s}/2","FL");
-  legy0->AddEntry(hmin,"p_{T} > 10 GeV","FL");
+  //TLegend *legy0 = tdrLeg(0.20,0.20,0.45,0.20+2*0.045);
+  TLegend *legy0 = tdrLeg(0.20,0.17,0.45,0.17+2*0.040);
+  legy0->SetTextSize(0.040);
+  legy0->AddEntry(hmax,"E = #sqrt{s}/2","FL");
+  legy0->AddEntry(hmin,"p_{T} = 10 GeV","FL");
   
   TH1D *hy15, *hy30, *hy100, *hy300, *hy1000, *hy3000;
   hy100  = drawH2JES(h2jes,100., "HISTE][",kNone,kGreen+2);
@@ -1668,7 +1692,9 @@ void L2Res() {
   hy1000 = drawH2JES(h2jes,1000.,"HISTE][",kNone,kRed);
   hy3000 = drawH2JES(h2jes,3000.,"HISTE][",kNone,kBlack);
 
-  TLegend *legy = tdrLeg(0.20,0.90-6*0.045,0.45,0.90);
+  //TLegend *legy = tdrLeg(0.20,0.90-6*0.045,0.45,0.90);
+  TLegend *legy = tdrLeg(0.20,0.90-6*0.040,0.45,0.90);
+  legy->SetTextSize(0.040);
   legy->AddEntry(hy15,  "p_{T} = 15 GeV",  "PLE");
   legy->AddEntry(hy30,  "p_{T} = 30 GeV",  "PLE");
   legy->AddEntry(hy100, "p_{T} = 100 GeV", "PLE");
