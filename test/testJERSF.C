@@ -42,9 +42,11 @@ void testJERSF(string filename) {
   const double rho = 20.85;
   TH1D *h10 = new TH1D("h10",";#eta_{jet};JER SF",nbins,0.,maxeta);
   TH1D *h100 = new TH1D("h100",";#eta_{jet};JER SF",nbins,0.,maxeta);
+  TH1D *h1000 = new TH1D("h1000",";#eta_{jet};JER SF",nbins,0.,maxeta);
   TH1D *hxmax = new TH1D("hxmax",";#eta_{jet};JER SF",nbins,0.,maxeta);
   TH1D *h10m = new TH1D("h10m",";-#eta_{jet};JER SF",nbins,0.,maxeta);
   TH1D *h100m = new TH1D("h100m",";-#eta_{jet};JER SF",nbins,0.,maxeta);
+  TH1D *h1000m = new TH1D("h1000m",";-#eta_{jet};JER SF",nbins,0.,maxeta);
   TH1D *hxmaxm = new TH1D("hxmaxm",";-#eta_{jet};JER SF",nbins,0.,maxeta);
   for (int i = 0; i != h100->GetNbinsX()+1; ++i) {
 
@@ -71,6 +73,18 @@ void testJERSF(string filename) {
     jer->setRho(rho);
     h100m->SetBinContent(i, jer->getCorrection());
 
+    if (1000.*cosh(etamin)<6800.) {
+      jer->setJetEta(eta);
+      jer->setJetPt(1000.);
+      jer->setRho(rho);
+      h1000->SetBinContent(i, jer->getCorrection());
+
+      jer->setJetEta(-eta);
+      jer->setJetPt(1000.);
+      jer->setRho(rho);
+      h1000m->SetBinContent(i, jer->getCorrection());
+    }
+      
     double ptmax = min(4000.,6800./cosh(etamin));
     jer->setJetEta(eta);
     jer->setJetPt(ptmax);
@@ -103,22 +117,27 @@ void testJERSF(string filename) {
   l->SetLineColor(kGray+2);
   l->DrawLine(0,1,5.2,1);
   
-  tdrDraw(h10,"HPz",kOpenDiamond,kRed,kSolid,-1,kNone);
-  tdrDraw(h100,"HPz",kFullCircle,kBlack,kSolid,-1,kNone);
-  tdrDraw(hxmax,"HPz",kOpenDiamond,kBlue,kSolid,-1,kNone);
+  tdrDraw(h10,"HPz",kOpenDiamond,kMagenta+2,kSolid,-1,kNone);
+  tdrDraw(h100,"HPz",kFullCircle,kGreen+2,kSolid,-1,kNone);
+  tdrDraw(h1000,"H][Pz",kFullDiamond,kRed,kSolid,-1,kNone);
+  tdrDraw(hxmax,"HPz",kOpenDiamond,kBlack,kSolid,-1,kNone);
 
-  tdrDraw(h10m,"HPz",kOpenDiamond,kRed-9,kDotted,-1,kNone);
-  tdrDraw(h100m,"HPz",kFullCircle,kGray,kDotted,-1,kNone);
-  tdrDraw(hxmaxm,"HPz",kOpenDiamond,kBlue-9,kDotted,-1,kNone);
+  tdrDraw(h10m,"HPz",kOpenDiamond,kMagenta+2-9,kDotted,-1,kNone);
+  tdrDraw(h100m,"HPz",kOpenCircle,kGreen+1,kDotted,-1,kNone);
+  tdrDraw(h1000m,"H][Pz",kFullDiamond,kRed-9,kDotted,-1,kNone);
+  tdrDraw(hxmaxm,"HPz",kOpenDiamond,kGray+2,kDotted,-1,kNone);
   h10m->SetMarkerSize(0.6);
   h100m->SetMarkerSize(0.6);
+  h1000m->SetMarkerSize(0.6);
   hxmaxm->SetMarkerSize(0.6);
 
-  TLegend *leg = tdrLeg(0.62,0.90-0.05*6,0.87,0.90);
+  TLegend *leg = tdrLeg(0.62,0.90-0.05*7,0.87,0.90);
   leg->AddEntry(hxmax,"p_{T,max}","PLE");
+  leg->AddEntry(h1000,"1000 GeV","PLE");
   leg->AddEntry(h100,"100 GeV","PLE");
   leg->AddEntry(h10,"10 GeV","PLE");
   leg->AddEntry(hxmaxm,"p_{T,max}, -|#eta|","PLE");
+  leg->AddEntry(h1000m,"1000 GeV, -|#eta|","PLE");
   leg->AddEntry(h100m,"100 GeV, -|#eta|","PLE");
   leg->AddEntry(h10m,"10 GeV, -|#eta|","PLE");
   

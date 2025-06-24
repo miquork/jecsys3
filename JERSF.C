@@ -11,8 +11,8 @@
 
 bool plotEtaBins = true; // lots of plots
 
-bool skipZ = false;//true;//false;
-bool skipG = false;//true;//false;
+bool skipZ = true;//false;
+bool skipG = true;//false;
 
 // Patch [2.853,2.964] minimum statistical uncertainty (for trig bias?)
 double patchErr29 = 0.005; // added in quadrature to stat unc
@@ -134,9 +134,9 @@ TF1 *fitJER(TH1D *hjer, double ptmin, double ptmax, double eta,
 	    const char *name, int color = kBlack, TF1 *f1ref = 0,
 	    TFitResultPtr *f1ptr = 0) {
 
-  //TF1 *f1 = new TF1(name,"sqrt([0]*fabs([0])/(x*x)+[1]*[1]/x+[2]*[2])",
-  TF1 *f1 = new TF1(name,"sqrt([0]*fabs([0])/(x*x)+[1]*[1]/x+[2]*[2]"
-		    "+[3]*[3]/(x*x*x*x))",
+  TF1 *f1 = new TF1(name,"sqrt([0]*fabs([0])/(x*x)+[1]*[1]/x+[2]*[2])",
+  //TF1 *f1 = new TF1(name,"sqrt([0]*fabs([0])/(x*x)+[1]*[1]/x+[2]*[2]"
+  //	    "+[3]*[3]/(x*x*x*x))",
 		    ptmin,ptmax);
   f1->SetParameters(10,1,0.05,0.);
   // Fix sensible range for each parameter
@@ -144,7 +144,7 @@ TF1 *fitJER(TH1D *hjer, double ptmin, double ptmax, double eta,
     f1->SetParLimits(0,  3.,  12.); // Noise (min was -1)
     f1->SetParLimits(1, 0.5, 1.5); // Stochastic
     f1->SetParLimits(2,0.03,0.07); // Constant
-    f1->FixParameter(3,0);
+    //f1->FixParameter(3,0);
     // Special treatment for EC2
     if (eta>2.500 && eta<3.139) {
       f1->SetParameters(10,1.5,0.10,0.);
@@ -160,8 +160,8 @@ TF1 *fitJER(TH1D *hjer, double ptmin, double ptmax, double eta,
     double N = f1ref->GetParameter(0);
     double S = f1ref->GetParameter(1);
     double C = f1ref->GetParameter(2);
-    double N2 = f1ref->GetParameter(3);
-    f1->SetParameters(N, 1.1*S, 1.1*C, N2);
+    //double N2 = f1ref->GetParameter(3);
+    f1->SetParameters(N, 1.1*S, 1.1*C);//, N2);
     //f1->SetParLimits(0, N-0.2*fabs(N), N+0.2*fabs(N));
     //f1->SetParLimits(0, N-0.05*max(fabs(N),1.), N+0.05*max(fabs(N),1.));
     f1->SetParLimits(0, N, N+0.05*max(fabs(N),1.));
@@ -170,7 +170,7 @@ TF1 *fitJER(TH1D *hjer, double ptmin, double ptmax, double eta,
     //f1->SetParLimits(0, N,  10); // Noise
     f1->SetParLimits(1, S, 1.5); // Stochastic
     f1->SetParLimits(2, C,0.12); // Constant
-    f1->SetParLimits(3, N2, 200.); // Noise^2
+    //f1->SetParLimits(3, N2, 200.); // Noise^2
     // Special treatment for EC2
     if (eta>2.500 && eta<3.139) {
       f1->SetParameters(N, S, min(2*C,0.24));
@@ -182,7 +182,7 @@ TF1 *fitJER(TH1D *hjer, double ptmin, double ptmax, double eta,
     if (eta>3.489) f1->FixParameter(0, N);
     // Special treatment for inner HB
     //if (eta>0.783) f1->FixParameter(3, 0);
-    f1->FixParameter(3, 0);
+    //f1->FixParameter(3, 0);
   }
   if (f1ptr) (*f1ptr) = hjer->Fit(f1,"QRNS");
   else                  hjer->Fit(f1,"QRN");
@@ -194,7 +194,7 @@ TF1 *fitJER(TH1D *hjer, double ptmin, double ptmax, double eta,
   
   return f1;
 } // fitJER
-/*
+
 TF1 *ratioJER(TF1 *f1, TF1 *f1m, const char *name, int color) {
   TF1 *f1r = new TF1(name,"sqrt([0]*fabs([0])/(x*x)+[1]*[1]/x+[2]*[2])/"
 		     "sqrt([3]*fabs([3])/(x*x)+[4]*[4]/x+[5]*[5])",
@@ -206,7 +206,7 @@ TF1 *ratioJER(TF1 *f1, TF1 *f1m, const char *name, int color) {
   
   return f1r;
 } // ratioJER
-*/
+/*
 // Prompt24 V9M variant for HB depth 1 noise issues
 TF1 *ratioJER(TF1 *f1, TF1 *f1m, const char *name, int color) {
   TF1 *f1r = new TF1(name,"sqrt([0]*fabs([0])/(x*x)+[1]*[1]/x+[2]*[2]"
@@ -222,6 +222,8 @@ TF1 *ratioJER(TF1 *f1, TF1 *f1m, const char *name, int color) {
   
   return f1r;
 } // ratioJER
+*/
+/*
 // Refit JER to data/MC ratio to be able to use pT<30 Gev range also
 TF1 *refitRatioJER(TH1D *hjer, TF1 *f1, double ptmin, double ptmax, double eta,
 		   const char *name, int color = kBlack,
@@ -256,7 +258,37 @@ TF1 *refitRatioJER(TH1D *hjer, TF1 *f1, double ptmin, double ptmax, double eta,
   
   return f1r;
 } // refitRatioJER
+*/
 
+// Refit JER to data/MC ratio to be able to use pT<30 Gev range also
+TF1 *refitRatioJER(TH1D *hjer, TF1 *f1, double ptmin, double ptmax, double eta,
+		   const char *name, int color = kBlack,
+		   TFitResultPtr *f1ptr = 0) {
+  TF1 *f1r = new TF1(name,"sqrt([0]*fabs([0])/(x*x)+[1]*[1]/x+[2]*[2])/"
+		     "sqrt([3]*fabs([3])/(x*x)+[4]*[4]/x+[5]*[5])",
+		     ptmin,ptmax);
+  f1r->SetParameters(f1->GetParameter(0),f1->GetParameter(1),
+		     f1->GetParameter(2),
+		     f1->GetParameter(3),f1->GetParameter(4),
+		     f1->GetParameter(5));
+  // Leave only N and N2 free for data, MC and S+C fixed
+  //f1r->FixParameter(0, f1->GetParameter(0)); // N
+  f1r->SetParLimits(0, f1->GetParameter(3), 10.); // N [MC-N, 10]
+  f1r->FixParameter(1, f1->GetParameter(1)); // S
+  //f1r->SetParLimits(1, f1->GetParameter(5), 1.5); // S
+  f1r->FixParameter(2, f1->GetParameter(2)); // C
+  f1r->FixParameter(3, f1->GetParameter(3)); // MC-N
+  f1r->FixParameter(4, f1->GetParameter(4)); // MC-S
+  f1r->FixParameter(5, f1->GetParameter(5)); // MC-C
+  f1r->SetLineColor(color);
+
+  if (f1ptr) (*f1ptr) = hjer->Fit(f1r,"QRNS");
+  else                  hjer->Fit(f1r,"QRN");
+  // If fit was empty, disregard f1ptr
+  if (f1r->GetNDF()<=0 && f1ptr) (*f1ptr) = 0;
+  
+  return f1r;
+} // refitRatioJER
 
 // Draw h2jersf
 TH1D *drawH2JERSF(TH2D *h2, double pt, string draw, int marker, int color) {
@@ -284,6 +316,7 @@ void JERSF() {
   
   // Set output directory;
   TFile *fout = new TFile("rootfiles/JERSF.root","RECREATE");
+  fout->mkdir("Eta13");
   fout->mkdir("Fits");
   fout->mkdir("Dijet");
   fout->mkdir("Extras");
@@ -306,12 +339,14 @@ void JERSF() {
 		   //"2024BC", //Pr24
 		   "2024BCD","2024E","2024F","2024G","2024H","2024I"
 		   //"2024B_nib1",*/
-                   //"2024CDEFGHI_nib","2024CDE_nib",
+    //"2024CDEFGHI_nib",
+    "2024_nib","2024CDE_nib",
     "2024FGHI_nib",
-		   //"2024C_nib1","2024D_nib1","2024Ev1_nib1","2024Ev2_nib1",
-		   //"2024F_nib1","2024F_nib2","2024F_nib3",
-		   //"2024G_nib1","2024G_nib2","2024H_nib1","2024I_nib1"
-		   //"2024E_noRW","2024E_692mb","2024E_753mb"
+    "2024C_nib1","2024D_nib1",//"2024Ev1_nib1","2024Ev2_nib1",
+    "2024E_nib1",
+    "2024F_nib1","2024F_nib2","2024F_nib3",
+    "2024G_nib1","2024G_nib2","2024H_nib1","2024I_nib1",
+    //"2024E_noRW","2024E_692mb","2024E_753mb"
 
     "2025C"
 		   
@@ -360,11 +395,12 @@ void JERSF() {
 		  //"Winter24","Winter24","Winter24","Winter24","Winter24",
 		  //"Winter24","Winter24"
 		  */
-    //"Summer24","Summer24",
+    "Summer24","Summer24",
     "Summer24",
-    //"Summer24","Summer24","Summer24","Summer24",
-    //"Summer24","Summer24","Summer24",
-    //"Summer24","Summer24","Summer24","Summer24"
+    "Summer24","Summer24",//"Summer24","Summer24",
+    "Summer24",
+    "Summer24","Summer24","Summer24",
+    "Summer24","Summer24","Summer24","Summer24",
     //"2024E_noRW","2024E_692mb","2024E_753mb" //Pr24
     "Winter25"
   };
@@ -389,6 +425,10 @@ void JERSF() {
   //string vmc[] = {"Winter24","Winter24","Winter24","Winter24",
   //		  "Summer23MGBPix","Summer23MG"};
   //string vmc[] = {"Summer23MGBPix","Summer23MGBPix","Summer23MGBPix","Summer23MGBPix"};
+
+  // Links to input files
+  #include "ConfigFiles.C"
+
   const int nmc = sizeof(vmc)/sizeof(vmc[0]);
   assert(nmc==nrun);
   for (int irun = 0; irun != nrun; ++irun) {
@@ -399,6 +439,7 @@ void JERSF() {
     
     //gROOT->ProcessLine(Form(".! mkdir pdf/JERSF/%s/vsEta",cr));
   // (No indent here for the resf of the loop, maybe function call later)
+    cout << "Processing run " << cr << endl;
     
   //string run = "2023D";
   //const char *cr = run.c_str();
@@ -569,11 +610,14 @@ void JERSF() {
     //f = new TFile(Form("rootfiles/Prompt2024/v111_2024/jmenano_data_cmb_%s_JME_v111_2024.root",cr),"READ"); // V6M->V7M
     //else
     //f = new TFile(Form("rootfiles/Prompt2024/v110_2024/jmenano_data_cmb_%s_JME_v110_2024.root",cr),"READ"); // V6M closure
-    if (tr.Contains("B") || tr.Contains("C") || tr.Contains("D") ||
-	tr.Contains("E"))
-      f = new TFile(Form("rootfiles/Prompt2024/v121_v2_Jet/jmenano_data_cmb_%s_Rereco_JME_v121_v2.root",cr),"READ"); // V9M re-reco
-    else
-      f = new TFile(Form("rootfiles/Prompt2024/v121_v2_Jet/jmenano_data_cmb_%s_JME_v121_v2.root",cr),"READ"); // V9M prompt
+    //if (tr.Contains("B") || tr.Contains("C") || tr.Contains("D") ||
+    //	tr.Contains("E"))
+    //f = new TFile(Form("rootfiles/Prompt2024/v121_v2_Jet/jmenano_data_cmb_%s_Rereco_JME_v121_v2.root",cr),"READ"); // V9M re-reco
+    //else
+    //f = new TFile(Form("rootfiles/Prompt2024/v121_v2_Jet/jmenano_data_cmb_%s_JME_v121_v2.root",cr),"READ"); // V9M prompt
+    string dijet_file_data = mf["24V9M"]["Jet"][cr];
+    cout << "Dijet file (Data) : " << dijet_file_data << endl;
+    f = new TFile(dijet_file_data.c_str(),"READ"); 
     //f = new TFile(Form("rootfiles/Prompt2024/v113_2024/jmenano_data_cmb_%s_JME_v113_2024.root",cr),"READ"); // V7M closure (cmb still missing)
     //fm = new TFile("rootfiles/Prompt2024/v39_2024_Prompt_etabin_DCSOnly/jmenano_mc_cmb_Summer23MGBPix_v39_2023_etabin_SFv2.root","READ"); // with JER SF?
     //fm = new TFile("rootfiles/Summer23_L2ResOnly/jmenano_mc_cmb_Summer23MGBPix_v39_noRwPU_noSmearJets_25Feb2024_L2Res_v1.root","READ"); // no JER SF
@@ -583,7 +627,10 @@ void JERSF() {
     //fm = new TFile(Form("rootfiles/Prompt2024/v111_2024/jmenano_mc_out_Winter24MGV14_v111_%s.root",cr),"READ"); // Winter24
     //else
     //fm = new TFile(Form("rootfiles/Prompt2024/v109_2024/jmenano_mc_out_Winter24MGV14_v109_%s.root",cr),"READ"); // Winter24
-    fm = new TFile("rootfiles/Prompt2024/v121_v2_Jet/jmenano_mc_out_Summer24MG_PU69_v121_v2.root","READ"); // V9M
+    //fm = new TFile("rootfiles/Prompt2024/v121_v2_Jet/jmenano_mc_out_Summer24MG_PU69_v121_v2.root","READ"); // V9M
+    string dijet_file_mc = mf["24V9M"]["Jet"]["MC"];
+    cout << "Dijet file (MC) : " << dijet_file_mc << endl;
+    fm = new TFile(dijet_file_mc.c_str(),"READ");
     fm = (TFile*)fm->GetDirectory("HLT_MC");
     //fm = new TFile("rootfiles/Prompt2024/v89_2024/jmenano_mc_cmb_Winter24MG_v89_2024.root","READ"); // MCV14, JER SF
     //if (run=="2024BCD") {
@@ -604,12 +651,15 @@ void JERSF() {
     //fz = new TFile(Form("rootfiles/Prompt2024/v88/jme_bplusZ_%s_Zmm_sync_v88b.root",cr),"READ"); // V6M->V7M
     //else
     //fz = new TFile(Form("rootfiles/Prompt2024/v88/jme_bplusZ_%s_Zmm_sync_v88.root",cr),"READ"); // V6M closure
-    if (tr.Contains("CDE") || tr.Contains("FGHI"))
-      fz = new TFile(Form("rootfiles/Prompt2024/v97_Zmm/jme_Zj_%s_Zmm_pileup_69200_V8M_v97.root","2024G_nib2"),"READ"); // V9M re-reco
-    else if (tr.Contains("C") || tr.Contains("D") || tr.Contains("E"))
-      fz = new TFile(Form("rootfiles/Prompt2024/v97_Zmm/jme_Zj_2024CDEReprocessing_v1_%s_Zmm_pileup_69200_V8M_v97.root",cr),"READ"); // V9M re-reco
-    else
-      fz = new TFile(Form("rootfiles/Prompt2024/v97_Zmm/jme_Zj_%s_Zmm_pileup_69200_V8M_v97.root",cr),"READ"); // V9M prompt  
+    //if (tr.Contains("CDE") || tr.Contains("FGHI"))
+    //fz = new TFile(Form("rootfiles/Prompt2024/v97_Zmm/jme_Zj_%s_Zmm_pileup_69200_V8M_v97.root","2024G_nib2"),"READ"); // V9M re-reco
+    //else if (tr.Contains("C") || tr.Contains("D") || tr.Contains("E"))
+    //fz = new TFile(Form("rootfiles/Prompt2024/v97_Zmm/jme_Zj_2024CDEReprocessing_v1_%s_Zmm_pileup_69200_V8M_v97.root",cr),"READ"); // V9M re-reco
+    //else
+    //fz = new TFile(Form("rootfiles/Prompt2024/v97_Zmm/jme_Zj_%s_Zmm_pileup_69200_V8M_v97.root",cr),"READ"); // V9M prompt
+    string zmm_file = mf["24V9M"]["Zmm"][cr];
+    cout << "Zmm file : " << zmm_file << endl;
+    fz = new TFile(zmm_file.c_str(),"READ");
     //fz = new TFile("rootfiles/Prompt2024/jme_bplusZ_2024BC_Zmm_sync_v80golden.root","READ"); // 3/fb closure
     //fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w12.root",cr),"READ"); // DCSOnly
     //fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w13.root",cr),"READ"); // DCSOnly
@@ -626,12 +676,12 @@ void JERSF() {
     //fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%sskim_w40.root",cr),"READ"); // V6M->V7M
     //else
     //fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w39.root",cr),"READ"); // // V6M closure
-    if (tr.Contains("CDE") || tr.Contains("FGHI"))
-      fg = new TFile(Form("rootfiles/Prompt2024/w48_Gam/GamHistosFill_data_%s_w48.root","2024BCDEFGHI"),"READ"); // V9M re-reco
-    else if (tr.Contains("C") || tr.Contains("D") || tr.Contains("E"))
-      fg = new TFile(Form("rootfiles/Prompt2024/w48_Gam/GamHistosFill_data_%s-rereco_w48.root",cr),"READ"); // V9M re-reco
-    else
-      fg = new TFile(Form("rootfiles/Prompt2024/w48_Gam/GamHistosFill_data_%s_w48.root",cr),"READ"); // V9M prompt
+    //if (tr.Contains("CDE") || tr.Contains("FGHI"))
+    //fg = new TFile(Form("rootfiles/Prompt2024/w48_Gam/GamHistosFill_data_%s_w48.root","2024BCDEFGHI"),"READ"); // V9M re-reco
+    //else if (tr.Contains("C") || tr.Contains("D") || tr.Contains("E"))
+    //fg = new TFile(Form("rootfiles/Prompt2024/w48_Gam/GamHistosFill_data_%s-rereco_w48.root",cr),"READ"); // V9M re-reco
+    //else
+    //fg = new TFile(Form("rootfiles/Prompt2024/w48_Gam/GamHistosFill_data_%s_w48.root",cr),"READ"); // V9M prompt
     //fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w18.root",cr),"READ"); // 3/fb closure
     //fgm = new TFile("rootfiles/Prompt2024/GamHistosFill_mc_2023P8-BPix_w12.root","READ");
     //fgm = new TFile("rootfiles/Prompt2024/GamHistosFill_mc_2023QCD-BPix_w12.root","READ");
@@ -639,7 +689,10 @@ void JERSF() {
     //fgm = new TFile("rootfiles/Prompt2024/GamHistosFill_mc_winter2024P8_w33.root","READ"); // Winter24 photon+jet only
     //fgm = new TFile("rootfiles/Prompt2024/GamHistosFill_mc_winter2024P8_w35.root","READ"); // Winter24 photon+jet only
     //fgm = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_mc_winter2024P8_%s-pu_w38.root",cr),"READ"); // Winter24 photon+jet only
-    fgm = new TFile("rootfiles/Prompt2024/w48_Gam/GamHistosFill_mc_summer2024P8_pu-2024CDEFGHI_w48.root","READ"); // V9M Summer24 (also PTG version?)
+    //fgm = new TFile("rootfiles/Prompt2024/w48_Gam/GamHistosFill_mc_summer2024P8_pu-2024CDEFGHI_w48.root","READ"); // V9M Summer24 (also PTG version?)
+
+    fg = new TFile(mf["24V9M"]["Gam"][cr].c_str(),"READ");
+    fgm = new TFile(mf["24V9M"]["Gam"]["MC"].c_str(),"READ");
   }
   else if (tr.Contains("2025")) {
     //f = new TFile(Form("rootfiles/Prompt2025/Jet_v129/jmenano_data_cmb_%s_JME_v129.root",cr),"READ"); // V9M prompt
@@ -750,7 +803,7 @@ void JERSF() {
   f13->SetLineColor(kBlack);
   f13->Draw("SAME");
 
-  TLegend *leg0 = tdrLeg(0.65,0.90-(skipG ? 2 : skipZ ? 3 : 4)*0.05,0.90,0.90);
+  TLegend *leg0 = tdrLeg(0.65,0.90-(skipG ? 4 : skipZ ? 5 : 6)*0.05,0.90,0.90);
   if (!skipG) {
     tdrDraw(hjer13gm,"HISTE",kNone,kBlue,kSolid,-1,kNone,0);
     tdrDraw(hjer13g,"Pz",kOpenCircle,kBlue);
@@ -768,18 +821,41 @@ void JERSF() {
     leg0->AddEntry(hjer13g,"#gamma + jet", "PLE");
   }
   leg0->AddEntry(hjer13,"Dijet", "PLE");
-  leg0->AddEntry(hjer13m,"MC", "L");
+  //leg0->AddEntry(hjer13m,"MC", "L");
+  leg0->AddEntry(hjer13m,"MC", "F");
+  leg0->AddEntry(f13,"Fit to data", "L");
+  leg0->AddEntry(f13m,"Fit to MC", "L");
 
   c0->cd(2);
   gPad->SetLogx();
   l->DrawLine(15,1,3500,1);
   
   tdrDraw(hsf13,"Pz",kFullCircle,kBlack);
-  f13r->SetLineColor(kBlack);
-  f13r->Draw("SAME");
 
-  f13r2->SetLineColor(kBlue);
+  // Ratio of fits in range [50,1500] GeV
+  // Show ratio extrapolated to rull range in lighter color
+  f13r->SetLineColor(kGray+1);
+  f13r->SetLineStyle(kDashed);
+  f13r->DrawClone("SAME");
+  // High-light actual fitted range with darker color
+  f13r->SetRange(50,1500);
+  f13r->SetLineColor(kBlack);
+  f13r->DrawClone("SAME");
+
+  // Fit to ratio in range [28,2000]
+  // Show ratio extrapolated to rull range in lighter color
+  f13r2->SetRange(15,2500);
+  f13r2->SetLineColor(kGray+2);//kBlue);
+  f13r2->DrawClone("SAME");
+  // High-light actual fitted range with darker color
+  f13r2->SetRange(28,2000);
+  f13r2->SetLineColor(kBlack);
   f13r2->Draw("SAME");
+
+  TLegend *leg0b = tdrLeg(0.30,0.70,0.55,0.90);
+  leg0b->SetTextSize(0.045*1.5);
+  leg0b->AddEntry(f13r,"Ratio of fits", "L");
+  leg0b->AddEntry(f13r2,"Fit to ratio", "L");
 
   if (!skipG) {
     tdrDraw(hsf13g,"Pz",kOpenCircle,kBlue);
@@ -962,7 +1038,13 @@ void JERSF() {
   f1r->Draw("SAME");
   f1rb->Draw("SAME");
 
+  f1r2->SetRange(28,2000.);
+  f1r2->SetLineColor(kBlue-9);
+  f1r2->SetLineWidth(2);
+  f1r2->DrawClone("SAME");
+  f1r2->SetRange(15,3500.);
   f1r2->SetLineColor(kBlue);
+  f1r2->SetLineWidth(1);
   f1r2->Draw("SAME");
   
   if (plotEtaBins)
@@ -994,6 +1076,14 @@ void JERSF() {
   f1rb->Draw("SAME");
   // Draw full range at the back
   f1r->Draw("SAME");
+
+  f1r2->SetRange(28,2000.);
+  f1r2->SetLineColor(kBlue-9);
+  f1r2->SetLineWidth(2);
+  f1r2->DrawClone("SAME");
+  f1r2->SetRange(15,3500.);
+  f1r2->SetLineColor(kBlue);
+  f1r2->SetLineWidth(1);
   f1r2->Draw("SAME");
 
   tdrDraw(hsf,"Pz",kFullCircle,kBlack);
@@ -1017,17 +1107,22 @@ void JERSF() {
     double pt1 = h2jersf->GetYaxis()->GetBinLowEdge(ipt);
     double emax1 = pt1*cosh(eta1);
     double jersf = f1r->Eval(pt);
+    double jersf2 = f1r2->Eval(pt);
     //double ejersf = 0.; // do properly later
     double d = f1->Eval(pt);
     double ed = (f1ptr ? tools::getFitErr(f1, f1ptr, pt) : 0);
     double m = f1m->Eval(pt);
     double em = (f1mptr ? tools::getFitErr(f1m, f1mptr, pt) : 0);
     // r = d/m => dr = dd/m (+) d*dm/m^2 => dr = d/m*(dd/d (+) dm/m)
+    // ejersf: both data and MC fit
+    // ejersf2: refit only noise part => add also ejersf
     double ejersf = jersf * sqrt(pow(ed/d,2) + pow(em/m,2));
+    double ejersf2 = (f1rptr ? tools::getFitErr(f1r2, f1rptr, pt) : 0);
+    ejersf2 = sqrt(ejersf2*ejersf2 + ejersf*ejersf);
     
     if (emax1 < 13600.*0.5) {
-      h2jersf->SetBinContent(ieta, ipt, jersf);
-      h2jersf->SetBinError(ieta, ipt, ejersf);
+      h2jersf->SetBinContent(ieta, ipt, jersf2);//jersf);
+      h2jersf->SetBinError(ieta, ipt, ejersf2);//ejersf);
     }
     h2jersf0->SetBinContent(ieta, ipt, hsf->GetBinContent(ipt));
     h2jersf0->SetBinError(ieta, ipt, hsf->GetBinError(ipt));
@@ -1201,7 +1296,7 @@ void JERSF() {
   //ofstream txt(Form("textFiles/Prompt24/Prompt24_%s_JRV6M_MC_SF_AK4PFPuppi.txt",cr));
   //ofstream txt(Form("textFiles/Prompt24/Prompt24_%s_JRV7M_MC_SF_AK4PFPuppi.txt",cr));
   //ofstream txt(Form("textFiles/Prompt24/Prompt24_%s_JRV9M_MC_SF_AK4PFPuppi.txt",cr));
-  ofstream txt(TString(cr).Contains("25") ? Form("textFiles/Prompt25/Prompt25_%s_JRV1M_MC_SF_AK4PFPuppi.txt",cr) : Form("textFiles/Prompt24/Prompt24_%s_JRV9M_MC_SF_AK4PFPuppi.txt",cr));
+  ofstream txt(TString(cr).Contains("25") ? Form("textFiles/Prompt25/Prompt25_%s_JRV1M_MC_SF_AK4PFPuppi.txt",cr) : Form("textFiles/ReReco24/ReReco24_%s_JRV9M_MC_SF_AK4PFPuppi.txt",cr));
   txt << "{1 JetEta 1 JetPt "
       << "sqrt([0]*fabs([0])/(x*x)+[1]*[1]/x+[2]*[2])/"
       << "sqrt([3]*fabs([3])/(x*x)+[4]*[4]/x+[5]*[5])"
@@ -1214,7 +1309,8 @@ void JERSF() {
 
   int neta = p2s->GetNbinsX();
   for (int i = neta-1; i != -1; --i) {
-    TF1 *f1 = vf1[i];
+    //TF1 *f1 = vf1[i];
+    TF1 *f1 = vf1r2[i];
     double abseta1 = p2s->GetXaxis()->GetBinLowEdge((i+1));
     double abseta2 = p2s->GetXaxis()->GetBinLowEdge((i+1)+1);
     txt << Form("%5.3f %5.3f %3d %4d %4d %8.3f %6.4f %7.5f %8.3f %6.4f %7.5f\n",
@@ -1230,7 +1326,8 @@ void JERSF() {
     //		  jer.n, jer.s, jer.c, jer.kn, jer.ks, jer.kc, rho);
   } // for i in -neta
   for (int i = 0; i != neta; ++i) {
-    TF1 *f1 = vf1[i];
+    //TF1 *f1 = vf1[i];
+    TF1 *f1 = vf1r2[i];
     double abseta1 = p2s->GetXaxis()->GetBinLowEdge((i+1));
     double abseta2 = p2s->GetXaxis()->GetBinLowEdge((i+1)+1);
     txt << Form("%5.3f %5.3f %3d %4d %4d %8.3f %6.4f %7.5f %8.3f %6.4f %7.5f\n",
@@ -1243,6 +1340,15 @@ void JERSF() {
   // Store results to output file
   fout->cd();
 
+  fout->cd("Eta13");
+  hjer13->Write(Form("hjer13_%s_%s_",cr,cm),TObject::kOverwrite);
+  hjer13m->Write(Form("hjer13m_%s_%s_",cr,cm),TObject::kOverwrite);
+  hsf13->Write(Form("hsf13_%s_%s_",cr,cm),TObject::kOverwrite);
+  f13->Write(Form("f13_%s_%s_",cr,cm),TObject::kOverwrite);
+  f13m->Write(Form("f13m_%s_%s_",cr,cm),TObject::kOverwrite);
+  f13r->Write(Form("f13r_%s_%s_",cr,cm),TObject::kOverwrite);
+  f13r2->Write(Form("f13r2_%s_%s_",cr,cm),TObject::kOverwrite);
+  
   //if (!fout->FindObject("Fits")) fout->mkdir("Fits");
   fout->cd("Fits");
   h2jersf->Write(Form("h2jersf_%s_%s",cr,cm),TObject::kOverwrite);
