@@ -1,21 +1,21 @@
-// HcalDepthsFromPhotonJet.C
+// HcalDepthsFromIsoTrack.C
 //
-// Purpose: This macro derives HCAL depth intercalibrations using photon+jet balance
+// Purpose: This macro derives HCAL depth intercalibrations using IsoTrack samples
 // from provided ROOT files containing TProfile2D histograms of fractional responses
 // per depth, eta, and pt.
 //
 // Input files:
-// - rootfiles/Fikri_JetDepths_2025C/Histo_Data25Cv2_EGamma.root (data)
-// - rootfiles/Fikri_JetDepths_2025C/Histo_MC25Winter_GJ_LO_MG.root (MC)
+// - ../isotrack/rootfiles/IsoTrack_25Aug20_EG25C2C_orig.root (data)
+// - rootfiles/IsoTrack_25Sep04_25MCNOPU_orig.root (MC)
 //
 // Key histograms:
-// - hp2_TagPhotonCand_pt_vs_ProbeJet0_eta_vs_fracRespDBDepth<N> for N=0..8
-// - hp2_tnpHFLongShort_TagPhotonCand_pt_vs_ProbeJet0_eta_vs_fracRespDBhfLong/Short for HF
-// - hp2_TagPhotonCand_pt_vs_ProbeJet0_eta_vs_RespDB for total response
+// - p2c for N=0..8
+// - missing for HF
+// - pc for total response
 //
 // Computation:
 // - For each depth (0=ECAL,1-7=HCAL,8=HO,9=HF long,10=HF short)
-// - Project to eta (ProfileY) for mean fractions in data and MC
+// - Project to depth (ProfileY) for mean fractions in data and MC
 // - Correction = (MC fraction / data fraction) * k_FSR_ratio (default 0.99)
 // - Stat unc from propagation
 // - Syst unc from pt dependence (low/high pt split) + k_FSR_syst (0.01)
@@ -25,11 +25,11 @@
 // - Summary plots vs eta: Frac_Data_All, Frac_MC_All, Ratio_All, Corr_All.pdf
 // - Plots vs pt per depth: FracRatioVsPt_Depth*.pdf
 // - RespDB vs pt: RespDB_Data_VsPt, RespDB_MC_VsPt, RespDB_Ratio_VsPt.pdf (all ieta)
-// - Text: HcalRespCorrs_PhotonJet_2025.txt (conditions format, skip depth0)
-// - Summary: HcalDepthsFromPhotonJet_Summary.txt (ieta,depth,corr,stat,syst)
-// - ROOT: rootfiles/HcalDepthFromPhotonJet_grok4.root with TH1D h_depth_<N> (corr vs ieta, error=stat)
+// - Text: HcalRespCorrs_IsoTrack_2025.txt (conditions format, skip depth0)
+// - Summary: HcalDepthsFromIsoTrack_Summary.txt (ieta,depth,corr,stat,syst)
+// - ROOT: rootfiles/HcalDepthFromIsoTrack.root with TH1D h_depth_<N> (corr vs ieta, error=stat)
 //
-// Usage: root -l -b -q minitools/HcalDepthsFromPhotonJet.C
+// Usage: root -l -b -q minitools/HcalDepthsFromIsoTrack.C
 // To continue: Load output ROOT, access h_depth_* for corrections per depth/ieta
 // Compare to IsoTrack method, upload text to DB, etc.
 
@@ -84,13 +84,13 @@ bool isValidEta(int ieta, int depth) {
   return false;
 }
 
-void HcalDepthsFromPhotonJet() {
+void HcalDepthsFromIsoTrack() {
   
   setTDRStyle();
   TDirectory *curdir = gDirectory;
   writeExtraText = true;
   extraText = "Private";
-  lumi_136TeV = "PhotonJet 55-230 GeV, EGamma 2025Cv2";
+  lumi_136TeV = "IsoTrack 40-60 GeV, EGamma 2025C";
   //lumi_136TeV = "Summer24 + EGamma 2025Cv2";
 
   // Configurable parameters
@@ -101,28 +101,30 @@ void HcalDepthsFromPhotonJet() {
   double k_FSR_syst = 0.01;   // Fractional syst uncertainty on k_FSR_ratio
 
   // Depths (0=ECAL, 1-7=HCAL, 8=HO, 9=hfLong, 10=hfShort)
-  int num_depths = 11;
-  std::string depth_str[11] = {"0", "1", "2", "3", "4", "5", "6", "7", "8", "hfLong", "hfShort"};
-  const char* label[11] = {"ECAL","Depth 1","Depth 2","Depth 3","Depth 4","5 (HE)","6 (HE)","7 (HE)","HO","HF Long","HF Short"};
-  int colors[11] = {kCyan+1, kBlue, kOrange+1, kGreen+1, kRed, kYellow+1, kOrange+3, kGray+2, kGray+1, kBlue, kRed};
-  int markers[11] = {20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30};
+  int num_depths = 9;
+  std::string depth_str[11] = {"0", "1", "2", "3", "4", "5", "6", "7", "8"};// "hfLong", "hfShort"};
+  const char* label[11] = {"ECAL","Depth 1","Depth 2","Depth 3","Depth 4","5 (HE)","6 (HE)","7 (HE)","HO"};//,"HF Long","HF Short"};
+  int colors[11] = {kCyan+1, kBlue, kOrange+1, kGreen+1, kRed, kYellow+1, kOrange+3, kGray+2, kGray+1};//, kBlue, kRed};
+  int markers[11] = {20, 21, 22, 23, 24, 25, 26, 27, 28};//, 29, 30};
 
   // Hist prefixes
-  std::string hist_prefix = "hp2_TagPhotonCand_pt_vs_ProbeJet0_eta_vs_fracRespDB";
-  std::string hf_prefix = "hp2_tnpHFLongShort_TagPhotonCand_pt_vs_ProbeJet0_eta_vs_fracRespDB";
-  std::string resp_prefix = "hp2_TagPhotonCand_pt_vs_ProbeJet0_eta_vs_RespDB";
+  std::string hist_prefix = "p2c";
+  std::string hf_prefix = "";//hp2_tnpHFLongShort_TagPhotonCand_pt_vs_ProbeJet0_eta_vs_fracRespDB";
+  std::string resp_prefix = "pc";
 
   // Output directories
-  std::string plot_dir = "pdf/HcalDepthsFromPhotonJet/";
-  std::string text_dir = "txt/HcalDepthsFromPhotonJet/";
+  std::string plot_dir = "pdf/HcalDepthsFromIsoTrack/";
+  std::string text_dir = "txt/HcalDepthsFromIsoTrack/";
   gSystem->mkdir(plot_dir.c_str(), kTRUE);
   gSystem->mkdir(text_dir.c_str(), kTRUE);
 
   // Open files
-  //TFile *f_data = new TFile("rootfiles/Fikri_JetDepths_2025C/Histo_Data25Cv2_EGamma.root", "READ");
-  TFile *f_data = new TFile("rootfiles/Fikri_JetDepths_2025C/Histo_Data25C_EGamma.root", "READ");
-  //TFile *f_mc = new TFile("rootfiles/Fikri_JetDepths_2025C/Histo_MC25Winter_GJ_LO_MG.root", "READ");
-  TFile *f_mc = new TFile("rootfiles/Fikri_JetDepths_2025C/Histo_MC24_GJ_LO_MG.root", "READ"); // Summer24 bigger stats
+  //TFile *f_data = new TFile("../isotrack/rootfiles/IsoTrack_25Aug20_EG25C2C_orig.root","READ");
+  //TFile *f_data = new TFile("rootfiles/IsoTrack_25Sep04_EG25C_orig.root","READ");
+  //TFile *f_data = new TFile("rootfiles/IsoTrack_25Sep04_EG25C2C_orig.root","READ");
+  TFile *f_data = new TFile("rootfiles/IsoTrack_25Sep04_EG25CC_orig.root","READ");
+  //TFile *f_mc = new TFile("rootfiles/IsoTrack_25Sep04_25MCNOPU_orig.root","READ");
+  TFile *f_mc = new TFile("rootfiles/IsoTrack_25Sep04_24MCPU_orig.root","READ");
   if (!f_data || f_data->IsZombie() || !f_mc || f_mc->IsZombie()) {
     return;
   }
@@ -166,21 +168,22 @@ void HcalDepthsFromPhotonJet() {
 
   // Loop over depths
   for (int d = 0; d < num_depths; ++d) {
-    std::string dstr = depth_str[d];
-    std::string hname = (d <= 8) ? hist_prefix + "Depth" + dstr : hf_prefix + dstr;
-
+    //std::string dstr = depth_str[d];
+    //std::string hname = (d <= 8) ? hist_prefix + "Depth" + dstr : hf_prefix + dstr;
+    std::string hname = hist_prefix;
+    
     TProfile2D *hp_data = (TProfile2D*)f_data->Get(hname.c_str());
     TProfile2D *hp_mc = (TProfile2D*)f_mc->Get(hname.c_str());
     if (!hp_data || !hp_mc) continue;
 
-    int ix1 = hp_data->GetXaxis()->FindBin(ptmin);
-    int ix2 = hp_data->GetXaxis()->FindBin(ptmax-0.1);
-    
-    TProfile *proj_data = hp_data->ProfileY(Form("proj_data_%d",d),ix1,ix2);
-    TProfile *proj_mc = hp_mc->ProfileY(Form("proj_mc_%d",d),ix1,ix2);
+    int ix1 = hp_data->GetYaxis()->FindBin(d);//ptmin);
+    int ix2 = hp_data->GetYaxis()->FindBin(d);//ptmax-0.1);
+
+    TProfile *proj_data = hp_data->ProfileX(Form("proj_data_%d",d),ix1,ix2);
+    TProfile *proj_mc = hp_mc->ProfileX(Form("proj_mc_%d",d),ix1,ix2);
 
     // Syst from pt dependence: split pt into low/high halves
-    int ix_mid = hp_data->GetXaxis()->FindBin(ptmid);
+    int ix_mid = hp_data->GetXaxis()->FindBin(d);//ptmid);
     TProfile *proj_data_low = hp_data->ProfileY(Form("proj_data_low_%d",d), ix1, ix_mid);
     TProfile *proj_mc_low = hp_mc->ProfileY(Form("proj_mc_low_%d",d), ix1, ix_mid);
     TProfile *proj_data_high = hp_data->ProfileY(Form("proj_data_high_%d",d), ix_mid + 1, ix2);
@@ -196,7 +199,7 @@ void HcalDepthsFromPhotonJet() {
 
     // Loop over eta bins
     for (int iy = 1; iy <= n_eta; ++iy) {
-      int iy_hist = proj_data->GetXaxis()->FindBin(etas[iy-1]);
+      int iy_hist = proj_data->GetXaxis()->FindBin(ietas[iy-1]);
       double f_data = proj_data->GetBinContent(iy_hist);
       double e_data = proj_data->GetBinError(iy_hist);
       double f_mc = proj_mc->GetBinContent(iy_hist);
@@ -280,7 +283,7 @@ void HcalDepthsFromPhotonJet() {
     leg_frac_data->AddEntry(g, label[i], "lep");
   }
   leg_frac_data->Draw();
-  c_frac_data->SaveAs((plot_dir + "HcalDepthsFromPhotonJet_Frac_Data_All.pdf").c_str());
+  c_frac_data->SaveAs((plot_dir + "HcalDepthsFromIsoTrack_Frac_Data_All.pdf").c_str());
   //delete c_frac_data;
 
   // Summary Frac_MC_All
@@ -296,7 +299,7 @@ void HcalDepthsFromPhotonJet() {
     leg_frac_mc->AddEntry(g, label[i], "lep");
   }
   leg_frac_mc->Draw();
-  c_frac_mc->SaveAs((plot_dir + "HcalDepthsFromPhotonJet_Frac_MC_All.pdf").c_str());
+  c_frac_mc->SaveAs((plot_dir + "HcalDepthsFromIsoTrack_Frac_MC_All.pdf").c_str());
   //delete c_frac_mc;
 
   // Summary Ratio_All
@@ -314,7 +317,7 @@ void HcalDepthsFromPhotonJet() {
     leg_ratio->AddEntry(g, label[i], "lep");
   }
   leg_ratio->Draw();
-  c_ratio_all->SaveAs((plot_dir + "HcalDepthsFromPhotonJet_Ratio_All.pdf").c_str());
+  c_ratio_all->SaveAs((plot_dir + "HcalDepthsFromIsoTrack_Ratio_All.pdf").c_str());
   //delete c_ratio_all;
 
   // Summary Corr_All
@@ -346,13 +349,13 @@ void HcalDepthsFromPhotonJet() {
     leg_all->AddEntry(h, label[i], "lep");
   }
   leg_all->Draw();
-  c_all->SaveAs((plot_dir + "HcalDepthsFromPhotonJet_Corr_All.pdf").c_str());
+  c_all->SaveAs((plot_dir + "HcalDepthsFromIsoTrack_Corr_All.pdf").c_str());
   //delete c_all;
 
 
   // Output text file for HcalRespCorrs
-  std::ofstream out(text_dir + "HcalRespCorrs_PhotonJet_2025Cv2.txt");
-  out << "HcalRespCorrs_PhotonJet_v1.0" << std::endl;  // Tag
+  std::ofstream out(text_dir + "HcalRespCorrs_IsoTrack_2025C.txt");
+  out << "HcalRespCorrs_IsoTrack_v1.0" << std::endl;  // Tag
   out << "1 infinite" << std::endl;  // IOV example
 
   for (int d = 1; d < num_depths; ++d) {  // Skip depth 0
@@ -393,7 +396,7 @@ void HcalDepthsFromPhotonJet() {
   out.close();
 
   // Optional: Print summary table of corrs and uncs to console or separate file
-  std::ofstream summary(text_dir + "HcalDepthsFromPhotonJet_Summary.txt");
+  std::ofstream summary(text_dir + "HcalDepthsFromIsoTrack_Summary.txt");
   summary << "ieta\tdepth\tcorr\tstat_unc\tsyst_unc" << std::endl;
   for (int d = 0; d < num_depths; ++d) {  // Include depth 0
     for (int idx = 0; idx < n_eta; ++idx) {
@@ -405,7 +408,7 @@ void HcalDepthsFromPhotonJet() {
   summary.close();
 
   // Store corrections as TH1D
-  TFile *fout = new TFile("rootfiles/HcalDepthFromPhotonJet.root","RECREATE");
+  TFile *fout = new TFile("rootfiles/HcalDepthFromIsoTrack.root","RECREATE");
   for (int d = 0; d < num_depths; ++d) {
     //std::string hname = "h_depth_" + depth_str[d];
     //TH1D *h = new TH1D(hname.c_str(), ";i#eta;Correction", n_ieta, vieta);
