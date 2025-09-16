@@ -42,7 +42,8 @@ void createL2L3ResTextFile() {
   TH1D *h = tdrHist("h","Absolute response at |#eta| < 1.3",
 		    0.88+1e-4,1.21-1e-4,"p_{T,ref} (GeV)",ptmin,ptmax);
   //lumi_136TeV = Form("2024, %s","109 fb^{-1}");
-  lumi_136TeV = Form("2025, %s","X fb^{-1}");
+  //lumi_136TeV = Form("2025, %s","X fb^{-1}");
+  lumi_136TeV = Form("2024 partial re-reco, %s","109 fb^{-1}");
   TCanvas *c1 = tdrCanvas("c1",h,8,11,kSquare);
   c1->SetLeftMargin(0.17);
   c1->SetRightMargin(0.03);
@@ -84,27 +85,40 @@ void createL2L3ResTextFile() {
   createL2L3ResTextFiles("2024F_nib3");
   createL2L3ResTextFiles("2024F_nib2");
   createL2L3ResTextFiles("2024F_nib1");
-  createL2L3ResTextFiles("2024Ev2_nib1");
-  createL2L3ResTextFiles("2024Ev1_nib1");
+  //createL2L3ResTextFiles("2024Ev2_nib1");
+  //createL2L3ResTextFiles("2024Ev1_nib1");
+  createL2L3ResTextFiles("2024E_nib1");
 
   createL2L3ResTextFiles("2024D_nib1");
 
   createL2L3ResTextFiles("2024C_nib1");
   //createL2L3ResTextFiles("2024B_nib1");
+
+  createL2L3ResTextFiles("2024_nib");
   */
+
+  createL2L3ResTextFiles("2025CDE");
   createL2L3ResTextFiles("2025C");
+  createL2L3ResTextFiles("2025D");
+  createL2L3ResTextFiles("2025E");
   
   c1->cd();
   gPad->RedrawAxis();
   c1->Update();
   //c1->SaveAs("pdf/createL2L3ResTextFile_Prompt24_V9M_VsPtRef.pdf");
-  c1->SaveAs("pdf/createL2L3ResTextFile_Prompt25_V1M_VsPtRef.pdf");
+  //c1->SaveAs("pdf/createL2L3ResTextFile_Prompt25_V1M_VsPtRef.pdf");
+  //c1->SaveAs("pdf/createL2L3ResTextFile_ReReco24_V9M_VsPtRef.pdf");
+  //c1->SaveAs("pdf/createL2L3ResTextFile_ReReco24_V10M_VsPtRef.pdf");
+  c1->SaveAs("pdf/createL2L3ResTextFile_Prompt25_V2M_VsPtRef.pdf");
   
   c3->cd();
   gPad->RedrawAxis();
   c3->Update();
   //c3->SaveAs("pdf/createL2L3ResTextFile_Prompt24_V9M_VsPtRaw.pdf");
-  c3->SaveAs("pdf/createL2L3ResTextFile_Prompt24_V1M_VsPtRaw.pdf");
+  //c3->SaveAs("pdf/createL2L3ResTextFile_Prompt24_V1M_VsPtRaw.pdf");
+  //c3->SaveAs("pdf/createL2L3ResTextFile_ReReco24_V9M_VsPtRaw.pdf");
+  //c3->SaveAs("pdf/createL2L3ResTextFile_ReReco24_V10M_VsPtRaw.pdf");
+  c3->SaveAs("pdf/createL2L3ResTextFile_Prompt25_V2M_VsPtRaw.pdf");
 
 } // createL2L3ResTextFile
 
@@ -202,6 +216,7 @@ void createL2L3ResTextFiles(string set) {
   color["2024D_nib1"] = kRed+3;
   color["2024Ev1_nib1"] = kOrange;
   color["2024Ev2_nib1"] = kOrange+1;
+  color["2024E_nib1"] = kOrange;
   color["2024F_nib1"] = kGreen+2;
   color["2024F_nib2"] = kBlue;
   color["2024F_nib3"] = kCyan+2;
@@ -209,7 +224,12 @@ void createL2L3ResTextFiles(string set) {
   color["2024G_nib2"] = kMagenta+1;
   color["2024H_nib1"] = kMagenta+2;
   color["2024I_nib1"] = kPink;
-  color["2025C"] = kRed;
+  color["2024_nib"] = kGray+2;
+  
+  color["2025CDE"] = kRed;
+  color["2025C"] = kOrange+2;
+  color["2025D"] = kOrange+1;
+  color["2025E"] = kOrange;
   
   h->Fit(f1,"QRN");
   h->Fit(f1,"QRNM");
@@ -372,12 +392,13 @@ void createL2L3ResTextFiles(string set) {
   TString tr(run);
   
   string sin(""), sout2(""), sout3("");
-  // Remember to copy L2Res .txt files by hand to output directory
+  // Remember to copy L2Res .txt files by hand to input directory
   // Hand-copying reduces risk of accidental overwriting after L2Res closed
-  sin = (tr.Contains("25") ? Form("textFiles/Prompt25_V1M/Prompt25_Run%s_V1M_DATA_L2ResidualVsPtRef_AK4PFPuppi.txt",cs) : Form("textFiles/Prompt24_V9M/Prompt24_Run%s_V9M_DATA_L2ResidualVsPtRef_AK4PFPuppi.txt",cs));
+  sin = (tr.Contains("25") ? Form("textFiles/Prompt25_V2M/Prompt25_Run%s_V2M_DATA_L2ResidualVsPtRef_AK4PFPuppi.txt",cs) : Form("textFiles/ReReco24_V10M/ReReco24_Run%s_V10M_DATA_L2ResidualVsPtRef_AK4PFPuppi.txt",cs));
   // Output files go to generic directory. Copy by hand to final output
-  sout2 = (tr.Contains("25") ? Form("textFiles/Prompt25/Prompt25_Run%s_V1M_DATA_L2L3ResidualVsPtRef_AK4PFPuppi.txt",cs) : Form("textFiles/Prompt24/Prompt24_Run%s_V9M_DATA_L2L3ResidualVsPtRef_AK4PFPuppi.txt",cs));
-  sout3 = (tr.Contains("25") ? Form("textFiles/Prompt25/Prompt25_Run%s_V1M_DATA_L2L3Residual_AK4PFPuppi.txt",cs) : Form("textFiles/Prompt24/Prompt24_Run%s_V9M_DATA_L2L3Residual_AK4PFPuppi.txt",cs));
+  // Hand-copying reduces risk of accidental overwriting if rerunning L2L3Res
+  sout2 = (tr.Contains("25") ? Form("textFiles/Prompt25/Prompt25_Run%s_V2M_DATA_L2L3ResidualVsPtRef_AK4PFPuppi.txt",cs) : Form("textFiles/ReReco24/ReReco24_Run%s_V10M_DATA_L2L3ResidualVsPtRef_AK4PFPuppi.txt",cs));
+  sout3 = (tr.Contains("25") ? Form("textFiles/Prompt25/Prompt25_Run%s_V2M_DATA_L2L3Residual_AK4PFPuppi.txt",cs) : Form("textFiles/ReReco24/ReReco24_Run%s_V10M_DATA_L2L3Residual_AK4PFPuppi.txt",cs));
   
   assert(sin!="");
   assert(sout2!="");
@@ -867,11 +888,12 @@ void createL2L3ResTextFiles(string set) {
     else if (eta<4.013) hx->GetYaxis()->SetRangeUser(0.70+eps,1.25-eps);
     else if (eta<5.191) hx->GetYaxis()->SetRangeUser(0.60+eps,1.35-eps);
     // Adjust HF for 2024BCD (and earlier)
-    if (ts.Contains("B") || ts.Contains("C") || ts.Contains("D")) {
-      if (eta>4.013 && eta<5.191)
-	hx->GetYaxis()->SetRangeUser(0.30+eps,1.25-eps);
-    }
-    if (ts.Contains("E") || ts.Contains("F_nib1")) {
+    //if (ts.Contains("B") || ts.Contains("C") || ts.Contains("D")) {
+    //if (eta>4.013 && eta<5.191)
+    //	hx->GetYaxis()->SetRangeUser(0.30+eps,1.25-eps);
+    //}
+    //if (ts.Contains("E") || ts.Contains("F_nib1")) {
+    if (ts.Contains("F_nib1")) {
       if (eta>2.853 && eta<4.013)
 	hx->GetYaxis()->SetRangeUser(0.30+eps,1.30-eps);
     }
