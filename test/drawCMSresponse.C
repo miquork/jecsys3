@@ -80,7 +80,11 @@ void drawCMSresponse(string era, string id="", bool isl2 = false) {
     //const char *sd = "textFiles/Run3_22Sep2023_v3";
     //const char *sd = "textFiles/Summer23_noL2L3Res";
     //const char *sd = "textFiles/Summer23_L2ResOnly";
-    const char *sd = "textFiles/Prompt24";
+    //const char *sd = "textFiles/Prompt24";
+    //const char *sd = "textFiles/Prompt25_V1M";
+    const char *sd = "textFiles/Prompt25_V2M";
+    //const char *sd = "textFiles/ReReco24";
+    //const char *sd = "textFiles/ReReco24_V9M";
     //const char *sd = "textFiles/Prompt24_V5M";
     //const char *sd = "textFiles/Prompt24_V6M";
     //const char *sd = "textFiles/Prompt24_V7M";
