@@ -79,13 +79,18 @@ void JetVeto(string run = "", string version = "vx") {
   //JetVetos("2024HI",version);
 
   //JetVetos("2024BCDEFGHI",version);
-  JetVetos("2024","V9M");
+  //JetVetos("2024","V9M");
 
   JetVetos("2025C","V2M");
+  JetVetos("2025D","V2M");
+  JetVetos("2025E","V2M");
+  JetVetos("2025CDE","V2M");
 }
 
 void JetVetos(string run, string version) {
 
+  #include "Config.C"
+  
   setTDRStyle();
   TDirectory *curdir = gDirectory;
   string sr = (run+"_"+version);
@@ -94,6 +99,8 @@ void JetVetos(string run, string version) {
   TFile *fout = new TFile(Form("rootfiles/jetveto%s.root",cr),
 			  "RECREATE");
   fout->mkdir("trigs");
+
+  gROOT->ProcessLine(".! touch pdf/JetVeto");
   
   TFile *f(0), *fg(0), *fpark(0);
   if (run=="2022CD") { // Summer22
@@ -169,12 +176,52 @@ void JetVetos(string run, string version) {
     fg = new TFile("rootfiles/Prompt2024/w48_Gam/GamHistosFill_data_2024BCDEFGHI_w48.root","READ"); // V8M
     fpark = new TFile("rootfiles/vbfparking/vbfparking_data_2024.root","READ");
   }
+  /*
   if (run=="2025C") {
-    lumi_136TeV = "Run2025C, X.X fb^{-1}";
-    f = new TFile("rootfiles/Prompt2025/Jet_v131/jmenano_data_out_2025C_JME_v131.root","READ"); // V1M
-    fg = new TFile("rootfiles/Prompt2025/Gam_w54/GamHistosFill_data_2025C_w54.root","READ"); // V1M
+    lumi_136TeV = "Run2025C, 20.8 fb^{-1}";
+    //f = new TFile("rootfiles/Prompt2025/Jet_v131/jmenano_data_out_2025C_JME_v131.root","READ"); // V1M
+    //f = new TFile("rootfiles/Prompt2025/Jet_v138/jmenano_data_out_2025C_JME_v138.root","READ");
+    f = new TFile("rootfiles/Prompt2025/Jet_v141/jmenano_data_out_2025C_JME_v141.root","READ");
+    //fg = new TFile("rootfiles/Prompt2025/Gam_w54/GamHistosFill_data_2025C_w54.root","READ"); // V1M
+    //fg = new TFile("rootfiles/Prompt2025/Gam_w58/GamHistosFill_data_2025D_w58.root","READ");
+    fg = new TFile("rootfiles/Prompt2025/Gam_w60/GamHistosFill_data_2025C_w60.root","READ");
     pullThreshold = 70;
     //pullThresholdHF45 = 250;
+  }
+  if (run=="2025D") {
+    lumi_136TeV = "Run2025D, 24.0 fb^{-1}";
+    f = new TFile("rootfiles/Prompt2025/Jet_v141/jmenano_data_out_2025D_JME_v141.root","READ");
+    fg = new TFile("rootfiles/Prompt2025/Gam_w58/GamHistosFill_data_2025D_w60.root","READ");
+    pullThreshold = 70;
+  }
+  if (run=="2025E") {
+    lumi_136TeV = "Run2025E, X.X fb^{-1}";
+    f = new TFile("rootfiles/Prompt2025/Jet_v141/jmenano_data_out_2025E_JME_v141.root","READ");
+    fg = new TFile("rootfiles/Prompt2025/Gam_w58/GamHistosFill_data_2025E_w60.root","READ");
+    pullThreshold = 70;
+  }
+  if (run=="2025E") {
+    lumi_136TeV = "Run2025E, X.X fb^{-1}";
+    f = new TFile("rootfiles/Prompt2025/Jet_v141/jmenano_data_out_2025E_JME_v141.root","READ");
+    fg = new TFile("rootfiles/Prompt2025/Gam_w58/GamHistosFill_data_2025E_w60.root","READ");
+    pullThreshold = 70;
+  }
+  */
+  
+  // Read input files from Config.C if available there
+  const char *ccr = run.c_str();
+  if (mfile.find(Form("JET_%s_DATA_OUT",ccr))!=mfile.end()) {
+    cout << "Reading JET_" << run << "_DATA_OUT from Config.C" << endl;
+    f = new TFile(mfile[Form("JET_%s_DATA_OUT",ccr)].c_str(),"READ");
+  }
+  if (mfile.find(Form("GAM_%s_DATA",ccr))!=mfile.end()) {
+    cout << "Reading GAM_" << run << "_DATA from Config.C" << endl;
+    fg = new TFile(mfile[Form("GAM_%s_DATA",ccr)].c_str(),"READ");
+  }
+  //if (mlum[run]!="") {
+  if (mlum.find(run)!=mlum.end()) {
+    cout << "Reading LUM_" << run << " from Config.C" << endl;
+    lumi_136TeV = Form("%s, %s",ccr,mlum[run].c_str());
   }
 
   // Don't use *cmb* files, trigger folder uncertainties messed up!!
@@ -624,7 +671,7 @@ void JetVetos(string run, string version) {
     h2veto->SetTitle("JME recommended map. Hot+Cold+FPIX(+not BPIX)");
     h2all->SetTitle("Union of all maps, used for JEC. Hot+cold+FPIX+BPIX");
   }
-  if (run=="2025C") {
+  if (run=="2025C" || run=="2025D" || run=="2025E" || run=="2025CDE") {
     h2veto->SetTitle("JME recommended map. Hot+Cold+FPIX(+not BPIX)");
     h2all->SetTitle("Union of all maps, used for JEC. Hot+cold+FPIX+BPIX");
   }
@@ -696,7 +743,7 @@ void JetVetos(string run, string version) {
 	  h2bpix->SetBinContent(i,j,100); // drop
 	  h2all->SetBinContent(i,j,100);  // drop
 	}
-	if (run=="2025C") {
+	if (run=="2025C" || run=="2025D" || run=="2025E" || run=="2025CDE") {
 	  // Keep BPix for recommended, drop for JEC
 	  h2veto->SetBinContent(i,j,0);   // keep!
 	  h2bpix->SetBinContent(i,j,100); // drop
@@ -715,7 +762,7 @@ void JetVetos(string run, string version) {
 	  h2fpix->SetBinContent(i,j,100);
 	  h2all->SetBinContent(i,j,100);
 	}
-	if (run=="2025C"){
+	if (run=="2025C" || run=="2025D" || run=="2025E" || run=="2025CDE"){
 	  h2veto->SetBinContent(i,j,100);
 	  h2fpix->SetBinContent(i,j,100);
 	  h2all->SetBinContent(i,j,100);
