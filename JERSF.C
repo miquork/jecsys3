@@ -340,6 +340,7 @@ void JERSF() {
 		   "2024BCD","2024E","2024F","2024G","2024H","2024I"
 		   //"2024B_nib1",*/
     //"2024CDEFGHI_nib",
+    /*
     "2024_nib","2024CDE_nib",
     "2024FGHI_nib",
     "2024C_nib1","2024D_nib1",//"2024Ev1_nib1","2024Ev2_nib1",
@@ -347,8 +348,9 @@ void JERSF() {
     "2024F_nib1","2024F_nib2","2024F_nib3",
     "2024G_nib1","2024G_nib2","2024H_nib1","2024I_nib1",
     //"2024E_noRW","2024E_692mb","2024E_753mb"
-
-    "2025C"
+    */
+    "2025C","2025D","2025E","2025CDE"
+    //"PhiBase","PhiIM","PhiMoM"
 		   
   };
 
@@ -395,6 +397,7 @@ void JERSF() {
 		  //"Winter24","Winter24","Winter24","Winter24","Winter24",
 		  //"Winter24","Winter24"
 		  */
+    /*
     "Summer24","Summer24",
     "Summer24",
     "Summer24","Summer24",//"Summer24","Summer24",
@@ -402,7 +405,9 @@ void JERSF() {
     "Summer24","Summer24","Summer24",
     "Summer24","Summer24","Summer24","Summer24",
     //"2024E_noRW","2024E_692mb","2024E_753mb" //Pr24
-    "Winter25"
+    */
+    "Winter25","Winter25","Winter25","Winter25"
+    //"Winter25","Winter25","Winter25"
   };
   //string vmc[] = {"Summer23MGBPix","Summer23MGBPix","Summer23MGBPix"};
   //string vmc[] = {"Summer23MGBPix","Summer23MGBPix","Summer23MGBPix"};
@@ -446,9 +451,38 @@ void JERSF() {
   //string mc = "Summer23MGBPix";
   //const char *cm = mc.c_str();
 
-    TFile *f(0), *fm(0), *fz(0), *fg(0), *fgm(0);
-    TString tr = cr;
-  if (TString(cr).Contains("Prompt2022")) {
+  // Files and luminosities
+  #include "Config.C"
+    
+  TFile *f(0), *fm(0), *fz(0), *fg(0), *fgm(0);
+  TString tr = cr;
+  if (mfile.find(Form("JET_%s_DATA_CMB",cr))!=mfile.end() &&
+      mfile.find(Form("JET_%s_MC",cr))!=mfile.end()) {
+    string file_data = mfile[Form("JET_%s_DATA_CMB",cr)];
+    cout << "Reading JET_"<<run<<"_DATA_CMB from Config.C: "<<file_data<<endl;
+    f = new TFile(file_data.c_str(),"READ");
+    string file_mc = mfile[Form("JET_%s_MC",cr)];
+    cout << "Reading JET_" << run << "_MC from Config.C: " << file_mc << endl;
+    fm = new TFile(file_mc.c_str(),"READ");
+    if (fm) fm = (TFile*)fm->GetDirectory("HLT_MC");
+
+    // Also load GAM, ZMM
+    if (mfile.find(Form("GAM_%s_DATA",cr))!=mfile.end() &&
+	mfile.find(Form("GAM_%s_MC",cr))!=mfile.end()) {
+      string file_data = mfile[Form("GAM_%s_DATA",cr)];
+      cout << "Reading GAM_" << run << "_DATA from Config.C: "<<file_data<<endl;
+      fg = new TFile(file_data.c_str(),"READ");
+      string file_mc = mfile[Form("GAM_%s_MC",cr)];
+      cout << "Reading GAM_" << run << "_MC from Config.C: " << file_mc << endl;
+      fgm = new TFile(file_mc.c_str(),"READ");
+    }
+    if (mfile.find(Form("ZMM_%s_DATAMC",cr))!=mfile.end()) {
+      string file = mfile[Form("ZMM_%s_DATAMC",cr)];
+      cout << "Reading ZMM_" << run << "_DATAMC from Config.C: "<<file<<endl;
+      fz = new TFile(file.c_str(),"READ");
+    }
+  }
+  else if (TString(cr).Contains("Prompt2022")) {
     string run2 = TString(cr).ReplaceAll("_Prompt2022","").Data();
     const char *cr2 = run2.c_str();
     f = new TFile(Form("rootfiles/Prompt2022CD/v42_2022_Prompt/jmenano_data_cmb_%s_JME_v42_2022_Prompt.root",cr2),"READ");
@@ -696,12 +730,22 @@ void JERSF() {
   }
   else if (tr.Contains("2025")) {
     //f = new TFile(Form("rootfiles/Prompt2025/Jet_v129/jmenano_data_cmb_%s_JME_v129.root",cr),"READ"); // V9M prompt
-    f = new TFile(Form("rootfiles/Prompt2025/Jet_v131/jmenano_data_cmb_%s_JME_v131.root",cr),"READ"); // V1M
+    if (tr.Contains("2025C"))
+      //f = new TFile(Form("rootfiles/Prompt2025/Jet_v131/jmenano_data_cmb_%s_JME_v131.root",cr),"READ"); // V1M
+      f = new TFile(Form("rootfiles/Prompt2025/Jet_v138/jmenano_data_cmb_%s_JME_v138.root",cr),"READ");
+    else
+      f = new TFile(Form("rootfiles/Prompt2025/Jet_v139/jmenano_data_cmb_%s_JME_v139.root",cr),"READ");
     fm = new TFile("rootfiles/Prompt2025/Jet_v128/jmenano_mc_out_Winter25MG_v128.root","READ");
     fm = (TFile*)fm->GetDirectory("HLT_MC");
     //
-    fz = new TFile(Form("rootfiles/Prompt2025/Zmm_v98/jme_Zj_%s_27052025_Zmm_v98_ddjson.root",cr),"READ");
-    fg = new TFile(Form("rootfiles/Prompt2025/Gam_w53/GamHistosFill_data_%s_NoL2L3Res_w53_28May2025.root",cr),"READ"); 
+    if (tr.Contains("2025C"))
+      //fz = new TFile(Form("rootfiles/Prompt2025/Zmm_v98/jme_Zj_%s_27052025_Zmm_v98_ddjson.root",cr),"READ");
+      fz = new TFile("rootfiles/Prompt2025/Zmm_v99/jme_Zj_2025C_02062025_Zmm_v99_ddjson.root","READ");
+    else
+      fz = new TFile(Form("rootfiles/Prompt2025/Zmm_v100/jme_Zj_%s_Zmm_v100.root",cr),"READ");
+    //fg = new TFile(Form("rootfiles/Prompt2025/Gam_w53/GamHistosFill_data_%s_NoL2L3Res_w53_28May2025.root",cr),"READ");
+    //fg = new TFile(Form("rootfiles/Prompt2025/Gam_w54/GamHistosFill_data_%s_w54.root",cr),"READ");
+    fg = new TFile(Form("rootfiles/Prompt2025/Gam_w58/GamHistosFill_data_%s_w58.root",cr),"READ"); 
     fgm = new TFile("rootfiles/Prompt2024/w48_Gam/GamHistosFill_mc_summer2024P8_pu-2024CDEFGHI_w48.root","READ"); // V9M Summer24
   }
   else if (TString(cr).Contains("2023")) {
@@ -716,6 +760,17 @@ void JERSF() {
   }
   else if (TString(cr).Contains("2022")) {
     assert(false);
+  }
+  else if (tr.Contains("Phi")) {
+    if (run=="PhiBase") f = new TFile("rootfiles/Prompt2025/Jet_v140/jmenano_data_out_2025C_v2_Baseline_ReRECO_v140.root","READ");
+    if (run=="PhiIM")   f = new TFile("rootfiles/Prompt2025/Jet_v140/jmenano_data_out_2025C_v2_PhiSymmIterEG0_ReRECO_v140.root","READ");
+    if (run=="PhiMoM")   f = new TFile("rootfiles/Prompt2025/Jet_v140/jmenano_data_out_2025C_v2_PhiSymmMoM4_ReRECO_v140.root","READ");
+    f = (TFile*)f->GetDirectory("HLT_PFJet500");
+    skipZ = true;
+    skipG = true;
+    //
+    fm = new TFile("rootfiles/Prompt2025/Jet_v128/jmenano_mc_out_Winter25MG_v128.root","READ");
+    fm = (TFile*)fm->GetDirectory("HLT_MC");
   }
   assert(f && !f->IsZombie());
   assert(fm && !fm->IsZombie());
@@ -779,6 +834,8 @@ void JERSF() {
 
   TLatex *tex = new TLatex();
   tex->SetNDC(); tex->SetTextSize(0.045);
+
+  #include "Config.C"
   
   // Draw reference region JER
   double eps = 1e-4;
@@ -1296,7 +1353,7 @@ void JERSF() {
   //ofstream txt(Form("textFiles/Prompt24/Prompt24_%s_JRV6M_MC_SF_AK4PFPuppi.txt",cr));
   //ofstream txt(Form("textFiles/Prompt24/Prompt24_%s_JRV7M_MC_SF_AK4PFPuppi.txt",cr));
   //ofstream txt(Form("textFiles/Prompt24/Prompt24_%s_JRV9M_MC_SF_AK4PFPuppi.txt",cr));
-  ofstream txt(TString(cr).Contains("25") ? Form("textFiles/Prompt25/Prompt25_%s_JRV1M_MC_SF_AK4PFPuppi.txt",cr) : Form("textFiles/ReReco24/ReReco24_%s_JRV9M_MC_SF_AK4PFPuppi.txt",cr));
+  ofstream txt(TString(cr).Contains("25") ? Form("textFiles/Prompt25/Prompt25_%s_JRV2M_MC_SF_AK4PFPuppi.txt",cr) : Form("textFiles/ReReco24/ReReco24_%s_JRV9M_MC_SF_AK4PFPuppi.txt",cr));
   txt << "{1 JetEta 1 JetPt "
       << "sqrt([0]*fabs([0])/(x*x)+[1]*[1]/x+[2]*[2])/"
       << "sqrt([3]*fabs([3])/(x*x)+[4]*[4]/x+[5]*[5])"
