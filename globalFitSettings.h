@@ -56,7 +56,7 @@ bool _gf_fitZjetHDM = true;//false;
 // Permit baseline shift for JES with L2L3Res inputs. Needed for PFcomp fit
 bool _gf_useJESref = false;//true;//false;
 // Alternatively, undo JES completely to show pre-closure plots
-bool _gf_undoJESref = true; // "*_closure.pdf"
+bool _gf_undoJESref = true;//false;//true; // Set 'false' to produce "*_closure.pdf"
 
 // Listing of all available 'datasets'
 // {name, type, name2}
@@ -66,6 +66,7 @@ bool _gf_undoJESref = true; // "*_closure.pdf"
 // How to use: comment out datasets that are not needed to switch them off
 const unsigned int ndt = 44;
 const array<array<string,3>,ndt> _gf_datasets = {{
+    {"mpfchs1_wqq_a100", "Rjet",""},
     {"ptchs_jetz_a100", "Rjet",""},
     {"mpfchs1_jetz_a100", "Rjet",""},
     {"hdm_mpfchs1_jetz", "Rjet",""},
@@ -100,6 +101,7 @@ const array<array<string,3>,ndt> _gf_datasets = {{
 // 'name' should match the dataset name in the list above
 // How to use: uncomment individual datasets to use only those
 const array<string,29> _gf_datasets_whitelist = {
+  "mpfchs1_wqq_a100",
   //"ptchs_zjet_a100",
   //"mpfchs1_zjet_a100",
   //"hdm_mpfchs1_jetz", // V8M
@@ -145,7 +147,9 @@ const array<string,29> _gf_shapes_whitelist = {
   //"loglin", // log^1
   //"const", // log^0 constant scale factor
   //"off", // Summer23
+  //"off_ho", // V9M test
   "off_nhf", // Prompt24, no hhpfc+hhnoise+hbtime+hbsipm+off with this
+  "dd_nhf", // Prompt25, model HCAL problems in 2025C
   //"ecalcc", // ECAL cc timing for 2024BCD, not 2024CR/CS/F
   //"qie11"
   //"x1p5",
@@ -156,7 +160,7 @@ const array<string,29> _gf_shapes_whitelist = {
   //"x3", // Summer23 hight pT? Slightly too sharp?
   //"x4", // test TeV scale
   //"hbtime", // test adding for Summer23; did nothing really on top of x2p5
-  //"hbsipm" // 22Sep2023 V3, not 19Dec2023
+  "hbsipm", // 22Sep2023 V3, not 19Dec2023
   "hhblue103"
 };
 
@@ -211,10 +215,13 @@ const array<array<string,3>, nshp> _gf_shapes = {{
     // R = (0.5*x+1150.)/x
     //{"qie11","Rjet","-0.5*max(x-1150.,0.)/(3000.-1150.)"},
     {"off","Rjet","1./x"},
+    {"off_ho","Rjet","5./(x/15.)"},
     //{"off_nhf","Rjet","18.46*pow(x/15.6,1.840)/(1+0.5*pow(x/15.6,3.679))"},
     //{"off_nhf","Rjet","19.15*pow(x/15.6,1.912)/(1+0.5*pow(x/15.6,3.824))"},
   //{"off_nhf","Rjet","19.26*pow(x/15.6,1.927)/(1+0.5*pow(x/15.6,3.853))"},//V8M
     {"off_nhf","Rjet","15.49*pow(x/15.1,1.939)/(1+0.5*pow(x/15.1,3.877))"},//V9M
+    //{"dd_nhf","Rjet","374.11/x-83.36*pow(x,-0.5104)"}, // Prompt2025, v1
+    {"dd_nhf","Rjet","370.96/x-83.46*pow(x,-0.5103)"},
     {"g1","Rjet","-6.5*max(log(x/610.),0.)"},
     {"p5log","Rjet","1.0*pow(log(x/300.),5)"},
     {"p4log","Rjet","1.0*pow(log(x/300.),4)"},

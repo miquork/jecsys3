@@ -46,7 +46,8 @@ Double_t jesFit(Double_t *x, Double_t *p);
 void jesFitter(Int_t& npar, Double_t* grad, Double_t& chi2, Double_t* par,
 	       Int_t flag);
 void cleanGraph(TGraphErrors *g);
-void globalFitEtaBin(double etamin, double etamax, string run, string version);
+void globalFitEtaBin(double etamin, double etamax, string run, string version,
+		     int doClosure = -1);
 void globalFitDraw(string run, string version);
 
 // Define global variables used in fitError
@@ -104,8 +105,11 @@ void globalFit(string run = "All", string version = "vX") {
   globalFitEtaBin(0.0, 1.3, run, version);
 } // globalFit
 
-void globalFitEtaBin(double etamin, double etamax, string run, string version) {
+void globalFitEtaBin(double etamin, double etamax, string run, string version,
+		     int doClosure) {
 
+  if (doClosure!=-1) _gf_undoJESref = (doClosure==0 ? true : false);
+  
   // Set fancy plotting style (CMS TDR style)
   setTDRStyle();
 
@@ -232,15 +236,15 @@ void globalFitEtaBin(double etamin, double etamax, string run, string version) {
 
     // Jet+Z special
     if (TString(name).Contains("jetz")) { // default: 0.985, 16/fb
-      //if (scaleJZperEra && trun.Contains("24I")) scaleJZ = 1.0050;
-      if (scaleJZperEra && trun.Contains("24I")) scaleJZ = 0.979;
+      if (scaleJZperEra && trun.Contains("24I")) scaleJZ = 1.0050;
+      //if (scaleJZperEra && trun.Contains("24I")) scaleJZ = 0.979;
       if (scaleJZperEra && trun.Contains("24H")) scaleJZ = 1.0050;
       if (scaleJZperEra && trun.Contains("24G")) scaleJZ = 1.0050; // 30/fb 
-      if (scaleJZperEra && trun.Contains("24F")) scaleJZ = 1.0050; // 30/fb 
-      if (scaleJZperEra && trun.Contains("24E")) scaleJZ = 0.995; // 11/fb 
-      if (scaleJZperEra && trun.Contains("24D")) scaleJZ = 0.989; // 16+11/fb
-      if (scaleJZperEra && trun.Contains("24C")) scaleJZ = 0.989; // 16+11/fb
-      if (scaleJZperEra && trun.Contains("24B")) scaleJZ = 0.989; // 16+11/fb
+      if (scaleJZperEra && trun.Contains("24F")) scaleJZ = 0.980;//1.0050;
+      if (scaleJZperEra && trun.Contains("24E")) scaleJZ = 0.995;
+      if (scaleJZperEra && trun.Contains("24D")) scaleJZ = 0.989;
+      if (scaleJZperEra && trun.Contains("24C")) scaleJZ = 0.989;
+      if (scaleJZperEra && trun.Contains("24B")) scaleJZ = 0.989;
 
       if (scaleJZperEra && trun.Contains("25")) scaleJZ = 1.000;
       
@@ -248,11 +252,11 @@ void globalFitEtaBin(double etamin, double etamax, string run, string version) {
     }
     // Z+jet ave special
     if (TString(name).Contains("zjav")) { // default: 0.9925, half of JZ
-      //if (scaleJZAperEra && trun.Contains("24I")) scaleJZA = 1.0025;
-      if (scaleJZAperEra && trun.Contains("24I")) scaleJZA = 0.9945;
+      if (scaleJZAperEra && trun.Contains("24I")) scaleJZA = 1.0025;
+      //if (scaleJZAperEra && trun.Contains("24I")) scaleJZA = 0.9945;
       if (scaleJZAperEra && trun.Contains("24H")) scaleJZA = 1.0025;
       if (scaleJZAperEra && trun.Contains("24G")) scaleJZA = 1.0025;
-      if (scaleJZAperEra && trun.Contains("24F")) scaleJZA = 1.0025;
+      if (scaleJZAperEra && trun.Contains("24F")) scaleJZA = 0.994;//1.0025;
       if (scaleJZAperEra && trun.Contains("24E")) scaleJZA = 0.9975;
       if (scaleJZAperEra && trun.Contains("24D")) scaleJZA = 0.9945;
       if (scaleJZAperEra && trun.Contains("24C")) scaleJZA = 0.9945;
@@ -422,6 +426,8 @@ void globalFitEtaBin(double etamin, double etamax, string run, string version) {
   int nfit = 1;
   if (run=="Run24F") nfit = 2;//1;
   if (run=="Run24BCD") nfit = 3;//1;
+  if (run=="Run24C_nib1") nfit = 3;
+  if (run=="Run24F_nib3") nfit = 2;
   if (run=="Run24I_nib1") nfit = 3;//1;
   cnt = 0;
   for (int i = 0; i != nfit; ++i)
@@ -431,12 +437,15 @@ void globalFitEtaBin(double etamin, double etamax, string run, string version) {
 
   // Retrieve the chi2 the hard way
   Double_t tmp_par[ntot], tmp_err[ntot];
+  //vector<Double_t> tmp_par(ntot);
+  //vector<Double_t> tmp_err(ntot);
   TVectorD vpar(ntot);
   TVectorD verr(ntot);
   Double_t chi2_gbl(0), chi2_src(0), chi2_par(0), chi2_data(0);
   Double_t chi2_data_minerr(0);
   int npar_true(0), nsrc_true(0), ndt(0);
   Double_t grad[ntot];
+  //vector<Double_t> grad(ntot);
   Int_t flag = 1;
 
   for (int i = 0; i != ntot; ++i) {
@@ -445,7 +454,8 @@ void globalFitEtaBin(double etamin, double etamax, string run, string version) {
     vpar[i] = fitter->GetParameter(i);
     verr[i] = fitter->GetParError(i);
   }
-  jesFitter(ntot, grad, chi2_gbl, tmp_par, flag);
+  //jesFitter(ntot, grad, chi2_gbl, tmp_par, flag);
+  jesFitter(ntot, &grad[0], chi2_gbl, &tmp_par[0], flag);
 
   for (int i = 0; i != ntot; ++i) {
     if (fabs(tmp_par[i])!=0 || fabs(tmp_err[i]-1)>1e-2) {
@@ -996,6 +1006,7 @@ void globalFitDraw(string run, string version) {
 	run=="Run24BC" || run=="Run24BCD" || run=="Run24BCDE" ||
 	run=="Run24CP" || run=="Run24CR" || run=="Run24CS")  nhf_off = 0.0;
     if (trun.Contains("2024")) nhf_off = 0.0;
+    if (trun.Contains("2025")) nhf_off = 0.0;
     if (run=="Run3")  {
       nhf_off = ((5.1+3.0)*2.0 + 5.9*3.0 + (18.0+3.1)*3.0 +
 		 //8.7*1.0 + 9.8*4.0 + 9.5*4.5) / //Summer22

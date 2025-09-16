@@ -15,12 +15,12 @@
   // Compile with +g to make sure asserts are run
   gROOT->ProcessLine(".L tools.C+g");
   gROOT->ProcessLine(".L Flavor.C+g");
-  gROOT->ProcessLine(".L reprocess.C+g");
+  gROOT->ProcessLine(".L reprocess.C++g");
   gROOT->ProcessLine(".L scaleJES.C+g");
   gROOT->ProcessLine(".L softrad3.C+g");
   //gROOT->ProcessLine(".L globalFitSyst.C+g");
   //gROOT->ProcessLine(".L globalFitRenormPF.C+g");
-  gROOT->ProcessLine(".L globalFit.C+g");
+  gROOT->ProcessLine(".L globalFit.C++g");
 
   // Merge inputs from separate groups
   // NB: this does not need to be run, if the merged inputs
@@ -30,6 +30,13 @@
   std::cout << epoch.c_str()<< std::endl;
   std::cout << inputepoch.c_str()<< std::endl;
   epoch = inputepoch;
+  #endif
+
+  int doClosure(0);
+  #ifdef closurebool
+  std::cout << "Was doClosure = " << doClosure << std::endl;
+  if (inputclosure!=-1) doClosure = inputclosure;
+  std::cout << "Is doClosure = " << doClosure << std::endl;
   #endif
 
   // Read in files from different groups and merge them in jecdata[epoch].root
@@ -76,9 +83,10 @@
   //globalFitEtaBin(0.0, 1.3, epoch, "Prompt24_V7M");
   //globalFitEtaBin(0.0, 1.3, epoch, "Prompt24_V8N");
   if (TString(epoch.c_str()).Contains("25"))
-    globalFitEtaBin(0.0, 1.3, epoch, "Prompt25_V2M");
+    globalFitEtaBin(0.0, 1.3, epoch, "Prompt25_V2M", doClosure);
   else
-    globalFitEtaBin(0.0, 1.3, epoch, "Prompt24_V9M");
+    //globalFitEtaBin(0.0, 1.3, epoch, "ReReco24_V9M");
+    globalFitEtaBin(0.0, 1.3, epoch, "ReReco24_V10M");
 
   
   exit(0); // Avoid page full of THastList::Delete errors

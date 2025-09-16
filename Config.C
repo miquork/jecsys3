@@ -123,17 +123,21 @@ mfile["JET_2025CDE_MC"]       = mfile["JET_2025_MC"];
 
 // Wqq files
 mfile["WQQ_2025_MC"]     = "rootfiles/Prompt2025/Wqq_v1m/Summer24_TTtoLNu2Q.root";
+mfile["WQQ_2025C_MC"]     = mfile["WQQ_2025_MC"];
 mfile["WQQ_2025C_DATA"]   = "rootfiles/Prompt2025/Wqq_v1m/Muon_Run2025C_Prompt_V1M.root";
 mfile["WQQ_2025D_MC"]     = mfile["WQQ_2025_MC"];
 mfile["WQQ_2025D_DATA"]   = "rootfiles/Prompt2025/Wqq_v1m/Muon_Run2025D_Prompt_V1M.root";
 mfile["WQQ_2025E_MC"]     = mfile["WQQ_2025_MC"];
 mfile["WQQ_2025E_DATA"]   = "rootfiles/Prompt2025/Wqq_v1m/Muon_Run2025E_Prompt_V1M.root";
+//
+mfile["WQQ_2025CDE_MC"]     = mfile["WQQ_2025_MC"];
+mfile["WQQ_2025CDE_DATA"]   = "rootfiles/Prompt2025/Wqq_v1m/Muon_Run2025CDE_Prompt_V1M.root";
 
 // Z+jet files
 mfile["ZMM_2025C_DATAMC"]   = "rootfiles/Prompt2025/Zmm_v100/jme_Zj_2025C_Zmm_v100.root"; // Missing
 mfile["ZMM_2025D_DATAMC"]   = "rootfiles/Prompt2025/Zmm_v100/jme_Zj_2025D_Zmm_v100.root";
 mfile["ZMM_2025E_DATAMC"]   = "rootfiles/Prompt2025/Zmm_v100/jme_Zj_2025E_Zmm_v100.root";
-mfile["ZMM_2025CDE_DATAMC"]   = "rootfiles/Prompt2025/Zmm_v100/jme_Zj_2025D_Zmm_v100.root"; // Placeholder
+mfile["ZMM_2025CDE_DATAMC"]   = "rootfiles/Prompt2025/Zmm_v100/jme_Zj_2025CDE_Zmm_v100.root";
 
 // Photon+jet files
 mfile["GAM_2025_MC"]       = "rootfiles/Prompt2025/Gam_w54/GamHistosFill_mc_winter2025P8_no-pu_w54.root";
