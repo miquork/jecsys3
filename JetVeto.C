@@ -81,10 +81,11 @@ void JetVeto(string run = "", string version = "vx") {
   //JetVetos("2024BCDEFGHI",version);
   //JetVetos("2024","V9M");
 
-  JetVetos("2025C","V2M");
-  JetVetos("2025D","V2M");
-  JetVetos("2025E","V2M");
-  JetVetos("2025CDE","V2M");
+  JetVetos("2025C","V3M");
+  JetVetos("2025D","V3M");
+  JetVetos("2025E","V3M");
+  JetVetos("2025F","V3M");
+  JetVetos("2025CDEF","V3M");
 }
 
 void JetVetos(string run, string version) {
@@ -671,7 +672,8 @@ void JetVetos(string run, string version) {
     h2veto->SetTitle("JME recommended map. Hot+Cold+FPIX(+not BPIX)");
     h2all->SetTitle("Union of all maps, used for JEC. Hot+cold+FPIX+BPIX");
   }
-  if (run=="2025C" || run=="2025D" || run=="2025E" || run=="2025CDE") {
+  if (run=="2025C" || run=="2025D" || run=="2025E" || run=="2025CDE" ||
+      run=="2025F" || run=="2025CDEF") {
     h2veto->SetTitle("JME recommended map. Hot+Cold+FPIX(+not BPIX)");
     h2all->SetTitle("Union of all maps, used for JEC. Hot+cold+FPIX+BPIX");
   }
@@ -743,7 +745,8 @@ void JetVetos(string run, string version) {
 	  h2bpix->SetBinContent(i,j,100); // drop
 	  h2all->SetBinContent(i,j,100);  // drop
 	}
-	if (run=="2025C" || run=="2025D" || run=="2025E" || run=="2025CDE") {
+	if (run=="2025C" || run=="2025D" || run=="2025E" || run=="2025CDE" ||
+	    run=="2025F" || run=="2025CDEF") {
 	  // Keep BPix for recommended, drop for JEC
 	  h2veto->SetBinContent(i,j,0);   // keep!
 	  h2bpix->SetBinContent(i,j,100); // drop
@@ -762,7 +765,8 @@ void JetVetos(string run, string version) {
 	  h2fpix->SetBinContent(i,j,100);
 	  h2all->SetBinContent(i,j,100);
 	}
-	if (run=="2025C" || run=="2025D" || run=="2025E" || run=="2025CDE"){
+	if (run=="2025C" || run=="2025D" || run=="2025E" || run=="2025CDE" ||
+	    run=="2025F" || run=="2025CDEF"){
 	  h2veto->SetBinContent(i,j,100);
 	  h2fpix->SetBinContent(i,j,100);
 	  h2all->SetBinContent(i,j,100);

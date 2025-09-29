@@ -29,7 +29,12 @@ void hotjetsRun3() {
   //string eras[] = {"22CD", "22EFG", "23BC", "23D", "24BCDE", "24F"};
   //string eras[] = {"22CD", "22EFG", "23BC", "23D", "24BCDE", "24FG"};
   //string eras[] = {"22CD", "22EFG", "23BC", "23D", "24BCDE", "24BCDEFGHI"};
-  string eras[] = {"22CD", "22EFG", "23BC", "23D", "24BCDEFGHI", "25C"};
+  //string eras[] = {"22CD", "22EFG", "23BC", "23D", "24BCDEFGHI", "25C"};
+  //string eras[] = {"22CD", "22EFG", "23BC", "23D", "24_V9M", "25C_V2M"};
+  //string eras[] = {"22CD", "22EFG", "23BC", "23D", "24_V9M",
+  //		   "25C_V2M","25D_V2M","25E_V2M","25CDE_V2M"};
+  string eras[] = {"22CD", "22EFG", "23BC", "23D", "24_V9M",
+		   "25C_V3M","25D_V3M","25E_V3M","25F_V3M","25CDEF_V3M"};
   const int nera = sizeof(eras)/sizeof(eras[0]);
 
   map<string, const char*> mera;
@@ -44,7 +49,18 @@ void hotjetsRun3() {
   //mera["24F"] = "24F";
   mera["24FG"] = "24FG";
   mera["24BCDEFGHI"] = "24";
+  mera["24_V9M"] = "24";
   mera["25C"] = "25C";
+  mera["25C_V2M"] = "25C";
+  mera["25D_V2M"] = "25D";
+  mera["25E_V2M"] = "25E";
+  mera["25CDE_V2M"] = "25";
+  //
+  mera["25C_V3M"] = "25C";
+  mera["25D_V3M"] = "25D";
+  mera["25E_V3M"] = "25E";
+  mera["25F_V3M"] = "25F";
+  mera["25CDEF_V3M"] = "25";
 
   map<string, int> mcolor;
   mcolor["22CD"] = kGreen+2;
@@ -58,7 +74,18 @@ void hotjetsRun3() {
   mcolor["24FG"] = kRed;
   //mcolor["24BCDEFGHI"] = kRed;
   mcolor["24BCDEFGHI"] = kSpring;
+  mcolor["24_V9M"] = kSpring;//kRed;//kSpring;
   mcolor["25C"] = kRed;
+  mcolor["25C_V2M"] = kOrange+2;
+  mcolor["25D_V2M"] = kOrange+1;
+  mcolor["25E_V2M"] = kOrange;
+  mcolor["25CDE_V2M"] = kRed;
+  //
+  mcolor["25C_V3M"] = kOrange+3;
+  mcolor["25D_V3M"] = kOrange+2;
+  mcolor["25E_V3M"] = kOrange+1;
+  mcolor["25F_V3M"] = kOrange;
+  mcolor["25CDEF_V3M"] = kRed;
 
   TH1D *h = new TH1D("h",";#eta_{jet};#phi_{jet}",100,-4.7,4.7);
   h->SetMaximum(+TMath::Pi());
@@ -71,7 +98,9 @@ void hotjetsRun3() {
   //lumi_13TeV = "Run2024BCDEF, 46.0 fb^{-1}";
   //lumi_13TeV = "Run2024BCDEFG, 92.2 fb^{-1}";
   //lumi_13TeV = "Run2024B-I, 109.2 fb^{-1}";
-  lumi_13TeV = "Run2025C, X.X fb^{-1}";
+  //lumi_13TeV = "Run2025C, X.X fb^{-1}";
+  //lumi_13TeV = "Run2024 re-reco, 109.2 fb^{-1}";
+  lumi_13TeV = "Run2025CDE, 58.7 fb^{-1}";
   TCanvas *c1 = tdrCanvas("c1",h,4,0,kRectangular);
 
   TLine *l = new TLine();
@@ -146,7 +175,10 @@ void hotjetsRun3() {
   //c1->SaveAs("pdf/hotjetsRun3_V5M.pdf");
   //c1->SaveAs("pdf/hotjetsRun3_V6M.pdf");
   //c1->SaveAs("pdf/hotjetsRun3_V7M.pdf");
-  c1->SaveAs("pdf/hotjetsRun3_Prompt25_V1M.pdf");
+  //c1->SaveAs("pdf/hotjetsRun3_Prompt25_V1M.pdf");
+  //c1->SaveAs("pdf/hotjetsRun3_ReReco24_V9M.pdf");
+  //c1->SaveAs("pdf/hotjetsRun3_Prompt25_V2M.pdf");
+  c1->SaveAs("pdf/hotjetsRun3_Prompt25_V3M.pdf");
 
   //TFile *fout = new TFile("rootfiles/hotjets-Run3.root","RECREATE");
   //h2sum->Write();
