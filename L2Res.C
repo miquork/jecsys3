@@ -276,13 +276,15 @@ TH1D *drawCleaned(TH1D *h, double eta, string data, string draw,
 	if (eta>2.500 && eta<2.964 && pt<70)  keep = false;
 	if (eta>4.716) keep = false; // Q vs G issue wrt dijets?
       }
-      if (tr.Contains("F") || tr.Contains("G") || tr.Contains("H") ||
-	  tr.Contains("I")) {
+      if (tr.Contains("24") &&
+	  (tr.Contains("F") || tr.Contains("G") || tr.Contains("H") ||
+	   tr.Contains("I"))) {
 	//if (eta>2.500 && eta<2.650 && ptmin<30) keep = false;
 	if (eta>2.500 && eta<2.650 && ptmin<50) keep = false;
 	if (eta>2.650 && eta<2.964 && ptmin<59) keep = false;
       }
-      if (tr.Contains("25B") || tr.Contains("25C") || tr.Contains("25D")) {
+      if (tr.Contains("25B") || tr.Contains("25C") || tr.Contains("25D") ||
+	  tr.Contains("25E") || tr.Contains("25F")) {
 	if (ptmax>200.) keep = false;
 	if (eta>4.538) keep = false;
       }
@@ -303,8 +305,9 @@ TH1D *drawCleaned(TH1D *h, double eta, string data, string draw,
 
       // Tunable vetoes
       if (eta>2.5 && eta<2.964 && ptmin<60) keep = false;
-      if (tr.Contains("F") || tr.Contains("G") || tr.Contains("H") ||
-	  tr.Contains("I")) {
+      if (tr.Contains("24") &&
+	  (tr.Contains("F") || tr.Contains("G") || tr.Contains("H") ||
+	   tr.Contains("I"))) {
 	if (eta>3.139 && eta<4.013 && ptmin<60) keep = false;
       }
       if (tr.Contains("F_nib1")) {
@@ -314,7 +317,8 @@ TH1D *drawCleaned(TH1D *h, double eta, string data, string draw,
       if (tr.Contains("25B")) {
 	if (pt>400) keep = false;
       }
-      if (tr.Contains("25C") || tr.Contains("25D")) {
+      if (tr.Contains("25C") || tr.Contains("25D") || tr.Contains("25E") ||
+	  tr.Contains("25F")) {
 	if (pt>800) keep = false;
 	if (eta>1.218 && pt>600) keep = false;
       }
@@ -360,7 +364,8 @@ TH1D *drawCleaned(TH1D *h, double eta, string data, string draw,
 	if (pt*cosh(eta)>3000. && eta<2.655) keep = false;
 	if (pt*cosh(eta)>4000. && eta<4.191) keep = false;
       }
-      if (tr.Contains("25C") || tr.Contains("25D")) {
+      if (tr.Contains("25C") || tr.Contains("25D") || tr.Contains("25E") ||
+	  tr.Contains("25F")) {
 	if (pt*cosh(eta)>2000. && eta<0.783) keep = false;
 	if (pt*cosh(eta)>2500. && eta<1.566) keep = false;
 	if (pt*cosh(eta)>3500. && eta<2.655) keep = false;
@@ -537,7 +542,7 @@ void L2Res(bool _doClosure = doClosure) {
       "2024I_nib1",  // V9M (V8M)
       */
       //"2025B",
-      "2025C","2025D","2025E","2025CDE"
+      "2025C","2025D","2025E","2025F","2025CDEF"
     };
 
   //"2024D_nib1"};
@@ -561,7 +566,7 @@ void L2Res(bool _doClosure = doClosure) {
       "Summer24",
       */
       //"Winter25",
-      "Winter25","Winter25","Winter25","Winter25"
+      "Winter25","Winter25","Winter25","Winter25","Winter25"
     };  // V9M
 
   //"Summer24"};  // V9M
@@ -931,6 +936,8 @@ void L2Res(bool _doClosure = doClosure) {
     if (!hrc_vsEta && tr.Contains("2025D"))
       hrc_vsEta = (TH1D*)frc->Get(Form("hrc13jes_%s","2025C"));
     if (!hrc_vsEta && tr.Contains("2025E"))
+      hrc_vsEta = (TH1D*)frc->Get(Form("hrc13jes_%s","2025C"));
+    if (!hrc_vsEta && tr.Contains("2025F"))
       hrc_vsEta = (TH1D*)frc->Get(Form("hrc13jes_%s","2025C"));
     if (!hrc_vsEta && tr.Contains("2025CDE"))
       hrc_vsEta = (TH1D*)frc->Get(Form("hrc13jes_%s","2025C"));
@@ -1919,7 +1926,7 @@ void L2Res(bool _doClosure = doClosure) {
   
   // Step 10. Print out text files
   // 10a: Original parameterization vs pTref
-  string ftxtname = (tr.Contains("25") ? Form("textfiles/Prompt25/Prompt25_Run%s_V2M_DATA_L2ResidualVsPtRef_AK4PFPuppi.txt",cr) : Form("textfiles/ReReco24/ReReco24_Run%s_V10M_DATA_L2ResidualVsPtRef_AK4PFPuppi.txt",cr));
+  string ftxtname = (tr.Contains("25") ? Form("textfiles/Prompt25/Prompt25_Run%s_V3M_DATA_L2ResidualVsPtRef_AK4PFPuppi.txt",cr) : Form("textfiles/ReReco24/ReReco24_Run%s_V10M_DATA_L2ResidualVsPtRef_AK4PFPuppi.txt",cr));
   cout << "Writing results to text file " << ftxtname << endl << flush;
   ofstream ftxt(ftxtname.c_str());
 
@@ -1948,7 +1955,7 @@ void L2Res(bool _doClosure = doClosure) {
     ftxt << endl;
   }
   // 10b: Re-parameterization vs pTraw
-  string ftxtname2 = (tr.Contains("25") ? Form("textfiles/Prompt25/Prompt25_Run%s_V2M_DATA_L2Residual_AK4PFPuppi.txt",cr) : Form("textfiles/ReReco24/ReReco24_Run%s_V10M_DATA_L2Residual_AK4PFPuppi.txt",cr));
+  string ftxtname2 = (tr.Contains("25") ? Form("textfiles/Prompt25/Prompt25_Run%s_V3M_DATA_L2Residual_AK4PFPuppi.txt",cr) : Form("textfiles/ReReco24/ReReco24_Run%s_V10M_DATA_L2Residual_AK4PFPuppi.txt",cr));
   cout << "Writing results to text file " << ftxtname2 << endl << flush;
   ofstream ftxt2(ftxtname2.c_str());
   
