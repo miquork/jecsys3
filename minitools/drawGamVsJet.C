@@ -5,6 +5,7 @@
 
 #include "../tdrstyle_mod22.C"
 
+// Scales for 2025 (adjust 2024 in code)
 double k200 = 0.989;//0.992;
 double k110 = 0.997;
 double k50 = 1;
@@ -13,21 +14,22 @@ double rmax = 1.035-1e-4;//1.05;
 double rmin = 0.955;
 double rrmin = -1.6;
 double rrmax = +1.2;
-double retamin = -1.5;
-double retamax = +2.0;
+double retamin = -2.2;//-1.5;
+double retamax = +3.2;//+2.0;
 
 
 
-void drawGamVsJet() {
+void drawGamVsJet(string year = "2025") {
 
   setTDRStyle();
   TDirectory *curdir = gDirectory;
 
   gROOT->ProcessLine(".! mkdir pdf/drawGamVsJet");
   gROOT->ProcessLine(".! touch pdf/drawGamVsJet");
-  
-  //TFile *f = new TFile("rootfiles/Prompt2024/w43/GamHistosFill_data_2024_w43.root","READ");
-  TFile *f = new TFile("rootfiles/Prompt2025/Gam_w64/GamHistosFill_data_2025CDEFG_w64.root","READ");
+
+  TFile *f(0);
+  if (year=="2024") f = new TFile("rootfiles/Prompt2024/w43/GamHistosFill_data_2024_w43.root","READ");
+  if (year=="2025") f = new TFile("rootfiles/Prompt2025/Gam_w64/GamHistosFill_data_2025CDEFG_w64.root","READ");
   assert(f && !f->IsZombie());
 
   TProfile *pg50 = (TProfile*)f->Get("control/pr50mpfvseta"); assert(pg50);
@@ -35,6 +37,12 @@ void drawGamVsJet() {
   TProfile *pg200 = (TProfile*)f->Get("control/pr200mpfvseta"); assert(pg200);
 
   curdir->cd();
+
+  // Adjust scales for 2024
+  if (year=="2024") {
+    k200 = 0.984;//0.989
+    k110 = 0.992;//0.997;
+  }
   
   TH1D *hg50 = pg50->ProjectionX("hg50");     hg50->Scale(k50);
   TH1D *hg110 = pg110->ProjectionX("hg110");  hg110->Scale(k110);
@@ -55,8 +63,8 @@ void drawGamVsJet() {
   }
   
   extraText = "Private";
-  //lumi_136TeV = "2024, 110 fb^{-1}";
-  lumi_136TeV = "2025, ~100 fb^{-1}";
+  if (year=="2024") lumi_136TeV = "2024, 110 fb^{-1}";
+  if (year=="2025") lumi_136TeV = "2025, ~100 fb^{-1}";
   //TH1D *h = tdrHist("h","#LTp_{T,jet}#GT / p_{T,#gamma} (MPF)^{ }",0.975,1.040,
   TH1D *h = tdrHist("h","#LTp_{T,jet}#GT / p_{T,#gamma} (MPF)^{ }", rmin, rmax,
 		    "Photon #eta_{#gamma}",-1.5,1.5);//-1.4795,+1.4795);
@@ -109,14 +117,15 @@ void drawGamVsJet() {
 
   gPad->RedrawAxis();
   
-  c1->SaveAs("pdf/drawGamVsJet/drawGamVsJet_eta_2025.pdf");
+  c1->SaveAs(Form("pdf/drawGamVsJet/drawGamVsJet_eta_%s.pdf",year.c_str()));
 
 
   TProfile *pgpt = (TProfile*)f->Get("resp_MPFchs_DATA_a100_eta00_13");
   assert(pgpt);
 
-  //TFile *fz = new TFile("rootfiles/Prompt2024/v93/jme_bplusZ_2024_Zmm_v93.root","READ");
-  TFile *fz = new TFile("rootfiles/Prompt2025/Zmm_v102/jme_Zj_2025_Zmm_v102_nomu.root","READ");
+  TFile *fz(0);
+  if (year=="2024") fz = new TFile("rootfiles/Prompt2024/v93/jme_bplusZ_2024_Zmm_v93.root","READ");
+  if (year=="2025") fz = new TFile("rootfiles/Prompt2025/Zmm_v102/jme_Zj_2025_Zmm_v102_nomu.root","READ");
   assert(fz && !fz->IsZombie());
   TProfile2D *p2z = (TProfile2D*)fz->Get("data/l2res/p2m0"); assert(p2z);
   int i13 = p2z->GetXaxis()->FindBin(1.305-0.06);
@@ -178,7 +187,7 @@ void drawGamVsJet() {
   hr->GetXaxis()->SetRangeUser(40,300);
   tdrDraw(hr,"Pz",kNone,kBlue);
   
-  c2->SaveAs("pdf/drawGamVsJet/drawGamVsJet_pt_2025.pdf");
+  c2->SaveAs(Form("pdf/drawGamVsJet/drawGamVsJet_pt_%s.pdf",year.c_str()));
 
 
   // Look at eta-asymmetry
@@ -196,27 +205,38 @@ void drawGamVsJet() {
   l->DrawLine(+0.8,retamin,+0.8,retamax-(retamax-retamin)*0.0);
 
   
-  TH1D *hreta = (TH1D*)hg50->Clone("hreta");
+  TH1D *hreta50 = (TH1D*)hg50->Clone("hreta50");
+  TH1D *hreta110 = (TH1D*)hg110->Clone("hreta110");
+  TH1D *hreta200 = (TH1D*)hg200->Clone("hreta200");
   for (int i = 1; i != hg50->GetNbinsX()+1; ++i) {
     double eta = hg50->GetBinContent(i);
     if (eta>0) {
       int j = hg50->GetXaxis()->FindBin(-eta);
-      hreta->SetBinContent(i, (hg50->GetBinContent(i)/hg50->GetBinContent(j)-1)*100);
-      hreta->SetBinError(i, sqrt(pow(hg50->GetBinError(i)/hg50->GetBinContent(i),2) + pow(hg50->GetBinError(j)/hg50->GetBinContent(j),2))*(1+0.01*hreta->GetBinContent(i))*100);
+      hreta50->SetBinContent(i, (hg50->GetBinContent(i)/hg50->GetBinContent(j)-1)*100);
+      hreta50->SetBinError(i, sqrt(pow(hg50->GetBinError(i)/hg50->GetBinContent(i),2) + pow(hg50->GetBinError(j)/hg50->GetBinContent(j),2))*(1+0.01*hreta50->GetBinContent(i))*100);
+      hreta110->SetBinContent(i, (hg110->GetBinContent(i)/hg110->GetBinContent(j)-1)*100);
+      hreta110->SetBinError(i, sqrt(pow(hg110->GetBinError(i)/hg110->GetBinContent(i),2) + pow(hg110->GetBinError(j)/hg110->GetBinContent(j),2))*(1+0.01*hreta110->GetBinContent(i))*100);
+      hreta200->SetBinContent(i, (hg200->GetBinContent(i)/hg200->GetBinContent(j)-1)*100);
+      hreta200->SetBinError(i, sqrt(pow(hg200->GetBinError(i)/hg200->GetBinContent(i),2) + pow(hg200->GetBinError(j)/hg200->GetBinContent(j),2))*(1+0.01*hreta200->GetBinContent(i))*100);
     } // eta>0
   } // for i
 
-  
-  tdrDraw(hreta,"Pz",kNone,kGreen+2);
 
-  TLegend *leg3 = tdrLeg(0.60,0.90-0.05,0.85,0.90);
-  leg3->AddEntry(hreta,"Photon50EB","PLE");
+  tdrDraw(hreta50,"HIST",kNone,kGreen+2,kSolid,-1,kNone,0);
+  tdrDraw(hreta200,"Pz",kNone,kRed);
+  tdrDraw(hreta110,"Pz",kNone,kBlue);
+  tdrDraw(hreta50,"Pz",kNone,kGreen+2,kSolid,-1,kNone,0);
+
+  TLegend *leg3 = tdrLeg(0.60,0.90-0.05*3,0.85,0.90);
+  leg3->AddEntry(hreta200,"Photon200EB","PLE");
+  leg3->AddEntry(hreta110,"Photon110EB","PLE");
+  leg3->AddEntry(hreta50,"Photon50EB","PLE");
 
   tex->DrawLatex(0.35,0.87,"#gamma + jet");
   tex->DrawLatex(0.35,0.81,"|#eta_{jet}| < 1.3");
   
   gPad->RedrawAxis();
   
-  c3->SaveAs("pdf/drawGamVsJet/drawGamVsJet_etaasymm_2025.pdf");
+  c3->SaveAs(Form("pdf/drawGamVsJet/drawGamVsJet_etaasymm_%s.pdf",year.c_str()));
   
 } // drawGamVsJet
