@@ -10,12 +10,14 @@ double k200 = 0.989;//0.992;
 double k110 = 0.997;
 double k50 = 1;
 
-double rmax = 1.035-1e-4;//1.05;
-double rmin = 0.955;
-double rrmin = -1.6;
-double rrmax = +1.2;
-double retamin = -2.2;//-1.5;
-double retamax = +3.2;//+2.0;
+double etamin = -2.5;//-1.5;
+double etamax = +2.5;//+1.5;
+double rmax = 1.10;//1.035-1e-4;//1.05;
+double rmin = 0.87;//0.955;
+double rrmin = -13;//-1.6;
+double rrmax = +6;//+1.2;
+double retamin = -3.5;//-2.2;//-1.5;
+double retamax = +6;//+3.2;//+2.0;
 
 
 
@@ -60,6 +62,22 @@ void drawGamVsJet(string year = "2025") {
     hr110->SetBinError(i, hr110->GetBinError(i)*100);
     hr200->SetBinContent(i, (hr200->GetBinContent(i)-1)*100);
     hr200->SetBinError(i, hr200->GetBinError(i)*100);
+    // Patch for hr200 beyond EB
+    double eta = hr110->GetXaxis()->GetBinCenter(i);
+    if (fabs(eta)>1.479) {
+      hg50->SetBinContent(i, 0);
+      hg50->SetBinError(i, 0);
+      hg110->SetBinContent(i, 0);
+      hg110->SetBinError(i, 0);
+      hr110->SetBinContent(i, 0);
+      hr110->SetBinError(i, 0);
+      int j = hg50->GetXaxis()->FindBin(eta<0 ? -1.479+1e-3 : +1.479-1e-3);
+      double keta50 = hg50->GetBinContent(j);
+      double keta200 = hg200->GetBinContent(j);
+      double k = k200/k50;
+      hr200->SetBinContent(i, (pg200->GetBinContent(i)*k/keta50-1)*100);
+      hr200->SetBinError(i, pg200->GetBinError(i)*k/keta50*100);
+    }
   }
   
   extraText = "Private";
@@ -67,10 +85,10 @@ void drawGamVsJet(string year = "2025") {
   if (year=="2025") lumi_136TeV = "2025, ~100 fb^{-1}";
   //TH1D *h = tdrHist("h","#LTp_{T,jet}#GT / p_{T,#gamma} (MPF)^{ }",0.975,1.040,
   TH1D *h = tdrHist("h","#LTp_{T,jet}#GT / p_{T,#gamma} (MPF)^{ }", rmin, rmax,
-		    "Photon #eta_{#gamma}",-1.5,1.5);//-1.4795,+1.4795);
+		    "Photon #eta_{#gamma}",etamin,etamax);//-1.5,1.5);//-1.4795,+1.4795);
   //TH1D *hd = tdrHist("hd","X/50-1 (%)",-1,+2.5,"#eta_{#gamma}",-1.4795,+1.4795);
   TH1D *hd = tdrHist("hd","X/50-1 (%)",rrmin,rrmax,"Photon #eta_{#gamma}",
-		     -1.5,1.5);//-1.4795,+1.4795);
+		     etamin,etamax);//-1.5,1.5);//-1.4795,+1.4795);
   TCanvas *c1 = tdrDiCanvas("c1",h,hd,8,11);
   h->GetYaxis()->SetTitleOffset(1.04);
 
@@ -79,17 +97,19 @@ void drawGamVsJet(string year = "2025") {
   TLine *l = new TLine();
   l->SetLineStyle(kDashed);
   l->SetLineColor(kGray+1);
-  l->DrawLine(-1.4795,1,+1.4795,1);
+  l->DrawLine(etamin,1,etamax,1);
   l->SetLineStyle(kDotted);
-  l->DrawLine(-1.4795,1.005,+1.4795,1.005);
-  l->DrawLine(-1.4795,0.995,+1.4795,0.995);
+  l->DrawLine(etamin,1.005,etamax,1.005);
+  l->DrawLine(etamin,0.995,etamax,0.995);
   l->DrawLine(-0.8,rmin,-0.8,rmax-(rmax-rmin)*0.23);
   l->DrawLine(+0.8,rmin,+0.8,rmax-(rmax-rmin)*0.23);
+  l->DrawLine(-1.4795,rmin,-1.4795,rmax-(rmax-rmin)*0.23);
+  l->DrawLine(+1.4795,rmin,+1.4795,rmax-(rmax-rmin)*0.23);
 
-  tdrDraw(pg50,"HIST",kNone,kGreen+2,kSolid,-1,kNone,0);
+  tdrDraw(hg50,"HIST][",kNone,kGreen+2,kSolid,-1,kNone,0);
   tdrDraw(hg200,"Pz",kNone,kRed);
   tdrDraw(hg110,"Pz",kNone,kBlue);
-  tdrDraw(hg50,"Pz",kNone,kGreen+2);
+  tdrDraw(hg50,"Pz",kNone,kGreen+2,kSolid,-1,kNone,0);
 
   TLegend *leg = tdrLeg(0.50,0.89-3*0.06,0.75,0.89);
   leg->AddEntry(hg200,Form("Photon200    #times %1.3f",k200),"PLE");
@@ -105,12 +125,14 @@ void drawGamVsJet(string year = "2025") {
   c1->cd(2);
 
   l->SetLineStyle(kDashed);
-  l->DrawLine(-1.4795,0,+1.4795,0);
+  l->DrawLine(etamin,0,etamax,0);
   l->SetLineStyle(kDotted);
-  l->DrawLine(-1.4795,+0.5,+1.4795,+0.5);
-  l->DrawLine(-1.4795,-0.5,+1.4795,-0.5);
+  l->DrawLine(etamin,+0.5,etamax,+0.5);
+  l->DrawLine(etamin,-0.5,etamax,-0.5);
   l->DrawLine(-0.8,rrmin,-0.8,rrmax-(rrmax-rrmin)*0.);
   l->DrawLine(+0.8,rrmin,+0.8,rrmax-(rrmax-rrmin)*0.);
+  l->DrawLine(-1.4795,rrmin,-1.4795,rrmax-(rrmax-rrmin)*0.);
+  l->DrawLine(+1.4795,rrmin,+1.4795,rrmax-(rrmax-rrmin)*0.);
 
   tdrDraw(hr200,"Pz",kNone,kRed);
   tdrDraw(hr110,"Pz",kNone,kBlue);
@@ -192,32 +214,42 @@ void drawGamVsJet(string year = "2025") {
 
   // Look at eta-asymmetry
   TH1D *h_3 = tdrHist("h_3","(#eta+) / (#eta-) - 1 (%)",retamin,retamax,
-		      "|#eta_{#gamma}|",0,1.5);
+		      "|#eta_{#gamma}|",0,etamax);//1.5);
   TCanvas *c3 = tdrCanvas("c3",h_3,8,11,kSquare);
 
   l->SetLineStyle(kDashed);
   l->SetLineColor(kGray+1);
-  l->DrawLine(-0,0,+1.4795,0);
+  l->DrawLine(0,0,etamax,0);
   l->SetLineStyle(kDotted);
-  l->DrawLine(0,+0.5,+1.4795,+0.5);
-  l->DrawLine(0,-0.5,+1.4795,-0.5);
+  l->DrawLine(0,+0.5,etamax,+0.5);
+  l->DrawLine(0,-0.5,etamax,-0.5);
   //l->DrawLine(-0.8,retamin,-0.8,retamax-(retamax-retamin)*0.0);
   l->DrawLine(+0.8,retamin,+0.8,retamax-(retamax-retamin)*0.0);
+  l->DrawLine(+1.4795,retamin,+1.4795,retamax-(retamax-retamin)*0.0);
 
   
   TH1D *hreta50 = (TH1D*)hg50->Clone("hreta50");
   TH1D *hreta110 = (TH1D*)hg110->Clone("hreta110");
   TH1D *hreta200 = (TH1D*)hg200->Clone("hreta200");
   for (int i = 1; i != hg50->GetNbinsX()+1; ++i) {
-    double eta = hg50->GetBinContent(i);
+    double eta = hg50->GetXaxis()->GetBinCenter(i); // had a bug :(
     if (eta>0) {
       int j = hg50->GetXaxis()->FindBin(-eta);
-      hreta50->SetBinContent(i, (hg50->GetBinContent(i)/hg50->GetBinContent(j)-1)*100);
-      hreta50->SetBinError(i, sqrt(pow(hg50->GetBinError(i)/hg50->GetBinContent(i),2) + pow(hg50->GetBinError(j)/hg50->GetBinContent(j),2))*(1+0.01*hreta50->GetBinContent(i))*100);
-      hreta110->SetBinContent(i, (hg110->GetBinContent(i)/hg110->GetBinContent(j)-1)*100);
-      hreta110->SetBinError(i, sqrt(pow(hg110->GetBinError(i)/hg110->GetBinContent(i),2) + pow(hg110->GetBinError(j)/hg110->GetBinContent(j),2))*(1+0.01*hreta110->GetBinContent(i))*100);
-      hreta200->SetBinContent(i, (hg200->GetBinContent(i)/hg200->GetBinContent(j)-1)*100);
-      hreta200->SetBinError(i, sqrt(pow(hg200->GetBinError(i)/hg200->GetBinContent(i),2) + pow(hg200->GetBinError(j)/hg200->GetBinContent(j),2))*(1+0.01*hreta200->GetBinContent(i))*100);
+      double reta50 = hg50->GetBinContent(j);
+      if (reta50>0) {
+	hreta50->SetBinContent(i, (hg50->GetBinContent(i)/hg50->GetBinContent(j)-1)*100);
+	hreta50->SetBinError(i, sqrt(pow(hg50->GetBinError(i)/hg50->GetBinContent(i),2) + pow(hg50->GetBinError(j)/hg50->GetBinContent(j),2))*(1+0.01*hreta50->GetBinContent(i))*100);
+      }
+      double reta110 = hg110->GetBinContent(j);
+      if (reta110>0) {
+	hreta110->SetBinContent(i, (hg110->GetBinContent(i)/hg110->GetBinContent(j)-1)*100);
+	hreta110->SetBinError(i, sqrt(pow(hg110->GetBinError(i)/hg110->GetBinContent(i),2) + pow(hg110->GetBinError(j)/hg110->GetBinContent(j),2))*(1+0.01*hreta110->GetBinContent(i))*100);
+      }
+      double reta200 = hg200->GetBinContent(j);
+      if (reta200>0) {
+	hreta200->SetBinContent(i, (hg200->GetBinContent(i)/hg200->GetBinContent(j)-1)*100);
+	hreta200->SetBinError(i, sqrt(pow(hg200->GetBinError(i)/hg200->GetBinContent(i),2) + pow(hg200->GetBinError(j)/hg200->GetBinContent(j),2))*(1+0.01*hreta200->GetBinContent(i))*100);
+      }
     } // eta>0
   } // for i
 
