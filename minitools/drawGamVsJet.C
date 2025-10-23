@@ -10,18 +10,28 @@ double k200 = 0.989;//0.992;
 double k110 = 0.997;
 double k50 = 1;
 
-double etamin = -2.5;//-1.5;
-double etamax = +2.5;//+1.5;
-double rmax = 1.10;//1.035-1e-4;//1.05;
-double rmin = 0.87;//0.955;
-double rrmin = -13;//-1.6;
-double rrmax = +6;//+1.2;
-double retamin = -3.5;//-2.2;//-1.5;
+// Narrow barrel range
+double etamin = -1.5;
+double etamax = +1.5;
+double rmax = 1.035-1e-4;//1.05;
+double rmin = 0.955;
+double rrmin = -1.6;
+double rrmax = +1.2;
+double retamin = -2.2;//-1.5;
+double retamax = +3.2;//+2.0;
+
+// Wide EB+EE range
+double etamin_wide = -2.5;//-1.5;
+double etamax_wide = +2.5;//+1.5;
+double rmax_wide = 1.10;//1.035-1e-4;//1.05;
+double rmin_wide = 0.87;//0.955;
+double rrmin_wide = -13;//-1.6;
+double rrmax_wide = +6;//+1.2;
+double retamin_wide = -3.5;//-2.2;//-1.5;
 double retamax = +6;//+3.2;//+2.0;
 
 
-
-void drawGamVsJet(string year = "2025") {
+void drawGamVsJet(string year = "2025", string width = "wide") {
 
   setTDRStyle();
   TDirectory *curdir = gDirectory;
@@ -44,6 +54,16 @@ void drawGamVsJet(string year = "2025") {
   if (year=="2024") {
     k200 = 0.984;//0.989
     k110 = 0.992;//0.997;
+  }
+  if (width=="wide") {
+    etamin = etamin_wide = -2.5;
+    etamax = etamax_wide = +2.5;
+    rmax = rmax_wide = 1.10;
+    rmin = rmin_wide = 0.87;
+    rrmin = rrmin_wide = -13;
+    rrmax = rrmax_wide = +6;
+    retamin = retamin_wide = -3.5;
+    retamax = retamax = +6;
   }
   
   TH1D *hg50 = pg50->ProjectionX("hg50");     hg50->Scale(k50);
@@ -139,7 +159,8 @@ void drawGamVsJet(string year = "2025") {
 
   gPad->RedrawAxis();
   
-  c1->SaveAs(Form("pdf/drawGamVsJet/drawGamVsJet_eta_%s.pdf",year.c_str()));
+  c1->SaveAs(Form("pdf/drawGamVsJet/drawGamVsJet_eta_%s_%s.pdf",
+		  year.c_str(),width.c_str()));
 
 
   TProfile *pgpt = (TProfile*)f->Get("resp_MPFchs_DATA_a100_eta00_13");
@@ -209,7 +230,8 @@ void drawGamVsJet(string year = "2025") {
   hr->GetXaxis()->SetRangeUser(40,300);
   tdrDraw(hr,"Pz",kNone,kBlue);
   
-  c2->SaveAs(Form("pdf/drawGamVsJet/drawGamVsJet_pt_%s.pdf",year.c_str()));
+  c2->SaveAs(Form("pdf/drawGamVsJet/drawGamVsJet_pt_%s_%s.pdf",
+		  year.c_str(),width.c_str()));
 
 
   // Look at eta-asymmetry
@@ -269,6 +291,7 @@ void drawGamVsJet(string year = "2025") {
   
   gPad->RedrawAxis();
   
-  c3->SaveAs(Form("pdf/drawGamVsJet/drawGamVsJet_etaasymm_%s.pdf",year.c_str()));
+  c3->SaveAs(Form("pdf/drawGamVsJet/drawGamVsJet_etaasymm_%s_%s.pdf",
+		  year.c_str(),width.c_str()));
   
 } // drawGamVsJet

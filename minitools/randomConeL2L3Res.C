@@ -8,6 +8,18 @@
 
 #include "../tdrstyle_mod22.C"
 
+// Force RC to be eta-symmetric
+bool symmetrizeEta = false;
+
+// Scale HB+HE results to account for neutral fraction
+bool scaleNeutral = true;
+
+// Scale HF results up to account for Long vs Short fibre balance
+bool scaleHF = true;
+
+// Scale HE+BE resulst to account for changes in timing
+bool scaleTiming = true;
+
 void randomConeL2L3Res_era(string era = "2024I");
 
 void randomConeL2L3Res() {
@@ -22,11 +34,12 @@ void randomConeL2L3Res() {
   randomConeL2L3Res_era("2024H");
   randomConeL2L3Res_era("2024I");
   */
-
+  /*
   randomConeL2L3Res_era("2024C_nib1");
   randomConeL2L3Res_era("2024D_nib1");
-  randomConeL2L3Res_era("2024Ev1_nib1");
-  randomConeL2L3Res_era("2024Ev2_nib1");
+  //randomConeL2L3Res_era("2024Ev1_nib1");
+  //randomConeL2L3Res_era("2024Ev2_nib1");
+  randomConeL2L3Res_era("2024E_nib1");
   randomConeL2L3Res_era("2024F_nib1");
   randomConeL2L3Res_era("2024F_nib2");
   randomConeL2L3Res_era("2024F_nib3");
@@ -34,11 +47,17 @@ void randomConeL2L3Res() {
   randomConeL2L3Res_era("2024G_nib2");
   randomConeL2L3Res_era("2024H_nib1");
   randomConeL2L3Res_era("2024I_nib1");
+  */
 
-  randomConeL2L3Res_era("2025B");
+  //randomConeL2L3Res_era("2025B");
   randomConeL2L3Res_era("2025C");
+  randomConeL2L3Res_era("2025D");
+  randomConeL2L3Res_era("2025E");
+  randomConeL2L3Res_era("2025F");
+  randomConeL2L3Res_era("2025G");
+  randomConeL2L3Res_era("2025CDEFG");
   
-  //exit(0);
+  exit(0);
 }
 
 void randomConeL2L3Res_era(string era) {
@@ -84,6 +103,10 @@ void randomConeL2L3Res_era(string era) {
   if (s.Contains("2024")) hrc = (TH1D*)frc->Get(Form("Run%s",cr2));
   if (s.Contains("2025")) hrc = (TH1D*)frc25->Get(Form("Run%s",cr2));
   if (s.Contains("2025C") && !hrc) hrc = (TH1D*)frc25->Get("Run2025B");
+  if (s.Contains("2025D") && !hrc) hrc = (TH1D*)frc25->Get("Run2025B");
+  if (s.Contains("2025E") && !hrc) hrc = (TH1D*)frc25->Get("Run2025B");
+  if (s.Contains("2025F") && !hrc) hrc = (TH1D*)frc25->Get("Run2025B");
+  if (s.Contains("2025G") && !hrc) hrc = (TH1D*)frc25->Get("Run2025B");
   assert(hrc);
   
   // Correct for sigmaMB=69.2mb->75.3mb
@@ -100,7 +123,7 @@ void randomConeL2L3Res_era(string era) {
   // Scale tracker-covered region by 0.4 to emulate difference from
   // primarily having differences from calorimeter side only
   TH1D *hrc753jes = (TH1D*)hrc753->Clone(Form("hrc753jes_%s",cr));
-  for (int i = 1; i != hrc753->GetNbinsX()+1; ++i) {
+  for (int i = 1; i != hrc753->GetNbinsX()+1 && scaleNeutral; ++i) {
     double eta = hrc753->GetBinCenter(i);
     double r = hrc753->GetBinContent(i);
     // For 2024CDE re-reco, apply scaling to EB only, not EE
@@ -131,6 +154,42 @@ void randomConeL2L3Res_era(string era) {
       hrc753jes->SetBinContent(i, (r-1)*0.4+1);
   } // for i
 
+  // Scale HF results, presumably to account for scale difference
+  // between Long and Short fibres introduced in 2025
+  for (int i = 1; i != hrc753->GetNbinsX()+1 && scaleHF; ++i) {
+    double eta = hrc753->GetBinCenter(i);
+    double r = hrc753jes->GetBinContent(i);
+    if (s.Contains("2025")) {
+      if (fabs(eta)>2.964) {
+	hrc753jes->SetBinContent(i, (era=="2025C" ? 1.10 : era=="2025CDEFG" ? 1.14 : 1.15)*r);
+      }
+    }
+  } // for i
+
+  // Scale HE+HB results in 2025DEFG, presumably to account for timing change
+  // introduced at the end of 2025C affecting effective thresholds
+  for (int i = 1; i != hrc753->GetNbinsX()+1 && scaleTiming; ++i) {
+    double abseta = fabs(hrc753->GetBinCenter(i));
+    double r = hrc753jes->GetBinContent(i);
+    if (s.Contains("2025") && era!="2025C") {
+      //if (abseta>=1.305 && abseta<2.964) {
+      //if (abseta<2.964) {
+      double x1 = 2.65;
+      double x0 = 0.5*1.305;//0.6525;
+      double x = abseta/x1;
+      if (abseta<x1) {
+	//double x = (abseta-0.6525)/(2.964-0.6525);
+	double kc = (era=="2025CDEFG" ? 0.80 : 1.00);
+	double k0 = 0 + 0.20*pow(x0,2);
+	double k = 1 + (0.20*pow(x,2) - k0) * kc;
+	//double k0 = 0 + 0.20*pow(x0,1);
+	//double k = 1 + 0.20*pow(x,1) - k0;
+	//hrc753jes->SetBinContent(i, (era=="2025CDEFG" ? 1.070 : 1.075) * k * r);
+	hrc753jes->SetBinContent(i, 1.075 * k * r);
+      }
+    }
+  } // for i
+  
   // Turn to L2Res by scaling out |eta|<1.3
   TH1D *hrc13 = (TH1D*)hrc753->Clone(Form("hrc13_%s",cr));
   TF1 *f13 = new TF1(Form("f13_%s",cr),"[0]",-1.305,1.305);
@@ -144,16 +203,18 @@ void randomConeL2L3Res_era(string era) {
   for (int i = 1; i != hrc13->GetNbinsX()+1; ++i) {
     hrc13->SetBinError(i, 0.);
     hrc13jes->SetBinError(i, 0.);
-    double eta = hrc13jes->GetBinCenter(i);
-    if (eta<0) {
-      int j = hrc13jes->GetXaxis()->FindBin(-eta);
-      hrc13jes->SetBinContent(i, 0.5*(hrc13jes->GetBinContent(i) +
-				      hrc13jes->GetBinContent(j)));
-    }
-    else {
+    if (symmetrizeEta) {
+      double eta = hrc13jes->GetBinCenter(i);
+      if (eta<0) {
+	int j = hrc13jes->GetXaxis()->FindBin(-eta);
+	hrc13jes->SetBinContent(i, 0.5*(hrc13jes->GetBinContent(i) +
+					hrc13jes->GetBinContent(j)));
+      }
+      else {
       int j = hrc13jes->GetXaxis()->FindBin(-eta);
       hrc13jes->SetBinContent(i, hrc13jes->GetBinContent(j));
-    }
+      }
+    } // symmetrizeEta
   } // for i
 
   // Add some reasonable uncertainties for L2Res fits later
@@ -161,6 +222,8 @@ void randomConeL2L3Res_era(string era) {
     double eta = fabs(hrc13jes->GetBinCenter(i));
     double dr = fabs(hrc13jes->GetBinContent(i)-1);
     if      (eta>3.139) hrc13jes->SetBinError(i, max(0.25*dr,0.02));
+    //if      (eta>3.139) hrc13jes->SetBinError(i, max(0.25*dr,0.05));
+    //if      (eta>3.139) hrc13jes->SetBinError(i, max(0.25*dr,0.03));
     else if (eta>2.65)  hrc13jes->SetBinError(i, 0.100);
     else if (eta>2.5)   hrc13jes->SetBinError(i, 0.070);
     else if (eta>2.322) hrc13jes->SetBinError(i, 0.050);
@@ -174,9 +237,13 @@ void randomConeL2L3Res_era(string era) {
   // Get L2Res
   //TFile *fl2 = new TFile("rootfiles/L2Res.root","READ");
   //TFile *fl2 = new TFile("rootfiles/L2Res_Prompt2024_V8M.root","READ");
+  /*
   TFile *fl2(0);
   if (s.Contains("24")) fl2=new TFile("rootfiles/L2Res_V9M_draft1.root","READ");
   if (s.Contains("25")) fl2=new TFile("rootfiles/L2Res.root","READ");
+  */
+  //TFile *fl2 = new TFile("rootfiles/L2Res_2024_V9M_2025_V2M.root","READ");
+  TFile *fl2 = new TFile("rootfiles/L2Res_2025CDEFG_V2M.root","READ");
   assert(fl2 && !fl2->IsZombie());
 
   //map<string, const char*> m;
@@ -203,7 +270,8 @@ void randomConeL2L3Res_era(string era) {
   //TH2D *h2l2 = (TH2D*)fl2->Get("h2jes_2024I_nib1"); assert(h2l2);
   //TH2D *h2l2 = (TH2D*)fl2->Get(Form("h2jes_%s_nib1",cr2)); assert(h2l2);
   //TH2D *h2l2 = (TH2D*)fl2->Get(Form("h2jes_%s",m[era])); assert(h2l2);
-  TH2D *h2l2 = (TH2D*)fl2->Get(Form("h2jes_%s",cr)); assert(h2l2);
+  //TH2D *h2l2 = (TH2D*)fl2->Get(Form("h2jes_%s",cr)); assert(h2l2); // eta-symmetric
+  TH2D *h2l2 = (TH2D*)fl2->Get(Form("h2jes1_%s",cr)); assert(h2l2); // eta-asymmetric
   double pt1 = 10;
   int ipt1 = h2l2->GetYaxis()->FindBin(pt1);
   TH1D *hl2_1 = h2l2->ProjectionX(Form("hl2_%s_1",cr),ipt1,ipt1);
@@ -234,7 +302,7 @@ void randomConeL2L3Res_era(string era) {
     double er20 = 0;//hl3->GetBinError(k20);
     
     double eta = hl2_1_rc->GetBinCenter(i);
-    int j = hl2_1->FindBin(fabs(eta));
+    int j = hl2_1->FindBin(symmetrizeEta ? fabs(eta) : eta);
     hl2_1_rc->SetBinContent(i, r10*hl2_1->GetBinContent(j));
     hl2_1_rc->SetBinError(i, r10*hl2_1->GetBinError(j));
     hl2_2_rc->SetBinContent(i, r20*hl2_2->GetBinContent(j));
@@ -251,7 +319,8 @@ void randomConeL2L3Res_era(string era) {
   #include "../Config.C"
   double eps = 1e-4;
   //TH1D *h = tdrHist(Form("h_%s",cr),"JES or RC SF ",0.4+eps,1.8-eps,
-  TH1D *h = tdrHist(Form("h_%s",cr),"JES or RC",0.25+eps,1.7-eps,
+  //TH1D *h = tdrHist(Form("h_%s",cr),"JES or RC",0.25+eps,1.7-eps,
+  TH1D *h = tdrHist(Form("h_%s",cr),"JES or RC",0.6+eps,1.45-eps,
 		    "#eta",-5.2,5.2);
   //TH1D *hd = tdrHist(Form("hd_%s",cr),"JES / RC SF ",0.8+eps,1.8-eps,
   TH1D *hd = tdrHist(Form("hd_%s",cr),"JES / RCF",0.4+eps,1.6-eps,
@@ -311,7 +380,7 @@ void randomConeL2L3Res_era(string era) {
     hr_1_band->SetBinContent(i, 1);
     hr_1_band->SetBinError(i, hrc13jes->GetBinError(i));
   }
-  tdrDraw(hr_1_band,"E2",kFullCircle,kBlack,kSolid,-1,1001,kYellow+1,0.5);
+  tdrDraw(hr_1_band,"E2",kNone,kBlack,kSolid,-1,1001,kYellow+1,0.5);
 
   l->SetLineStyle(kSolid);
   l->SetLineColor(kBlack);
