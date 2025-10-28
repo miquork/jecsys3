@@ -28,7 +28,7 @@ double rmin_wide = 0.87;//0.955;
 double rrmin_wide = -13;//-1.6;
 double rrmax_wide = +6;//+1.2;
 double retamin_wide = -3.5;//-2.2;//-1.5;
-double retamax = +6;//+3.2;//+2.0;
+double retamax_wide = +6;//+3.2;//+2.0;
 
 
 void drawGamVsJet(string year = "2025", string width = "wide") {
@@ -42,6 +42,7 @@ void drawGamVsJet(string year = "2025", string width = "wide") {
   TFile *f(0);
   if (year=="2024") f = new TFile("rootfiles/Prompt2024/w43/GamHistosFill_data_2024_w43.root","READ");
   if (year=="2025") f = new TFile("rootfiles/Prompt2025/Gam_w64/GamHistosFill_data_2025CDEFG_w64.root","READ");
+  if (year=="2025C") f = new TFile("rootfiles/Prompt2025/Gam_w64/GamHistosFill_data_2025C_w64.root","READ");
   assert(f && !f->IsZombie());
 
   TProfile *pg50 = (TProfile*)f->Get("control/pr50mpfvseta"); assert(pg50);
@@ -103,6 +104,7 @@ void drawGamVsJet(string year = "2025", string width = "wide") {
   extraText = "Private";
   if (year=="2024") lumi_136TeV = "2024, 110 fb^{-1}";
   if (year=="2025") lumi_136TeV = "2025, ~100 fb^{-1}";
+  if (year=="2025C") lumi_136TeV = "2025C, 20.8 fb^{-1}";
   //TH1D *h = tdrHist("h","#LTp_{T,jet}#GT / p_{T,#gamma} (MPF)^{ }",0.975,1.040,
   TH1D *h = tdrHist("h","#LTp_{T,jet}#GT / p_{T,#gamma} (MPF)^{ }", rmin, rmax,
 		    "Photon #eta_{#gamma}",etamin,etamax);//-1.5,1.5);//-1.4795,+1.4795);
@@ -160,7 +162,7 @@ void drawGamVsJet(string year = "2025", string width = "wide") {
   gPad->RedrawAxis();
   
   c1->SaveAs(Form("pdf/drawGamVsJet/drawGamVsJet_eta_%s_%s.pdf",
-		  year.c_str(),width.c_str()));
+		  width.c_str(),year.c_str()));
 
 
   TProfile *pgpt = (TProfile*)f->Get("resp_MPFchs_DATA_a100_eta00_13");
@@ -169,6 +171,7 @@ void drawGamVsJet(string year = "2025", string width = "wide") {
   TFile *fz(0);
   if (year=="2024") fz = new TFile("rootfiles/Prompt2024/v93/jme_bplusZ_2024_Zmm_v93.root","READ");
   if (year=="2025") fz = new TFile("rootfiles/Prompt2025/Zmm_v102/jme_Zj_2025_Zmm_v102_nomu.root","READ");
+  if (year=="2025C") fz = new TFile("rootfiles/Prompt2025/Zmm_v102/jme_Zj_2025C_Zmm_v102_nomu.root","READ");
   assert(fz && !fz->IsZombie());
   TProfile2D *p2z = (TProfile2D*)fz->Get("data/l2res/p2m0"); assert(p2z);
   int i13 = p2z->GetXaxis()->FindBin(1.305-0.06);
@@ -230,8 +233,7 @@ void drawGamVsJet(string year = "2025", string width = "wide") {
   hr->GetXaxis()->SetRangeUser(40,300);
   tdrDraw(hr,"Pz",kNone,kBlue);
   
-  c2->SaveAs(Form("pdf/drawGamVsJet/drawGamVsJet_pt_%s_%s.pdf",
-		  year.c_str(),width.c_str()));
+  c2->SaveAs(Form("pdf/drawGamVsJet/drawGamVsJet_pt_%s.pdf", year.c_str()));
 
 
   // Look at eta-asymmetry
@@ -292,6 +294,6 @@ void drawGamVsJet(string year = "2025", string width = "wide") {
   gPad->RedrawAxis();
   
   c3->SaveAs(Form("pdf/drawGamVsJet/drawGamVsJet_etaasymm_%s_%s.pdf",
-		  year.c_str(),width.c_str()));
+		  width.c_str(),year.c_str()));
   
 } // drawGamVsJet
