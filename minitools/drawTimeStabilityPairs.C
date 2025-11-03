@@ -25,7 +25,7 @@ void drawGamVsZmm(string mode);
 // Draw Central vs Outer Barrel photon scale
 void drawGamVsGam();
 // Draw TTBar vs Gam
-void drawGamVsTTBar();
+void drawGamVsTTBar(string mode);
 // Draw PFcomposition + JES (+ reference run if not 0)
 void drawPFcomp(string ref, double refrun=0);
 
@@ -51,7 +51,8 @@ void drawTimeStabilityPairs() {
   */
   //drawGamVsGam();
 
-  drawGamVsTTBar();
+  //drawGamVsTTBar("prof_top_inWindow");
+  //drawGamVsTTBar("prof_W_inWindow");
 }
 
 void drawGamVsZmm(string mode) {
@@ -460,7 +461,7 @@ void drawGamVsGam() {
   c1->SaveAs("pdf/drawTimeStability/drawTimeStabilityPairs_GamVsGam.pdf");
 } // drawTimeStabilityPairs()
 
-void drawGamVsTTBar() {
+void drawGamVsTTBar(string mode) {
 
   setTDRStyle();
   TDirectory *curdir = gDirectory;
@@ -474,7 +475,8 @@ void drawGamVsTTBar() {
   l->SetLineStyle(kDashed);
   l->SetLineColor(kGray+1);
 
-  double xmin(0), xmax(175), ymin(-2.4), ymax(+3.4), ymind(-1.5), ymaxd(+1.9);
+  //double xmin(0), xmax(175), ymin(-2.4), ymax(+3.4), ymind(-1.5), ymaxd(+1.9);
+  double xmin(0), xmax(175), ymin(-2.4), ymax(+3.4), ymind(-1.9), ymaxd(+2.4);
   TH1D *h = tdrHist("h_u","JES-1 (%)",ymin,ymax,"Cumulative luminosity (fb^{-1})",xmin,xmax);
   TH1D *h_d = tdrHist("h_d","#gamma+j - t#bar{t} (%)",ymind,ymaxd,"Cumulative luminosity (fb^{-1})",xmin,xmax);
   lumi_136TeV = "Run 3, 2022-24";
@@ -486,7 +488,10 @@ void drawGamVsTTBar() {
   TH1D *ha(0), *hb(0);
   ha = (TH1D*)f->Get("pr50m"); assert(ha);
   //hb = (TH1D*)f->Get("prof_top_inWindow"); assert(hb);
-  hb = (TH1D*)f->Get("prof_W_inWindow"); assert(hb);
+  //hb = (TH1D*)f->Get("prof_W_inWindow"); assert(hb);
+  const char *cm = mode.c_str();
+  TString tm(cm);
+  hb = (TH1D*)f->Get(cm); assert(hb);
   TH1D *hd = (TH1D*)ha->Clone("hd");
   hd->Add(hb,-1);
   cleanEmpty(hd,ha,hb);
@@ -539,7 +544,11 @@ void drawGamVsTTBar() {
 
   TLegend *leg = tdrLeg(0.65,0.89-0.05*4,0.90,0.89);
   leg->SetFillStyle(1001);
-  leg->AddEntry(hb,"t#bar{t} 50","PLE");
+
+  if (tm.Contains("top"))
+    leg->AddEntry(hb,"t#bar{t} m_{t}","PLE");
+  else
+    leg->AddEntry(hb,"t#bar{t} m_{W}","PLE");
   leg->AddEntry(ha,"#gamma+jet 50","PLE");
 
   gPad->RedrawAxis();
@@ -616,7 +625,10 @@ void drawGamVsTTBar() {
   
   gPad->RedrawAxis();
 
-  c1->SaveAs("pdf/drawTimeStability/drawTimeStabilityPairs_GamVsTTBar.pdf");
+  if (tm.Contains("top"))
+    c1->SaveAs("pdf/drawTimeStability/drawTimeStabilityPairs_GamVsTTBar_mt.pdf");
+  else
+    c1->SaveAs("pdf/drawTimeStability/drawTimeStabilityPairs_GamVsTTBar_mW.pdf");
 
 } // drawGamVsTTBar
 
