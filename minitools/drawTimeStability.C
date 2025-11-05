@@ -7,13 +7,24 @@
 #include "TF1.h"
 
 #include <iostream>
+#include <sstream>
+#include <fstream>
+#include <map>
 
 #include "../tdrstyle_mod22.C"
 
 bool debug = false;
 bool addExtraText = false;
 bool addExtraLine = false;
+
+bool addNibLine = true;
+bool addYearLine = true;
+
 void rebinProfileCustom(TProfile* p, TProfile* p_new);
+map<string,pair<int,int>> BuildRanges(const string& fname);
+void addLines(map<string,pair<int,int>>& ml, TH1D *hcumlum2, double kf,
+	      double xmin, double xmax, double ymin, double ymax,
+	      TH1D *hbreaks = 0);
 
 void drawTimeStability() {
 
@@ -37,54 +48,36 @@ void drawTimeStability() {
 
     // dijet
     "DiJet",
-    // //"2022C_v39","2022D_v39","2022E_v39","2022F_v39","2022G_v39",
-    //"2022C_v113","2022D_v113","2022E_v113","2022F_v113","2022G_v113",
-    //"2023Cv123_v39","2023Cv4_v39","2023D_v39",
-    // //"2024B_v110","2024C_v110","2024D_v110","2024E_v110",
-    // //"2024F_v110","2024G_v110","2024H_v111","2024I_v111",
-    //"2024B_v112","2024C_v112","2024D_v112","2024E_v112",
-    //"2024F_v112","2024G_v112","2024H_v112","2024I_v112",
-
-    "2022_v113","2023_v113",//"2024_v113",
-    //"2022C_v113","2022D_v113","2022E_v113","2022F_v113","2022G_v113",
-    //"2023Cv123_v39","2023Cv4_v39","2023D_v39",
-    //"2024B_nib1","2024C_nib1","2024D_nib1","2024Ev1_nib1","2024Ev2_nib1",
-    "2024C_nib1","2024D_nib1","2024E_nib1",
-    "2024F_nib1","2024F_nib2","2024F_nib3","2024G_nib1","2024G_nib2",
-    "2024H_nib1","2024I_nib1",
-
+    "2022_v113","2023_v113",
+    //"2024C_nib1","2024D_nib1","2024E_nib1",
+    //"2024F_nib1","2024F_nib2","2024F_nib3","2024G_nib1","2024G_nib2",
+    //"2024H_nib1","2024I_nib1",
+    "2024CDEFGHI_nib",
+    //
+    "2025C","2025D","2025E", "2025F","2025G",
+    
     // gamma+jet
     "GamJet",
     "2022C","2022D","2022E","2022F","2022G",
     "2023Cv123","2023Cv4","2023D",
-    //"2024B","2024C","2024D","2024Ev1","2024Ev2","2024F","2024G","2024H","2024Iv1","2024Iv2",
-    //"2024B_nib1",
-    "2024C_nib1-rereco","2024D_nib1-rereco",//"2024Ev1_nib1","2024Ev2_nib1",
-    "2024E_nib1-rereco",
+    "2024C_nib1-rereco","2024D_nib1-rereco","2024E_nib1-rereco",
     "2024F_nib1","2024F_nib2","2024F_nib3","2024G_nib1","2024G_nib2",
     "2024H_nib1","2024I_nib1",
-    //"2024C","2024D-rereco","2024E-rereco",
-    //"2024Fnib1","2024Fnib2","2024Fnib3","2024Gnib1","2024Gnib2",
-    //"2024Hnib1","2024Inib1",
-    
-    //"2022CDE_v32","2022FG_v32",
-    //"2023Cv123_w8","2023Cv4_w8","2023D_w8",
-    //"2024BCD_w39","2024E_w39","2024F_w39","2024G_w39","2024H_w40","2024I_w40",
+    //
+    "2025C","2025D","2025E","2025F","2025G",
 
     // Z+jet
     "ZmmJet",
-    "2022CD","2022E",//"2022FG",
-    "2022F","2022G",
+    "2022CD","2022E","2022F","2022G",
     "2023C123","2023C4","2023D",
-    //"2024BCD","2024E","2024F","2024G","2024H","2024I"
-    //"2024B_nib1","2024C_nib1","2024D_nib1","2024Ev1_nib1","2024Ev2_nib1",
-    //"2024B_nib1",
     "2024CDEReprocessing_v1_2024C_nib1",
     "2024CDEReprocessing_v1_2024D_nib1",
     "2024CDEReprocessing_v1_2024Ev1_nib1",
     "2024CDEReprocessing_v1_2024Ev2_nib1",
     "2024F_nib1","2024F_nib2","2024F_nib3","2024G_nib1","2024G_nib2",
     "2024H_nib1","2024I_nib1",
+    //
+    "2025C","2025D","2025E","2025F","2025G",
 
     "TTBar",
     "2024"
@@ -122,9 +115,9 @@ void drawTimeStability() {
     "mpf_run_zpt30","mpf_run_zpt110","mpf_run_zpt50",
     "db_run_zpt30","db_run_zpt110","db_run_zpt50",
 
-    "chf_run_zpt30","nef_run_zpt30","nhf_run_zpt30",
-    "chf_run_zpt50","nef_run_zpt50","nhf_run_zpt50",
-    "chf_run_zpt110","nef_run_zpt110","nhf_run_zpt110",
+    //"chf_run_zpt30","nef_run_zpt30","nhf_run_zpt30",
+    //"chf_run_zpt50","nef_run_zpt50","nhf_run_zpt50",
+    //"chf_run_zpt110","nef_run_zpt110","nhf_run_zpt110",
 
 
     // ttbar
@@ -162,6 +155,9 @@ void drawTimeStability() {
   mhead["pr50m"] = "#gamma+jet MPF 50EB";
   mhead["pr110m"] = "#gamma+jet MPF 110EB";
   mhead["pr230m"] = "#gamma+jet MPF 200";
+  mhead["pr50b"] = "#gamma+jet DB 50EB";
+  mhead["pr110b"] = "#gamma+jet DB 110EB";
+  mhead["pr230b"] = "#gamma+jet DB 200";
   mhead["pr50chf"] = "#gamma+jet CHF 50EB";
   mhead["pr50nhf"] = "#gamma+jet NHF 50EB";
   mhead["pr50nef"] = "#gamma+jet NEF 50EB";
@@ -181,6 +177,9 @@ void drawTimeStability() {
 
   // Store normalizations to histogra
   TH1D *hscales = new TH1D("hscales",";Observable;Scale",2*nh,0,2*nh);
+
+  // Load year, era, nib ranges from file
+  map<string,pair<int,int> > ml = BuildRanges("rootfiles/brilcalc/fibs.txt");
   
   // Loop over files to retrieve stuff
   bool useGam(false), useZmm(false), useJet(false), useTT(false);
@@ -205,14 +204,11 @@ void drawTimeStability() {
     if (th.Contains("chf")) kpf = 1.5; // 65%
     
     TH1D *hsum = (TH1D*)hlum2->Clone(Form("hsum_%s",ch)); hsum->Reset();
-    //double vx[hsum->GetNbinsX()+1];
-    //for (int i = 1; i != hsum->GetNbinsX()+2; ++i) vx[i-1] = hsum->GetBinLowEdge(i);
-    //TProfile *psum = new TProfile(Form("psum_%s",ch),"",hsum->GetNbinsX(),&vx[0]);//hsum->GetXaxis()->GetXbins()->GetArray());
     double vx[hbins->GetNbinsX()+1];
     for (int i = 1; i != hbins->GetNbinsX()+2; ++i) vx[i-1] = hbins->GetBinLowEdge(i);
-    TProfile *psum = new TProfile(Form("psum_%s",ch),"",hbins->GetNbinsX(),&vx[0]);//hsum->GetXaxis()->GetXbins()->GetArray());
+    TProfile *psum = new TProfile(Form("psum_%s",ch),"",hbins->GetNbinsX(),&vx[0]);
     psum->Sumw2();
-    TProfile *psumjes = new TProfile(Form("psumjes_%s",ch),"",hbins->GetNbinsX(),&vx[0]);//hsum->GetXaxis()->GetXbins()->GetArray());
+    TProfile *psumjes = new TProfile(Form("psumjes_%s",ch),"",hbins->GetNbinsX(),&vx[0]);
     psumjes->Sumw2();
     
     // Keep track of JES (1=L2L3Res) for gamma+jet MPF
@@ -237,74 +233,57 @@ void drawTimeStability() {
       TFile *f(0);
       // Photon+jet files
       if (useGam) {
-	/*
-	if (tf.Contains("2024")) f = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s.root",cf),"READ");
-	*/
-	if (tf.Contains("2023")) f = new TFile(Form("rootfiles/Summer23_L2L3Res/GamHistosFill_data_%s.root",cf),"READ");
-	if (tf.Contains("2022")) f = new TFile(Form("../gamjet/rootfiles/GamHistosFill_data_%s.root",cf),"READ");
-
-	//f = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s_w42.root",cf),"READ");
-	//f = new TFile(Form("rootfiles/Prompt2024/v45_Gam/GamHistosFill_data_%s_w45.root",cf),"READ");
-	if (tf.Contains("2024")) f = new TFile(Form("rootfiles/Prompt2024/w48_Gam/GamHistosFill_data_%s_w48.root",cf),"READ"); // V9M
+	
+	if (tf.Contains("2023")) f = new TFile(Form("rootfiles/Summer23_L2L3Res/GamHistosFill_data_%s_w8.root",cf),"READ");
+	if (tf.Contains("2022")) f = new TFile(Form("../gamjet/rootfiles/GamHistosFill_data_%s_v32.root",cf),"READ");
+	if (tf.Contains("2024")) f = new TFile(Form("rootfiles/Prompt2024/w48_Gam/GamHistosFill_data_%s_w48.root",cf),"READ"); // V9M prompt
+	if (tf.Contains("2025")) f = new TFile(Form("rootfiles/Prompt2025/Gam_w65/GamHistosFill_data_%s_w65.root",cf),"READ"); // V2M prompt
       }
+      
       // Zmm+jet files
       if (useZmm) {
 
-	if (tf.Contains("2022FG")) f = new TFile(Form("rootfiles/jme_bplusZ_%s_Zmm_sync_v78.root",cf),"READ");
-	else if (tf.Contains("2022"))   f = new TFile(Form("rootfiles/jme_bplusZ_%s_Zmm_sync_v76.root",cf),"READ");
-	if (tf.Contains("2023"))   f = new TFile(Form("rootfiles/Prompt2024/jme_bplusZ_%s_Zmm_sync_v84.root",cf),"READ");
-	//if (tf.Contains("2024"))   f = new TFile(Form("rootfiles/Prompt2024/v88/jme_bplusZ_%s_Zmm_sync_v88.root",cf),"READ");
-
-	
-	//if (tf.Contains("2024F")) f = new TFile(Form("rootfiles/Prompt2024/v88/jme_bplusZ_%s_Zmm_sync_v88.root",cf),"READ");
-	/*
-	if (tf.Contains("2024BC") || tf.Contains("2024F") || tf.Contains("2024G") || tf.Contains("2024H")) f = new TFile(Form("rootfiles/Prompt2024/v91/jme_bplusZ_%s_Zmm_sync_v91d.root",cf),"READ");
-	else
-	  f = new TFile(Form("rootfiles/Prompt2024/v91/jme_bplusZ_%s_Zmm_sync_v91.root",cf),"READ");
-	*/
-	//f = new TFile(Form("rootfiles/Prompt2024/v94_Zmm/jme_bplusZ_%s_Zmm_v94_Summer24.root",cf),"READ");
-	//f = new TFile(Form("rootfiles/Prompt2024/v96_Zmm/jme_Zj_%s_Zmm_NoPU_V8M_v96.root",cf),"READ"); // V8M
-	//f = new TFile(Form("rootfiles/Prompt2024/v96_Zmm/jme_Zj_%s_Zmm_NoPU_V8M_v96.root",cf),"READ"); // V8M
-	//if (tf.Contains("24C") || tf.Contains("24D") || tf.Contains("24E"))
-	//f = new TFile(Form("rootfiles/Prompt2024/v97_Zmm/jme_Zj_2024CDEReprocessing_v1_%s_Zmm_pileup_69200_V8M_v97.root",cf), "READ"); // V9M rereco
-	//else
-	if (tf.Contains("2024"))
-	  f = new TFile(Form("rootfiles/Prompt2024/v97_Zmm/jme_Zj_%s_Zmm_pileup_69200_V8M_v97.root",cf), "READ"); // V9M prompt
+	if (tf.Contains("2022F") || tf.Contains("2022G")) f = new TFile(Form("rootfiles/jme_bplusZ_%s_Zmm_sync_v78.root",cf),"READ");
+	else if (tf.Contains("2022")) f = new TFile(Form("rootfiles/jme_bplusZ_%s_Zmm_sync_v76.root",cf),"READ");
+	if (tf.Contains("2023")) f = new TFile(Form("rootfiles/Prompt2024/jme_bplusZ_%s_Zmm_sync_v84.root",cf),"READ");
+	if (tf.Contains("2024")) f = new TFile(Form("rootfiles/Prompt2024/v97_Zmm/jme_Zj_%s_Zmm_pileup_69200_V8M_v97.root",cf), "READ"); // V9M prompt
+	if (tf.Contains("2025")) f = new TFile(Form("rootfiles/Prompt2025/Zmm_v102/jme_Zj_%s_Zmm_v102_nomu.root",cf), "READ"); // V2M prompt
       }
+
+      // Inclusive jet files
       if (useJet) {
+
 	char cv[256], ce[256];
 	TString tf(cf); tf.ReplaceAll("_"," ");
 	sscanf(tf.Data(),"%s %s",ce,cv);
 	cout << "s="<<cf<<", ce="<<ce<<", cv="<<cv<<endl<<flush;
-	/*
-	if (tf.Contains("2024")) {
-	  f = new TFile(Form("rootfiles/Prompt2024/%s_2024/jmenano_data_out_%s_JME_%s_2024.root",cv,ce,cv),"READ");
-	}
-	*/
-	if (tf.Contains("2023")) {
-	  //f = new TFile(Form("rootfiles/Summer23_L2L3ResJERSF/%s_2023_etabin_SFv2/jmenano_data_out_%s_JME_%s_2023_etabin_SFv2.root",cv,ce,cv),"READ");
-	  f = new TFile(Form("rootfiles/Prompt2024/%s_2023/jmenano_data_out_%s_%s.root",cv,ce,cv),"READ");
-	}
+
 	if (tf.Contains("2022")) {
-	  //f = new TFile(Form("rootfiles/Summer22_L2L3ResJERSF/%s_2022_etabin_SFv/jmenano_data_out_%s_JME_%s_2022_etabin_SFv.root",cv,ce,cv),"READ");
-	  //f = new TFile(Form("rootfiles/Prompt2024/%s_2022/jmenano_data_out_%s_nib1_JME_%s_2022.root",cv,ce,cv),"READ");
-	  //f = new TFile(Form("rootfiles/Prompt2024/%s_2022/jmenano_data_out_%s.root",cv,ce),"READ");
 	  f = new TFile(Form("rootfiles/Prompt2024/%s_2022/jmenano_data_out_%s_%s.root",cv,ce,cv),"READ");
 	}
-
-	//f = new TFile(Form("rootfiles/Prompt2024/%s_%s/jmenano_data_out_%s_%s.root",cv,ce,ce,cv));
-	//if (!tf.Contains("Rereco"))
-	//f = new TFile(Form("rootfiles/Prompt2024/v116_Jet/jmenano_data_out_%s_JME_v116.root",cf),"READ");
-	//f = new TFile(Form("rootfiles/Prompt2024/v121_Jet/jmenano_data_out_%s_JME_v121.root",cf),"READ");
-
-	if (tf.Contains("24C") || tf.Contains("24D") || tf.Contains("24E"))
-	  f = new TFile(Form("rootfiles/Prompt2024/v121_v2_Jet/jmenano_data_cmb_%s_Rereco_JME_v121_v2.root",cf),"READ"); // V9M re-reco
+	if (tf.Contains("2023")) {
+	  f = new TFile(Form("rootfiles/Prompt2024/%s_2023/jmenano_data_out_%s_%s.root",cv,ce,cv),"READ");
+	}
+	if (tf.Contains("2024CDEFGHI_nib")) {
+	  f = new TFile(Form("rootfiles/Prompt2024/v121_v2_Jet/jmenano_data_out_%s_Rereco_JME_v121_v2.root",cf),"READ"); // V9M re-reco
+	}
+	else if (tf.Contains("24C") || tf.Contains("24D") || tf.Contains("24E"))
+	  f = new TFile(Form("rootfiles/Prompt2024/v121_v2_Jet/jmenano_data_out_%s_Rereco_JME_v121_v2.root",cf),"READ"); // V9M re-reco
 	else if (tf.Contains("2024"))
-	  f = new TFile(Form("rootfiles/Prompt2024/v121_v2_Jet/jmenano_data_cmb_%s_JME_v121_v2.root",cf),"READ"); // V9M prompt
+	  f = new TFile(Form("rootfiles/Prompt2024/v121_v2_Jet/jmenano_data_out_%s_JME_v121_v2.root",cf),"READ"); // V9M prompt
+	if (tf.Contains("2025F") || tf.Contains("2025G")) {
+	  f = new TFile(Form("rootfiles/Prompt2025/Jet_v147/jmenano_data_out_%s_JME_v147.root",cf),"READ"); // V9M prompt
+	}
+	else if (tf.Contains("2025")) {
+	  f = new TFile(Form("rootfiles/Prompt2025/Jet_v146/jmenano_data_out_%s_JME_v146.root",cf),"READ"); // V9M prompt
+	}
       }
+
+      // mW, mTop, ttbar xsec
       if (useTT) {
 	f = new TFile("rootfiles/Prompt2024/Emilia_tt_2024.root","READ");
       }
+      
       if (!f || f->IsZombie()) cout << "Missing " << cf << endl << flush;
       assert(f && !f->IsZombie());
       curdir->cd();
@@ -410,28 +389,37 @@ void drawTimeStability() {
 
     double xmin = hbins->GetXaxis()->GetXmin();
     double xmax = hbins->GetXaxis()->GetXmax();
-    //double kf = (psum->Integral()!=0 ? (isPF ? kpf : 1.) : 20.);
     double kf = (psum->Integral()!=0 ? (isPF ? kpf : 1.) : 12.);
-    double ymin = (psum->Integral()!=0 ? (isPF ? -2.5*kpf : -2.5) : -2.5*kf);
-    double ymax = (psum->Integral()!=0 ? (isPF ? +5.5*kpf : +5.5) : +5.5*kf);
+    //double ymin = (psum->Integral()!=0 ? (isPF ? -2.5*kpf : -2.5) : -2.5*kf);
+    //double ymax = (psum->Integral()!=0 ? (isPF ? +5.5*kpf : +5.5) : +5.5*kf);
+    //double ymin = (psum->Integral()!=0 ? (isPF ? -2.5*kpf : -7.0) : -2.5*kf);
+    //double ymax = (psum->Integral()!=0 ? (isPF ? +5.5*kpf : +17.0) : +5.5*kf);
+    double ymin = (psum->Integral()!=0 ? (isPF ? -2.5*kpf : -11.0) : -2.5*kf);
+    double ymax = (psum->Integral()!=0 ? (isPF ? +5.5*kpf : +14.0) : +5.5*kf);
     if (isZmass) {
       ymin = -0.2; ymax = +0.3;
     }
-    //if (useJet) {
-    //ymin = -200; ymax=+400;
-    //}
     if (isEta) {
-      //ymin = -5; ymax = +11;
-      //ymin = -7.5; ymax = +16.5;
       ymin = -10; ymax = +22;
     }
-    //TH1D *h1 = tdrHist(Form("h1_%s",ch),"JES",0.975,1.025,"Cumulative luminosity (fb^{-1})",0,hbins->GetXaxis()->GetXmax());
     TH1D *h1 = tdrHist(Form("h1_%s",ch),"JES-1 (%)",ymin,ymax,"Cumulative luminosity (fb^{-1})",xmin,xmax);
-    lumi_136TeV = "Run3, 2022-24";
+    lumi_136TeV = "Run3, 2022-25";
     extraText = "Private";
     TCanvas *c1 = tdrCanvas(Form("c1_%s",ch),h1,8,11,kRectangular);
 
-    if (true) { // Draw extra lines etc.
+    if (addNibLine || addYearLine) {
+
+      TH1D *hbreaks = new TH1D("hbreaks",";Break point;Cum.Lum. (/fb)",ml.size(),0,ml.size());
+      
+      addLines(ml, hcumlum2, kf, xmin, xmax, ymin, ymax, hbreaks);
+
+      fout->cd();
+      hbreaks->GetXaxis()->SetTitleOffset(3.0);
+      hbreaks->Write("hbreaks",TObject::kOverwrite);
+      curdir->cd();
+      delete hbreaks;
+    }
+    else if (false) { // Draw extra lines etc.
 
       // Horizontal lines at 0 and +/-1% for reference
       TLine *l = new TLine();
@@ -451,52 +439,30 @@ void drawTimeStability() {
       // Define era boundaries as pairs of (start_run, end_run)
       std::vector<std::pair<int, int>> era_boundaries = {
         // 2022 (CDE) (FG)
-        {355100, 355793}, /*{355794, 357486}, {357487, 357733},*/ {357734, 358219}, /*{358220, 359021}, {359022, 360331},*/
-        //{360332, 362180}, {362181, 362349}, {362350, 362760},
-        // 2023
-        {366442, 367079}, //{367080, 367515}, {367516, 367620}, {367621, 367763}, {367765, 369802}, {369803, 370602}, {370603, 370790},
+        {355100, 355793}, {357734, 358219}, {366442, 367079}, 
         // 2024
-        {378971, 379411}, /*{379412, 380252}, {380253, 380947},*/ {380948, 381383}, {381384, 381943}, {381944, 383779},
+        {378971, 379411}, {380948, 381383}, {381384, 381943}, {381944, 383779},
         {383780, 385813}, {385814, 386408}, {386409, 386951}
       };
       // List of eras as (start_run, era name)
       std::vector<std::pair<int, string>> eras = {
         // 2022
-        //{355100, "22"},/* {355794, "22C"}, {357487, "22D"}, {357734, "22Dv2"}, {358220, "22Dv3"},*/ {359022, "E"},
-        //{360332, "F"}, /*{362181, "22HI"}, {362350, "G"},*/
-	{355374, "22"}, {359569, "E"}, {360390, "F"}, /*{362181, "22HI"},*/ {362437, "G"}, // Updated actual first run
+	{355374, "22"}, {359569, "E"}, {360390, "F"}, {362437, "G"}, // Updated actual first run
         // 2023
-        //{366442, "23"}, /*{367080, "23C"}, {367516, "23Cv2"}, {367621, "23Cv3"},*/ {367765, "Cv4"}, {369803, "D"}, /*{370603, "23Dv2"},*/
 	{366727, "23"}, {367770, "Cv4"}, {369927, "D"}, // Updated actual first run
         // 2024
         //{378971, "24"}, /*{379412, "24C"}, {380253, "24D"},*/ {380948, "E"}, /*{381384, "24Ev2"},*/ {381944, "F"},
 	{378985, "24"}, {380963, "E"}, {382229, "F"}, // Updated actual first run
-        //{383780, "G"}, {385814, "H"}, {386409, "I"}
 	{383811, "G"}, {385836, "H"}, {386478, "I"} // Updated actual first run
       };
 
       // Additional HCAL breaks
       // https://twiki.cern.ch/twiki/bin/viewauth/CMS/HcalRespCorrsTagsRun3
       // https://twiki.cern.ch/twiki/bin/view/CMS/HcalRespCorrsTags2011
-      //eras.push_back(pair<int,string>(383195,"24_v2.0")); // HLT
-      //eras.push_back(pair<int,string>(383219,"24_v2.1")); // HLT
-      //eras.push_back(pair<int,string>(386401,"24_v3.0")); // HLT, eraH
-
       // => https://cms-talk.web.cern.ch/t/fast-track-validation-hlt-prompt-hcal-respcorrs-condition-update-from-hb-time-adjustment/25302/5
-      //eras.push_back(pair<int,string>(368775,"V1.0")); // 368765, 368822 =>
       eras.push_back(pair<int,string>(368822,"V1.0")); // (actual run, 23D-)
-      
-      //eras.push_back(pair<int,string>(367765,"V1.0")); // 23_v1.0 => 23Cv4
-      //eras.push_back(pair<int,string>(380637,"V1.0")); // Something in mid-24C?
-      //eras.push_back(pair<int,string>(380852,"V1.0")); // 24E
-      //eras.push_back(pair<int,string>(382287,"V2.0")); // 24_v2.0 =>
       eras.push_back(pair<int,string>(382298,"V2.0")); // 24_v2.0 (actual first run)
-      //eras.push_back(pair<int,string>(383219,"V2.1")); // 24_v2.1 =>
       eras.push_back(pair<int,string>(383247,"V2.1")); // 24_v2.1 (actual first run)
-      //eras.push_back(pair<int,string>(386401,"V3.0")); // 24_v3.0 => 24I =>
-      //eras.push_back(pair<int,string>(386478,"V3.0")); // 24_v3.0 / 24I (actual first run)
-      //eras.push_back(pair<int,string>(383811,"VG")); // 24G tes
-
       // https://twiki.cern.ch/twiki/bin/viewauth/CMS/AlCaTSGConditionsUpdate
       eras.push_back(pair<int,string>(386401,"V1.0")); // Old tag?
       eras.push_back(pair<int,string>(386732,"VHP")); // HCAL pedestals
@@ -505,102 +471,36 @@ void drawTimeStability() {
       // Additional ECAL intercalibration updates
       // https://cms-talk.web.cern.ch/c/ppd/alca/108
       // => https://cms-talk.web.cern.ch/t/gt-online-hlt-express-prompt-update-of-ecal-pedestals-conditions-run-368782-w24/25407
-      //era_boundaries.push_back(pair<int,int>(368919,368919)); // 23D-, 368823, 369927 =>
-      //eras.push_back(pair<int,string>(369927,"EP")); // =? 23D (actual run)
       // => https://cms-talk.web.cern.ch/t/gt-online-hlt-express-prompt-update-of-ecal-pedestals-conditions-run-384719-w34/46354/10
-      //eras.push_back(pair<int,string>(384719,"IC")); // mid-24G! =>
-      //eras.push_back(pair<int,string>(384933,"IC1")); // mid-24G! (actual first run) 384644, 384933
       // => https://cms-talk.web.cern.ch/t/l1-pre-announcement-of-ecal-intercalibration-update-at-l1-run-386025/57306
-      //eras.push_back(pair<int,string>(386025,"IC")); // also actual run? or deployed later?
       // => https://cms-talk.web.cern.ch/t/l1-pre-announcement-of-ecal-intercalibration-update-at-l1-run-386945/61017
-      // eras.push_back(pair<int,string>(386945,"IC")); // post 24I
-
       // => https://cms-talk.web.cern.ch/t/full-track-validation-hlt-prompt-ecalintercalibconstants-conditions-from-runs-378981-379660/39889/5
-      //eras.push_back(pair<int,string>(380115,"IC")); // mid-24C (too late)
       // => https://cms-talk.web.cern.ch/t/full-track-validation-hlt-prompt-ecalintercalibconstants-conditions-from-runs-378981-379616/39588/4
-      //eras.push_back(pair<int,string>(379956,"IC")); // mid-24C 379866, 379984 =>
-      //eras.push_back(pair<int,string>(379984,"IC1")); // (actual run)
 
       // Some more from:
       // https://twiki.cern.ch/twiki/bin/viewauth/CMS/AlCaTSGConditionsUpdate
-      //eras.push_back(pair<int,string>(387696,"IC"));
-      //eras.push_back(pair<int,string>(387048,"IC"));
-      //eras.push_back(pair<int,string>(386663,"ICT")); // TimeCalib
-      //eras.push_back(pair<int,string>(386661,"ICS")); // PulseShapes
-      //eras.push_back(pair<int,string>(386455,"IC"));
       eras.push_back(pair<int,string>(386489,"ICP")); // Pulseshapes
-      //eras.push_back(pair<int,string>(386357,"ICL")); // TPGLinearization??
-      //eras.push_back(pair<int,string>(386319,"IC"));
-      //eras.push_back(pair<int,string>(386186,"IC"));
       eras.push_back(pair<int,string>(385728,"ICU")); // PulseShapes+TimeCalib
-      //eras.push_back(pair<int,string>(385620,"ICC")); // per crystal
       eras.push_back(pair<int,string>(385286,"ICT")); // TimeCalib
-      //eras.push_back(pair<int,string>(385154,"ICU")); // PulseShapes+TimeCalib
-      //eras.push_back(pair<int,string>(384982,"IC")); // before
       eras.push_back(pair<int,string>(384935,"ICN")); // ChannelStatus (noise)
-      //eras.push_back(pair<int,string>(384756,"ICT")); // TimeCalib FEdelay,aft
-      //eras.push_back(pair<int,string>(384719,"ICP")); // pedestals
-      // 384719 -> 384933 (mid-24G)
-      //eras.push_back(pair<int,string>(384578,"IC"));
-      //eras.push_back(pair<int,string>(384413,"ICU")); // PulseShapes+TimeCalib
-      //eras.push_back(pair<int,string>(384332,"IC"));
-      //eras.push_back(pair<int,string>(384285,"IC"));
-      //eras.push_back(pair<int,string>(384237,"IC"));
-      //eras.push_back(pair<int,string>(384052,"IC2"));
       eras.push_back(pair<int,string>(383756,"ICU")); // PulseShapes+TimeCalib
-      //eras.push_back(pair<int,string>(383227,"IC"));
-      //eras.push_back(pair<int,string>(383155,"IC2"));
-      //eras.push_back(pair<int,string>(382921,"IC2"));
-      //eras.push_back(pair<int,string>(382777,"IC"));
-      //eras.push_back(pair<int,string>(382712,"IC"));
       eras.push_back(pair<int,string>(382298,"ICF")); // 24_v2.0 (24F DD)
-      //eras.push_back(pair<int,string>(381640,"IC"));
       eras.push_back(pair<int,string>(381379,"ICN")); // ChannelStatus EB+13
-      //eras.push_back(pair<int,string>(381208,"IC")); // BIG, later
-      //eras.push_back(pair<int,string>(380992,"IC"));
-      //eras.push_back(pair<int,string>(380049,"ICN")); // ChannelStatus EB-03
       eras.push_back(pair<int,string>(380000,"ICT")); // TimeCalib
-      //eras.push_back(pair<int,string>(379956,"IC")); // BIG or MID?
-      // 379956 -> 379984
-      //eras.push_back(pair<int,string>(379693,"ICN")); // ChannelStatus EB+16
-      //eras.push_back(pair<int,string>(379661,"ICN")); // ChannelStatus EB+16,bef
+
       eras.push_back(pair<int,string>(379434,"ICT")); // TimeCalib
-      //eras.push_back(pair<int,string>(379367,"ICT")); // TimeCalib CC,aft
       eras.push_back(pair<int,string>(366727,"IC3")); // 2023 start
-      //eras.push_back(pair<int,string>(362523,"ICT")); // TimeCalib
-      //eras.push_back(pair<int,string>(362181,"ICHI")); // HI
       eras.push_back(pair<int,string>(362475,"ICP")); // Pedestals
       eras.push_back(pair<int,string>(362012,"ICP")); // Pedestals
       eras.push_back(pair<int,string>(360390,"IC2F")); // 22F start
       eras.push_back(pair<int,string>(359569,"IC2E")); // 22E start
       // ...
       
-      //eras.push_back(pair<int,string>(368824,"XX")); // 23D- mystery run
-      //eras.push_back(pair<int,string>(368765,"XX")); // 23D- mystery run
-      //eras.push_back(pair<int,string>(380030,"XX")); // mid-24C mystery runx
-
-      // Dijet team
-      //Runs 382298 - 383246
-      //Runs 383247 – 384932
-      //Runs 384933 – End of Era G
-      //eras.push_back(pair<int,string>(382298,"DJ")); // HCAL 24_v2.0
-      //eras.push_back(pair<int,string>(383247,"DJ")); // HCAL 24_v2.1
-      //eras.push_back(pair<int,string>(384933,"DJ")); // IC
-
       // Tracker voltage changes (Martin Delcourt, CMS-PPD-Muon..., 28 Nov 2024)
-      //eras.push_back(pair<int,string>(380504,"TRK"));
-      //eras.push_back(pair<int,string>(380517,"TRK")); // next up => nah
       eras.push_back(pair<int,string>(380481,"TRK")); // one down
-      //eras.push_back(pair<int,string>(382772,"TRK"));
-      //eras.push_back(pair<int,string>(382834,"TRK")); // next up => nah
       eras.push_back(pair<int,string>(382770,"TRK")); // one down
-      //eras.push_back(pair<int,string>(385063,"TRK"));
-      //eras.push_back(pair<int,string>(385127,"TRK")); // next up => not ok
       eras.push_back(pair<int,string>(385012,"TRK")); // one down
-      //eras.push_back(pair<int,string>(385959,"TRK"));
       eras.push_back(pair<int,string>(385986,"TRK")); // next up => ok!
-      //eras.push_back(pair<int,string>(386968,"TRK"));
-      //eras.push_back(pair<int,string>(387017,"TRK")); // next up (after I)
 
       // Tracker optical power changes (Martin Delcourt, CMS-PPD-Muon..., 3 Dec 2024)
       eras.push_back(pair<int,string>(380029,"TRP"));
@@ -612,7 +512,7 @@ void drawTimeStability() {
       // Follow up on BPix_L1 inefficiency (Martin Delcourt, CMS-PPD-Muon, 12 Dec)
       eras.push_back(pair<int,string>(385260,"TRB")); // BPix_L1 inefficiency
       
-      
+
       // Keep record of breaks for drawTimeStabilityPairs
       TH1D *hbreaks = new TH1D("hbreaks",";Break point;Cum.Lum. (/fb)",eras.size(),0,eras.size());
       
@@ -627,12 +527,8 @@ void drawTimeStability() {
 	TString t = TString(cn);
 
 	int j = hcumlum2->FindBin(run);
-	//if (hcumlum2->GetBinLowEdge(j)<run) ++j;
 	if (hcumlum2->GetBinLowEdge(j)!=run) cout << "run="<<run<<", bin edges="<<hcumlum2->GetBinLowEdge(j)<<","<<hcumlum2->GetBinLowEdge(j+1)<<" (lum="<<hcumlum2->GetBinContent(j)<<")"<<endl<<flush;
 	double cumlum = hcumlum2->GetBinContent(j);
-	//int k = hcumlum->FindBin(run)+1;
-	//if (hcumlum->GetBinLowEdge(k)<run) ++k;
-	//double cumlum1 = hcumlum->GetBinContent(k);
 
 	l->SetLineColor(kGray);
 	if (t.Contains("V")) l->SetLineColor(kRed);
@@ -642,41 +538,39 @@ void drawTimeStability() {
 	if (t.Contains("DJ")) l->SetLineColor(kOrange+1);
 	if (t.Contains("TR")) l->SetLineColor(kOrange+1);
 	l->SetLineStyle(kSolid);
-	//if (t.Contains("V")) l->DrawLine(cumlum1,ymin,cumlum1,ymax);
-	//else
-	if (addExtraLine || l->GetLineColor()==kGray)
+	if (addExtraLine || l->GetLineColor()==kGray) {
+	  if (l->GetLineColor()==kGray) l->SetLineColorAlpha(kGray,0.3);
 	  l->DrawLine(cumlum,ymin,cumlum,ymax);
+	}
 	if (s=="22"||s=="23"||s=="24") ks = 0;
-	//tex->DrawLatex(cumlum+1,-1.2-0.2*(ks++),cn);
-	//if (t.Contains("V")) tex->DrawLatex(cumlum1+1,-1.6-0.4*(kh++),cn);
 	if (t.Contains("V") || t.Contains("IC") || t.Contains("XX") || t.Contains("EP") || t.Contains("TR")) {
 	  if (addExtraText) {
 	    if (isZmass) tex->DrawLatex(cumlum+1,(-0.12-0.03*(kh++%3))*kf,cn);
 	    else if (isEta) tex->DrawLatex(cumlum+1,(-3.2-0.8*(kh++%3))*kf,cn);
-	  //else if (isEta) tex->DrawLatex(cumlum+1,(-5.8-1.6*(kh++%3))*kf,cn);
 	    else tex->DrawLatex(cumlum+1,(-1.6-0.4*(kh++%3))*kf,cn);
 	  }
 	}
 	else {
 	  if (isZmass) tex->DrawLatex(cumlum+1,(+0.15-0.03*(ks++))*kf,cn);
 	  else if (isEta) tex->DrawLatex(cumlum+1,(+7.0-0.8*(ks++))*kf,cn);
-	  //else if (isEta) tex->DrawLatex(cumlum+1,(+14.0-1.6*(ks++))*kf,cn);
 	  else tex->DrawLatex(cumlum+1,(+3.5-0.4*(ks++))*kf,cn);
 	}
 	hbreaks->SetBinContent(i+1,cumlum);
 	hbreaks->GetXaxis()->SetBinLabel(i+1,cn);
       }
-
+      
       fout->cd();
       hbreaks->Write("hbreaks",TObject::kOverwrite);
       curdir->cd();
       delete hbreaks;
     }
+      
 
     TF1 *f1 = new TF1("f1","[0]",0,1e6); f1->SetParameter(0,0);
     TF1 *f2 = new TF1("f2","[0]",0,1e6); f2->SetParameter(0,0);
     if (hsum->Integral()!=0) {
-      f1->SetRange(382298,1e6); // V2.0 onwards
+      //f1->SetRange(382298,1e6); // V2.0 onwards
+      f1->SetRange(379416, 392112+0.5); // 2024CDEFGH
       hsum->Fit(f1,"QRN");
       hsum->Scale(1./f1->GetParameter(0));
       
@@ -687,8 +581,17 @@ void drawTimeStability() {
 	double cumlum = hcumlum2->GetBinContent(hcumlum2->FindBin(run));
 	int j = hbins->FindBin(cumlum);
 	if (hsum->GetBinContent(i)!=0) {
-	  h->SetBinContent(j, (hsum->GetBinContent(i)-1)*100.);
-	  h->SetBinError(j, hsum->GetBinError(i)*100.);
+
+	  // Patch for jets
+	  double k(1);
+	  if (useJet) {
+	    if      (run<=362760) k = 1.7*34.8/109.; // 2022
+	    else if (run<=370790) k = 1.7*28.4/109.; // 2023
+	    else if (run<=392112) k = 109./109.; // 2024
+	    else if (run<=400000) k = 109./109.; // 2025
+	  }
+	  h->SetBinContent(j, (k*hsum->GetBinContent(i)-1)*100.);
+	  h->SetBinError(j, k*hsum->GetBinError(i)*100.);
 	}
       }
       
@@ -703,8 +606,16 @@ void drawTimeStability() {
     
     if (psum->Integral()!=0) {
       //f1->SetRange(82,1e6); // V2.0 onwards => wrong /fb
-      f1->SetRange(90.7,1e6); // V2.0 onwards
-      f2->SetRange(90.7,1e6); // V2.0 onwards
+      //f1->SetRange(90.7,1e6); // V2.0 onwards
+      //f2->SetRange(90.7,1e6); // V2.0 onwards
+
+      int run1 = 379416, run2 = 392112; // 2024CDEFGH
+      int j1 = hcumlum2->FindBin(run1);
+      double cumlum1 = hcumlum2->GetBinContent(j1);
+      int j2 = hcumlum2->FindBin(run2);
+      double cumlum2 = hcumlum2->GetBinContent(j2);
+      f1->SetRange(cumlum1,cumlum2);
+      f2->SetRange(cumlum1,cumlum2);
       
       // Normalize average to unity to focus on time dependence
       psum->Fit(f1,"QRN");
@@ -810,3 +721,87 @@ void rebinProfileCustom(TProfile* p, TProfile* p_new) {
   } // for ix
 } // rebinProfileCustom
 
+
+//#include <bits/stdc++.h>
+using namespace std;
+
+map<string,pair<int,int>> BuildRanges(const string& fname){
+
+  ifstream in(fname); string L; map<string,pair<int,int>> M;
+  auto upd = [&](const string& k, int a, int b){
+    auto it=M.find(k);
+    if(it==M.end()) M[k]={a,b};
+    else { if(a<it->second.first) it->second.first=a; if(b>it->second.second) it->second.second=b; }
+  };
+  auto trim=[&](string &s){ size_t i=s.find_first_not_of(" \t"), j=s.find_last_not_of(" \t"); s=(i==string::npos)?"":s.substr(i,j-i+1); };
+
+  getline(in,L); // remove header line
+  while(getline(in,L)){
+    size_t lb=L.find('['), rb=L.find(']'); if(lb==string::npos||rb==string::npos) continue;
+    int a=0,b=0; sscanf(L.c_str()+lb,"[%d ,%d",&a,&b);
+    size_t p1=L.find('|',rb), p2=(p1==string::npos)?string::npos:L.find('|',p1+1);
+    if(p1==string::npos||p2==string::npos) continue;
+    string tag=L.substr(p1+1,p2-p1-1); trim(tag);
+
+    string nib=tag; size_t q=nib.rfind("-fib"); if(q!=string::npos) nib.resize(q);
+    string era=nib; q=nib.rfind("-nib");     if(q!=string::npos) era.resize(q);
+    string year=era; year.resize(4);
+
+    upd(nib,a,b);    // e.g. "2024G-nib2"
+    upd(era,a,b);   // e.g. "2024G"
+    upd(year,a,b);   // e.g. "2024"
+  }
+  return M;
+}
+
+
+void addLines(map<string,pair<int,int>> &ml, TH1D *hcumlum2, double kf,
+	      double xmin, double xmax, double ymin, double ymax,
+	      TH1D *hbreaks) {
+
+  //map<string,pair<int,int> > ml = BuildRanges("rootfiles/brilcalc/fibs.txt");
+  typedef map<string,pair<int,int> >::const_iterator IT; int i(0);
+  double prevlum(0);
+  for (IT it = ml.begin(); it != ml.end(); ++it) {
+    string tag = it->first;
+    int run = it->second.first;
+    bool isYear = (tag.size()==4);
+    
+    int j = hcumlum2->FindBin(run);
+    double cumlum = hcumlum2->GetBinContent(j);
+    
+    // Horizontal lines at 0 and +/-1% for reference
+    TLine *l = new TLine();
+    l->SetLineStyle(kDashed);
+    l->SetLineColor(kGray+1);
+    l->DrawLine(xmin, 0, xmax, 0);
+    l->SetLineStyle(kDotted);
+    l->DrawLine(xmin, +1*kf, xmax, +1*kf);
+    l->DrawLine(xmin, -1*kf, xmax, -1*kf);
+    
+    TLatex *tex = new TLatex();
+    tex->SetTextSize(0.015);
+    tex->SetTextAngle(270);
+    tex->SetTextAlign(31);//33);//12);
+    
+    l->SetLineStyle(kSolid);
+    if (hbreaks) {
+      TString t(tag.c_str());
+      hbreaks->SetBinContent(++i,cumlum);
+      if (!t.Contains("-nib1")) hbreaks->GetXaxis()->SetBinLabel(i,tag.c_str());
+    }
+    // Avoid label overlaps
+    if (cumlum-prevlum>3.0 || isYear) {
+      //if (hbreaks) hbreaks->GetXaxis()->SetBinLabel(i,tag.c_str());
+      tex->SetTextColorAlpha(kGray,isYear ? 1.0 : 0.3);
+      l->SetLineColorAlpha(kGray,isYear ? 1.0 : 0.1);
+      l->DrawLine(cumlum,ymin,cumlum,ymax);
+      tex->DrawLatex(cumlum+0.01,ymin,tag.c_str());
+      prevlum = cumlum;
+    }
+    else {
+      l->SetLineColorAlpha(kGray,0.075);
+      l->DrawLine(cumlum,ymin+3.0,cumlum,ymax);
+    }
+  }
+} // void addLines

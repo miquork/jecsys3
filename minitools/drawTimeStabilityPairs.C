@@ -9,6 +9,7 @@
 
 #include <set>
 
+//#include "drawTimeStability.C" // BuildRanges, addLines
 #include "../tdrstyle_mod22.C"
 
 // pr50pr110 for RCF application
@@ -71,17 +72,20 @@ void drawGamVsZmm(string mode) {
   l->SetLineStyle(kDashed);
   l->SetLineColor(kGray+1);
 
-  double xmin(0), xmax(175), ymin(-2.4), ymax(+3.4), ymind(-1.5), ymaxd(+1.9);
+  //double xmin(0), xmax(175), ymin(-2.4), ymax(+3.4), ymind(-1.5), ymaxd(+1.9);
+  double xmin(0), xmax(280), ymin(-2.8), ymax(+5.8), ymind(-2.5), ymaxd(+2.5);
   TH1D *h = tdrHist("h_u","JES-1 (%)",ymin,ymax,"Cumulative luminosity (fb^{-1})",xmin,xmax);
   TH1D *h_d = tdrHist("h_d","#gamma+j - Z+j (%)",ymind,ymaxd,"Cumulative luminosity (fb^{-1})",xmin,xmax);
-  lumi_136TeV = "Run 3, 2022-24";
+  //lumi_136TeV = "Run 3, 2022-24";
+  lumi_136TeV = "Run 3, 2022-25";
   extraText = "Private";
   TCanvas *c1 = tdrDiCanvas("c1",h,h_d,8,11);
 
   TCanvas *c1b(0);
   TLegend *leg1b(0);
   if (useRCFstyle) {
-    TH1D *h1b = tdrHist("h1b","(#gamma+j - Z+j) vs late 2024 [V2.0] (%)",ymind+1e-3,ymaxd+0.5-1e-3,
+    //TH1D *h1b = tdrHist("h1b","(#gamma+j - Z+j) vs late 2024 [V2.0] (%)",ymind+1e-3,ymaxd+0.5-1e-3,
+    TH1D *h1b = tdrHist("h1b","(#gamma+j - Z+j) vs 2024 (%)",ymind+1e-3,ymaxd+0.5-1e-3,
 			"Cumulative luminosity (fb^{-1})",xmin,xmax);
     c1b = tdrCanvas("c1b",h1b,8,11,kSquare);
 
@@ -96,6 +100,8 @@ void drawGamVsZmm(string mode) {
 
   
   TH1D *hbreaks = (TH1D*)f->Get("hbreaks"); assert(hbreaks);
+  //map<string,<pair,pair> ml = BuildRanges("rootfiles/brilcalc/fibs.txt");
+  //addLines(ml, hcumlum2, 1.0, xmin, xmax, ymin, ymax, 0);
 
   TH1D *ha(0), *hb(0);
   if (mode=="MPF") {
@@ -110,9 +116,9 @@ void drawGamVsZmm(string mode) {
   hd->Add(hb,-1);
   cleanEmpty(hd,ha,hb);
 
-  cleanRange(ha,63.2,200); // noisy
-  //cleanRange(hb,63.2,200); // ok
-  cleanRange(hd,63.2,200); // noisy
+  //cleanRange(ha,63.2,200); // noisy
+  // //cleanRange(hb,63.2,200); // ok
+  //cleanRange(hd,63.2,200); // noisy
   
   // Extra pairs
   TH1D *ha2(0), *hb2(0);
@@ -146,7 +152,7 @@ void drawGamVsZmm(string mode) {
   for (int i = 1; i != hbreaks->GetNbinsX()+1; ++i) {
     double cumlum = hbreaks->GetBinContent(i);
     TString ts(hbreaks->GetXaxis()->GetBinLabel(i));
-
+    /*
     ll->SetLineStyle(kSolid);
     ll->SetLineColor(kGray);
     if (ts.Contains("V")) { ll->SetLineColor(kGreen+1); } //kRed-9); //continue; }
@@ -174,8 +180,9 @@ void drawGamVsZmm(string mode) {
       }
       c1->cd(1);
     }
+    */
     
-    if (ts.Contains("IC"))
+    //if (ts.Contains("IC"))
       breakset.insert(cumlum);
   }
   breakset.insert(xmax);
@@ -239,6 +246,8 @@ void drawGamVsZmm(string mode) {
 
   if (useRCFstyle) {
     c1b->cd();
+    TLatex *tex = new TLatex(); tex->SetNDC(); tex->SetTextSize(0.045);
+    tex->DrawLatex(0.40,0.80,cm);
     tdrDraw(hd2,"Pz",kOpenSquare,kMagenta-9,kSolid,-1,kNone,0,0.6);
     tdrDraw(hd,"Pz",kFullCircle,kBlue,kSolid,-1,kNone,0,0.6);
     leg1b->AddEntry(hd2,"p_{T} > 110 GeV","PLE");
@@ -655,9 +664,11 @@ void drawPFcomp(string ref, double refrun) {
   l->SetLineStyle(kDashed);
   l->SetLineColor(kGray+1);
 
-  double xmin(0), xmax(175), ymin(-3.7), ymax(+6.3);
+  //double xmin(0), xmax(175), ymin(-3.7), ymax(+6.3);
+  double xmin(0), xmax(280), ymin(-9.0), ymax(+9.5);
   TH1D *h = tdrHist(Form("hpf_%s",cr),"PFJES-1 (%)",ymin,ymax,"Cumulative luminosity (fb^{-1})",xmin,xmax);
-  lumi_136TeV = "Run3, 2022-24";
+  //lumi_136TeV = "Run3, 2022-24";
+  lumi_136TeV = "Run3, 2022-25";
   extraText = "Private";
   TCanvas *c1 = tdrCanvas(Form("c1pf_%s",cr),h,8,11,kRectangular);
 
@@ -665,21 +676,32 @@ void drawPFcomp(string ref, double refrun) {
   TH1D *hscales = (TH1D*)f->Get("hscales"); assert(hscales);
 
   // DB has bigger effect than MPF in 2022-23. Good?
-  TH1D *hgamvsz = (TH1D*)fs->Get("GamJetMinusZmmJet_DB"); assert(hgamvsz);
+  //TH1D *hgamvsz = (TH1D*)fs->Get("GamJetMinusZmmJet_DB"); assert(hgamvsz);
+  // MPF seems more continous for pr50m. Is any correction needed?
+  TH1D *hgamvsz = (TH1D*)fs->Get("GamJetMinusZmmJet_MPF"); assert(hgamvsz);
+  // NONE with no correction at all. MPF looks better.
+  //hgamvsz->Reset();
+
+  // For MPF use MPF correction
+  TH1D *hgamvszm = (TH1D*)fs->Get("GamJetMinusZmmJet_MPF"); assert(hgamvszm);
 
   // Format string for Z+jet
-  TH1D *hr(0), *hc(0), *hn(0), *he(0);
-  double kr(1), fc(0.65), fe(0.25), fn(0.10);
+  TH1D *hr(0), *hc(0), *hn(0), *he(0), *hm(0);
+  double kr(1), fc(0.65), fe(0.25), fn(0.10), km(1);
   if (tr.Contains("pr")) {
-    hr = (TH1D*)f->Get(Form("%sm_jes",cr)); assert(hr);
+    //hr = (TH1D*)f->Get(Form("%sm_jes",cr)); assert(hr); // MPF
+    hr = (TH1D*)f->Get(Form("%sb_jes",cr)); assert(hr); // DB
     hc = (TH1D*)f->Get(Form("%schf",cr));  assert(hc);
     hn = (TH1D*)f->Get(Form("%snhf",cr));  assert(hn);
     he = (TH1D*)f->Get(Form("%snef",cr));  assert(he);
+    hm = (TH1D*)f->Get(Form("%sm_jes",cr)); assert(hr); // MPF
 
-    kr = getScale(hscales,Form("%sm_jes",cr));
+    //kr = getScale(hscales,Form("%sm_jes",cr)); // MPF
+    kr = getScale(hscales,Form("%sb_jes",cr)); // DB
     fc = getScale(hscales,Form("%schf",cr));
     fe = getScale(hscales,Form("%snef",cr));
     fn = getScale(hscales,Form("%snhf",cr));
+    km = getScale(hscales,Form("%sm_jes",cr)); // MPF
   }
   if (tr.Contains("zpt")) {
     hr = (TH1D*)f->Get(Form("mpf_run_%s_jes",cr)); assert(hr);
@@ -695,19 +717,23 @@ void drawPFcomp(string ref, double refrun) {
   assert(hr);
 
   // Get second photon trigger to patch full range
-  TH1D *hr2(0), *hc2(0), *hn2(0), *he2(0);
-  double kr2(1), fc2(0.65), fe2(0.25), fn2(0.10);
+  TH1D *hr2(0), *hc2(0), *hn2(0), *he2(0), *hm2(0);
+  double kr2(1), fc2(0.65), fe2(0.25), fn2(0.10), km2(0);
   if (ref=="pr50pr110") {
     const char *cr2 = "pr110";
-    hr2 = (TH1D*)f->Get(Form("%sm_jes",cr2)); assert(hr2);
+    //hr2 = (TH1D*)f->Get(Form("%sm_jes",cr2)); assert(hr2); // MPF
+    hr2 = (TH1D*)f->Get(Form("%sb_jes",cr2)); assert(hr2); // DB
     hc2 = (TH1D*)f->Get(Form("%schf",cr2));  assert(hc2);
     hn2 = (TH1D*)f->Get(Form("%snhf",cr2));  assert(hn2);
     he2 = (TH1D*)f->Get(Form("%snef",cr2));  assert(he2);
+    hm2 = (TH1D*)f->Get(Form("%sm_jes",cr2)); assert(hm2); // MPF
 
-    kr2 = getScale(hscales,Form("%sm_jes",cr2));
+    //kr2 = getScale(hscales,Form("%sm_jes",cr2)); // MPF
+    kr2 = getScale(hscales,Form("%sb_jes",cr2)); // DB
     fc2 = getScale(hscales,Form("%schf",cr2));
     fe2 = getScale(hscales,Form("%snef",cr2));
     fn2 = getScale(hscales,Form("%snhf",cr2));
+    km2 = getScale(hscales,Form("%sm_jes",cr2)); // MPF
   }
 
   // Calculate JES and scale with per-fib JES
@@ -715,31 +741,34 @@ void drawPFcomp(string ref, double refrun) {
   TH1D *hjesc = (TH1D*)hc->Clone(Form("hjesc_%s",cr));
   TH1D *hjesn = (TH1D*)hn->Clone(Form("hjesn_%s",cr));
   TH1D *hjese = (TH1D*)he->Clone(Form("hjese_%s",cr));
+  TH1D *hmpfr = (TH1D*)hm->Clone(Form("hmpfr_%s",cr));
   for (int i = 1; i != hr->GetNbinsX()+1; ++i) {
 
-    TH1D *hrs(hr), *hcs(hc), *hns(hn), *hes(he);
-    double krs(kr), fcs(fc), fns(fn), fes(fe);
+    TH1D *hrs(hr), *hcs(hc), *hns(hn), *hes(he), *hms(hm);
+    double krs(kr), fcs(fc), fns(fn), fes(fe), kms(km);
     if (ref=="pr50pr110" && hr->GetBinLowEdge(i)<63.2) {
-      assert(hr2); assert(hc2); assert(hn2); assert(he2);
-      hrs = hr2; hcs = hc2; hns = hn2; hes = he2;
-      krs = kr2; fcs = fc2; fns = fn2; fes = fe2;
+      assert(hr2); assert(hc2); assert(hn2); assert(he2); assert(hm2);
+      hrs = hr2; hcs = hc2; hns = hn2; hes = he2; hms = hm2;
+      krs = kr2; fcs = fc2; fns = fn2; fes = fe2; kms = km2;
     }
     
     double s = hrs->GetBinContent(i); // s = (jes-1)*100
     double es = hrs->GetBinError(i);
     double jes = s*kr*0.01+1;
 
+    double m = hms->GetBinContent(i); // m = (mpf-1)*100
+    double em = hms->GetBinError(i);
+    double mpf = m*km*0.01+1;
+
     // Patch photon scale before 2024F from GamVsZmm_DB
     double cumlum = hrs->GetBinCenter(i);
-    //if (cumlum>=91 && cumlum<92) jes *= 1./1.008;
-    //if (cumlum>=67 && cumlum<91) jes *= 1./1.014;
-    //if (cumlum>=64 && cumlum<67) jes *= 1./1.004;
-    //if (cumlum>=44 && cumlum<64) jes *= 1./1.004;
-    //if (cumlum>=10 && cumlum<44) jes *= 1./1.010;
-    //if (cumlum>=0  && cumlum<10) jes *= 1./1.007;
     double j = hgamvsz->GetXaxis()->FindBin(cumlum);
     double gamvsz = (1+0.01*hgamvsz->GetBinContent(j));
     jes *= 1./gamvsz;
+
+    double jm = hgamvszm->GetXaxis()->FindBin(cumlum);
+    double gamvszm = (1+0.01*hgamvszm->GetBinContent(jm));
+    mpf *= 1./gamvszm;
     
     double jesr = (jes-1)*100.;
     double ejesr = es*krs;
@@ -763,18 +792,28 @@ void drawPFcomp(string ref, double refrun) {
     double ejese = ee*fes*jes;
     hjese->SetBinContent(i, jese);
     hjese->SetBinError(i, ejese);
+    double mpfr = (mpf-1)*100.;
+    double empfr = em*kms;
+    hmpfr->SetBinContent(i, mpfr);
+    hmpfr->SetBinError(i, empfr);
   }
 
   // Add known breaks
   TLine *ll = new TLine();
   TLatex *tex = new TLatex();
-  tex->SetTextSize(0.03);
+  //tex->SetTextSize(0.03);
+  tex->SetTextSize(0.015);
+  tex->SetTextAngle(270);
+  tex->SetTextAlign(31);
+  
   set<double> breakset;
   breakset.insert(xmin);
+  double prevlum(0);
   for (int i = 1; i != hbreaks->GetNbinsX()+1; ++i) {
     double cumlum = hbreaks->GetBinContent(i);
     TString ts(hbreaks->GetXaxis()->GetBinLabel(i));
 
+    /*
     ll->SetLineColor(kGray);
     ll->SetLineStyle(kSolid);
     if (ts.Contains("V")) ll->SetLineColor(kGreen+1);
@@ -797,7 +836,23 @@ void drawPFcomp(string ref, double refrun) {
       if (!isRCFstyle || (ll->GetLineColor()==kGray && ts.Contains("2") || ts=="V2.0"))
 	tex->DrawLatex(cumlum+1,ymin+0.4-((i-1)%3)*0.15,ts.Data());
     }
+    */
 
+    // Avoid label overlaps
+    bool isYear = (ts.Length()==4);
+    if (cumlum-prevlum>3.0 || isYear) {
+      //if (hbreaks) hbreaks->GetXaxis()->SetBinLabel(i,tag.c_str());
+      tex->SetTextColorAlpha(kGray,isYear ? 1.0 : 0.3);
+      ll->SetLineColorAlpha(kGray,isYear ? 1.0 : 0.1);
+      ll->DrawLine(cumlum,ymin,cumlum,ymax);
+      tex->DrawLatex(cumlum+0.01,ymin,ts.Data());
+      prevlum = cumlum;
+    }
+    else {
+      ll->SetLineColorAlpha(kGray,0.075);
+      ll->DrawLine(cumlum,ymin+3.0,cumlum,ymax);
+    }
+			  
     breakset.insert(cumlum);
   }
   breakset.insert(xmax);
@@ -814,41 +869,61 @@ void drawPFcomp(string ref, double refrun) {
   l->DrawLine(xmin,+1,xmax,+1);
   l->DrawLine(xmin,-1,xmax,-1);
   
-  tdrDraw(hjesc,"Pz",kFullSquare,kRed,kSolid,-1,kNone,0,0.6);
-  tdrDraw(hjese,"Pz",kOpenSquare,kBlue,kSolid,-1,kNone,0,0.6);
-  tdrDraw(hjesn,"Pz",kOpenCircle,kGreen+2,kSolid,-1,kNone,0,0.6);
-  tdrDraw(hjesr,"Pz",kFullCircle,kBlack,kSolid,-1,kNone,0,0.6);
+  //tdrDraw(hjesc,"Pz",kFullSquare,kRed,kSolid,-1,kNone,0,0.6);
+  //tdrDraw(hjese,"Pz",kOpenSquare,kBlue,kSolid,-1,kNone,0,0.6);
+  //tdrDraw(hjesn,"Pz",kOpenCircle,kGreen+2,kSolid,-1,kNone,0,0.6);
+  //tdrDraw(hjesr,"Pz",kFullCircle,kBlack,kSolid,-1,kNone,0,0.6);
+
+  tdrDraw(hmpfr,"Pz",kFullDiamond,kOrange+2,kSolid,-1,kNone,0,0.6);
+  tdrDraw(hjesc,"Pz",kFullSquare,kRed,kSolid,-1,kNone,0,0.5);
+  tdrDraw(hjese,"Pz",kOpenSquare,kBlue,kSolid,-1,kNone,0,0.5);
+  tdrDraw(hjesn,"Pz",kOpenCircle,kGreen+2,kSolid,-1,kNone,0,0.5);
+  tdrDraw(hjesr,"Pz",kFullCircle,kBlack,kSolid,-1,kNone,0,0.5);
 
   //TLegend *leg = tdrLeg(0.65,0.89-0.05*4,0.90,0.89);
-  TLegend *leg = tdrLeg(0.58,0.89-0.05*4,0.83,0.89);
+  TLegend *leg = tdrLeg(0.58,0.89-0.05*5,0.83,0.89);
   leg->SetFillStyle(1001);
   if (isRCFstyle) {
-    h->GetYaxis()->SetTitle("Difference to late 2024 [V2.0] (%)");
+    //h->GetYaxis()->SetTitle("Difference to late 2024 [V2.0] (%)");
+    h->GetYaxis()->SetTitle("Difference to 2024 (%)");
+    h->GetYaxis()->SetTitleOffset(0.8);
+    gPad->SetLeftMargin(0.10);
     leg->SetX1(0.43); leg->SetX2(0.68);
-    leg->AddEntry(hjesr,"Jet Energy Scale, split by:","PLE");
-    leg->AddEntry(hjesc,"  Tracking (charged hadrons)","PLE");
-    leg->AddEntry(hjesn,"  HCAL (neutral hadrons)","PLE");
-    leg->AddEntry(hjese,"  ECAL (photons)","PLE");
+    //leg->AddEntry(hjesr,"Jet Energy Scale, split by:","PLE");
+    //leg->AddEntry(hjesc,"  Tracking (charged hadrons)","PLE");
+    //leg->AddEntry(hjesn,"  HCAL (neutral hadrons)","PLE");
+    //leg->AddEntry(hjese,"  ECAL (photons)","PLE");
+    leg->AddEntry(hjesr,"Jet Energy Scale, split by PF:","PLE");
+    leg->AddEntry(hjesc,"  Charged hadrons (tracks)","PLE");
+    leg->AddEntry(hjesn,"  Neutral hadrons (HCAL)","PLE");
+    leg->AddEntry(hjese,"  Photons (ECAL)","PLE");
+    leg->AddEntry(hmpfr,"Missing E_{T} (MPF)","PLE");
   }
   else if (ref=="pr50pr110") {
-    leg->AddEntry(hjesr,"#gamma+jet MPF 50/110","PLE");
+    //leg->AddEntry(hjesr,"#gamma+jet MPF 50/110","PLE");
+    leg->AddEntry(hjesr,"#gamma+jet DB 50/110","PLE");
     leg->AddEntry(hjesc,"#gamma+jet CHF 50/110","PLE");
     leg->AddEntry(hjesn,"#gamma+jet NHF 50/110","PLE");
     leg->AddEntry(hjese,"#gamma+jet NEF 50/110","PLE");
+    leg->AddEntry(hmpfr,"#gamma+jet MPF 50/110","PLE");
   }
   if (ref=="pr50" || ref=="pr110" || ref=="pr230") {
     int ipt; sscanf(cr,"pr%d",&ipt);
-    leg->AddEntry(hjesr,Form("#gamma+jet MPF %d",ipt),"PLE");
+    //leg->AddEntry(hjesr,Form("#gamma+jet MPF %d",ipt),"PLE");
+    leg->AddEntry(hjesr,Form("#gamma+jet DB %d",ipt),"PLE");
     leg->AddEntry(hjesc,Form("#gamma+jet CHF %d",ipt),"PLE");
     leg->AddEntry(hjesn,Form("#gamma+jet NHF %d",ipt),"PLE");
     leg->AddEntry(hjese,Form("#gamma+jet NEF %d",ipt),"PLE");
+    leg->AddEntry(hmpfr,Form("#gamma+jet MPF %d",ipt),"PLE");
   }
   if (ref=="zpt30" || ref=="zpt50" || ref=="zpt110") {
     int ipt; sscanf(cr,"zpt%d",&ipt);
-    leg->AddEntry(hjesr,Form("Z_{#mu#mu}+jet MPF %d",ipt),"PLE");
+    //leg->AddEntry(hjesr,Form("Z_{#mu#mu}+jet MPF %d",ipt),"PLE");
+    leg->AddEntry(hjesr,Form("Z_{#mu#mu}+jet DB %d",ipt),"PLE");
     leg->AddEntry(hjesc,Form("Z_{#mu#mu}+jet CHF %d",ipt),"PLE");
     leg->AddEntry(hjesn,Form("Z_{#mu#mu}+jet NHF %d",ipt),"PLE");
     leg->AddEntry(hjese,Form("Z_{#mu#mu}+jet NEF %d",ipt),"PLE");
+    leg->AddEntry(hmpfr,Form("Z_{#mu#mu}+jet MPF %d",ipt),"PLE");
   }
     
   gPad->RedrawAxis();
