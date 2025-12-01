@@ -33,8 +33,10 @@ void hotjetsRun3() {
   //string eras[] = {"22CD", "22EFG", "23BC", "23D", "24_V9M", "25C_V2M"};
   //string eras[] = {"22CD", "22EFG", "23BC", "23D", "24_V9M",
   //		   "25C_V2M","25D_V2M","25E_V2M","25CDE_V2M"};
+  //string eras[] = {"22CD", "22EFG", "23BC", "23D", "24_V9M",
+  //		   "25C_V3M","25D_V3M","25E_V3M","25F_V3M","25CDEF_V3M"};
   string eras[] = {"22CD", "22EFG", "23BC", "23D", "24_V9M",
-		   "25C_V3M","25D_V3M","25E_V3M","25F_V3M","25CDEF_V3M"};
+		   "25CDEFG_V3M"};
   const int nera = sizeof(eras)/sizeof(eras[0]);
 
   map<string, const char*> mera;
@@ -50,6 +52,8 @@ void hotjetsRun3() {
   mera["24FG"] = "24FG";
   mera["24BCDEFGHI"] = "24";
   mera["24_V9M"] = "24";
+  mera["25CDEFG_V3M"] = "25";
+  //
   mera["25C"] = "25C";
   mera["25C_V2M"] = "25C";
   mera["25D_V2M"] = "25D";
@@ -74,7 +78,9 @@ void hotjetsRun3() {
   mcolor["24FG"] = kRed;
   //mcolor["24BCDEFGHI"] = kRed;
   mcolor["24BCDEFGHI"] = kSpring;
-  mcolor["24_V9M"] = kSpring;//kRed;//kSpring;
+  mcolor["24_V9M"] = kOrange+1;//kSpring;//kRed;//kSpring;
+  mcolor["25CDEFG_V3M"] = kRed;
+  //
   mcolor["25C"] = kRed;
   mcolor["25C_V2M"] = kOrange+2;
   mcolor["25D_V2M"] = kOrange+1;
@@ -100,7 +106,9 @@ void hotjetsRun3() {
   //lumi_13TeV = "Run2024B-I, 109.2 fb^{-1}";
   //lumi_13TeV = "Run2025C, X.X fb^{-1}";
   //lumi_13TeV = "Run2024 re-reco, 109.2 fb^{-1}";
-  lumi_13TeV = "Run2025CDE, 58.7 fb^{-1}";
+  //lumi_13TeV = "Run2025CDE, 58.7 fb^{-1}";
+  //lumi_13TeV = "Run2025CDEF, 64.5 fb^{-1}";
+  lumi_13TeV = "Run2025CDEFG, 109 fb^{-1}";
   TCanvas *c1 = tdrCanvas("c1",h,4,0,kRectangular);
 
   TLine *l = new TLine();
