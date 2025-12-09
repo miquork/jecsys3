@@ -74,7 +74,8 @@ void randomConeL2L3Res_era(string era) {
   TFile *frc = new TFile("rootfiles/Hirak_compare_sf_Run2024_Summer24MC-merge3.root","READ");
   assert(frc && !frc->IsZombie());
 
-  TFile *frc25 = new TFile("rootfiles/Hirak_2025B/compare_sf_Run2024GHI-Summer24MC_Run2025B-Winter25MC.root","READ");
+  //TFile *frc25 = new TFile("rootfiles/Hirak_2025B/compare_sf_Run2024GHI-Summer24MC_Run2025B-Winter25MC.root","READ");
+  TFile *frc25 = new TFile("rootfiles/Hirak_2025CDEFG/compare_sf_Run2025-Summer24MC.root","READ");
   assert(frc25 && !frc25->IsZombie());
 
   
@@ -102,11 +103,15 @@ void randomConeL2L3Res_era(string era) {
   TH1D *hrc(0);
   if (s.Contains("2024")) hrc = (TH1D*)frc->Get(Form("Run%s",cr2));
   if (s.Contains("2025")) hrc = (TH1D*)frc25->Get(Form("Run%s",cr2));
+  /*
   if (s.Contains("2025C") && !hrc) hrc = (TH1D*)frc25->Get("Run2025B");
   if (s.Contains("2025D") && !hrc) hrc = (TH1D*)frc25->Get("Run2025B");
   if (s.Contains("2025E") && !hrc) hrc = (TH1D*)frc25->Get("Run2025B");
   if (s.Contains("2025F") && !hrc) hrc = (TH1D*)frc25->Get("Run2025B");
   if (s.Contains("2025G") && !hrc) hrc = (TH1D*)frc25->Get("Run2025B");
+  */
+  if (s.Contains("2025C") && !hrc) hrc = (TH1D*)frc25->Get("Run2025Cv1v2");
+  if (s.Contains("2025F") && !hrc) hrc = (TH1D*)frc25->Get("Run2025Fv1v2");
   assert(hrc);
   
   // Correct for sigmaMB=69.2mb->75.3mb
@@ -142,6 +147,7 @@ void randomConeL2L3Res_era(string era) {
       // do nothing
     }
     else if (s.Contains("2025")) {
+      /*
       if (fabs(eta)<1.044)
 	hrc753jes->SetBinContent(i, (r-1)*0.8+1);
       else if (fabs(eta)<1.305)
@@ -149,11 +155,24 @@ void randomConeL2L3Res_era(string era) {
       else if (fabs(eta)<2.65)
 	hrc753jes->SetBinContent(i, (r-1)*0.6+1);
       // do nothing
+      */
+      //if (fabs(eta)<2.65)
+      //hrc753jes->SetBinContent(i, (r-1)*0.4+1);
+      //
+      if (fabs(eta)>2.964)
+	//hrc753jes->SetBinContent(i, era=="2025C" ? 0.75*r : 0.80*r);
+	//hrc753jes->SetBinContent(i, era=="2025C" ? 0.80*r : 0.85*r);
+	//hrc753jes->SetBinContent(i, era=="2025C" ? 0.85*r : 0.90*r);
+	hrc753jes->SetBinContent(i, era=="2025C" ? 0.83*r : 0.88*r);
+      if (i==1) cout << "Extra scaling for 2025 HF" << endl;
     }
-    else if (fabs(eta)<2.65)
+    else if (fabs(eta)<2.65) {
       hrc753jes->SetBinContent(i, (r-1)*0.4+1);
+      if (i==1) cout << "Generic extra scaling for tracker coverage" << endl;
+    }
   } // for i
 
+  /*
   // Scale HF results, presumably to account for scale difference
   // between Long and Short fibres introduced in 2025
   for (int i = 1; i != hrc753->GetNbinsX()+1 && scaleHF; ++i) {
@@ -165,7 +184,8 @@ void randomConeL2L3Res_era(string era) {
       }
     }
   } // for i
-
+  */
+  /*
   // Scale HE+HB results in 2025DEFG, presumably to account for timing change
   // introduced at the end of 2025C affecting effective thresholds
   for (int i = 1; i != hrc753->GetNbinsX()+1 && scaleTiming; ++i) {
@@ -189,6 +209,7 @@ void randomConeL2L3Res_era(string era) {
       }
     }
   } // for i
+  */
   
   // Turn to L2Res by scaling out |eta|<1.3
   TH1D *hrc13 = (TH1D*)hrc753->Clone(Form("hrc13_%s",cr));
@@ -221,8 +242,8 @@ void randomConeL2L3Res_era(string era) {
   for (int i = 1; i != hrc13jes->GetNbinsX()+1; ++i) {
     double eta = fabs(hrc13jes->GetBinCenter(i));
     double dr = fabs(hrc13jes->GetBinContent(i)-1);
-    if      (eta>3.139) hrc13jes->SetBinError(i, max(0.25*dr,0.02));
-    //if      (eta>3.139) hrc13jes->SetBinError(i, max(0.25*dr,0.05));
+    //if      (eta>3.139) hrc13jes->SetBinError(i, max(0.25*dr,0.02));
+    if      (eta>3.139) hrc13jes->SetBinError(i, max(0.25*dr,0.05));
     //if      (eta>3.139) hrc13jes->SetBinError(i, max(0.25*dr,0.03));
     else if (eta>2.65)  hrc13jes->SetBinError(i, 0.100);
     else if (eta>2.5)   hrc13jes->SetBinError(i, 0.070);
@@ -243,8 +264,14 @@ void randomConeL2L3Res_era(string era) {
   if (s.Contains("25")) fl2=new TFile("rootfiles/L2Res.root","READ");
   */
   //TFile *fl2 = new TFile("rootfiles/L2Res_2024_V9M_2025_V2M.root","READ");
-  TFile *fl2 = new TFile("rootfiles/L2Res_2025CDEFG_V2M.root","READ");
-  assert(fl2 && !fl2->IsZombie());
+  //TFile *fl2 = new TFile("rootfiles/L2Res_2025CDEFG_V2M.root","READ");
+  //TFile *fl2 = new TFile("rootfiles/L2Res_2025CDEFG_V3M_withoutRC_v1.root","READ");
+  TFile *fl2_norc = new TFile("rootfiles/L2Res_2025CDEFG_V3M_withoutRC.root","READ");
+  assert(fl2_norc && !fl2_norc->IsZombie());
+  //TFile *fl2_wrc = new TFile("rootfiles/L2Res_2025CDEFG_V3M_withRC_v2.root","READ");
+  TFile *fl2_wrc = new TFile("rootfiles/L2Res_2025CDEFG_V3M_withRC_v3.root","READ");
+  //TFile *fl2 = new TFile("rootfiles/L2Res_2025CDEFG_V2M_withRC.root","READ");
+  assert(fl2_wrc && !fl2_wrc->IsZombie());
 
   //map<string, const char*> m;
   //m["2024B"] = "2024B_nib1";
@@ -271,23 +298,32 @@ void randomConeL2L3Res_era(string era) {
   //TH2D *h2l2 = (TH2D*)fl2->Get(Form("h2jes_%s_nib1",cr2)); assert(h2l2);
   //TH2D *h2l2 = (TH2D*)fl2->Get(Form("h2jes_%s",m[era])); assert(h2l2);
   //TH2D *h2l2 = (TH2D*)fl2->Get(Form("h2jes_%s",cr)); assert(h2l2); // eta-symmetric
-  TH2D *h2l2 = (TH2D*)fl2->Get(Form("h2jes1_%s",cr)); assert(h2l2); // eta-asymmetric
+  TH2D *h2l2_norc = (TH2D*)fl2_norc->Get(Form("h2jes1_%s",cr)); assert(h2l2_norc); // eta-asymmetric
+  //TH2D *h2l2_wrc = (TH2D*)fl2_wrc->Get(Form("h2jes1_%s",cr)); assert(h2l2_wrc); // eta-asymmetric
+  TH2D *h2l2_wrc = (TH2D*)fl2_wrc->Get(Form("h2jes1_%s",cr)); assert(h2l2_wrc); // eta-asymmetric
   double pt1 = 10;
-  int ipt1 = h2l2->GetYaxis()->FindBin(pt1);
-  TH1D *hl2_1 = h2l2->ProjectionX(Form("hl2_%s_1",cr),ipt1,ipt1);
+  int ipt1 = h2l2_norc->GetYaxis()->FindBin(pt1);
+  TH1D *hl2_norc_1 = h2l2_norc->ProjectionX(Form("hl2_norc_%s_1",cr),ipt1,ipt1);
   double pt2 = 20;//15;
-  int ipt2 = h2l2->GetYaxis()->FindBin(pt2);
-  TH1D *hl2_2 = h2l2->ProjectionX(Form("hl2_%s_2",cr),ipt2,ipt2);
+  int ipt2 = h2l2_norc->GetYaxis()->FindBin(pt2);
+  TH1D *hl2_norc_2 = h2l2_norc->ProjectionX(Form("hl2_norc_%s_2",cr),ipt2,ipt2);
+
+  TH1D *hl2_wrc_1 = h2l2_wrc->ProjectionX(Form("hl2_wrc_%s_1",cr),ipt1,ipt1);
+  TH1D *hl2_wrc_2 = h2l2_wrc->ProjectionX(Form("hl2_wrc_%s_2",cr),ipt2,ipt2);
 
   TH1D *hl3 = (TH1D*)fl3->Get("ratio/eta00-13/run3/hFit_Rjet");
   assert(hl3);
   
   // Copy L2Res*L3Res to RC bins, especially to +eta and -eta
-  TH1D *hl2_1_rc = (TH1D*)hrc13->Clone(Form("hl2_%s_1_rc",cr));
-  hl2_1_rc->Clear();
-  TH1D *hl2_2_rc = (TH1D*)hrc13->Clone(Form("hl2_%s_2_rc",cr));
-  hl2_2_rc->Clear();
-  for (int i = 1; i != hl2_1_rc->GetNbinsX()+1; ++i) {
+  TH1D *hl2_norc_1_rc = (TH1D*)hrc13->Clone(Form("hl2_norc_%s_1_rc",cr));
+  hl2_norc_1_rc->Clear();
+  TH1D *hl2_norc_2_rc = (TH1D*)hrc13->Clone(Form("hl2_norc_%s_2_rc",cr));
+  hl2_norc_2_rc->Clear();
+  TH1D *hl2_wrc_1_rc = (TH1D*)hrc13->Clone(Form("hl2_wrc_%s_1_rc",cr));
+  hl2_norc_1_rc->Clear();
+  TH1D *hl2_wrc_2_rc = (TH1D*)hrc13->Clone(Form("hl2_wrc_%s_2_rc",cr));
+  hl2_wrc_2_rc->Clear();
+  for (int i = 1; i != hl2_norc_1_rc->GetNbinsX()+1; ++i) {
 
     int k10 = hl3->FindBin(10.);
     double r10 = 1;//;hl3->GetBinContent(k10);
@@ -301,12 +337,17 @@ void randomConeL2L3Res_era(string era) {
     double r20 = 1;//hl3->GetBinContent(k20);
     double er20 = 0;//hl3->GetBinError(k20);
     
-    double eta = hl2_1_rc->GetBinCenter(i);
-    int j = hl2_1->FindBin(symmetrizeEta ? fabs(eta) : eta);
-    hl2_1_rc->SetBinContent(i, r10*hl2_1->GetBinContent(j));
-    hl2_1_rc->SetBinError(i, r10*hl2_1->GetBinError(j));
-    hl2_2_rc->SetBinContent(i, r20*hl2_2->GetBinContent(j));
-    hl2_2_rc->SetBinError(i, r20*hl2_2->GetBinError(j));
+    double eta = hl2_norc_1_rc->GetBinCenter(i);
+    int j = hl2_norc_1->FindBin(symmetrizeEta ? fabs(eta) : eta);
+    hl2_norc_1_rc->SetBinContent(i, r10*hl2_norc_1->GetBinContent(j));
+    hl2_norc_1_rc->SetBinError(i, r10*hl2_norc_1->GetBinError(j));
+    hl2_norc_2_rc->SetBinContent(i, r20*hl2_norc_2->GetBinContent(j));
+    hl2_norc_2_rc->SetBinError(i, r20*hl2_norc_2->GetBinError(j));
+    //
+    hl2_wrc_1_rc->SetBinContent(i, r10*hl2_wrc_1->GetBinContent(j));
+    hl2_wrc_1_rc->SetBinError(i, r10*hl2_wrc_1->GetBinError(j));
+    hl2_wrc_2_rc->SetBinContent(i, r20*hl2_wrc_2->GetBinContent(j));
+    hl2_wrc_2_rc->SetBinError(i, r20*hl2_wrc_2->GetBinError(j));
   } // for i
   
   curdir->cd();
@@ -320,7 +361,8 @@ void randomConeL2L3Res_era(string era) {
   double eps = 1e-4;
   //TH1D *h = tdrHist(Form("h_%s",cr),"JES or RC SF ",0.4+eps,1.8-eps,
   //TH1D *h = tdrHist(Form("h_%s",cr),"JES or RC",0.25+eps,1.7-eps,
-  TH1D *h = tdrHist(Form("h_%s",cr),"JES or RC",0.6+eps,1.45-eps,
+  //TH1D *h = tdrHist(Form("h_%s",cr),"JES or RC",0.6+eps,1.45-eps,
+  TH1D *h = tdrHist(Form("h_%s",cr),"JES or RC",0.65+eps,1.65-eps,
 		    "#eta",-5.2,5.2);
   //TH1D *hd = tdrHist(Form("hd_%s",cr),"JES / RC SF ",0.8+eps,1.8-eps,
   TH1D *hd = tdrHist(Form("hd_%s",cr),"JES / RCF",0.4+eps,1.6-eps,
@@ -346,19 +388,21 @@ void randomConeL2L3Res_era(string era) {
   tdrDraw(hrc13,"HISTE",kNone,kGray+1,kSolid,-1,kNone);
   TH1D *hrc13jes_clone = (TH1D*)hrc13jes->Clone(Form("hrc13jes_clone_%s",cr));
   tdrDraw(hrc13jes_clone,"HIST",kNone,kBlack,kSolid,-1,kNone);
-  tdrDraw(hl2_1_rc,"Pz",kFullCircle,kBlack,kSolid,-1,kNone,0,0.7);
+  tdrDraw(hl2_norc_1_rc,"Pz",kOpenCircle,kBlack,kSolid,-1,kNone,0,0.7);
+  tdrDraw(hl2_wrc_1_rc,"Pz",kFullCircle,kBlack,kSolid,-1,kNone,0,0.7);
   //tdrDraw(hl2_1_rc,"Pz",kFullCircle,kGray+1,kSolid,-1,kNone,0,0.7);
   //tdrDraw(hl2_2_rc,"Pz",kOpenCircle,kGray+1,kSolid,-1,kNone,0,0.7);
   //tdrDraw(hl2_1,"Pz",kFullCircle,kBlack,kSolid,-1,kNone,0,0.7);
   //tdrDraw(hl2_2,"Pz",kOpenCircle,kBlack,kSolid,-1,kNone,0,0.7);
 
   //TLegend *leg = tdrLeg(0.50,0.90-0.05*5,0.75,0.90);
-  TLegend *leg = tdrLeg(0.45,0.90-0.05*3,0.70,0.90);
+  TLegend *leg = tdrLeg(0.35,0.90-0.05*4,0.60,0.90);
   //leg->AddEntry(hrc,"RC@69.2 mb","L");
   //leg->AddEntry(hrc753,"RC@75.3 mb","L");
   leg->AddEntry(hrc13,"RC SF / (|#eta|<1.3)","L");
   leg->AddEntry(hrc13jes,"RC#otimesf(neutral) / (|#eta|<1.3)","FL");
-  leg->AddEntry(hl2_1,"JES(L2Res)@10 GeV","PLE");
+  leg->AddEntry(hl2_norc_1_rc,"JES(L2Res)@10 GeV (pre-RC)","PLE");
+  leg->AddEntry(hl2_wrc_1_rc,"JES(L2Res)@10 GeV (post-RC)","PLE");
   //leg->AddEntry(hl2_2,"JES@15 GeV","L");
   //leg->AddEntry(hl2_2,"JES@20 GeV","L");
 
@@ -370,17 +414,23 @@ void randomConeL2L3Res_era(string era) {
   hr_rc->Divide(hrc13jes);
   TH1D *hr_rc753 = (TH1D*)hrc753->Clone(Form("hr753_rc753_%s",cr));
   hr_rc753->Divide(hrc13jes);
-  TH1D *hr_1 = (TH1D*)hl2_1_rc->Clone(Form("hr_1_%s",cr));
-  hr_1->Divide(hrc13jes);
-  TH1D *hr_2 = (TH1D*)hl2_2_rc->Clone(Form("hr_2_%s",cr));
-  hr_2->Divide(hrc13jes);
+  TH1D *hr_norc_1 = (TH1D*)hl2_norc_1_rc->Clone(Form("hr_norc_1_%s",cr));
+  hr_norc_1->Divide(hrc13jes);
+  TH1D *hr_norc_2 = (TH1D*)hl2_norc_2_rc->Clone(Form("hr_norc_2_%s",cr));
+  hr_norc_2->Divide(hrc13jes);
+  //
+  TH1D *hr_wrc_1 = (TH1D*)hl2_wrc_1_rc->Clone(Form("hr_wrc_1_%s",cr));
+  hr_wrc_1->Divide(hrc13jes);
+  TH1D *hr_wrc_2 = (TH1D*)hl2_wrc_2_rc->Clone(Form("hr_wrc_2_%s",cr));
+  hr_wrc_2->Divide(hrc13jes);
+  
 
-  TH1D *hr_1_band = (TH1D*)hr_1->Clone(Form("hr_1_band_%s",cr));
-  for (int i = 1; i != hr_1_band->GetNbinsX()+1; ++i) {
-    hr_1_band->SetBinContent(i, 1);
-    hr_1_band->SetBinError(i, hrc13jes->GetBinError(i));
+  TH1D *hr_norc_1_band = (TH1D*)hr_norc_1->Clone(Form("hr_norc_1_band_%s",cr));
+  for (int i = 1; i != hr_norc_1_band->GetNbinsX()+1; ++i) {
+    hr_norc_1_band->SetBinContent(i, 1);
+    hr_norc_1_band->SetBinError(i, hrc13jes->GetBinError(i));
   }
-  tdrDraw(hr_1_band,"E2",kNone,kBlack,kSolid,-1,1001,kYellow+1,0.5);
+  tdrDraw(hr_norc_1_band,"E2",kNone,kBlack,kSolid,-1,1001,kYellow+1,0.5);
 
   l->SetLineStyle(kSolid);
   l->SetLineColor(kBlack);
@@ -389,7 +439,8 @@ void randomConeL2L3Res_era(string era) {
   //tdrDraw(hr_rc,"HIST",kNone,kGray,kSolid,-1,kNone);
   //tdrDraw(hr_rc753,"HIST",kNone,kGray+1,kSolid,-1,kNone);
   //tdrDraw(hr_1,"Pz",kFullCircle,kGray+1,kSolid,-1,kNone,0,0.5);
-  tdrDraw(hr_1,"Pz",kFullCircle,kBlack,kSolid,-1,kNone,0,0.5);
+  tdrDraw(hr_norc_1,"Pz",kOpenCircle,kBlack,kSolid,-1,kNone,0,0.5);
+  tdrDraw(hr_wrc_1,"Pz",kFullCircle,kBlack,kSolid,-1,kNone,0,0.5);
   //tdrDraw(hr_2,"Pz",kOpenCircle,kGray+1,kSolid,-1,kNone,0,0.5);
   
   gPad->RedrawAxis();
@@ -404,7 +455,8 @@ void randomConeL2L3Res_era(string era) {
   
   frc->Close();
   frc25->Close();
-  fl2->Close();
+  fl2_norc->Close();
+  fl2_wrc->Close();
   fl3->Close();
   
 } // randomConeL2L3Res
