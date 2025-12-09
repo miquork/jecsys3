@@ -132,9 +132,9 @@ const array<string,29> _gf_datasets_whitelist = {
 // 'name' should match the dataset name in the list above
 // How to use: uncomment individual datasets to use only those
 const array<string,29> _gf_shapes_whitelist = {
-  "em3",
-  "tv402","tv3n1","tv300pn",
-  "hhp3",
+  "em3", // EM scale -3%
+  "tv402","tv3n1","tv300pn", // tracking -1% Ntrk=1, Ntrk>=1; eff=0.998^{N-1}
+  "hhp3", // HCAL scale -3%
   //"hhpfc", // Run23
   //"hhnoise", // Run22
   //"x0p5",
@@ -160,8 +160,9 @@ const array<string,29> _gf_shapes_whitelist = {
   //"x3", // Summer23 hight pT? Slightly too sharp?
   //"x4", // test TeV scale
   //"hbtime", // test adding for Summer23; did nothing really on top of x2p5
-  "hbsipm", // 22Sep2023 V3, not 19Dec2023
-  "hhblue103"
+  //"hbsipm", // 22Sep2023 V3, not 19Dec2023, off for 2025
+  "hhblue103",
+  "hbd1","hbd2","hbd3","hbd4" // Depth variations by 20% (or 17%?) for 2025
 };
 
 // Listing one-sided (positive-definite) sources
@@ -242,6 +243,31 @@ const array<array<string,3>, nshp> _gf_shapes = {{
     {"x4","Rjet","10.*pow(x/3000.,4)"},
     // Quick tests for 10% pT^2 and pT^3 uncertainty at 3 TeV
 
+    // HB depth variations for depths 1,2,3,4
+    {"hbd1","Rjet","-3.295+log(x)*(2.364+log(x)*(-0.6283+log(x)*(0.03461+log(x)*(0.009515+log(x)*(-0.001753+log(x)*9.142e-05)))))"},
+    {"hbd1","chf","0.6206+log(x)*(-0.1393+log(x)*(-0.001886+log(x)*(0.003798+log(x)*(0.0006411+log(x)*(1.277e-05+log(x)*-1.549e-05)))))"},
+    {"hbd1","nef","7.78+log(x)*(-7.391+log(x)*(2.32+log(x)*(-0.1615+log(x)*(-0.04895+log(x)*(0.009229+log(x)*-0.0004418)))))"},
+    {"hbd1","nhf","-10.4+log(x)*(9.327+log(x)*(-2.848+log(x)*(0.1941+log(x)*(0.05795+log(x)*(-0.01106+log(x)*0.0005452)))))"},
+    // "hbd1" checksum: 605291bc9220bea47529cf5500ceb299
+
+    {"hbd2","Rjet","-1.473+log(x)*(0.7143+log(x)*(-0.07459+log(x)*(-0.018+log(x)*(-0.0001996+log(x)*(0.0002706+log(x)*-7.195e-06)))))"},
+    {"hbd2","chf","-4.981+log(x)*(4.784+log(x)*(-1.447+log(x)*(0.09612+log(x)*(0.02997+log(x)*(-0.005195+log(x)*0.0002244)))))"},
+    {"hbd2","nef","13.8+log(x)*(-12.99+log(x)*(3.973+log(x)*(-0.2471+log(x)*(-0.08869+log(x)*(0.0158+log(x)*-0.000728)))))"},
+    {"hbd2","nhf","-14.01+log(x)*(12.73+log(x)*(-3.826+log(x)*(0.2391+log(x)*(0.0809+log(x)*(-0.01473+log(x)*0.0007006)))))"},
+    // "hbd2" checksum: 0d1494f63e15b067458feb1bd1d23f01
+
+    {"hbd3","Rjet","-3.36+log(x)*(2.678+log(x)*(-0.6936+log(x)*(0.02975+log(x)*(0.0134+log(x)*(-0.002282+log(x)*0.0001095)))))"},
+    {"hbd3","chf","-1.347+log(x)*(1.321+log(x)*(-0.4023+log(x)*(0.02565+log(x)*(0.008512+log(x)*(-0.001317+log(x)*4.75e-05)))))"},
+    {"hbd3","nef","5.869+log(x)*(-5.448+log(x)*(1.624+log(x)*(-0.08804+log(x)*(-0.03836+log(x)*(0.006432+log(x)*-0.0002824)))))"},
+    {"hbd3","nhf","-8.257+log(x)*(7.358+log(x)*(-2.136+log(x)*(0.1191+log(x)*(0.0468+log(x)*(-0.008154+log(x)*0.000378)))))"},
+    // "hbd3" checksum: c982fae4d80f57c2e6e2a5477bedab01
+
+    {"hbd4","Rjet","-2.433+log(x)*(1.973+log(x)*(-0.5149+log(x)*(0.02303+log(x)*(0.01015+log(x)*(-0.001673+log(x)*7.395e-05)))))"},
+    {"hbd4","chf","1.292+log(x)*(-1.099+log(x)*(0.3116+log(x)*(-0.01734+log(x)*(-0.007365+log(x)*(0.001474+log(x)*-8.072e-05)))))"},
+    {"hbd4","nef","1.916+log(x)*(-1.709+log(x)*(0.4718+log(x)*(-0.01473+log(x)*(-0.0123+log(x)*(0.001667+log(x)*-5.559e-05)))))"},
+    {"hbd4","nhf","-3.991+log(x)*(3.467+log(x)*(-0.9667+log(x)*(0.04508+log(x)*(0.02209+log(x)*(-0.003581+log(x)*0.0001556)))))"},
+    // "hbd4" checksum: b0013414f696dc10245acf35c3385aea
+    
     // ECAL cc timing, dijet/drawCompareLite_Promp24_vs_ECALRATIO_TnP_2024B.pdf
     // Maximum drop put in by hand, now -9%:
     // 1) photon xsec max drop 75%: 18.75% scale if pT^-4,
