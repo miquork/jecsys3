@@ -30,9 +30,12 @@
 
 // Scale soft jets and unclustered energy with gJES from Z+flavor (Flavor.C)
 // gJESpt=15 => 0.947, gJESpt=45 => 0.981
-bool useGluonJES = true; // (def:true)
+bool useGluonJES = false;//true; // (def:true; Run3:false)
 double gJESpt = 15.; // reference pT for gluonJES (def:45)
 bool _debug3 = false;
+
+// Scale Ru_d time dependence from HB scale drop in 2025, and others as needed
+bool fixTimeDependence = true;
 
 // Find entry in graph corresponding to this histogram bin
 double getY(double pt, double ptmin, double ptmax, TGraphErrors *g,
@@ -119,6 +122,9 @@ void softrad3(double etamin=0.0, double etamax=1.3, string epoch="") {
   methods2.push_back("ptchs");
 
   vector<string> samples;
+  samples.push_back("jetp");
+  samples.push_back("pjav");
+  samples.push_back("pjet");
   samples.push_back("gamjet");
   //samples.push_back("zeejet");
   //samples.push_back("zmmjet");
@@ -127,6 +133,26 @@ void softrad3(double etamin=0.0, double etamax=1.3, string epoch="") {
   samples.push_back("zjet");
   samples.push_back("multijet");
 
+  // Add flavor stuff
+  const int nf = 6;
+  const char *vf[nf] = {"i", "b", "c", "q", "g", "n"};
+
+  // Add flavor stuff for Z+jet
+  for (int i = 0; i != nf; ++i) {
+    samples.push_back(Form("z%s",vf[i]));
+    for (int j = 0; j != nf; ++j) {
+      samples.push_back(Form("z%s%s",vf[i],vf[j]));
+    } // for j
+  } // for i
+
+  // Add flavor stuff for gamma+jet
+  for (int i = 0; i != nf; ++i) {
+    samples.push_back(Form("g%s",vf[i]));
+    for (int j = 0; j != nf; ++j) {
+      samples.push_back(Form("g%s%s",vf[i],vf[j]));
+    } // for j
+  } // for i
+  
   const int aref = 100; // Z/gamma+jet
   const int mptref = 100;//30; // multijet
 
@@ -314,12 +340,19 @@ void softrad3(double etamin=0.0, double etamax=1.3, string epoch="") {
 	    // v1: Runcl = 0.685
 	    //double Ru_d(0.685), Ru_m(0.685); // Ru(DY,CP5,UL17)
 	    // v2: Runcl = 0.92
-	    double Ru_d(0.92), Ru_m(0.92); // soft gluon jets in MC
+	    double Ru_d(0.92), Ru_m(0.92); // soft gluon jets in MC (Run 2)
+	    //double Ru_d(0.92*0.80), Ru_m(0.92); // unclustered (Run 3 / 2025)
+	    //double Ru_d(0.8*0.80), Ru_m(0.8); // unclustered (Run 3 / 2025)
 	    // v3: Runcl_data * gJES, Rn_data * gJES (optional)
 	    double R2_m(1.000), R2_d(1.000); // multijet recoil?
 	    if (useGluonJES) {
 	      double gJES = _flv->getResp(gJESpt,0.,"MultijetRecoil25",-1,"25");
 	      Ru_d *= gJES;
+	    }
+	    if (fixTimeDependence) {
+	      TString t(cep);
+	      // Account for HB scale drop in 2025
+	      if (t.Contains("25")) Ru_d *= 0.80;
 	    }
 	    
 	    // Systematic variations for Rn_m, Ru_m numerically

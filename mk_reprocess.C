@@ -15,7 +15,7 @@
   // Compile with +g to make sure asserts are run
   gROOT->ProcessLine(".L tools.C+g");
   gROOT->ProcessLine(".L Flavor.C+g");
-  gROOT->ProcessLine(".L reprocess.C++g");
+  gROOT->ProcessLine(".L reprocess.C++g"); // ++g to pick updates in Config.C
   gROOT->ProcessLine(".L scaleJES.C+g");
   gROOT->ProcessLine(".L softrad3.C+g");
   //gROOT->ProcessLine(".L globalFitSyst.C+g");
@@ -83,7 +83,7 @@
   //globalFitEtaBin(0.0, 1.3, epoch, "Prompt24_V7M");
   //globalFitEtaBin(0.0, 1.3, epoch, "Prompt24_V8N");
   if (TString(epoch.c_str()).Contains("25"))
-    globalFitEtaBin(0.0, 1.3, epoch, "Prompt25_V2M", doClosure);
+    globalFitEtaBin(0.0, 1.3, epoch, "Prompt25_V3M", doClosure);
   else
     //globalFitEtaBin(0.0, 1.3, epoch, "ReReco24_V9M");
     globalFitEtaBin(0.0, 1.3, epoch, "ReReco24_V10M");

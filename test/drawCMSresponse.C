@@ -82,7 +82,8 @@ void drawCMSresponse(string era, string id="", bool isl2 = false) {
     //const char *sd = "textFiles/Summer23_L2ResOnly";
     //const char *sd = "textFiles/Prompt24";
     //const char *sd = "textFiles/Prompt25_V1M";
-    const char *sd = "textFiles/Prompt25_V2M";
+    //const char *sd = "textFiles/Prompt25_V2M";
+    const char *sd = "textFiles/Prompt25";
     //const char *sd = "textFiles/ReReco24";
     //const char *sd = "textFiles/ReReco24_V9M";
     //const char *sd = "textFiles/Prompt24_V5M";
@@ -177,8 +178,8 @@ void drawCMSresponse(string era, string id="", bool isl2 = false) {
   //TH1D *h = new TH1D("h",";Jet |#eta|;Data response+offset",40,0,4.8);
   //h->SetMaximum(1.25);
   //h->SetMinimum(0.5);
-  h->SetMaximum(1.55);//1.35);//1.30);//1.20);
-  h->SetMinimum(0.00);//0.40);//0.55);//0.65);
+  h->SetMaximum(1.65);//1.55);//1.35);//1.30);//1.20);
+  h->SetMinimum(0.50);//0.00);//0.40);//0.55);//0.65);
   //extraText = "Simulation";
   //extraText = "Simulation Preliminary";
   //extraText = "Preliminary";
@@ -238,22 +239,26 @@ void drawCMSresponse(string era, string id="", bool isl2 = false) {
   */
   // Run II
   l->SetLineStyle(kDashed);
-  l->SetLineColor(kGray+1);
+  l->SetLineColor(kGray+2);
   l->DrawLine(0,1,5.191,1);
 
   l->SetLineStyle(kSolid);
-  l->SetLineColor(kBlack);
+  //l->SetLineColor(kBlack);
+  l->SetLineStyle(kDotted);
   //l->DrawLine(1.305,0.78,1.305,1.12); // BB
-  l->DrawLine(1.305,0.78,1.305,1.18); // BB
+  //l->DrawLine(1.305,0.78,1.305,1.18); // BB
+  l->DrawLine(1.305,0.85,1.305,1.15); // BB
   //l->DrawLine(2.5,0.78,2.5,1.06); // EC1
-  l->DrawLine(2.5,0.68,2.5,1.12); // EC1
+  //l->DrawLine(2.5,0.68,2.5,1.12); // EC1
+  l->DrawLine(2.5,0.80,2.5,1.20); // EC1
   //l->DrawLine(2.853,0.76,2.853,1.06); // EC2
   //l->DrawLine(3.139,0.66,3.139,1.06); // HF
   //l->DrawLine(4.538,0.66,4.538,1.06); // HF
   //l->SetLineStyle(kDashed);
   //l->DrawLine(2.964,0.66,2.964,1.00); // HF
   //l->DrawLine(2.964,0.78,2.964,1.12); // HF
-  l->DrawLine(2.964,0.60,2.964,1.18); // HF
+  //l->DrawLine(2.964,0.60,2.964,1.s18); // HF
+  l->DrawLine(2.964,0.80,2.964,1.45); // HF
 
   //tex->DrawLatex(0.23,0.86,"2012 JES: Anti-k_{t} R = 0.5, PF+CHS");
   //tex->DrawLatex(0.30,0.86,"53X JES: Anti-k_{t} R = 0.5, PF+CHS");

@@ -11,8 +11,8 @@
 
 bool plotEtaBins = true; // lots of plots
 
-bool skipZ = true;//false;
-bool skipG = true;//false;
+bool skipZ = true;//false;//true;//false;
+bool skipG = true;//false;//true
 
 // Patch [2.853,2.964] minimum statistical uncertainty (for trig bias?)
 double patchErr29 = 0.005; // added in quadrature to stat unc
@@ -30,8 +30,8 @@ TH1D *getJER(TProfile2D *p2s, TProfile2D *p2x, TH1D *hjer13,
     int ieta00 = p2s->GetXaxis()->FindBin(0.);
     int ieta13 = p2s->GetXaxis()->FindBin(1.3); // bin edge 1.305
     TProfile *p13s, *p13x;
-    p13s = p2s->ProfileY("p13s",ieta00,ieta13,"S");
-    p13x = p2x->ProfileY("p13x",ieta00,ieta13,"S");
+    p13s = p2s->ProfileY("p13s",ieta00,ieta13,"s");//"S");
+    p13x = p2x->ProfileY("p13x",ieta00,ieta13,"s");//"S");
     hjer13 = p13s->ProjectionX("hjer13_");
     for (int i = 1; i != hjer13->GetNbinsX()+1; ++i) {
       double s = p13s->GetBinError(i);
@@ -49,8 +49,8 @@ TH1D *getJER(TProfile2D *p2s, TProfile2D *p2x, TH1D *hjer13,
   int ieta1 = p2s->GetXaxis()->FindBin(etamin);
   int ieta2 = p2s->GetXaxis()->FindBin(etamax);
   TProfile *ps, *px;
-  ps = p2s->ProfileY("ps",ieta1,ieta2,"S");
-  px = p2x->ProfileY("px",ieta2,ieta2,"S");
+  ps = p2s->ProfileY("ps",ieta1,ieta2,"s");//"S");
+  px = p2x->ProfileY("px",ieta1,ieta2,"s");//"S");
   TH1D *hjer = ps->ProjectionX(name!=0 ? name : "hjer_");
   for (int i = 1; i != hjer->GetNbinsX()+1; ++i) {
     double s = ps->GetBinError(i);
@@ -88,6 +88,8 @@ TH1D *getJER(TProfile2D *p2s, TProfile2D *p2x, TH1D *hjer13,
 } // getJER
 
 // Calculate JER with MPFX for Z+jet. JER13 not needed
+// Low pT bias: have to account for truncation of RMS in parallel direction
+// - mean should be zero, but truncation makes it no so; re-calc RMS wrt 0
 TH1D *getJERZ(TProfile2D *p2s, TProfile2D *p2x, 
 	      double etamin, double etamax, const char *name = 0) {
   assert(p2s);
@@ -97,12 +99,16 @@ TH1D *getJERZ(TProfile2D *p2s, TProfile2D *p2x,
   int ieta1 = p2s->GetXaxis()->FindBin(etamin);
   int ieta2 = p2s->GetXaxis()->FindBin(etamax);
   TProfile *ps, *px;
-  ps = p2s->ProfileY("ps",ieta1,ieta2,"S");
-  px = p2x->ProfileY("px",ieta2,ieta2,"S");
+  ps = p2s->ProfileY("ps",ieta1,ieta2,"s");//"S");
+  px = p2x->ProfileY("px",ieta1,ieta2,"s");//"S");
   TH1D *hjer = ps->ProjectionX(name!=0 ? name : "hjer_");
   for (int i = 1; i != hjer->GetNbinsX()+1; ++i) {
     double s = ps->GetBinError(i);
+    double m = ps->GetBinContent(i);
+    //s = sqrt(pow(s,2) + pow(m-1,2)); // RMS bias from mean truncation
     double x = px->GetBinError(i);
+    double mx = px->GetBinContent(i);
+    //x = sqrt(pow(x,2) + pow(mx-1,2)); // RMS vs mean=0
     double jer = sqrt(max(s*s - x*x,0.));
     hjer->SetBinContent(i, jer);
     //hjer->SetBinError(i, 0.); // do properly later
@@ -316,7 +322,12 @@ void JERSF() {
   
   // Set output directory;
   TFile *fout = new TFile("rootfiles/JERSF.root","RECREATE");
-  fout->mkdir("Eta13");
+  double yminc(0), ymaxc(1.3); // default
+  //double yminc(1.8), ymaxc(2.65); // TrkRadDam -- too wide
+  //double yminc(1.8), ymaxc(2.5); // TrkRadDam -- okayish
+  //double yminc(1.8), ymaxc(2.3); // TrkRadDam -- avoid HCAL problems
+  if (yminc==0 && ymaxc==1.3) fout->mkdir("Eta13");
+  else fout->mkdir(Form("Eta%1.0f_%1.0f",10*yminc,10*ymaxc));
   fout->mkdir("Fits");
   fout->mkdir("Dijet");
   fout->mkdir("Extras");
@@ -349,7 +360,10 @@ void JERSF() {
     "2024G_nib1","2024G_nib2","2024H_nib1","2024I_nib1",
     //"2024E_noRW","2024E_692mb","2024E_753mb"
     */
-    "2025C","2025D","2025E","2025CDE"
+    "2025C","2025D","2025E","2025F","2025G",
+    "2025CDEFG","2025DEFG"
+    //"2025C0","2025CT"
+    //"2025C","2025D"
     //"PhiBase","PhiIM","PhiMoM"
 		   
   };
@@ -406,7 +420,10 @@ void JERSF() {
     "Summer24","Summer24","Summer24","Summer24",
     //"2024E_noRW","2024E_692mb","2024E_753mb" //Pr24
     */
-    "Winter25","Winter25","Winter25","Winter25"
+    //"Winter25","Winter25","Winter25","Winter25","Winter25"
+    "Summer24","Summer24","Summer24","Summer24","Summer24",
+    "Summer24","Summer24"
+    //"Winter25","Winter25"
     //"Winter25","Winter25","Winter25"
   };
   //string vmc[] = {"Summer23MGBPix","Summer23MGBPix","Summer23MGBPix"};
@@ -454,7 +471,7 @@ void JERSF() {
   // Files and luminosities
   #include "Config.C"
     
-  TFile *f(0), *fm(0), *fz(0), *fg(0), *fgm(0);
+  TFile *f(0), *fm(0), *fz(0), *fzm(0), *fg(0), *fgm(0);
   TString tr = cr;
   if (mfile.find(Form("JET_%s_DATA_CMB",cr))!=mfile.end() &&
       mfile.find(Form("JET_%s_MC",cr))!=mfile.end()) {
@@ -476,10 +493,20 @@ void JERSF() {
       cout << "Reading GAM_" << run << "_MC from Config.C: " << file_mc << endl;
       fgm = new TFile(file_mc.c_str(),"READ");
     }
-    if (mfile.find(Form("ZMM_%s_DATAMC",cr))!=mfile.end()) {
+    if (mfile.find(Form("ZMM_%s_DATA",cr))!=mfile.end() &&
+	mfile.find(Form("ZMM_%s_MC",cr))!=mfile.end()) {
+      string datafile = mfile[Form("ZMM_%s_DATA",cr)];
+      cout << "Reading ZMM_" << run << "_DATA from Config.C: " << datafile <<endl;
+      fz = new TFile(datafile.c_str(),"READ");
+      string mcfile = mfile[Form("ZMM_%s_MC",cr)];
+      cout << "Reading ZMM_" << run << "_MC from Config.C: " << mcfile <<endl;
+      fzm = new TFile(mcfile.c_str(),"READ");
+    }
+    else if (mfile.find(Form("ZMM_%s_DATAMC",cr))!=mfile.end()) {
       string file = mfile[Form("ZMM_%s_DATAMC",cr)];
       cout << "Reading ZMM_" << run << "_DATAMC from Config.C: "<<file<<endl;
       fz = new TFile(file.c_str(),"READ");
+      fzm = fz;
     }
   }
   else if (TString(cr).Contains("Prompt2022")) {
@@ -775,6 +802,7 @@ void JERSF() {
   assert(f && !f->IsZombie());
   assert(fm && !fm->IsZombie());
   assert(fz && !fz->IsZombie() || skipZ);
+  assert(fzm && !fzm->IsZombie() || skipZ);
   assert(fg && !fg->IsZombie() || skipG);
   assert(fgm && !fgm->IsZombie() || skipG);
 
@@ -790,8 +818,8 @@ void JERSF() {
   if (!skipZ) {
     p2zs = (TProfile2D*)fz->Get("data/l2res/p2m0");  assert(p2zs);
     p2zx = (TProfile2D*)fz->Get("data/l2res/p2m0x"); assert(p2zx);
-    p2zsm = (TProfile2D*)fz->Get("mc/l2res/p2m0");  assert(p2zsm);
-    p2zxm = (TProfile2D*)fz->Get("mc/l2res/p2m0x"); assert(p2zxm);
+    p2zsm = (TProfile2D*)fzm->Get("mc/l2res/p2m0");  assert(p2zsm);
+    p2zxm = (TProfile2D*)fzm->Get("mc/l2res/p2m0x"); assert(p2zxm);
   }
   
   TProfile2D *p2gs(0), *p2gx(0), *p2gsm(0), *p2gxm(0);
@@ -801,24 +829,24 @@ void JERSF() {
     p2gsm = (TProfile2D*)fgm->Get("Gamjet2/p2m0");  assert(p2gsm);
     p2gxm = (TProfile2D*)fgm->Get("Gamjet2/p2m0x"); assert(p2gxm);
   }
-  
-  TH1D *hjer13  = getJER(p2s, p2x, 0, 0,1.3,Form("hjer13_%s",cr));
-  TH1D *hjer13m = getJER(p2sm,p2xm,0, 0,1.3,Form("hjer13m_%s",cr));
+
+  TH1D *hjer13  = getJER(p2s, p2x, 0, yminc,ymaxc,Form("hjer13_%s",cr));
+  TH1D *hjer13m = getJER(p2sm,p2xm,0, yminc,ymaxc,Form("hjer13m_%s",cr));
   TH1D *hsf13 = (TH1D*)hjer13->Clone(Form("hsf13_%s",cr));
   hsf13->Divide(hjer13m);
 
   TH1D *hjer13g(0), *hjer13gm(0), *hsf13g(0);
   if (!skipG) {
-    hjer13g  = getJERZ(p2gs, p2gx,  0,1.3,Form("hjer13g_%s",cr));
-    hjer13gm = getJERZ(p2gsm,p2gxm, 0,1.3,Form("hjer13gm_%s",cr));
+    hjer13g  = getJERZ(p2gs, p2gx,  yminc,ymaxc,Form("hjer13g_%s",cr));
+    hjer13gm = getJERZ(p2gsm,p2gxm, yminc,ymaxc,Form("hjer13gm_%s",cr));
     hsf13g = (TH1D*)hjer13g->Clone(Form("hsf13g_%s",cr));
     hsf13g->Divide(hjer13gm);
   }
 
   TH1D *hjer13z(0), *hjer13zm(0), *hsf13z(0);
   if (!skipZ) {
-    hjer13z  = getJERZ(p2zs, p2zx,  0,1.3,Form("hjer13z_%s",cr));
-    hjer13zm = getJERZ(p2zsm,p2zxm, 0,1.3,Form("hjer13zm_%s",cr));
+    hjer13z  = getJERZ(p2zs, p2zx,  yminc,ymaxc,Form("hjer13z_%s",cr));
+    hjer13zm = getJERZ(p2zsm,p2zxm, yminc,ymaxc,Form("hjer13zm_%s",cr));
     hsf13z = (TH1D*)hjer13z->Clone(Form("hsf13z_%s",cr));
     hsf13z->Divide(hjer13zm);
   }
@@ -850,7 +878,10 @@ void JERSF() {
   c0->cd(1);
   gPad->SetLogx();
 
-  tex->DrawLatex(0.40,0.85,"|#eta| < 1.3");
+  if (yminc==0)
+    tex->DrawLatex(0.40,0.85,Form("|#eta| < %1.1f",ymaxc));
+  else
+    tex->DrawLatex(0.40,0.85,Form("%1.1f #leq |#eta| < %1.1f",yminc,ymaxc));
 
   tdrDraw(hjer13m,"HIST",kNone,kBlack,kSolid,-1,kNone,0);
   f13m->SetLineColor(kBlack);
@@ -922,7 +953,10 @@ void JERSF() {
     //}
   }
 
-  c0->SaveAs(Form("pdf/JERSF/JERSF_Eta13_%s.pdf",cr));
+  if (yminc!=0 && ymaxc!=1.3)
+    c0->SaveAs(Form("pdf/JERSF/JERSF_Eta%1.0f_%1.0f_%s.pdf",10*yminc,10*ymaxc,cr));
+  else
+    c0->SaveAs(Form("pdf/JERSF/JERSF_Eta13_%s.pdf",cr));
   if (run=="2024BCD") c0->SaveAs(Form("pdf/JERSF/JERSF_Eta13_%s.png",cr));
   
   //TCanvas *cx = new TCanvas("cx","cx",7*250,3*250);
@@ -1149,7 +1183,7 @@ void JERSF() {
   double siz = tex->GetTextSize();
   tex->SetTextSize(0.045*1.5);
   tex->DrawLatex(0.50,0.92,Form("[%1.3f,%1.3f]",eta1,eta2));
-  tex->SetTextColor(kYellow+2);//kGreen+2);
+  tex->SetTextColor(kBlack);//kYellow+2);//kGreen+2);
   tex->DrawLatex(0.50,0.85,Form("#chi^{2}/ndf=%1.1f/%d",
 				f1->GetChisquare(),f1->GetNDF()));
   tex->SetTextColor(kBlue);
@@ -1338,6 +1372,10 @@ void JERSF() {
   
   tdrDraw(hchi2,"HPz",kFullCircle,kBlack,kSolid,-1,kNone);
   tdrDraw(hchi2r,"HPz",kOpenSquare,kBlue,kSolid,-1,kNone);
+
+  TLegend *legchi = tdrLeg(0.20,0.85-0.05*2,0.45,0.85);
+  legchi->AddEntry(hchi2,"Fit to data, p_{T}>50 GeV","PLE");
+  legchi->AddEntry(hchi2r,"Re-fit to ratio, p_{T}>28 GeV","PLE");
   
   cz->SaveAs(Form("pdf/JERSF/JERSF_Chi2_%s.pdf",cr));
 
@@ -1397,7 +1435,8 @@ void JERSF() {
   // Store results to output file
   fout->cd();
 
-  fout->cd("Eta13");
+  if (yminc==0 && ymaxc==1.3) fout->cd("Eta13");
+  else fout->cd(Form("Eta%1.0f_%1.0f",yminc*10,ymaxc*10));
   hjer13->Write(Form("hjer13_%s_%s_",cr,cm),TObject::kOverwrite);
   hjer13m->Write(Form("hjer13m_%s_%s_",cr,cm),TObject::kOverwrite);
   hsf13->Write(Form("hsf13_%s_%s_",cr,cm),TObject::kOverwrite);

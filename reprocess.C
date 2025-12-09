@@ -142,9 +142,14 @@ void reprocess(string epoch="") {
   }
   if (usePrompt24RangeV2) {
 
-    fjzptmin = 15; fjzptmax = 70;
-    fzjaptmin = 25; fzjaptmax = 70;
-    fzptmin  = 15; fzptmax  = 500;//1000;
+    //fjzptmin = 15; fjzptmax = 70;
+    //fzjaptmin = 25; fzjaptmax = 70;
+    //fzptmin  = 15; fzptmax  = 500;//1000;
+
+    // minitools/drawZJetPtAveV2.C 
+    fjzptmin = 15; fjzptmax = 1000;
+    fzjaptmin = 15; fzjaptmax = 1000;
+    fzptmin  = 15; fzptmax  = 1000;
 
     //fgptmin =  (epoch=="Run24F" || epoch=="Run24G" || epoch=="Run24FG" || epoch=="Run24H" || epoch=="Run24I" || tepoch.Contains("nib") ? 75 : 110);
     fgptmin = 230; // V8M; TightIso_TightID small discontinuity in MPF?
@@ -158,11 +163,20 @@ void reprocess(string epoch="") {
     fmjptmax = 2500;
 
     if (tr.Contains("2025")) {
-      fgptmin = 40;
+      //fgptmin = 40; // default 230
     }
-    if (tr.Contains("2025E")) {
+    if (tr.Contains("2025E") || tr.Contains("2025F")) {
       fmjptmax = 1800;
       fgptmax = 1500;
+    }
+    if (tr.Contains("2025C0") || tr.Contains("2025CT")) {
+      fmjptmax = 1800;
+      fgptmax = 1500;
+    }
+    // Extend range a bit for full stats
+    if (tr.Contains("25DEFG") || tr.Contains("25CDEFG")) {
+      fgptmax = 2000;
+      fmjptmax = 3000;
     }
     
     //if (tr.Contains("2025")) {
@@ -222,10 +236,18 @@ void reprocess(string epoch="") {
   TFile *fwd(0), *fwm(0);
   if (mfile.find(Form("WQQ_%s_DATA",ccr))!=mfile.end() &&
       mfile.find(Form("WQQ_%s_MC",ccr))!=mfile.end()) {
-    cout << "Reading WQQ_" << ccr << "_DATA from Config.C" << endl;
-    fwd = new TFile(mfile[Form("WQQ_%s_DATA",ccr)].c_str(),"READ");
-    cout << "Reading WQQ_" << ccr << "_MC from Config.C" << endl;
-    fwm = new TFile(mfile[Form("WQQ_%s_MC",ccr)].c_str(),"READ");
+
+    string file_data = mfile[Form("WQQ_%s_DATA",ccr)];
+    cout << "Reading WQQ_"<<ccr<<"_DATA from Config.C:\n"<<file_data<<endl;
+    fwd = new TFile(file_data.c_str(),"READ");
+    string file_mc = mfile[Form("WQQ_%s_MC",ccr)];
+    cout << "Reading WQQ_" << ccr << "_MC from Config.C:\n" << file_mc << endl;
+    fwm = new TFile(file_mc.c_str(),"READ");
+    
+    //cout << "Reading WQQ_" << ccr << "_DATA from Config.C" << endl;
+    //fwd = new TFile(mfile[Form("WQQ_%s_DATA",ccr)].c_str(),"READ");
+    //cout << "Reading WQQ_" << ccr << "_MC from Config.C" << endl;
+    //fwm = new TFile(mfile[Form("WQQ_%s_MC",ccr)].c_str(),"READ");
   }
   
   ////////////////////////////
@@ -249,13 +271,34 @@ void reprocess(string epoch="") {
   mz["Run24CS"] = "2024BCD";
   mz["Run24CP"] = "2024BCD";
   
-  TFile *fz(0), *fzjes(0);
+  TFile *fz(0), *fzd(0), *fzm(0), *fzjes(0);
   TH1D *hzjes(0);
   //const char *cdz = "../JERCProtoLab/Winter22Run3/L3Residual_Z";
   const char *cdzul = "rootfiles/Sami_20230630";
-  if (mfile.find(Form("ZMM_%s_DATAMC",ccr))!=mfile.end()) {
-    cout << "Reading ZMM_" << ccr << "_DATAMC from Config.C" << endl;
-    fz = new TFile(mfile[Form("ZMM_%s_DATAMC",ccr)].c_str(),"READ");
+  if (mfile.find(Form("ZMM_%s_DATA",ccr))!=mfile.end() &&
+      mfile.find(Form("ZMM_%s_MC",ccr))!=mfile.end()) {
+
+    string file_data = mfile[Form("ZMM_%s_DATA",ccr)];
+    cout << "Reading ZMM_"<<ccr<<"_DATA from Config.C:\n"<<file_data<<endl;
+    fzd = new TFile(file_data.c_str(),"READ");
+    string file_mc = mfile[Form("ZMM_%s_MC",ccr)];
+    cout << "Reading ZMM_" << ccr << "_MC from Config.C:\n" << file_mc << endl;
+    fzm = new TFile(file_mc.c_str(),"READ");
+    fz = fzd;
+    
+    //cout << "Reading ZMM_" << ccr << "_DATA from Config.C" << endl;
+    //fzd = new TFile(mfile[Form("ZMM_%s_DATA",ccr)].c_str(),"READ");
+    //cout << "Reading ZMM_" << ccr << "_MC from Config.C" << endl;
+    //fzm = new TFile(mfile[Form("ZMM_%s_MC",ccr)].c_str(),"READ");
+    //fz = fzd;
+  }
+  else if (mfile.find(Form("ZMM_%s_DATAMC",ccr))!=mfile.end()) {
+    string file_datamc = mfile[Form("ZMM_%s_DATAMC",ccr)];
+    cout << "Reading ZMM_" << ccr << "_DATAMC from Config.C:\n" << file_datamc << endl;
+    fz = new TFile(file_datamc.c_str(),"READ");
+
+    //cout << "Reading ZMM_" << ccr << "_DATAMC from Config.C" << endl;
+    //fz = new TFile(mfile[Form("ZMM_%s_DATAMC",ccr)].c_str(),"READ");
   }
   else if (tepoch.Contains("UL")) {
     fz = new TFile(Form("%s/jme_bplusZ_%s_Zmm_sync_v53.root",
@@ -356,10 +399,20 @@ void reprocess(string epoch="") {
     //epoch.c_str()),"READ");
   }
 
-  assert(fz && !fz->IsZombie());
+  assert((fz && !fz->IsZombie()));
+  //(fzd && !fzd->IsZombie() && fzm && !fzm->IsZombie()));
+  if (!fzd) fzd = fz;
+  if (!fzm) fzm = fz;
   
-  TFile *fmz = fz; 
-  assert(fmz && !fmz->IsZombie());
+  TFile *fmzd = fzd;//(fzd ? fzd : fz);
+  TFile *fmzm = fzm;//(fzm ? fzm : fz);
+  // hot patch for Sami's TrkRadDam files missing MC
+  // if (tepoch.Contains("2025CT")) {
+  //cout << "*** Patching TrkRadDam MC ***" << endl;
+  //fmz = new TFile("rootfiles/Prompt2025/Zmm_v101/jme_Zj_2025C_Zmm_v101.root","READ");
+  //}
+  assert(fmzd && !fmzd->IsZombie() &&
+	 fmzm && !fmzm->IsZombie());
   
   string sr = "eta_00_13";
   const char *cr = sr.c_str();
@@ -385,19 +438,25 @@ void reprocess(string epoch="") {
       epoch=="Run24CR" || epoch=="Run24CS" || epoch=="Run24CP" ||
       (epoch=="Run3" && false)
       ) {
-    TH2D *hmz_dt2 = (TH2D*)fmz->Get(Form("data/%s/h_Zpt_mZ_alpha100",cr));
+    TH2D *hmz_dt2 = (TH2D*)fmzd->Get(Form("data/%s/h_Zpt_mZ_alpha100",cr));
     assert(hmz_dt2);
     hmz_dt = (hmz_dt2 ? hmz_dt2->ProfileX()->ProjectionX("hmz_dt") : 0);
     assert(hmz_dt);
 
-    TH2D *hmz_mc2 = (TH2D*)fmz->Get(Form("mc/%s/h_Zpt_mZ_alpha100",cr));
+    TH2D *hmz_mc2 = (TH2D*)fmzm->Get(Form("mc/%s/h_Zpt_mZ_alpha100",cr));
     assert(hmz_mc2);
     hmz_mc = (hmz_mc2 ? hmz_mc2->ProfileX()->ProjectionX("hmz_mc") : 0);
     assert(hmz_mc);
   }
   if (epoch=="Run3" && true) {
-    hmz_dt = (TH1D*)fz->Get("data/eta00-13/mass_zjet_a100"); assert(hmz_dt);
-    hmz_mc = (TH1D*)fz->Get("mc/eta00-13/mass_zjet_a100"); assert(hmz_mc);
+    assert(fzd && fzm);
+    hmz_dt = (TH1D*)fzd->Get("data/eta00-13/mass_zjet_a100"); assert(hmz_dt);
+    hmz_mc = (TH1D*)fzm->Get("mc/eta00-13/mass_zjet_a100"); assert(hmz_mc);
+    //}
+    //else {
+    //hmz_dt = (TH1D*)fz->Get("data/eta00-13/mass_zjet_a100"); assert(hmz_dt);
+    //hmz_mc = (TH1D*)fz->Get("mc/eta00-13/mass_zjet_a100"); assert(hmz_mc);
+    //}
   }
   assert(hmz_dt);
   assert(hmz_mc);
@@ -469,19 +528,28 @@ void reprocess(string epoch="") {
   //TFile *fp = new TFile(Form("../gamjet/rootfiles/GamHistosRatio_%s_P8QCD_v32.root",mp[epoch]),"READ"); // L2L3Res_V3
   TFile *fp(0), *fp0(0), *fpm(0), *fpd(0);
   if (mfile.find(Form("GAM_%s_DATA",ccr))!=mfile.end() &&
-      (mfile.find(Form("GAM_%s_MIX",ccr))!=mfile.end() ||
+      (mfile.find(Form("GAM_%s_MIX",ccr))!=mfile.end() && false ||
        mfile.find(Form("GAM_%s_MC",ccr))!=mfile.end())) {
-    cout << "Reading GAM_" << ccr << "_DATA from Config.C" << endl;
-    fp0 = new TFile(mfile[Form("GAM_%s_DATA",ccr)].c_str(),"READ");
+
+    string file_data = mfile[Form("GAM_%s_DATA",ccr)];
+    cout << "Reading GAM_"<<ccr<<"_DATA from Config.C:\n"<<file_data<<endl;
+    fp0 = new TFile(file_data.c_str(),"READ");
     fpd = fp0;
-    if (mfile.find(Form("GAM_%s_MIX",ccr))!=mfile.end()) {
-      cout << "Reading GAM_" << ccr << "_MIX from Config.C" << endl;
-      fpm = new TFile(mfile[Form("GAM_%s_MIX",ccr)].c_str(),"READ");
-    }
-    else {
-      cout << "Reading GAM_" << ccr << "_MC from Config.C" << endl;
-      fpm = new TFile(mfile[Form("GAM_%s_MC",ccr)].c_str(),"READ");
-    }
+    string file_mc = mfile[Form("GAM_%s_MC",ccr)];
+    cout << "Reading GAM_" << ccr << "_MC from Config.C:\n" << file_mc << endl;
+    fpm = new TFile(file_mc.c_str(),"READ");
+    
+    //cout << "Reading GAM_" << ccr << "_DATA from Config.C" << endl;
+    //fp0 = new TFile(mfile[Form("GAM_%s_DATA",ccr)].c_str(),"READ");
+    //fpd = fp0;
+    //if (mfile.find(Form("GAM_%s_MIX",ccr))!=mfile.end() && false) {
+    //cout << "Reading GAM_" << ccr << "_MIX from Config.C" << endl;
+    //fpm = new TFile(mfile[Form("GAM_%s_MIX",ccr)].c_str(),"READ");
+    //}
+    //else {
+    //cout << "Reading GAM_" << ccr << "_MC from Config.C" << endl;
+    //fpm = new TFile(mfile[Form("GAM_%s_MC",ccr)].c_str(),"READ");
+    //}
   }
   else if (epoch=="Run22FG") {
     //fp = new TFile(Form("../gamjet/rootfiles/GamHistosRatio_%s_P8QCD_19Dec_v33.root",mp[epoch]),"READ"); // 19Dec2023
@@ -710,10 +778,10 @@ void reprocess(string epoch="") {
   if (mfile.find(Form("JET_%s_DATA_CMB",ccr))!=mfile.end() &&
       mfile.find(Form("JET_%s_MC",ccr))!=mfile.end()) {
     string file_data = mfile[Form("JET_%s_DATA_CMB",ccr)];
-    cout << "Reading JET_"<<ccr<<"_DATA_CMB from Config.C: "<<file_data<<endl;
+    cout << "Reading JET_"<<ccr<<"_DATA_CMB from Config.C:\n"<<file_data<<endl;
     fmjd = new TFile(file_data.c_str(),"READ");
     string file_mc = mfile[Form("JET_%s_MC",ccr)];
-    cout << "Reading JET_" << ccr << "_MC from Config.C: " << file_mc << endl;
+    cout << "Reading JET_" << ccr << "_MC from Config.C:\n" << file_mc << endl;
     fmjm = new TFile(file_mc.c_str(),"READ");
     if (fmjm) fmjm = (TFile*)fmjm->GetDirectory("HLT_MC"); // PATCH
   }
@@ -855,19 +923,68 @@ void reprocess(string epoch="") {
   files["wqq_data"] = fwd;
   files["wqq_mc"] = fwm;
   files["wqq_ratio"] = fwd;
-  files["jetz"] = fz;
-  files["zjav"] = fz;
-  files["zjet"] = fz;
+  //files["jetz"] = fz;
+  //files["zjav"] = fz;
+  //files["zjet"] = fz;
+  files["jetz_data"] =  fzd;//(fzd ? fzd : fz);
+  files["jetz_mc"] =    fzm;//(fzm ? fzm : fz);
+  files["jetz_ratio"] = fzd;//(fzd ? fzd : fz);
+  files["zjav_data"] =  fzd;//(fzd ? fzd : fz);
+  files["zjav_mc"] =    fzm;//(fzm ? fzm : fz);
+  files["zjav_ratio"] = fzd;//(fzd ? fzd : fz);
+  files["zjet_data"] =  fzd;//(fzd ? fzd : fz);
+  files["zjet_mc"] =    fzm;//(fzm ? fzm : fz);
+  files["zjet_ratio"] = fzd;//(fzd ? fzd : fz);
   files["gamjet"] = fp;
   files["gamjet_data"] = fpd;
   files["gamjet_mc"] = fpm;
   files["gamjet_ratio"] = fpd;
+  files["pjet"] = fp;
+  files["pjet_data"] = fpd;
+  files["pjet_mc"] = fpm;
+  files["pjet_ratio"] = fpd;
+  files["jetp"] = fp;
+  files["jetp_data"] = fpd;
+  files["jetp_mc"] = fpm;
+  files["jetp_ratio"] = fpd;
+  files["pjav"] = fp;
+  files["pjav_data"] = fpd;
+  files["pjav_mc"] = fpm;
+  files["pjav_ratio"] = fpd;
   files["multijet_data"] = fmjd;
   files["multijet_mc"] = fmjm;
   files["multijet_ratio"] = fmjd;
   files["incjet_data"] = fijd;
   files["incjet_mc"] = fijm;
   files["incjet_ratio"] = fijm; // => should be fijd? or doesn't matter
+
+  // Add flavor stuff
+  const int nf = 6;
+  const char *vf[nf] = {"i", "b", "c", "q", "g", "n"};
+
+  // Add flavor stuff for Z+jet
+  for (int i = 0; i != nf; ++i) {
+    files[Form("z%s_data",vf[i])] = fzd;
+    files[Form("z%s_mc",vf[i])] = fzm;
+    files[Form("z%s_ratio",vf[i])] = fzd;
+    for (int j = 0; j != nf; ++j) {
+      files[Form("z%s%s_data",vf[i],vf[j])] = fzd;
+      files[Form("z%s%s_mc",vf[i],vf[j])] = fzm;
+      files[Form("z%s%s_ratio",vf[i],vf[j])] = fzd;
+    } // for j
+  } // for i
+  
+  // Add flavor stuff for gamma+jet
+  for (int i = 0; i != nf; ++i) {
+    files[Form("g%s_data",vf[i])] = fpd;
+    files[Form("g%s_mc",vf[i])] = fpm;
+    files[Form("g%s_ratio",vf[i])] = fpd;
+    for (int j = 0; j != nf; ++j) {
+      files[Form("g%s%s_data",vf[i],vf[j])] = fpd;
+      files[Form("g%s%s_mc",vf[i],vf[j])] = fpm;
+      files[Form("g%s%s_ratio",vf[i],vf[j])] = fpd;
+    } // for j
+  } // for i
 
   // Map variable names used in different files to common scheme
   map<string, map<string, const char*> > rename;
@@ -925,6 +1042,27 @@ void reprocess(string epoch="") {
   rename["gamjet"]["mpfn"] = "resp_MPFRnchs";
   rename["gamjet"]["mpfu"] = "resp_MpfRuchs";
   rename["gamjet"]["rho"] = "resp_Rho_CHS";
+  //
+  rename["pjet"]["ptchs"] = "pm2";
+  rename["pjet"]["mpfchs1"] = "pm0";
+  rename["pjet"]["mpf1"] = "pm2";
+  rename["pjet"]["mpfn"] = "pmn";
+  rename["pjet"]["mpfu"] = "pmu";
+  rename["pjet"]["counts"] = "hpt13";
+  //
+  rename["jetp"]["ptchs"] = "pm2j";
+  rename["jetp"]["mpfchs1"] = "pm0j";
+  rename["jetp"]["mpf1"] = "pm2j";
+  rename["jetp"]["mpfn"] = "pmnj";
+  rename["jetp"]["mpfu"] = "pmuj";
+  rename["jetp"]["counts"] = "hpt13j";
+  //
+  rename["pjav"]["ptchs"] = "pm2a";
+  rename["pjav"]["mpfchs1"] = "pm0a";
+  rename["pjav"]["mpf1"] = "pm2a";
+  rename["pjav"]["mpfn"] = "pmna";
+  rename["pjav"]["mpfu"] = "pmua";
+  rename["pjav"]["counts"] = "hpt13a";
 
   rename["gjet"]["ratio"] = "";
   rename["gjet"]["data"] = "_DATA";
@@ -971,6 +1109,57 @@ void reprocess(string epoch="") {
   rename["multijet"]["muf"] = "../Dijet/PFcomposition/pmuf13";
   rename["multijet"]["rho"] = "../Dijet/PFcomposition/prho13";
   
+  // Add flavor stuff for Z+jet
+  map<string, const char*> mzfr, mzfg;
+  mzfr["i"] = "";
+  mzfr["b"] = "_btag";
+  mzfr["c"] = "_ctag";
+  //mzfr["q"] = "_quarktag";
+  //mzfr["g"] = "_gluontag";
+  mzfr["q"] = "_gluontag"; // TMP PATCH 20251010
+  mzfr["g"] = "_quarktag"; // TMP PATCH 20251010
+  mzfr["n"] = "_notag";
+  mzfg["i"] = "";
+  mzfg["b"] = "_genb";
+  mzfg["c"] = "_genc";
+  mzfg["q"] = "_genuds";
+  mzfg["g"] = "_geng";
+  mzfg["n"] = "_unclassified";
+  for (int i = 0; i != nf; ++i) {
+    const char *cfr = vf[i];
+    rename[Form("z%s",cfr)]["tag"] = mzfr[cfr];
+    rename[Form("z%s",cfr)]["parent"] = "zjet";
+    rename[Form("z%s",cfr)]["gen"] = "";
+    for (int j = 0; j != nf; ++j) {
+      const char *cfg = vf[j];
+      rename[Form("z%s%s",cfr,cfg)]["tag"] = mzfr[cfr];
+      rename[Form("z%s%s",cfr,cfg)]["parent"] = "zjet";
+      rename[Form("z%s%s",cfr,cfg)]["gen"] = mzfg[cfg];
+    } // for j
+  } // for i
+
+  map<string, const char*> mgfr;
+  mgfr["i"] = "i";
+  mgfr["b"] = "b";
+  mgfr["c"] = "c";
+  //mgfr["q"] = "q";
+  //mgfr["g"] = "g";
+  mgfr["q"] = "g"; // TMP PATCH 20251010
+  mgfr["g"] = "q"; // TMP PATCH 20251010
+  mgfr["n"] = "n";
+  // Add flavor stuff for gamma+jet
+  for (int i = 0; i != nf; ++i) {
+    const char *cfr = vf[i];
+    rename[Form("g%s",cfr)]["tag"] = mgfr[cfr];
+    rename[Form("g%s",cfr)]["parent"] = "gamjet";
+    //rename[Form("g%s",cfr)]["gen"] = "";
+    for (int j = 0; j != nf; ++j) {
+      const char *cfg = vf[j];
+      rename[Form("g%s%s",cfr,cfg)]["tag"] = mgfr[cfr];
+      rename[Form("g%s%s",cfr,cfg)]["parent"] = "gamjet";
+      //rename[Form("g%s%s",cfr,cfg)]["gen"] = cfg;
+    } // for j
+  } // for i
   
   // color and style codes
   map<string, map<string, int> > style;
@@ -1017,6 +1206,33 @@ void reprocess(string epoch="") {
   style["zjet_mc"]["npv"] = kOpenTriangleDown;
 
   style["wqq"]["mpfchs1"] = kFullStar;
+
+  style["pjet"]["mpfchs1"] = kFullDiamond;
+  style["pjet"]["ptchs"] = kOpenDiamond;
+  style["pjet"]["mpf1"] = kFullTriangleUp;
+  style["pjet"]["mpfn"] = kFullTriangleUp;
+  style["pjet"]["mpfu"] = kFullTriangleDown;
+  style["pjet_mc"]["mpf1"] = kOpenTriangleUp;
+  style["pjet_mc"]["mpfn"] = kOpenTriangleUp;
+  style["pjet_mc"]["mpfu"] = kOpenTriangleDown;
+
+  style["jetp"]["mpfchs1"] = kFullDiamond;
+  style["jetp"]["ptchs"] = kOpenDiamond;
+  style["jetp"]["mpf1"] = kFullTriangleUp;
+  style["jetp"]["mpfn"] = kFullTriangleUp;
+  style["jetp"]["mpfu"] = kFullTriangleDown;
+  style["jetp_mc"]["mpf1"] = kOpenTriangleUp;
+  style["jetp_mc"]["mpfn"] = kOpenTriangleUp;
+  style["jetp_mc"]["mpfu"] = kOpenTriangleDown;
+
+  style["pjav"]["mpfchs1"] = kFullDiamond;
+  style["pjav"]["ptchs"] = kOpenDiamond;
+  style["pjav"]["mpf1"] = kFullTriangleUp;
+  style["pjav"]["mpfn"] = kFullTriangleUp;
+  style["pjav"]["mpfu"] = kFullTriangleDown;
+  style["pjav_mc"]["mpf1"] = kOpenTriangleUp;
+  style["pjav_mc"]["mpfn"] = kOpenTriangleUp;
+  style["pjav_mc"]["mpfu"] = kOpenTriangleDown;
   
   style["gamjet"]["mpfchs1"] = kFullSquare;
   style["gamjet"]["ptchs"] = kOpenSquare;
@@ -1077,6 +1293,21 @@ void reprocess(string epoch="") {
   color["zjet_cef"] = kCyan+1;
   color["zjet_muf"] = kMagenta+1;
 
+  color["jetp"] = kRed+1;
+  color["jetp_mpf1"] = kRed;
+  color["jetp_mpfn"] = kGreen+2;
+  color["jetp_mpfu"] = kBlue;
+
+  color["pjet"] = kRed+1;
+  color["pjet_mpf1"] = kRed;
+  color["pjet_mpfn"] = kGreen+2;
+  color["pjet_mpfu"] = kBlue;
+
+  color["pjav"] = kRed+1;
+  color["pjav_mpf1"] = kRed;
+  color["pjav_mpfn"] = kGreen+2;
+  color["pjav_mpfu"] = kBlue;
+  
   style["gamjet"]["chf"] = kFullCircle;
   style["gamjet"]["nhf"] = kFullDiamond;
   style["gamjet"]["nef"] = kFullSquare;
@@ -1210,14 +1441,33 @@ void reprocess(string epoch="") {
   }
 
   vector<string> sets;
-  sets.push_back("wqq");
+  if (fwm && fwd) sets.push_back("wqq");
   sets.push_back("jetz");
   sets.push_back("zjav");
   sets.push_back("zjet");
+  sets.push_back("jetp");
+  sets.push_back("pjav");
+  sets.push_back("pjet");
   sets.push_back("gamjet");
   sets.push_back("multijet");
   sets.push_back("incjet");
 
+  // Add flavor stuff for Z+jet
+  for (int i = 0; i != nf; ++i) {
+    sets.push_back(Form("z%s",vf[i]));
+    for (int j = 0; j != nf; ++j) {
+      sets.push_back(Form("z%s%s",vf[i],vf[j]));
+    } // for j
+  } // for i
+  
+  // Add flavor stuff for gamma+jet
+  for (int i = 0; i != nf; ++i) {
+    sets.push_back(Form("g%s",vf[i]));
+    for (int j = 0; j != nf; ++j) {
+      sets.push_back(Form("g%s%s",vf[i],vf[j]));
+    } // for j
+  } // for i
+  
   vector<pair<double,double> > etas;
   etas.push_back(make_pair<double,double>(0,1.305));
   //etas.push_back(make_pair<double,double>(0,2.500));
@@ -1311,6 +1561,7 @@ void reprocess(string epoch="") {
 	  TFile *f = files[s];
 	  if (!f) f = files[s+"_"+d];
 	  if (!f) cout << "File not found for "<<s<<"_"<<d<<endl<<flush;
+	  //if (!f) {cout << "Skip file\n\n"; continue; }
 	  assert(f);
 
 	  // C_recoil is only meant for multijets
@@ -1355,6 +1606,10 @@ void reprocess(string epoch="") {
 	  // zjav only for HDM inputs
 	  if (s=="zjav" && !(t=="mpfchs1" || t=="ptchs" || ismpfc ||
 			     t=="counts")) continue;
+
+	  // pjet, jetp and pjav only for HDM inputs
+	  if ((s=="pjet" || s=="jetp" || s=="pjav") &&
+	      !(t=="mpfchs1" || t=="ptchs" || ismpfc || t=="counts")) continue;
 
 	  double alpha = 1.00;
 	  eta1 = etas[ieta].first; // reset to avoid trouble with below
@@ -1413,6 +1668,9 @@ void reprocess(string epoch="") {
 	      c = Form("%s/eta00-13/%s_%s_a100",d.c_str(),t.c_str(),s.c_str());
 	    }
 	  } // "zjet"
+	  if (s=="jetp" || s=="pjav" || s=="pjet") {
+	    c = Form("Gamjet/%s",rename[s][t]);
+	  }
 	  if (s=="gamjet" && t=="counts") {
 	    c = Form("%s%s_a%1.0f_eta%02.0f_%02.0f_%s",
 		     rename[s]["mpfchs1"],
@@ -1455,6 +1713,29 @@ void reprocess(string epoch="") {
 	    //if (d=="mc") // patch 22Sep2023, not 19Dec2023
 	    //c = Form("HLT_MC/Incjet/PFcomposition/p%s13",tt);//rename[s][t]);
 	  }
+
+	  // Add flavor stuff for Z+jet
+	  if (sp=="zjet") {
+	    c = Form("%s/eta_%02.0f_%02.0f%s/%s%s_zmmjet%s_a%1.0f",
+	             rename["zjet"][d],10*eta1,10*eta2,
+	             (d=="mc" ? rename[s]["gen"] : ""),
+	             ((d=="data"||d=="ratio"||t=="counts") ? "" : 
+		      sPSWgtZ.c_str()),
+		     rename["zjet"][t],rename[s]["tag"],100.*alpha);
+
+	    if (isfrac) continue;
+	    if (t=="rho") continue;
+	  }
+
+	  // Add flavor stuff for gamma+jet
+	  if (sp=="gamjet") {
+	    if (s=="gi"||s=="gb"||s=="gc"||s=="gq"||s=="gg"||s=="gn")
+	      c = Form("flavor/%s_%si",tt,ss);
+	    else
+	      c = Form("flavor/%s_%s",tt,ss);//s.c_str());
+	    if (isfrac) continue;
+	    if (t=="rho") continue;
+	  }
 	  
 	  assert(f);
 	  TObject *obj = f->Get(c);
@@ -1469,7 +1750,8 @@ void reprocess(string epoch="") {
 	  // Calculate data/MC ratio
 	  if ((s=="jetz" || s=="zjav" || s=="zjet" || sp=="zjet" ||
 	       s=="multijet" || s=="wqq" ||
-	       (s=="gamjet" && fp==0)) &&
+	       ((s=="pjet" || s=="jetp" || s=="pjav" ||
+		 s=="gamjet" || sp=="gamjet") && fp==0)) &&
 	      d=="ratio" && (t=="mpfchs1"||t=="ptchs")) {
 	    TGraphErrors *gd = grs["data"][t][s][ieta];
 	    TGraphErrors *gm = grs["mc"][t][s][ieta];
@@ -1481,7 +1763,7 @@ void reprocess(string epoch="") {
 	  }
 	  if ((s=="jetz" || s=="zjav" || s=="zjet" ||
 	       s=="multijet" || s=="incjet" ||
-	       (s=="gamjet" && fp==0)) &&
+	       (s=="pjet" || s=="jetp" || s=="pjav" || s=="gamjet" && fp==0)) &&
 	      d=="ratio" &&
 	      // bug: 20231114...
 	      //(isfrac || t=="rmpf1" || t=="rmpfn" || t=="rpmfu")) {
@@ -1626,7 +1908,8 @@ void reprocess(string epoch="") {
 	  }
 
 	  // PATCH EM scale corrections for gamma+jet in absence of QCD bkg
-	  if (s=="gamjet" && (d=="data" || d=="ratio") &&
+	  if ((s=="pjet" || s=="jetp" || s=="pjav" ||
+	       s=="gamjet") && (d=="data" || d=="ratio") &&
 	      (ismpfc || t=="ptchs" || t=="mpfchs1"))  { // 20240227 add mpfchs1
 	    for (int i = 0; i != g->GetN(); ++i) {
 	      double pt = g->GetX()[i];
@@ -1636,6 +1919,7 @@ void reprocess(string epoch="") {
 		if (epoch=="Run23C4")   scaleEM = 0.994;
 		if (epoch=="Run23D")    scaleEM = 0.990;
 
+		if (epoch=="2025CDEFG") scaleEM = 1.000;//1.003;
 		// minitools/drawTimeStabilityPairs.C (GamVsZmm_DB,MPF)
 		// double-check these
 		/*
@@ -1892,20 +2176,24 @@ void reprocess(string epoch="") {
       presm = (TProfile*)fmjd->Get("Multijet/presa"); assert(presm);
       p2res = (TProfile2D*)p2resz->Clone(Form("p2res_%s",epoch.c_str()));
       pres = (TProfile*)presp->Clone(Form("pres_%s",epoch.c_str()));
-      presw = (TProfile*)fwd->Get("prof_L2L3Res_ptpair"); assert(presw);
+      if (fwd) {
+	presw = (TProfile*)fwd->Get("prof_L2L3Res_ptpair"); assert(presw);
+      }
       //pres = (TProfile*)presm->Clone(Form("pres_%s",epoch.c_str()));
       pres->Add(presz);
       pres->Add(presm);
 
       // Patch Wqq
-      TProfile *presw_old = presw;
-      presw = (TProfile*)presw_old->Clone(Form("presw_%s",epoch.c_str()));
-      presw->Reset();
-      for (int i = 1; i != presw_old->GetNbinsX()+1; ++i) {
-	double pt = presw_old->GetBinCenter(i);
-	double corr = presw_old->GetBinContent(i);
-	if (corr>0) presw->Fill(pt, 1./corr);
-	//presw->SetBinContent(i, 1./corr);
+      if (presw) {
+	TProfile *presw_old = presw;
+	presw = (TProfile*)presw_old->Clone(Form("presw_%s",epoch.c_str()));
+	presw->Reset();
+	for (int i = 1; i != presw_old->GetNbinsX()+1; ++i) {
+	  double pt = presw_old->GetBinCenter(i);
+	  double corr = presw_old->GetBinContent(i);
+	  if (corr>0) presw->Fill(pt, 1./corr);
+	  //presw->SetBinContent(i, 1./corr);
+	}
       }
     }
     assert(jec || pres);

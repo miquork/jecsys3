@@ -15,7 +15,9 @@
   */
   
   //testJERSF("textfiles/ReReco24_V9M/ReReco24_2024CDEFGHI_nib_JRV9M_MC_SF_AK4PFPuppi.txt"); // Buggy file!
-  testJERSF("textfiles/ReReco24/ReReco24_2024_nib_JRV9M_MC_SF_AK4PFPuppi.txt");
-  testJERSF("textfiles/ReReco24_V9M_goodJER/ReReco24_2024_nib_JRV9M_MC_SF_AK4PFPuppi.txt");
-  testJERSF("textfiles/Prompt25/Prompt25_2025C_JRV1M_MC_SF_AK4PFPuppi.txt");
+  //testJERSF("textfiles/ReReco24/ReReco24_2024_nib_JRV9M_MC_SF_AK4PFPuppi.txt");
+  //testJERSF("textfiles/ReReco24_V9M_goodJER/ReReco24_2024_nib_JRV9M_MC_SF_AK4PFPuppi.txt");
+  //testJERSF("textfiles/ReReco24_V10M_JERSF/ReReco24_2024_nib_JRV10M_MC_SF_AK4PFPuppi.txt");
+  //testJERSF("textfiles/Prompt25/Prompt25_2025C_JRV1M_MC_SF_AK4PFPuppi.txt");
+  testJERSF("textfiles/Prompt25/Prompt25_2025CDEFG_JRV2M_MC_SF_AK4PFPuppi.txt");
 }

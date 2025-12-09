@@ -308,11 +308,13 @@ TH1D *drawRatio(TH1D *h, TH1D *hm, string sdraw, int marker, int color,
 TH1D *drawCleaned(TH1D *h, double eta, string data, string sdraw,
 		  int marker, int color, bool draw = true) {
   assert(h);
+  assert(eta>=0); // cleaning cuts without fabs
   TH1D *hc = (TH1D*)h->Clone(Form("hc_%s_%s",h->GetName(),_run.c_str()));
   for (int i = 1; i != hc->GetNbinsX()+1; ++i) {
     double pt = hc->GetBinCenter(i);
     double ptmin = hc->GetBinLowEdge(i);
     double ptmax = hc->GetBinLowEdge(i+1);
+    double emin = ptmin * cosh(eta);
     double emax = ptmax * cosh(eta);
     double sqrts = 13600.;
     double keep(false);
@@ -354,9 +356,18 @@ TH1D *drawCleaned(TH1D *h, double eta, string data, string sdraw,
 	if (eta>2.650 && eta<2.964 && ptmin<59) keep = false;
       }
       if (tr.Contains("25B") || tr.Contains("25C") || tr.Contains("25D") ||
-	  tr.Contains("25E") || tr.Contains("25F")) {
+	  tr.Contains("25E") || tr.Contains("25F") || tr.Contains("25G") ||
+	  tr.Contains("25DEFG") || tr.Contains("25CDEFG")) {
 	if (ptmax>200.) keep = false;
 	if (eta>4.538) keep = false;
+      }
+      // Something off with Z in 2.5<|eta|<3.0
+      // TMP patch for primarily 25G
+      if (tr.Contains("25B") || tr.Contains("25C") || tr.Contains("25D") ||
+	  tr.Contains("25E") || tr.Contains("25F") || tr.Contains("25G") ||
+	  tr.Contains("25DEFG") || tr.Contains("25CDEFG")) {
+	//if (tr.Contains("25G") || tr.Contains("25CDEFG")) {
+	if (eta>2.500 && eta<3.139) keep = false;
       }
       if (eta>3.139 && ptmax<70) keep = false;
       
@@ -388,9 +399,16 @@ TH1D *drawCleaned(TH1D *h, double eta, string data, string sdraw,
 	if (pt>400) keep = false;
       }
       if (tr.Contains("25C") || tr.Contains("25D") || tr.Contains("25E") ||
-	  tr.Contains("25F")) {
+	  tr.Contains("25F") || tr.Contains("25G") ||
+	  tr.Contains("25DEFG") || tr.Contains("25CDEFG")) {
 	if (pt>800) keep = false;
 	if (eta>1.218 && pt>600) keep = false;
+      }
+      // TMP patch for primarily 25G
+      if (tr.Contains("25C") || tr.Contains("25D") || tr.Contains("25E") ||
+	  tr.Contains("25F") || tr.Contains("25G") ||
+	  tr.Contains("25DEFG") || tr.Contains("25CDEFG")) {
+	if (eta>2.5 && pt<110) keep = false;
       }
       // Additional veto for 2024BC 3.3/fb golden closure (errors bad)
       //if (doClosure && ptmin>500) keep = false;
@@ -403,13 +421,17 @@ TH1D *drawCleaned(TH1D *h, double eta, string data, string sdraw,
     
     if (data=="J") {
 
-      // Core range
+      // Core range in 2024
+      /*
       if       (ptmin>=15. && ptmax<2500. && eta<1.044) keep = true;
       else if  (ptmin>=15. && ptmax<2000. && eta<2.500) keep = true;
       else if  (ptmin>=15. && ptmax<967.  && eta<2.964) keep = true;
       else if  (ptmin>=15. && ptmax<846.  && eta<3.839) keep = true;
       else if  (ptmin>=15. && ptmax<460.  && eta<5.191) keep = true;
-
+      */
+      // Core range in 2025
+      if (ptmin>=15 && ptmax<2500 && emin<0.5*sqrts) keep = true;
+            
       // Tunable vetoes
       if (eta>1.392 && eta<1.479 && pt<20) keep = false;
       //if (eta>2.500 && eta<2.650 && pt<30) keep = false;
@@ -435,11 +457,20 @@ TH1D *drawCleaned(TH1D *h, double eta, string data, string sdraw,
 	if (pt*cosh(eta)>4000. && eta<4.191) keep = false;
       }
       if (tr.Contains("25C") || tr.Contains("25D") || tr.Contains("25E") ||
-	  tr.Contains("25F")) {
-	if (pt*cosh(eta)>2000. && eta<0.783) keep = false;
-	if (pt*cosh(eta)>2500. && eta<1.566) keep = false;
-	if (pt*cosh(eta)>3500. && eta<2.655) keep = false;
-	if (pt*cosh(eta)>4500. && eta<4.191) keep = false;
+	  tr.Contains("25F") || tr.Contains("25G") ||
+	  tr.Contains("25DEFG") || tr.Contains("25CDEFG")) {
+	//if (pt*cosh(eta)>2000. && eta<0.783) keep = false;
+	//if (pt*cosh(eta)>2500. && eta<1.566) keep = false;
+	//if (pt*cosh(eta)>3500. && eta<2.655) keep = false;
+	//if (pt*cosh(eta)>4500. && eta<4.191) keep = false;
+      }
+      // Potentially bad (forward) jet trigger turn-on in 25G (hence 25CDEFG)
+      // TMP patch for primarily 25G
+      if (tr.Contains("25G") ||
+	  tr.Contains("25DEFG") || tr.Contains("25CDEFG")) {
+	if (pt>170 && pt<236) keep = false;
+	if (eta>2.500 && eta<3.489 && pt>59 && pt<86) keep = false;
+	if (eta>3.314 && eta<3.489 && pt>279 && pt<302) keep = false;
       }
       // Additional veto for 2024BC 3.3/fb golden closure (bad errors?)
       //if (doClosure && emax>0.5*sqrts) keep = false;
@@ -614,7 +645,7 @@ void L2Res(bool _doClosure = doClosure) {
       //"2025B",
       //"2025C","2025CDEF"
       "2025C","2025D","2025E","2025F","2025G",
-      "2025CDEFG"
+      "2025DEFG", "2025CDEFG"
       //"2025C0","2025CT"
     };
 
@@ -642,7 +673,7 @@ void L2Res(bool _doClosure = doClosure) {
       //"Winter25","Winter25","Winter25","Winter25","Winter25",
       //"Winter25"
       "Summer24","Summer24","Summer24","Summer24","Summer24",
-      "Summer24"
+      "Summer24", "Summer24"
       //"Winter25","Winter25"
     };  // V9M
 
@@ -1040,12 +1071,14 @@ void L2Res(bool _doClosure = doClosure) {
     //tr.Contains("I"))) {
     //frc = new TFile("rootfiles/randomConeL2L3Res.root","READ");
     //frc = new TFile("rootfiles/randomConeL2L3Res_for_V9M.root","READ");
-    frc = new TFile("rootfiles/randomConeL2L3Res_for_V9M_plus_2025C.root","READ");
-    frc1 = new TFile("rootfiles/randomConeL2L3Res_for_asymm_V2M.root","READ");
+    //frc = new TFile("rootfiles/randomConeL2L3Res_for_V9M_plus_2025C.root","READ");
+    //frc1 = new TFile("rootfiles/randomConeL2L3Res_for_asymm_V2M.root","READ");
+    frc = frc1 = new TFile("rootfiles/randomConeL2L3Res_for_Prompt25_V3M.root","READ");
   }
   TH1D *hrc_vsEta(0), *hrc1_vsEta(0);
   if (frc) {
     hrc_vsEta = (TH1D*)frc->Get(Form("hrc13jes_%s",cr));
+    /*
     if (!hrc_vsEta && tr.Contains("2025C"))
       hrc_vsEta = (TH1D*)frc->Get(Form("hrc13jes_%s","2025C"));
     if (!hrc_vsEta && tr.Contains("2025D"))
@@ -1060,12 +1093,17 @@ void L2Res(bool _doClosure = doClosure) {
       hrc_vsEta = (TH1D*)frc->Get(Form("hrc13jes_%s","2025C"));
     if (!hrc_vsEta && tr.Contains("2025CDEFG"))
       hrc_vsEta = (TH1D*)frc->Get(Form("hrc13jes_%s","2025C"));
+    */
+    if (!hrc_vsEta && tr.Contains("2025DEFG"))
+      hrc_vsEta = (TH1D*)frc->Get(Form("hrc13jes_%s","2025CDEFG"));
     if (!hrc_vsEta && (tr.Contains("2024E_nib1") || tr=="2024_nib"))
       hrc_vsEta = (TH1D*)frc->Get(Form("hrc13jes_%s","2024Ev1_nib1"));
     assert(hrc_vsEta);
   }
   if (frc1) {
     hrc1_vsEta = (TH1D*)frc1->Get(Form("hrc13jes_%s",cr));
+    if (!hrc1_vsEta && tr.Contains("2025DEFG"))
+      hrc1_vsEta = (TH1D*)frc->Get(Form("hrc13jes_%s","2025CDEFG"));
     if (hrc1_vsEta) { // Recalculate symmetric hrc_vsEta from this
       hrc_vsEta = (TH1D*)hrc1_vsEta->Clone(Form("hrc13jes_%s_symm",cr));
       cout << " ** Recalculating symmetric RC for era " << cr << endl;
@@ -1227,21 +1265,35 @@ void L2Res(bool _doClosure = doClosure) {
   TH2D *h2jes_d = p2d->ProjectionXY(Form("h2jes_d_%s",cr)); h2jes_d->Reset();
   TH2D *h2jes_cd = p2d->ProjectionXY(Form("h2jes_cd_%s",cr)); h2jes_cd->Reset();
   TH2D *h2jes1 = p2j1->ProjectionXY(Form("h2jes1_%s",cr)); h2jes1->Reset();
+  TH2D *h2jes1_c = p2j1->ProjectionXY(Form("h2jes1_c_%s",cr)); h2jes1_c->Reset();
+
+  TH2D *h2merged = p2d->ProjectionXY(Form("h2merged_%s",cr)); h2merged->Reset();
+  TH2D *h2merged1 = p2j1->ProjectionXY(Form("h2merged1_%s",cr)); h2merged1->Reset();
 
   // Another giant canvas to show final results:
   // merged cleaned data, final fit, uncertainty band, deviations from fit
   TCanvas *cxf = new TCanvas(Form("cxf_%s",cr),"cxf",9*300,5*300);
   cxf->Divide(9,5,0,0);
+
+  // Yet another giant canvas to show data minus fit:
+  TCanvas *cxfd = new TCanvas(Form("cxfd_%s",cr),"cxfd",9*300,5*300);
+  cxfd->Divide(9,5,0,0);
   
   // Loop over the ieta bins
   vector<TF1*> vf1(p2d->GetNbinsX()+1);
   vector<TF1*> vf1_m(p2d->GetNbinsX()+1);
   vector<TF1*> vf1_p(p2d->GetNbinsX()+1);
+  vector<TF1*> vf1_cm(p2d->GetNbinsX()+1);
+  vector<TF1*> vf1_cp(p2d->GetNbinsX()+1);
   TH1D *hmin = p2d->ProjectionX(Form("hmin_%s",cr)); hmin->Reset();
   TH1D *hmax = p2d->ProjectionX(Form("hmax_%s",cr)); hmax->Reset();
   TH1D *hmin_d = p2d->ProjectionX(Form("hmin_d_%s",cr)); hmin_d->Reset();
   TH1D *hmax_d = p2d->ProjectionX(Form("hmax_d_%s",cr)); hmax_d->Reset();
   TH1D *hchi2 = p2d->ProjectionX(Form("hchi2_%s",cr)); hchi2->Reset();
+  TH1D *hchi2_m = p2d->ProjectionX(Form("hchi2_m_%s",cr)); hchi2_m->Reset();
+  TH1D *hchi2_p = p2d->ProjectionX(Form("hchi2_p_%s",cr)); hchi2_p->Reset();
+  TH1D *hchi2_cm = p2d->ProjectionX(Form("hchi2_cm_%s",cr)); hchi2_cm->Reset();
+  TH1D *hchi2_cp = p2d->ProjectionX(Form("hchi2_cp_%s",cr)); hchi2_cp->Reset();
   for (int ieta = 1; ieta != p2d->GetNbinsX()+1; ++ieta) {
     //int ieta = p2d->GetXaxis()->FindBin(2.7);
     double etamin = p2d->GetXaxis()->GetBinCenter(ieta);
@@ -1536,7 +1588,14 @@ void L2Res(bool _doClosure = doClosure) {
     //leg1->AddEntry(g_rc1_m,"#eta- Random Cone","PLE");
     //leg1->AddEntry(g_rc1_p,"#eta+ Random Cone","PLE");
   }
-  
+
+  // Naming for difference plot later
+  if (g_z) g_z->SetName("Z+jet");
+  if (g_g) g_g->SetName("#gamma+jet");
+  if (g_d) g_d->SetName("Dijet");
+  if (g_p) g_p->SetName("Probe+jet");
+  if (g_j) g_j->SetName("Tag+jet");
+  if (g_rc) g_rc->SetName("Random Cone");
   
   TMultiGraph *mg = new TMultiGraph(Form("mg_%s",cr),"mg");
   if (fitZ && g_z && g_z->GetN()>0) mg->Add(g_z,"SAMEPz");
@@ -1620,7 +1679,13 @@ void L2Res(bool _doClosure = doClosure) {
   fref->SetParameters(f5->GetParameter(0), f5->GetParameter(1),
 		      f5->GetParameter(2), f5->GetParameter(3),
 		      f5->GetParameter(4));
-  if (!doClosure) {
+
+  if (!doClosure) { // 2025 version: same limits as f5, only
+    fref->SetParLimits(3,-0.5,0.5); // offset no more than 50% at 10 GeV
+    fref->SetParLimits(4,0.,0.25); // 1/x^2
+  }
+  /*
+  if (!doClosure) { // 2024, early 2025 version
     fref->SetParLimits(0, 0.5, 1.5); // constant
     fref->SetParLimits(1,-0.3, 0.3); // log-lin
     //fref->SetParLimits(2,-0.05, 0.05); // log-quad
@@ -1628,24 +1693,20 @@ void L2Res(bool _doClosure = doClosure) {
   fref->SetParLimits(3,-0.5, 0.5); // 1/x (large for 2.1<eta<2.5)
   fref->SetParLimits(4,  0., 0.25); // 1/x^2
   // With addition of RC offset at low pT, this might be stabilized enough
-  /*
-  if (eta<1.305) { fref->FixParameter(4,0.);         } // Barrel 1/x^2 off
-  if (eta<1.305) { fref->SetParLimits(3,-0.02,0.02); } // Barrel 1/x limits
-  */
+  //if (eta<1.305) { fref->FixParameter(4,0.);         } // Barrel 1/x^2 off
+  //if (eta<1.305) { fref->SetParLimits(3,-0.02,0.02); } // Barrel 1/x limits
   if (eta>2.964) { fref->SetParLimits(4, 0., 0.25);  } // HF0 1/x^2 off
   if (eta>2.964) { fref->SetParLimits(3, 0., 0.25);  } // HF0 1/x limits
   if (eta>3.139) { fref->FixParameter(4, 0.);        } // HF 1/x^2 off
   if (eta>3.139) { fref->SetParLimits(3, 0, 0.15);   } // HF 1/x limits
   if (eta>4.716) { fref->SetParLimits(4, 0, 0.25);   } // HF2 1/x^2 off
   if (eta>4.716) { fref->SetParLimits(3, 0, 0.25);   } // HF2 1/x limits
-  /*
   // EC1-inner stabilization
-  if (eta>1.305 && eta<1.930 && 
-      (tr.Contains("C") || tr.Contains("D") || tr.Contains("E"))) { 
-    fref->SetParLimits(4,  0.0, 0.1); // 1/x^2 limits
-    //fref->SetParLimits(3, -0.5, 0.0); // 1/x non-positive
-  }
-  */
+  //if (eta>1.305 && eta<1.930 && 
+    //  (tr.Contains("C") || tr.Contains("D") || tr.Contains("E"))) { 
+    //fref->SetParLimits(4,  0.0, 0.1); // 1/x^2 limits
+    ////fref->SetParLimits(3, -0.5, 0.0); // 1/x non-positive
+  //}
   // Special low-lumi nib
   if (tr.Contains("2024F_nib1")) {
     fref->FixParameter(4, 0.); // 1/x^2 off
@@ -1653,6 +1714,7 @@ void L2Res(bool _doClosure = doClosure) {
     if (eta<1.305 || eta>2.964) fref->FixParameter(3, 0.); // BB,HF 1/x off
   }
   } // doClosure
+  */
   if (doClosure) {
     fref->FixParameter(4, 0.);
   }
@@ -1774,7 +1836,7 @@ void L2Res(bool _doClosure = doClosure) {
       fref_m->SetParLimits(ipar, parmin, parmax);
       fref_p->SetParLimits(ipar, parmin, parmax);
     }
-    if (ipar!=0) {
+    if (ipar!=0 && ipar!=1) {
       fref_cm->FixParameter(ipar, par);
       fref_cp->FixParameter(ipar, par);
     }
@@ -1820,6 +1882,8 @@ void L2Res(bool _doClosure = doClosure) {
   vf1[ieta-1] = fref; // V9M
   vf1_m[ieta-1] = fref_m;
   vf1_p[ieta-1] = fref_p;
+  vf1_cm[ieta-1] = fref_cm;
+  vf1_cp[ieta-1] = fref_cp;
   
   f0->Draw("SAME"); f0->SetLineColor(kMagenta+2); //f0->SetLineStyle(kDashed);
   f1->Draw("SAME"); f1->SetLineColor(kBlue-9);// V9M kBlue); // V8M
@@ -1979,9 +2043,13 @@ void L2Res(bool _doClosure = doClosure) {
       int ieta_m = h2jes1->GetXaxis()->FindBin(-eta);
       h2jes1->SetBinContent(ieta_m, ipt, jes_m);
       h2jes1->SetBinError(ieta_m, ipt, ejes_stat_m);//ejes_m);
+      h2jes1_c->SetBinContent(ieta_m, ipt, jes_cm);
+      h2jes1_c->SetBinError(ieta_m, ipt, ejes_stat_cm);//ejes_m);
       int ieta_p = h2jes1->GetXaxis()->FindBin(+eta);
       h2jes1->SetBinContent(ieta_p, ipt, jes_p);
       h2jes1->SetBinError(ieta_p, ipt, ejes_stat_p);//ejes_p);
+      h2jes1_c->SetBinContent(ieta_p, ipt, jes_cp);
+      h2jes1_c->SetBinError(ieta_p, ipt, ejes_stat_cp);//ejes_p);
       //
       h2jes_d->SetBinContent(ieta, ipt, 1+0.5*(jes_p-jes_m));
       h2jes_d->SetBinError(ieta, ipt, sqrt(0.5*pow(ejes_stat_p,2)+0.5*(pow(ejes_stat_m,2))));
@@ -2019,9 +2087,16 @@ void L2Res(bool _doClosure = doClosure) {
   fref_m->Draw("SAME");
   fref_p->SetLineColor(kRed-9);
   fref_p->Draw("SAME");
+
+  fref_cm->SetLineColor(kBlue);//-9);
+  //fref_cm->SetLineStyle(kDashed);
+  fref_cm->Draw("SAME");
+  fref_cp->SetLineColor(kRed);//-9);
+  //fref_cp->SetLineStyle(kDashed);
+  fref_cp->Draw("SAME");
     
   fref->Draw("SAME");
-
+  
   TH1D *hmerged = (TH1D*)hjrf->Clone(Form("hmerged_%s_%d",cr,ieta));
   hmerged->Reset();
   // loop over all graphs in the multigraph
@@ -2087,7 +2162,7 @@ void L2Res(bool _doClosure = doClosure) {
       hmerged_p->SetBinError(ib, W+w>0 ? 1.0 / sqrt(W + w) : 0); 
     }
   }
-  
+
   //if (fitJ && g_j1_m && g_j1_m->GetN()>0) {
   //tdrDraw(g_j1_m,"Pz",kOpenDiamond,kBlue-9,kSolid,-1,kNone,0,1);
   //}
@@ -2109,7 +2184,7 @@ void L2Res(bool _doClosure = doClosure) {
   
   if (ieta==nxy) {
     cxf->cd(ieta+1);
-    TLegend *legf = tdrLeg(0.05,0.90-0.05*5*2.5,0.55,0.90);
+    TLegend *legf = tdrLeg(0.05,0.95-0.045*7*2.5,0.55,0.95);
     legf->SetTextSize(2.5*0.045);
     legf->AddEntry(hmerged,"Merged data","PLE");
     //legf->AddEntry(g_j1_m,"#eta-dijet","PLE");
@@ -2119,7 +2194,9 @@ void L2Res(bool _doClosure = doClosure) {
     //legf->AddEntry(hmerged_p,"#eta+ data","PLE");
     legf->AddEntry(hmerged_p,"#eta+ data","FLE");
     legf->AddEntry(hjes,"Fit uncertainty","F");
-    legf->AddEntry(fref,"Reference fit","L");
+    legf->AddEntry(fref,"Reference |#eta| fit","L");
+    legf->AddEntry(fref_m,"#eta- fit","L");
+    legf->AddEntry(fref_cm,"|#eta| #times #eta- fit","L");
     legf->Draw("SAME");
 
     cxf->cd(ieta+2);
@@ -2130,9 +2207,116 @@ void L2Res(bool _doClosure = doClosure) {
     tex->DrawLatex(0.05,0.50,mlum[run].c_str());
     tex->SetTextSize(siz);
   }
+
+  // Save merged results for era comparisons
+  for (int ipt = 1; ipt != h2merged->GetNbinsY()+1; ++ipt) {
+    h2merged->SetBinContent(ieta, ipt, hmerged->GetBinContent(ipt));
+    h2merged->SetBinError(ieta, ipt, hmerged->GetBinError(ipt));
+  }
+  for (int ipt = 1; ipt != h2merged1->GetNbinsY()+1; ++ipt) {
+    int ieta_m = h2merged1->GetXaxis()->FindBin(-eta);
+    h2merged1->SetBinContent(ieta_m, ipt, hmerged_m->GetBinContent(ipt));
+    h2merged1->SetBinError(ieta_m, ipt, hmerged_m->GetBinError(ipt));
+    int ieta_p = h2merged1->GetXaxis()->FindBin(+eta);
+    h2merged1->SetBinContent(ieta_p, ipt, hmerged_p->GetBinContent(ipt));
+    h2merged1->SetBinError(ieta_p, ipt, hmerged_p->GetBinError(ipt));
+  }
   
   gPad->RedrawAxis();
 
+
+  // Draw differences to fit in a single canvas
+  cxfd->cd(ieta);
+  TH1D *h6fd = (TH1D*)h6->Clone(Form("%sfd",h6->GetName()));
+  if (ieta<=2*9) h6fd->GetYaxis()->SetRangeUser(-3.5,5.5);
+  else if (ieta<=3*9) h6fd->GetYaxis()->SetRangeUser(-6.5,10.5);
+  else if (ieta<=5*9) h6fd->GetYaxis()->SetRangeUser(-9,15.5);
+  h6fd->GetYaxis()->SetTitle("Data - fit (%)");
+  
+  h6fd->Draw();
+  gPad->SetLogx();
+
+  sizf = tex->GetTextSize();
+  tex->SetTextSize(1.5*0.045);
+  tex->DrawLatex(0.50,0.85,Form("[%1.3f,%1.3f]",eta1,eta2));
+  tex->SetTextSize(sizf);
+
+  TH1D *hmerged_diff = (TH1D*)hmerged->Clone(Form("hmerged_diff_%s",cr));
+  TH1D *hjes_diff = (TH1D*)hjes->Clone(Form("hjes_diff_%s",cr));
+  //hmerged_diff->Add(fref,-1);
+  for (int i = 1; i != hmerged_diff->GetNbinsX()+1; ++i) {
+    double pt = hmerged_diff->GetBinCenter(i);
+    //if (pt<15 && (fitRC || fitRC1)) pt = 10;
+    double y = hmerged_diff->GetBinContent(i);
+    double ey = hmerged_diff->GetBinError(i);
+    if (y!=0 && ey!=0) {
+      double yfit = fref->Eval(pt);
+      hmerged_diff->SetBinContent(i, (y - yfit)*100.);
+      hmerged_diff->SetBinError(i, ey*100.);
+    }
+
+    double z = hjes_diff->GetBinContent(i);
+    double ez = hjes_diff->GetBinError(i);
+    if (z!=0 && ez!=0) {
+      double zfit = fref->Eval(pt);
+      hjes_diff->SetBinContent(i, (z - zfit)*100.);
+      hjes_diff->SetBinError(i, ez*100.);
+    }
+  }
+  tdrDraw(hjes_diff,"E2",kNone,kYellow+2,kSolid,-1,1001,kYellow+1);
+
+  l->SetLineStyle(kDashed);
+  l->DrawLine(ptmin,0,3500.,0);
+  l->SetLineStyle(kDotted);
+  l->DrawLine(ptmin,1,3500.,1);
+  l->DrawLine(ptmin,-1,3500.,-1);
+
+  TList *lst = mg->GetListOfGraphs();
+  vector<TGraphErrors*> vgd(lst->GetEntries());
+  int entry(0);
+  for (TObject *obj: *lst) {
+    auto *g = dynamic_cast<TGraphErrors*>(obj);
+    if (!g) continue;
+    
+    auto *gdiff = (TGraphErrors*)g->Clone(g->GetName());
+
+    int n = gdiff->GetN();
+    double x, y;
+    for (int i = 0; i != n; ++i) {
+      gdiff->GetPoint(i, x, y);
+      //if (x<15 && (fitRC || fitRC1)) x = 10;
+      double yfit = fref->Eval(x);
+      gdiff->SetPoint(i, x, (y - yfit)*100.); // subtract fit, make %
+      gdiff->SetPointError(i, g->GetEX()[i],g->GetEY()[i]*100.);
+    }
+
+    tdrDraw(gdiff,string(gdiff->GetName())=="Tag+jet" ? "P" : "Pz",
+	    g->GetMarkerStyle(),g->GetMarkerColor()-9,kSolid,-1);
+    vgd[entry++] = gdiff;
+  }
+
+  tdrDraw(hmerged_diff,"Pz",kFullCircle,kBlack,kSolid,-1,kNone,0,1);
+
+  if (ieta==1) {
+    cxfd->cd(nxy+1);
+    TLegend *legf = tdrLeg(0.05,0.95-0.045*7*2.5,0.55,0.95);
+    legf->SetTextSize(2.5*0.045);
+    legf->AddEntry(hmerged,"Merged data","PLE");
+    for (int i = 0; i != vgd.size(); ++i) {
+      if (vgd[i]) legf->AddEntry(vgd[i],vgd[i]->GetName(),"PLE");
+    }
+    legf->Draw("SAME");
+
+    cxfd->cd(nxy+2);
+    double siz = tex->GetTextSize();
+    tex->SetTextSize(siz*2.5);
+    tex->DrawLatex(0.05,0.80,Form("%s vs",cr));
+    tex->DrawLatex(0.05,0.65,cm);
+    tex->DrawLatex(0.05,0.50,mlum[run].c_str());
+    tex->SetTextSize(siz);
+  }
+  
+  gPad->RedrawAxis();
   
   //hmin->SetBinContent(ieta, f2->Eval(10.));
   //hmax->SetBinContent(ieta, f2->Eval(6800./cosh(eta1)));
@@ -2143,6 +2327,17 @@ void L2Res(bool _doClosure = doClosure) {
 				     fref_m->Eval(6800./cosh(eta1))));
   hchi2->SetBinContent(ieta, fref->GetChisquare() / max(fref->GetNDF(),1));
   hchi2->SetBinError(ieta, 1. / sqrt(max(fref->GetNDF(),1)));
+
+  hchi2_m->SetBinContent(ieta, fref_m->GetChisquare()/max(fref_m->GetNDF(),1));
+  hchi2_m->SetBinError(ieta, 1./sqrt(max(fref_m->GetNDF(),1)));
+  hchi2_p->SetBinContent(ieta, fref_p->GetChisquare()/max(fref_p->GetNDF(),1));
+  hchi2_p->SetBinError(ieta, 1./sqrt(max(fref_p->GetNDF(),1)));
+
+  hchi2_cm->SetBinContent(ieta, fref_cm->GetChisquare()/max(fref_cm->GetNDF(),1));
+  hchi2_cm->SetBinError(ieta, 1./sqrt(max(fref_cm->GetNDF(),1)));
+  hchi2_cp->SetBinContent(ieta, fref_cp->GetChisquare()/max(fref_cp->GetNDF(),1));
+  hchi2_cp->SetBinError(ieta, 1./sqrt(max(fref_cp->GetNDF(),1)));
+
 
   // Store results with uncertainty to output histogram
   
@@ -2178,7 +2373,15 @@ void L2Res(bool _doClosure = doClosure) {
     cxf->SaveAs(Form("pdf/L2res/L2Res_AllFinalClosure_%s.pdf",cr));
   else
     cxf->SaveAs(Form("pdf/L2res/L2Res_AllFinal_%s%s.pdf",cr,cc));
-  cxf->SetName(Form("cx_%s",cr));
+  cxf->SetName(Form("cxf_%s",cr));
+
+  if (doClosure)
+    cxfd->SaveAs(Form("pdf/L2res/L2Res_AllPullClosure_%s.pdf",cr));
+  else
+    cxfd->SaveAs(Form("pdf/L2res/L2Res_AllPull_%s%s.pdf",cr,cc));
+  cxfd->SetName(Form("cxfd_%s",cr));
+
+  
 
   
   // Step 7. Draw summary of final results in a single plot
@@ -2257,26 +2460,27 @@ void L2Res(bool _doClosure = doClosure) {
   tdrDraw(hy_cd,"HIST",kNone,kGray+2,kSolid,-1,kNone,kGray+2,1,2);
   //hy_cd->SetLineWidth(2);
   
-  TH1D *hy15_d, *hy30_d, *hy100_d, *hy300_d, *hy1000_d, *hy3000_d;
-  hy100_d  = drawH2JES(h2jes_d,100., "HISTE][",kNone,kGreen+2);
-  hy100_d->SetLineWidth(3);
+  TH1D *hy15_cd, *hy30_cd, *hy100_cd, *hy300_cd, *hy1000_cd, *hy3000_cd;
+  hy100_cd  = drawH2JES(h2jes_cd,100., "HISTE][",kNone,kGreen+2);
+  hy100_cd->SetLineWidth(3);
 
-  //hy15_d   = drawH2JES(h2jes_d,15.,  "HISTE][",kNone,kMagenta+2);
-  hy30_d   = drawH2JES(h2jes_d,30.,  "HISTE][",kNone,kBlue);
-  hy300_d  = drawH2JES(h2jes_d,300., "HISTE][",kNone,kOrange+2);
-  hy1000_d = drawH2JES(h2jes_d,1000.,"HISTE][",kNone,kRed);
-  //hy3000_d = drawH2JES(h2jes_d,3000.,"HISTE][",kNone,kBlack);
+  //hy15_cd   = drawH2JES(h2jes_cd,15.,  "HISTE][",kNone,kMagenta+2);
+  hy30_cd   = drawH2JES(h2jes_cd,30.,  "HISTE][",kNone,kBlue);
+  hy300_cd  = drawH2JES(h2jes_cd,300., "HISTE][",kNone,kOrange+2);
+  hy1000_cd = drawH2JES(h2jes_cd,1000.,"HISTE][",kNone,kRed);
+  //hy3000_cd = drawH2JES(h2jes_cd,3000.,"HISTE][",kNone,kBlack);
 
   //TLegend *legy1 = tdrLeg(0.20,0.90-6*0.040,0.45,0.90);
   TLegend *legy1 = tdrLeg(0.20,0.90-5*0.040,0.45,0.90);
   legy1->SetTextSize(0.040);
-  legy1->AddEntry(hy_cd,  "const. in p_{T}",  "FL");
-  //legy1->AddEntry(hy15_d,  "p_{T} = 15 GeV",  "PLE");
-  legy1->AddEntry(hy30_d,  "p_{T} = 30 GeV",  "PLE");
-  legy1->AddEntry(hy100_d, "p_{T} = 100 GeV", "PLE");
-  legy1->AddEntry(hy300_d, "p_{T} = 300 GeV", "PLE");
-  legy1->AddEntry(hy1000_d,"p_{T} = 1000 GeV","PLE");
-  //legy1->AddEntry(hy3000_d,"p_{T} = 3000 GeV","PLE");
+  //legy1->AddEntry(hy_cd,  "const. in p_{T}",  "FL");
+  legy1->AddEntry(hy_cd,  "Trendline",  "FL");
+  //legy1->AddEntry(hy15_cd,  "p_{T} = 15 GeV",  "PLE");
+  legy1->AddEntry(hy30_cd,  "p_{T} = 30 GeV",  "PLE");
+  legy1->AddEntry(hy100_cd, "p_{T} = 100 GeV", "PLE");
+  legy1->AddEntry(hy300_cd, "p_{T} = 300 GeV", "PLE");
+  legy1->AddEntry(hy1000_cd,"p_{T} = 1000 GeV","PLE");
+  //legy1->AddEntry(hy3000_cd,"p_{T} = 3000 GeV","PLE");
 
   if (doClosure)
     cy1->SaveAs(Form("pdf/L2res/L2Res_TheClosureAsymmetry_%s.pdf",cr));
@@ -2299,8 +2503,19 @@ void L2Res(bool _doClosure = doClosure) {
   l->SetLineStyle(kDashed);
   l->DrawLine(0,1,5.2,1);
 
-  tdrDraw(hchi2,"HE",kNone,kBlack,kSolid,-1,kNone,0);
+  tdrDraw(hchi2,"HE",kNone,kBlack,kSolid,-1,kNone,0,1,3);
+  tdrDraw(hchi2_m,"HE",kNone,kBlue-9,kSolid,-1,kNone,0,1,2);
+  tdrDraw(hchi2_p,"HE",kNone,kRed-9,kSolid,-1,kNone,0,1,2);
+  tdrDraw(hchi2_cm,"HE",kNone,kBlue,kSolid,-1,kNone,0,1,1);
+  tdrDraw(hchi2_cp,"HE",kNone,kRed,kSolid,-1,kNone,0,1,1);
 
+  TLegend *legchi = tdrLeg(0.20,0.90-0.05*6,0.50,0.90);
+  legchi->AddEntry(hchi2,"|#eta|","PLE");
+  legchi->AddEntry(hchi2_m,"#eta-","PLE");
+  legchi->AddEntry(hchi2_p,"#eta+","PLE");
+  legchi->AddEntry(hchi2_cm,"|#eta| #times #eta-","PLE");
+  legchi->AddEntry(hchi2_cp,"|#eta| #times #eta+","PLE");
+  
   if (doClosure)
     cchi2->SaveAs(Form("pdf/L2res/L2Res_Chi2Closure_%s.pdf",cr));
   else
@@ -2321,9 +2536,12 @@ void L2Res(bool _doClosure = doClosure) {
     double eta2 = p2d->GetXaxis()->GetBinLowEdge(ieta+1);
     double eta = 0.5*(eta1+eta2);
     TF1 *f1 = vf1[ieta-1]; assert(f1);
-    TF1 *f1_m = vf1_m[ieta-1]; assert(f1_m);
-    TF1 *f1_p = vf1_p[ieta-1]; assert(f1_p);
+    //TF1 *f1_m = vf1_m[ieta-1]; assert(f1_m);
+    //TF1 *f1_p = vf1_p[ieta-1]; assert(f1_p);
+    TF1 *f1_m = vf1_cm[ieta-1]; assert(f1_m);
+    TF1 *f1_p = vf1_cp[ieta-1]; assert(f1_p);
 
+    
     // Generate graph with 100 points logarithmically distributed between
     // pTref=15 GeV / 1.40 (JER 40%*1) and E=sqrt(s)/2. * 1.2 (JER 10%*2)
     const int npt = 100;
@@ -2444,9 +2662,12 @@ void L2Res(bool _doClosure = doClosure) {
   } // for ieta
   cx2->SaveAs(Form("pdf/L2Res/L2Res_AllRefit_%s.pdf",cr));
 
+
+  /////////////////////////////////
+  // Step 10. Print out text file //
+  //////////////////////////////////
   
-  // Step 10. Print out text files
-  // 10a: Original parameterization vs pTref
+  // 10a: Original eta-symmetric parameterization vs pTref
   string ftxtname = (tr.Contains("25") ? Form("textfiles/Prompt25/Prompt25_Run%s_V3M_DATA_L2ResidualVsPtRef_AK4PFPuppi.txt",cr) : Form("textfiles/ReReco24/ReReco24_Run%s_V10M_DATA_L2ResidualVsPtRef_AK4PFPuppi.txt",cr));
   cout << "Writing results to text file " << ftxtname << endl << flush;
   ofstream ftxt(ftxtname.c_str());
@@ -2475,7 +2696,41 @@ void L2Res(bool _doClosure = doClosure) {
     }
     ftxt << endl;
   }
-  // 10b: Re-parameterization vs pTraw
+
+  // 10b: Original eta-asymmetric parameterization vs pTref
+  string ftxtname1 = (tr.Contains("25") ? Form("textfiles/Prompt25/Prompt25_Run%s_V3M_DATA_L2ResidualVsPtRefAsymm_AK4PFPuppi.txt",cr) : Form("textfiles/ReReco24/ReReco24_Run%s_V10M_DATA_L2ResidualVsPtRefAsymm_AK4PFPuppi.txt",cr));
+  cout << "Writing results to text file " << ftxtname1 << endl << flush;
+  ofstream ftxt1(ftxtname1.c_str());
+
+  ftxt1 << Form("{ 1 JetEta 1 JetPt 1./(%s) Correction L2Relative}",
+		//vf1_m[0]->GetExpFormula().Data()) << endl;
+  		vf1_cm[0]->GetExpFormula().Data()) << endl;
+  for (int ieta = p2d->GetNbinsX(); ieta != 0; --ieta) {
+    double eta1 = -p2d->GetXaxis()->GetBinLowEdge(ieta+1);
+    double eta2 = -p2d->GetXaxis()->GetBinLowEdge(ieta);
+    //TF1 *f1_m = vf1_m[ieta-1];
+    TF1 *f1_m = vf1_cm[ieta-1];
+    ftxt1 << Form("  %+1.3f %+1.3f  %d  %d %4d  ", eta1, eta2,
+		 2 + f1_m->GetNpar(),  10, int(6800. / cosh(eta2)));
+    for (int i = 0; i != f1_m->GetNpar(); ++i) {
+      ftxt1 << Form(" %7.4f",f1_m->GetParameter(i));
+    }
+    ftxt1 << endl;
+  }
+  for (int ieta = 1; ieta != p2d->GetNbinsX()+1; ++ieta) {
+    double eta1 = p2d->GetXaxis()->GetBinLowEdge(ieta);
+    double eta2 = p2d->GetXaxis()->GetBinLowEdge(ieta+1);
+    //TF1 *f1_p = vf1_p[ieta-1];
+    TF1 *f1_p = vf1_cp[ieta-1];
+    ftxt1 << Form("  %+1.3f %+1.3f  %d  %d %4d  ", eta1, eta2,
+		  2 + f1_p->GetNpar(),  10, int(6800. / cosh(eta1)));
+    for (int i = 0; i != f1_p->GetNpar(); ++i) {
+      ftxt1 << Form(" %7.4f",f1_p->GetParameter(i));
+    }
+    ftxt1 << endl;
+  }
+
+  // 10c: Re-parameterization vs pTraw (of symmetric response)
   string ftxtname2 = (tr.Contains("25") ? Form("textfiles/Prompt25/Prompt25_Run%s_V3M_DATA_L2Residual_AK4PFPuppi.txt",cr) : Form("textfiles/ReReco24/ReReco24_Run%s_V10M_DATA_L2Residual_AK4PFPuppi.txt",cr));
   cout << "Writing results to text file " << ftxtname2 << endl << flush;
   ofstream ftxt2(ftxtname2.c_str());
@@ -2712,10 +2967,14 @@ void L2Res(bool _doClosure = doClosure) {
   if (fout) {
     cout << "Saving results to " << fout->GetName() << endl << flush;
     fout->cd();
+    h2merged->Write(Form("h2merged_%s",cr),TObject::kOverwrite);
+    h2merged1->Write(Form("h2merged1_%s",cr),TObject::kOverwrite);
+    //
     h2jes->Write(Form("h2jes_%s",cr),TObject::kOverwrite);
-    h2jes_d->Write(Form("h2jes_d_%s",cr),TObject::kOverwrite);
-    h2jes_cd->Write(Form("h2jes_cd_%s",cr),TObject::kOverwrite);
+    h2jes_d->Write(Form("h2jes_eta_asymmetry_%s",cr),TObject::kOverwrite);
+    h2jes_cd->Write(Form("h2jes_const_eta_asymmetry_%s",cr),TObject::kOverwrite);
     h2jes1->Write(Form("h2jes1_%s",cr),TObject::kOverwrite);
+    h2jes1_c->Write(Form("h2jes1_const_eta_%s",cr),TObject::kOverwrite);
     //
     p2z->Write(Form("p2m0tc_zjet_data_%s",cr),TObject::kOverwrite);
     p2zm->Write(Form("p2m0tc_zjet_mc_%s",cm),TObject::kOverwrite);
