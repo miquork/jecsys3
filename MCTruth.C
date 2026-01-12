@@ -29,12 +29,28 @@ void fixMedian(TH1D *hjes, TF1* jes_fit, TF1* jer_fit, double pT_threshold);
 double evalXmin(double jes, double jer, double eff);
 TH1D* cutHist(const TH1D *h, const double xmin);
 
-void MCTruth(string set="Winter25MG") {
+//void MCTruth(string set="Winter25MG") {
+//void MCTruth(string set="Summer24MG") {
+void MCTruth(string set="Summer24MC_Flat") {
 
   setTDRStyle();
   TDirectory *curdir = gDirectory;
 
+  gROOT->ProcessLine(".! mkdir pdf");
+  gROOT->ProcessLine(".! mkdir pdf/MCTruth");
+  gROOT->ProcessLine(".! touch pdf");
+  gROOT->ProcessLine(".! touch pdf/MCTruth");
+  
+  #include "Config.C"
+  
   TFile *f(0);
+  const char *cs = set.c_str();
+  if (mfile.find(Form("JERC_%s_MC",cs))!=mfile.end()) {
+    string file = mfile[Form("JERC_%s_MC",cs)];
+    cout << "Reading JERC_" << set << "_MC from Config.C: " << file << endl;
+    f = new TFile(file.c_str(),"READ");
+  }
+  else {
   if (set=="Summer24JME") f = new TFile("rootfiles/Prompt2024/v124_Jet/jmenano_mc_out_Summer24MC_FlatJMEN_v124.root","READ");
   if (set=="Summer24") f = new TFile("rootfiles/Prompt2024/v121_Jet/jmenano_mc_out_Summer24MG_v121_2024CDEFGHI.root","READ");
   // v4->v6: remove _Athens, count 3 leading gen (was 4), Jet_neMultiplicity for reco (was gen)
@@ -42,6 +58,7 @@ void MCTruth(string set="Winter25MG") {
   if (set=="Winter25") f = new TFile("rootfiles/Prompt2025/v123_v8_Jet/jmenano_mc_out_Winter25MC_Flat2022_v123_v8.root","READ");
   if (set=="Winter25MG") f = new TFile("rootfiles/Prompt2025/Jet_v128/jmenano_mc_out_Winter25MG_v128.root","READ");
   if (set=="Winter24") f = new TFile("rootfiles/Prompt2025/v123_v8_Jet/jmenano_mc_out_Winter24MCFlat_v123_v8.root","READ");
+  }
   assert(f && !f->IsZombie());
 
   gDirectory->cd("HLT_MC");
@@ -186,9 +203,10 @@ void MCTruth(string set="Winter25MG") {
 
     if (i==1) {
       if (set=="Summer24JME") legeff->SetHeader("Summer24, JME QCDFlat MC");
-      if (set=="Summer24") legeff->SetHeader("Summer24, MG QCD MC");
-      if (set=="Winter25") legeff->SetHeader("Winter25, QCDFlat MC");
-      if (set=="Winter24") legeff->SetHeader("Winter24, QCDFlat MC");
+      else if (set=="Summer24") legeff->SetHeader("Summer24, MG QCD MC");
+      else if (set=="Winter25") legeff->SetHeader("Winter25, QCDFlat MC");
+      else if (set=="Winter24") legeff->SetHeader("Winter24, QCDFlat MC");
+      else legeff->SetHeader(set.c_str());
       legeff->AddEntry(hr,"Data","PLE");
       legeff->AddEntry(f1eff,"Fit","L");
     }
@@ -240,9 +258,10 @@ void MCTruth(string set="Winter25MG") {
 
     if (i==1) {
       if (set=="Summer24JME") legjes->SetHeader("Summer24, JME QCDFlat MC");
-      if (set=="Summer24") legjes->SetHeader("Summer24, MG QCD MC");
-      if (set=="Winter25") legjes->SetHeader("Winter25, QCDFlat MC");
-      if (set=="Winter24") legjes->SetHeader("Winter24, QCDFlat MC");
+      else if (set=="Summer24") legjes->SetHeader("Summer24, MG QCD MC");
+      else if (set=="Winter25") legjes->SetHeader("Winter25, QCDFlat MC");
+      else if (set=="Winter24") legjes->SetHeader("Winter24, QCDFlat MC");
+      else legjes->SetHeader(set.c_str());
       legjes->AddEntry(hr,"Data","PLE");
       legjes->AddEntry(f1jes,"Fit","L");
     }
@@ -293,9 +312,10 @@ void MCTruth(string set="Winter25MG") {
 
     if (i==1) {
       if (set=="Summer24JME") legjer->SetHeader("Summer24, JME QCDFlat MC");
-      if (set=="Summer24") legjer->SetHeader("Summer24, MG QCD MC");
-      if (set=="Winter25") legjer->SetHeader("Winter25, QCDFlat MC");
-      if (set=="Winter24") legjer->SetHeader("Winter24, QCDFlat MC");
+      else if (set=="Summer24") legjer->SetHeader("Summer24, MG QCD MC");
+      else if (set=="Winter25") legjer->SetHeader("Winter25, QCDFlat MC");
+      else if (set=="Winter24") legjer->SetHeader("Winter24, QCDFlat MC");
+      else legjer->SetHeader(set.c_str());
       legjer->AddEntry(hr,"Data","PLE");
       legjer->AddEntry(f1jes,"Fit","L");
     }
@@ -381,9 +401,10 @@ void MCTruth(string set="Winter25MG") {
     
     if (i==1) {
       if (set=="Summer24JME") legjec->SetHeader("Summer24, JME QCDFlat MC");
-      if (set=="Summer24") legjec->SetHeader("Summer24, MG QCD MC");
-      if (set=="Winter25") legjec->SetHeader("Winter25, QCDFlat MC");
-      if (set=="Winter24") legjec->SetHeader("Winter24, QCDFlat MC");
+      else if (set=="Summer24") legjec->SetHeader("Summer24, MG QCD MC");
+      else if (set=="Winter25") legjec->SetHeader("Winter25, QCDFlat MC");
+      else if (set=="Winter24") legjec->SetHeader("Winter24, QCDFlat MC");
+      else legjec->SetHeader(set.c_str());
       //legjec->AddEntry(hc,"Data","PLE");
     }
 
@@ -458,9 +479,10 @@ void MCTruth(string set="Winter25MG") {
 
     if (i==1) {
       if (set=="Summer24JME") legjerx->SetHeader("Summer24, JME QCDFlat MC");
-      if (set=="Summer24") legjerx->SetHeader("Summer24, MG QCD MC");
-      if (set=="Winter25") legjerx->SetHeader("Winter25, QCDFlat MC");
-      if (set=="Winter24") legjerx->SetHeader("Winter24, QCDFlat MC");
+      else if (set=="Summer24") legjerx->SetHeader("Summer24, MG QCD MC");
+      else if (set=="Winter25") legjerx->SetHeader("Winter25, QCDFlat MC");
+      else if (set=="Winter24") legjerx->SetHeader("Winter24, QCDFlat MC");
+      else legjerx->SetHeader(set.c_str());
       legjerx->AddEntry(hs_raw,"Raw RMS","PLE");
       legjerx->AddEntry(f1jer_raw,"Raw fit","L");
       legjerx->AddEntry(hs,"Corrected RMS","PLE");
@@ -506,9 +528,10 @@ void MCTruth(string set="Winter25MG") {
 
     if (i==1) {
       if (set=="Summer24JME") legjesx->SetHeader("Summer24, JME QCDFlat MC");
-      if (set=="Summer24") legjesx->SetHeader("Summer24, MG QCD MC");
-      if (set=="Winter25") legjesx->SetHeader("Winter25, QCDFlat MC");
-      if (set=="Winter24") legjesx->SetHeader("Winter24, QCDFlat MC");
+      else if (set=="Summer24") legjesx->SetHeader("Summer24, MG QCD MC");
+      else if (set=="Winter25") legjesx->SetHeader("Winter25, QCDFlat MC");
+      else if (set=="Winter24") legjesx->SetHeader("Winter24, QCDFlat MC");
+      else legjesx->SetHeader(set.c_str());
       legjesx->AddEntry(hx,"Official JEC","F");
       legjesx->AddEntry(hr_raw,"Raw Mean","PLE");
       legjesx->AddEntry(f1jes_raw,"Raw Mean fit (p_{T}>30 GeV)","L");
@@ -549,9 +572,10 @@ void MCTruth(string set="Winter25MG") {
 
     if (i==1) {
       if (set=="Summer24JME") legjecx->SetHeader("Summer24, JME QCDFlat MC");
-      if (set=="Summer24") legjecx->SetHeader("Summer24, MG QCD MC");
-      if (set=="Winter25") legjecx->SetHeader("Winter25, QCDFlat MC");
-      if (set=="Winter24") legjecx->SetHeader("Winter24, QCDFlat MC");
+      else if (set=="Summer24") legjecx->SetHeader("Summer24, MG QCD MC");
+      else if (set=="Winter25") legjecx->SetHeader("Winter25, QCDFlat MC");
+      else if (set=="Winter24") legjecx->SetHeader("Winter24, QCDFlat MC");
+      else legjecx->SetHeader(set.c_str());
       legjecx->AddEntry(hc_raw,"Raw Mean","PLE");
       legjecx->AddEntry(hc,"Corrected Mean","PLE");
       //legjecx->AddEntry(hr_ratio,"Corr. Mean  / Fit","PLE");
@@ -562,7 +586,7 @@ void MCTruth(string set="Winter25MG") {
   } // for i
 
 
-  const char *cs = set.c_str();
+  //const char *cs = set.c_str();
   c1eff->SaveAs(Form("pdf/MCTruth/MCTruth_EFF_%s.pdf",cs));
   c1jes->SaveAs(Form("pdf/MCTruth/MCTruth_JES_%s.pdf",cs));
   c1jer->SaveAs(Form("pdf/MCTruth/MCTruth_JER_%s.pdf",cs));
@@ -579,13 +603,20 @@ void MCTruth(string set="Winter25MG") {
   TH3D *h3r = (TH3D*)d->Get("Response3D_raw"); assert(h3r);
   TH3D *h3c = (TH3D*)d->Get("Response3D"); assert(h3c);
 
+  // Make plots of Gaussian response in various pT intervals
+  vector<pair<double,double> > ptbins;
+  ptbins.push_back(make_pair<double,double>(15,20));
+  ptbins.push_back(make_pair<double,double>(30,35));
+  ptbins.push_back(make_pair<double,double>(86,110));
+
+  
   TCanvas *c1gaus = new TCanvas("c1gaus","c1gaus",7*size,6*size);
   c1gaus->Divide(7,6,0,0);
 
   c1gaus->cd(42);
   TLegend *leggaus = tdrLeg(0.05,0.80-0.05*1.5*4,0.50,0.80);
   leggaus->SetTextSize(0.045*1.5);
-  
+
   // x=eta_gen, y=pTgen, z=pTreco/pTgen
   for (int i = 1; i != h3r->GetNbinsX()+1; ++i) {
 
