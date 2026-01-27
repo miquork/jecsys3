@@ -358,8 +358,10 @@ TH1D *drawCleaned(TH1D *h, double eta, string data, string sdraw,
       if (tr.Contains("25B") || tr.Contains("25C") || tr.Contains("25D") ||
 	  tr.Contains("25E") || tr.Contains("25F") || tr.Contains("25G") ||
 	  tr.Contains("25DEFG") || tr.Contains("25CDEFG")) {
-	if (ptmax>200.) keep = false;
-	if (eta>4.538) keep = false;
+	//if (ptmax>200.) keep = false; // V3M
+	if (ptmax>200.) keep = keep && doClosure; // V4M
+	//if (eta>4.538) keep = false; // V3M
+	if (eta>4.538) keep = keep && doClosure; // V4M
       }
       // Something off with Z in 2.5<|eta|<3.0
       // TMP patch for primarily 25G
@@ -367,9 +369,11 @@ TH1D *drawCleaned(TH1D *h, double eta, string data, string sdraw,
 	  tr.Contains("25E") || tr.Contains("25F") || tr.Contains("25G") ||
 	  tr.Contains("25DEFG") || tr.Contains("25CDEFG")) {
 	//if (tr.Contains("25G") || tr.Contains("25CDEFG")) {
-	if (eta>2.500 && eta<3.139) keep = false;
+	//if (eta>2.500 && eta<3.139) keep = false; // V3M
+	if (eta>2.500 && eta<3.139) keep = keep && doClosure; // V4M
       }
-      if (eta>3.139 && ptmax<70) keep = false;
+      //if (eta>3.139 && ptmax<70) keep = false; // V3M
+      if (eta>3.139 && ptmax<70) keep = keep && doClosure; // V4M
       
       // Large error filtering. Also skip any higher pT points in case bad stat
       if (eta<2.650 && ptmin>600.) {
@@ -385,7 +389,8 @@ TH1D *drawCleaned(TH1D *h, double eta, string data, string sdraw,
       else if (ptmin>=30. && ptmax<200.  && emax<0.5*sqrts) keep = true;
 
       // Tunable vetoes
-      if (eta>2.5 && eta<2.964 && ptmin<60) keep = false;
+      //if (eta>2.5 && eta<2.964 && ptmin<60) keep = false; // V3M
+      if (eta>2.5 && eta<2.964 && ptmin<60) keep = keep && doClosure; // V4M
       if (tr.Contains("24") &&
 	  (tr.Contains("F") || tr.Contains("G") || tr.Contains("H") ||
 	   tr.Contains("I"))) {
@@ -401,14 +406,17 @@ TH1D *drawCleaned(TH1D *h, double eta, string data, string sdraw,
       if (tr.Contains("25C") || tr.Contains("25D") || tr.Contains("25E") ||
 	  tr.Contains("25F") || tr.Contains("25G") ||
 	  tr.Contains("25DEFG") || tr.Contains("25CDEFG")) {
-	if (pt>800) keep = false;
-	if (eta>1.218 && pt>600) keep = false;
+	//if (pt>800) keep = false; // V3M
+	if (pt>800) keep = keep && doClosure; // V4M
+	//if (eta>1.218 && pt>600) keep = false; // V3M
+	if (eta>1.218 && pt>600) keep = keep && doClosure; // V4M
       }
       // TMP patch for primarily 25G
       if (tr.Contains("25C") || tr.Contains("25D") || tr.Contains("25E") ||
 	  tr.Contains("25F") || tr.Contains("25G") ||
 	  tr.Contains("25DEFG") || tr.Contains("25CDEFG")) {
-	if (eta>2.5 && pt<110) keep = false;
+	//if (eta>2.5 && pt<110) keep = false; // V3M
+	if (eta>2.5 && pt<110) keep = keep && doClosure; // V4M
       }
       // Additional veto for 2024BC 3.3/fb golden closure (errors bad)
       //if (doClosure && ptmin>500) keep = false;
@@ -468,9 +476,12 @@ TH1D *drawCleaned(TH1D *h, double eta, string data, string sdraw,
       // TMP patch for primarily 25G
       if (tr.Contains("25G") ||
 	  tr.Contains("25DEFG") || tr.Contains("25CDEFG")) {
-	if (pt>170 && pt<236) keep = false;
-	if (eta>2.500 && eta<3.489 && pt>59 && pt<86) keep = false;
-	if (eta>3.314 && eta<3.489 && pt>279 && pt<302) keep = false;
+	//if (pt>170 && pt<236) keep = false; // V3M
+	if (pt>170 && pt<236) keep = keep && doClosure; // V4M
+	//if (eta>2.500 && eta<3.489 && pt>59 && pt<86) keep = false; // V3M
+	if (eta>2.500 && eta<3.489 && pt>59 && pt<86) keep = keep && doClosure; // V4M
+	//if (eta>3.314 && eta<3.489 && pt>279 && pt<302) keep = false; // V3M
+	if (eta>3.314 && eta<3.489 && pt>279 && pt<302) keep = keep && doClosure; // V4M
       }
       // Additional veto for 2024BC 3.3/fb golden closure (bad errors?)
       //if (doClosure && emax>0.5*sqrts) keep = false;
@@ -538,12 +549,25 @@ TH1D *drawCleaned(TH1D *h, double eta, string data, string sdraw,
     // Remove points with zero error for closure
     if (doClosure &&
 	(h->GetBinError(i)==0 ||
-	 (ptmin>1000 && h->GetBinError(i)<0.01) ||
+	 //(ptmin>1000 && h->GetBinError(i)<0.01) ||
+	 (ptmin>1500 && h->GetBinError(i)<0.01) ||
 	 (data=="G" && ptmin>500 && h->GetBinError(i)<0.02) ||
 	 (data=="Z" && ptmin>200 && h->GetBinError(i)<0.02) ||
 	 emax>6800.)) {
       keep = false;
     }
+
+    // Remove points outside of plot ranges
+    double y = h->GetBinContent(i);
+    if (doClosure && tr.Contains("25") &&
+	((eta<0.783 && (y>1.10 || y<0.95)) ||
+	 (eta>=0.783 && eta<1.566 && (y>1.20 || y<0.75)) ||
+	 (eta>=1.566 && eta<2.650 && (y>1.20 || y<0.50)) ||
+	 (eta>=2.650 && eta<4.191 && (y>1.45 || y<0.30)) ||
+	 (eta>=4.191 && eta<5.191 && (y>1.65 || y<0.50)))) {
+      keep = false;
+    }
+      
     
     // Remove points we don't want to keep
     if (!keep) {
@@ -587,6 +611,7 @@ void L2Res(bool _doClosure = doClosure) {
 
   doClosure = _doClosure; 
   if (doClosure) fitRC = false;
+  if (doClosure) fitRC1 = false;
   
   // Set graphical styles
   setTDRStyle();
@@ -1680,7 +1705,8 @@ void L2Res(bool _doClosure = doClosure) {
 		      f5->GetParameter(2), f5->GetParameter(3),
 		      f5->GetParameter(4));
 
-  if (!doClosure) { // 2025 version: same limits as f5, only
+  //if (!doClosure) { // 2025 version: same limits as f5, only
+  if (true) { // V4M
     fref->SetParLimits(3,-0.5,0.5); // offset no more than 50% at 10 GeV
     fref->SetParLimits(4,0.,0.25); // 1/x^2
   }
@@ -1716,7 +1742,7 @@ void L2Res(bool _doClosure = doClosure) {
   } // doClosure
   */
   if (doClosure) {
-    fref->FixParameter(4, 0.);
+    //fref->FixParameter(4, 0.); // Off for V4M
   }
   
   // V9M_draft1
@@ -1831,10 +1857,14 @@ void L2Res(bool _doClosure = doClosure) {
     if (parerr==0) {
       fref_m->FixParameter(ipar, par);
       fref_p->FixParameter(ipar, par);
+      fref_cm->FixParameter(ipar, par); // 24V4M
+      fref_cp->FixParameter(ipar, par); // 25V4M
     }
     else {
       fref_m->SetParLimits(ipar, parmin, parmax);
       fref_p->SetParLimits(ipar, parmin, parmax);
+      fref_cm->SetParLimits(ipar, parmin, parmax); // 25V4M
+      fref_cp->SetParLimits(ipar, parmin, parmax); // 25V4M
     }
     if (ipar!=0 && ipar!=1) {
       fref_cm->FixParameter(ipar, par);
@@ -2668,7 +2698,7 @@ void L2Res(bool _doClosure = doClosure) {
   //////////////////////////////////
   
   // 10a: Original eta-symmetric parameterization vs pTref
-  string ftxtname = (tr.Contains("25") ? Form("textfiles/Prompt25/Prompt25_Run%s_V3M_DATA_L2ResidualVsPtRef_AK4PFPuppi.txt",cr) : Form("textfiles/ReReco24/ReReco24_Run%s_V10M_DATA_L2ResidualVsPtRef_AK4PFPuppi.txt",cr));
+  string ftxtname = (tr.Contains("25") ? Form("textfiles/Prompt25/Prompt25_Run%s_V4M_DATA_L2ResidualVsPtRef_AK4PFPuppi.txt",cr) : Form("textfiles/ReReco24/ReReco24_Run%s_V10M_DATA_L2ResidualVsPtRef_AK4PFPuppi.txt",cr));
   cout << "Writing results to text file " << ftxtname << endl << flush;
   ofstream ftxt(ftxtname.c_str());
 
@@ -2698,7 +2728,7 @@ void L2Res(bool _doClosure = doClosure) {
   }
 
   // 10b: Original eta-asymmetric parameterization vs pTref
-  string ftxtname1 = (tr.Contains("25") ? Form("textfiles/Prompt25/Prompt25_Run%s_V3M_DATA_L2ResidualVsPtRefAsymm_AK4PFPuppi.txt",cr) : Form("textfiles/ReReco24/ReReco24_Run%s_V10M_DATA_L2ResidualVsPtRefAsymm_AK4PFPuppi.txt",cr));
+  string ftxtname1 = (tr.Contains("25") ? Form("textfiles/Prompt25/Prompt25_Run%s_V4M_DATA_L2ResidualVsPtRefAsymm_AK4PFPuppi.txt",cr) : Form("textfiles/ReReco24/ReReco24_Run%s_V10M_DATA_L2ResidualVsPtRefAsymm_AK4PFPuppi.txt",cr));
   cout << "Writing results to text file " << ftxtname1 << endl << flush;
   ofstream ftxt1(ftxtname1.c_str());
 
@@ -2731,7 +2761,7 @@ void L2Res(bool _doClosure = doClosure) {
   }
 
   // 10c: Re-parameterization vs pTraw (of symmetric response)
-  string ftxtname2 = (tr.Contains("25") ? Form("textfiles/Prompt25/Prompt25_Run%s_V3M_DATA_L2Residual_AK4PFPuppi.txt",cr) : Form("textfiles/ReReco24/ReReco24_Run%s_V10M_DATA_L2Residual_AK4PFPuppi.txt",cr));
+  string ftxtname2 = (tr.Contains("25") ? Form("textfiles/Prompt25/Prompt25_Run%s_V4M_DATA_L2Residual_AK4PFPuppi.txt",cr) : Form("textfiles/ReReco24/ReReco24_Run%s_V10M_DATA_L2Residual_AK4PFPuppi.txt",cr));
   cout << "Writing results to text file " << ftxtname2 << endl << flush;
   ofstream ftxt2(ftxtname2.c_str());
   

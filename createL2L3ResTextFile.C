@@ -33,7 +33,12 @@ void createL2L3ResTextFile() {
   cout << "Warning: sscanf only works correctly when code is compiled (.C+)\n";
   cout << "****************************************************************\n";
   cout << endl;
-    
+
+  gROOT->ProcessLine(".! mkdir pdf");
+  gROOT->ProcessLine(".! mkdir pdf/createL2L3ResTextFile");
+  gROOT->ProcessLine(".! touch pdf");
+  gROOT->ProcessLine(".! touch pdf/createL2L3ResTextFile");
+  
   setTDRStyle();
 
   // Plots vs pT,ref
@@ -118,7 +123,8 @@ void createL2L3ResTextFile() {
   //c1->SaveAs("pdf/createL2L3ResTextFile_ReReco24_V9M_VsPtRef.pdf");
   //c1->SaveAs("pdf/createL2L3ResTextFile_ReReco24_V10M_VsPtRef.pdf");
   //c1->SaveAs("pdf/createL2L3ResTextFile_Prompt25_V2M_VsPtRef.pdf");
-  c1->SaveAs("pdf/createL2L3ResTextFile_Prompt25_V3M_VsPtRef.pdf");
+  //c1->SaveAs("pdf/createL2L3ResTextFile_Prompt25_V3M_VsPtRef.pdf");
+  c1->SaveAs("pdf/createL2L3ResTextFile_Prompt25_V4M_VsPtRef.pdf");
   
   c3->cd();
   gPad->RedrawAxis();
@@ -128,7 +134,8 @@ void createL2L3ResTextFile() {
   //c3->SaveAs("pdf/createL2L3ResTextFile_ReReco24_V9M_VsPtRaw.pdf");
   //c3->SaveAs("pdf/createL2L3ResTextFile_ReReco24_V10M_VsPtRaw.pdf");
   //c3->SaveAs("pdf/createL2L3ResTextFile_Prompt25_V2M_VsPtRaw.pdf");
-  c3->SaveAs("pdf/createL2L3ResTextFile_Prompt25_V3M_VsPtRaw.pdf");
+  //c3->SaveAs("pdf/createL2L3ResTextFile_Prompt25_V3M_VsPtRaw.pdf");
+  c3->SaveAs("pdf/createL2L3ResTextFile_Prompt25_V4M_VsPtRaw.pdf");
 
 } // createL2L3ResTextFile
 
@@ -410,12 +417,12 @@ void createL2L3ResTextFiles(string set) {
   // Remember to copy L2Res .txt files by hand to input directory
   // Hand-copying reduces risk of accidental overwriting after L2Res closed
   //sin = (tr.Contains("25") ? Form("textFiles/Prompt25_V3M/Prompt25_Run%s_V3M_DATA_L2ResidualVsPtRef_AK4PFPuppi.txt",cs) : Form("textFiles/ReReco24_V10M/ReReco24_Run%s_V10M_DATA_L2ResidualVsPtRef_AK4PFPuppi.txt",cs));
-  sin = (tr.Contains("25") ? Form("textFiles/Prompt25/Prompt25_Run%s_V3M_DATA_L2ResidualVsPtRefAsymm_AK4PFPuppi.txt",cs) : Form("textFiles/ReReco24_V10M/ReReco24_Run%s_V10M_DATA_L2ResidualVsPtRef_AK4PFPuppi.txt",cs)); // TMPT
+  sin = (tr.Contains("25") ? Form("textFiles/Prompt25/Prompt25_Run%s_V4M_DATA_L2ResidualVsPtRefAsymm_AK4PFPuppi.txt",cs) : Form("textFiles/ReReco24_V10M/ReReco24_Run%s_V10M_DATA_L2ResidualVsPtRef_AK4PFPuppi.txt",cs)); // TMPT
   // Output files go to generic directory. Copy by hand to final output
   // Hand-copying reduces risk of accidental overwriting if rerunning L2L3Res
   //sout2 = (tr.Contains("25") ? Form("textFiles/Prompt25/Prompt25_Run%s_V3M_DATA_L2L3ResidualVsPtRef_AK4PFPuppi.txt",cs) : Form("textFiles/ReReco24/ReReco24_Run%s_V10M_DATA_L2L3ResidualVsPtRef_AK4PFPuppi.txt",cs));
-  sout2 = (tr.Contains("25") ? Form("textFiles/Prompt25/Prompt25_Run%s_V3M_DATA_L2L3ResidualVsPtRefAsymmm_AK4PFPuppi.txt",cs) : Form("textFiles/ReReco24/ReReco24_Run%s_V10M_DATA_L2L3ResidualVsPtRef_AK4PFPuppi.txt",cs)); // TMP
-  sout3 = (tr.Contains("25") ? Form("textFiles/Prompt25/Prompt25_Run%s_V3M_DATA_L2L3Residual_AK4PFPuppi.txt",cs) : Form("textFiles/ReReco24/ReReco24_Run%s_V10M_DATA_L2L3Residual_AK4PFPuppi.txt",cs));
+  sout2 = (tr.Contains("25") ? Form("textFiles/Prompt25/Prompt25_Run%s_V4M_DATA_L2L3ResidualVsPtRefAsymmm_AK4PFPuppi.txt",cs) : Form("textFiles/ReReco24/ReReco24_Run%s_V10M_DATA_L2L3ResidualVsPtRef_AK4PFPuppi.txt",cs)); // TMP
+  sout3 = (tr.Contains("25") ? Form("textFiles/Prompt25/Prompt25_Run%s_V4M_DATA_L2L3Residual_AK4PFPuppi.txt",cs) : Form("textFiles/ReReco24/ReReco24_Run%s_V10M_DATA_L2L3Residual_AK4PFPuppi.txt",cs));
   
   assert(sin!="");
   assert(sout2!="");
@@ -479,8 +486,11 @@ void createL2L3ResTextFiles(string set) {
   int cnt(0), ieta(0), cntmax(0);
 
   const int nxy = 41;
-  TCanvas *cx = new TCanvas(Form("cx_%s",cs),"cx",9*300,5*300);
-  cx->Divide(7,6,0,0);
+  TCanvas *cx_p = new TCanvas(Form("cx_p_%s",cs),"cx",9*300,5*300);
+  cx_p->Divide(7,6,0,0);
+  TCanvas *cx_m = new TCanvas(Form("cx_m_%s",cs),"cx",9*300,5*300);
+  cx_m->Divide(7,6,0,0);
+  TCanvas *cx = cx_m;
       
   while (getline(fin,line)) {
 
@@ -882,6 +892,8 @@ void createL2L3ResTextFiles(string set) {
     
     // Plotting only for positive side (is anyway symmetric)
     if (etamin<0) continue;
+    //if (etamin<0) cx = cx_m;
+    //else          cx = cx_p;
     ++ieta;
     
     // Calculate ratio of fit and graph to check quality
@@ -952,8 +964,9 @@ void createL2L3ResTextFiles(string set) {
     TLatex *tex = new TLatex();
     tex->SetNDC(); tex->SetTextSize(0.045*2.0);
     tex->DrawLatex(0.50,0.90,Form("[%1.3f,%1.3f]",etamin,etamax));
-    if (ieta==nxy) {
-      cx->cd(ieta+1);
+    if (ieta==nxy || ieta==1) {
+      //cx->cd(ieta+1);
+      cx->cd(nxy+1);
       TLegend *legx = tdrLeg(0.05,0.95-0.05*2.0*9,0.30,0.95);
       legx->SetTextSize(0.045*2.0);//2.5);
       legx->AddEntry(f1,"JES-L3Res fit vs p_{T,ref}","L");
@@ -979,6 +992,8 @@ void createL2L3ResTextFiles(string set) {
   } // for ieta
   
   cx->SaveAs(Form("pdf/createL2L3ResTextFile/createL2L3ResTextFile_PtRawReFit_%s.pdf",cs));
+  cx_p->SaveAs(Form("pdf/createL2L3ResTextFile/createL2L3ResTextFile_PtRawReFitPlus_%s.pdf",cs));
+  cx_m->SaveAs(Form("pdf/createL2L3ResTextFile/createL2L3ResTextFile_PtRawReFitMinus_%s.pdf",cs));
 
   f1->SetLineColor(color[set]);
   f1->SetRange(15,4500.);

@@ -11,6 +11,7 @@
 #include "TF1.h"
 #include "TH3D.h"
 
+#include "tools.C"
 #include "tdrstyle_mod22.C"
 
 bool debug = false;
@@ -75,6 +76,16 @@ void MCTruth(string set="Summer24MC_Flat") {
   TProfile2D *p2r = (TProfile2D*)d->Get("p2r_raw"); assert(p2r);
   TProfile2D *p2c = (TProfile2D*)d->Get("p2r");     assert(p2c);
 
+  // Save output JES to rootfiles/MCTruth.root for comparisons
+  TFile *fout = new TFile("rootfiles/MCTruth.root","UPDATE");
+  TH2D *h2jesRaw = p2x->ProjectionXY(Form("h2jesRaw_%s",cs)); h2jesRaw->Reset();
+  TH2D *h2jes = p2x->ProjectionXY(Form("h2jes_%s",cs)); h2jes->Reset();
+  TH2D *h2jesFit = p2x->ProjectionXY(Form("h2jesFit_%s",cs)); h2jesFit->Reset();
+  TH2D *h2jerRaw = p2x->ProjectionXY(Form("h2jerRaw_%s",cs)); h2jerRaw->Reset();
+  TH2D *h2jer = p2x->ProjectionXY(Form("h2jer_%s",cs)); h2jer->Reset();
+  TH2D *h2jerFit = p2x->ProjectionXY(Form("h2jerFit_%s",cs)); h2jerFit->Reset();
+  curdir->cd();
+  
   //if (set=="Winter25") {
   //p2r = (TProfile2D*)d->Get("LeadingJ/p2r_Athens"); assert(p2r);
   //}
@@ -250,6 +261,7 @@ void MCTruth(string set="Summer24MC_Flat") {
       f1jes->SetRange(ptmin_fwd,ptmax);
     }
     hr->Fit(f1jes,"QRN");
+    //TFitResultPtr f1jes_fp = hr->Fit(f1jes,"QRNS");
 
     tex->DrawLatex(i%7==1 ? 0.30 : 0.20, 0.90,
 		   Form("%1.3f<|#eta|<%1.3f",etamin,etamax));
@@ -266,7 +278,6 @@ void MCTruth(string set="Summer24MC_Flat") {
       legjes->AddEntry(f1jes,"Fit","L");
     }
 
-    
     c1jesx->cd(i);
     gPad->SetLogx();
     hjes->Draw("AXIS");
@@ -455,7 +466,7 @@ void MCTruth(string set="Summer24MC_Flat") {
     c1jer->cd(i);
 
     f1jer->SetRange(15.,ptmax);
-    hs->Fit(f1jer,"QRN");
+    TFitResultPtr f1jer_fp = hs->Fit(f1jer,"QRNS");
 
     tdrDraw(hs_raw,"Pz",kOpenCircle,kRed+1,kSolid,-1,kNone,0,1.5,1);
     f1jer_raw->Draw("SAME");
@@ -468,6 +479,24 @@ void MCTruth(string set="Summer24MC_Flat") {
       legjer->AddEntry(f1jer_raw,"Orig. fit","L");
       legjer->AddEntry(f1jer_raw," ","");
     }
+
+    // Save JER to rootfiles/MCTruth.root for comparisons
+    for (int ipt = 1; ipt != h2jer->GetNbinsY()+1; ++ipt) {
+      double eta = 0.5*(etamin+etamax);
+      double ieta = h2jer->GetXaxis()->FindBin(eta);
+      double pt = h2jer->GetYaxis()->GetBinCenter(ipt);
+      double ptmin = h2jer->GetYaxis()->GetBinLowEdge(ipt);
+      int jpt = hs->FindBin(pt);
+      h2jerRaw->SetBinContent(ieta, ipt, hs_raw->GetBinContent(jpt));
+      h2jerRaw->SetBinError(ieta, ipt, hs_raw->GetBinError(jpt));
+      h2jer->SetBinContent(ieta, ipt, hs->GetBinContent(jpt));
+      h2jer->SetBinError(ieta, ipt, hs->GetBinError(jpt));
+      double erg = ptmin*cosh(etamin);
+      if (erg<0.5*13600.) {
+	h2jerFit->SetBinContent(ieta, ipt, f1jer->Eval(pt));
+	h2jerFit->SetBinError(ieta, ipt, tools::getFitErr(f1jer, f1jer_fp, pt));
+      }
+    } // for i
 
 
     c1jerx->cd(i);
@@ -493,7 +522,7 @@ void MCTruth(string set="Summer24MC_Flat") {
     c1jes->cd(i);
 
     f1jes->SetRange(15.,ptmax);
-    hr->Fit(f1jes,"QRN");
+    TFitResultPtr f1jes_fp = hr->Fit(f1jes,"QRNS");
 
     //TH1D *hx_raw = (TH1D*)hx->Clone(Form("hx_raw_%d",i));
     //fixMedian(hx, f1jes, f1jer, 0.);
@@ -513,6 +542,23 @@ void MCTruth(string set="Summer24MC_Flat") {
       legjes->AddEntry(hx,"Previous JEC","F");
     }
 
+    // Save JES to rootfiles/MCTruth.root for comparisons
+    for (int ipt = 1; ipt != h2jes->GetNbinsY()+1; ++ipt) {
+      double eta = 0.5*(etamin+etamax);
+      double ieta = h2jes->GetXaxis()->FindBin(eta);
+      double pt = h2jes->GetYaxis()->GetBinCenter(ipt);
+      double ptmin = h2jes->GetYaxis()->GetBinLowEdge(ipt);
+      int jpt = hr->FindBin(pt);
+      h2jesRaw->SetBinContent(ieta, ipt, hr_raw->GetBinContent(jpt));
+      h2jesRaw->SetBinError(ieta, ipt, hr_raw->GetBinError(jpt));
+      h2jes->SetBinContent(ieta, ipt, hr->GetBinContent(jpt));
+      h2jes->SetBinError(ieta, ipt, hr->GetBinError(jpt));
+      double erg = ptmin*cosh(etamin);
+      if (erg<0.5*13600.) {
+	h2jesFit->SetBinContent(ieta, ipt, f1jes->Eval(pt));
+	h2jesFit->SetBinError(ieta, ipt, tools::getFitErr(f1jes, f1jes_fp, pt));
+      }
+    } // for i
     
     c1jesx->cd(i);
     gPad->SetLogx();
@@ -852,6 +898,16 @@ void MCTruth(string set="Summer24MC_Flat") {
   c1jecx->SaveAs(Form("pdf/MCTruth/MCTruth_JEC_xtra_%s.pdf",cs));
   c1jerx->SaveAs(Form("pdf/MCTruth/MCTruth_JER_xtra_%s.pdf",cs));
   c1gaus->SaveAs(Form("pdf/MCTruth/MCTruth_Gaus_%s.pdf",cs));
+
+  // Save results to rootfiles/MCTruth.root for comparisons
+  fout->cd();
+  h2jesRaw->Write(h2jesRaw->GetName(),TObject::kOverwrite);
+  h2jes->Write(h2jes->GetName(),TObject::kOverwrite);
+  h2jesFit->Write(h2jesFit->GetName(),TObject::kOverwrite);
+  h2jerRaw->Write(h2jerRaw->GetName(),TObject::kOverwrite);
+  h2jer->Write(h2jer->GetName(),TObject::kOverwrite);
+  h2jerFit->Write(h2jerFit->GetName(),TObject::kOverwrite);
+  fout->Close();
   
 }
 
@@ -980,9 +1036,10 @@ void fixJESandJER(TH1D *hjes, TH1D *hjec, TH1D *hjer, TH1D *heff,
 	     (jer_raw * sigma / sigma_bias) : jer_raw);
 
       // Rough place-holder errors for now
-      ejes = sqrt(pow(ejes,2)+pow(jes_raw*(mu/mu_bias-1)*0.5,2));
-      ejec = sqrt(pow(ejec,2)+pow(jec_raw*(mu/mu_bias-1)*0.5,2));
-      ejer = sqrt(pow(ejer,2)+pow(jer_raw*(sigma/sigma_bias-1)*0.5,2));
+      double kerr = 0.1;//0.5;
+      ejes = sqrt(pow(ejes,2)+pow(jes_raw*(mu/mu_bias-1)*kerr,2));
+      ejec = sqrt(pow(ejec,2)+pow(jec_raw*(mu/mu_bias-1)*kerr,2));
+      ejer = sqrt(pow(ejer,2)+pow(jer_raw*(sigma/sigma_bias-1)*kerr,2));
 
       if (debug)
 	cout << Form("pt=%1.0f [%1.0f,%1.0f] GeV, eff=%1.3f, jer=%1.3f, "
