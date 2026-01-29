@@ -177,7 +177,7 @@ void compareMCTruth() {
     leg2->AddEntry(h1jer_var,Form("p_{T} = %1.0f GeV",pt),"PLE");
     if (jpt == npt-1) {
       leg2->AddEntry(h1jer_ref,"Winter25");
-      leg2->AddEntry(h1jerFit_var,"JES fits");
+      leg2->AddEntry(h1jerFit_var,"JER fits");
     }
     
     c2->cd(2);
@@ -202,4 +202,86 @@ void compareMCTruth() {
   gPad->RedrawAxis();
 
   c2->SaveAs("pdf/compareMCTruth/compareMCTruth_JER_EEZS9p6.pdf");
+
+
+
+  ////////////////////////
+  // EFF comparisons    //
+  ////////////////////////
+  
+  TH2D *h2eff_var = (TH2D*)f->Get("h2effRaw_Winter25MC_Flat_EEZS9p5");
+  assert(h2eff_var);
+  TH2D *h2eff_ref = (TH2D*)f->Get("h2effRaw_Winter25MC_Flat22");
+  assert(h2eff_ref);
+
+  TH2D *h2effFit_var = (TH2D*)f->Get("h2effFit_Winter25MC_Flat_EEZS9p5");
+  assert(h2effFit_var);
+  TH2D *h2effFit_ref = (TH2D*)f->Get("h2effFit_Winter25MC_Flat22");
+  assert(h2effFit_ref);
+
+  double y3up1(0.0+eps), y3up2(1.50-eps);
+  TH1D *hup3 = tdrHist("hup3","Efficiency",y3up1,y3up2,"|#eta|",0,5.2);
+  //double ydw1(0.95+eps), ydw2(1.07-eps); // JES
+  double y3dw1(0.80+eps), y3dw2(1.20-eps); // EFF
+  TH1D *hdw3 = tdrHist("hdw3","Ratio",y3dw1,y3dw2,"|#eta|",0,5.2);
+  
+  TCanvas *c3 = tdrDiCanvas("c3",hup3,hdw3,8,11);
+
+  c3->cd(1);
+  TLegend *leg3 = tdrLeg(0.32,0.89-5*0.05,0.57,0.89);
+  leg3->SetHeader("EEZS 9.5 vs Winter25");
+
+  double vpt3[] = {15,30,100};
+  int color3[] = {kBlue, kRed, kGreen+2};
+  const int npt3 = sizeof(vpt3)/sizeof(vpt3[0]);
+
+  for (int jpt = 0; jpt != npt3; ++jpt) {
+    
+    double pt = vpt3[jpt];
+    int ipt = h2eff_ref->GetYaxis()->FindBin(pt);
+    TH1D *h1eff_var = h2eff_var->ProjectionX(Form("h1eff_var_%d",jpt),ipt,ipt);
+    TH1D *h1eff_ref = h2eff_ref->ProjectionX(Form("h1eff_ref_%d",jpt),ipt,ipt);
+    TH1D *hr = (TH1D*)h1eff_var->Clone(Form("hr3_%d",jpt));
+    hr->Divide(h1eff_var,h1eff_ref,1,1,"");//"B");
+
+    TH1D *h1effFit_var = h2effFit_var->ProjectionX(Form("h1effFit_var_%d",jpt),ipt,ipt);
+    TH1D *h1effFit_ref = h2effFit_ref->ProjectionX(Form("h1effFit_ref_%d",jpt),ipt,ipt);
+    TH1D *hrFit = (TH1D*)h1effFit_var->Clone(Form("hr3Fit_%d",jpt));
+    hrFit->Divide(h1effFit_var,h1effFit_ref,1,1,"");//"B");
+    
+    c3->cd(1);
+    
+    l->DrawLine(0,1,5.2,1);
+    l->DrawLine(1.305,y2up1,1.305,1.00);
+    l->DrawLine(2.964,y2up1,2.964,1.00);
+    
+    tdrDraw(h1effFit_ref,"HIST][",kNone,color[jpt]-9,kSolid,-1,kNone,0);
+    tdrDraw(h1effFit_var,"HIST][",kNone,color[jpt],kSolid,-1,kNone,0);
+    tdrDraw(h1eff_ref,"Pz",kOpenCircle,color[jpt]-9,kSolid,-1,kNone,0,0.7);
+    tdrDraw(h1eff_var,"Pz",kFullCircle,color[jpt],kSolid,-1,kNone,0,0.7);
+
+    leg3->AddEntry(h1eff_var,Form("p_{T} = %1.0f GeV",pt),"PLE");
+    if (jpt == npt-1) {
+      leg3->AddEntry(h1eff_ref,"Winter25");
+      leg3->AddEntry(h1effFit_var,"EFF fits");
+    }
+    
+    c3->cd(2);
+    
+    l->DrawLine(0,1,5.2,1);
+    l->DrawLine(1.305,y2dw1,1.305,y2dw2);
+    l->DrawLine(2.964,y2dw1,2.964,y2dw2);
+    tdrDraw(hrFit,"HIST][",kNone,color3[jpt],kSolid,-1,kNone,0);
+    //TGraph *gr = new TGraph(hr);
+    //tdrDraw(gr,"Pz",kFullCircle,color[jpt],kSolid,-1,kNone,0,0.7);
+    tdrDraw(hr,"Pz",kFullCircle,color3[jpt],kSolid,-1,kNone,0,0.7);
+  } // jpt
+  
+  c3->cd(1);
+  gPad->RedrawAxis();
+  
+  c3->cd(2);
+  gPad->RedrawAxis();
+
+  c3->SaveAs("pdf/compareMCTruth/compareMCTruth_EFF_EEZS9p6.pdf");
 } // void compareMCTruth

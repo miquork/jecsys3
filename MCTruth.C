@@ -78,6 +78,9 @@ void MCTruth(string set="Summer24MC_Flat") {
 
   // Save output JES to rootfiles/MCTruth.root for comparisons
   TFile *fout = new TFile("rootfiles/MCTruth.root","UPDATE");
+  TH2D *h2effRaw = p2x->ProjectionXY(Form("h2effRaw_%s",cs)); h2effRaw->Reset();
+  TH2D *h2eff = p2x->ProjectionXY(Form("h2eff_%s",cs)); h2eff->Reset();
+  TH2D *h2effFit = p2x->ProjectionXY(Form("h2effFit_%s",cs)); h2effFit->Reset();
   TH2D *h2jesRaw = p2x->ProjectionXY(Form("h2jesRaw_%s",cs)); h2jesRaw->Reset();
   TH2D *h2jes = p2x->ProjectionXY(Form("h2jes_%s",cs)); h2jes->Reset();
   TH2D *h2jesFit = p2x->ProjectionXY(Form("h2jesFit_%s",cs)); h2jesFit->Reset();
@@ -109,6 +112,10 @@ void MCTruth(string set="Summer24MC_Flat") {
   TCanvas *c1jecx = new TCanvas("c1jecx","c1jecx",7*size,6*size);
   c1jecx->Divide(7,6,0,0);
 
+  // For official corrections
+  TCanvas *c1jer_mc = new TCanvas("c1jer_mc","c1jer_mc",7*size,6*size);
+  c1jer_mc->Divide(7,6,0,0);
+  
 
   TLine *l = new TLine();
   l->SetLineStyle(kDashed);
@@ -127,7 +134,7 @@ void MCTruth(string set="Summer24MC_Flat") {
   legjes->SetTextSize(0.045*1.5);
 
   c1jesx->cd(42);
-  TLegend *legjesx = tdrLeg(0.05,0.90-0.05*1.5*9,0.50,0.90);
+  TLegend *legjesx = tdrLeg(0.05,0.90-0.05*1.5*10,0.50,0.90);
   legjesx->SetTextSize(0.045*1.5);
   
   c1jer->cd(42);
@@ -135,17 +142,21 @@ void MCTruth(string set="Summer24MC_Flat") {
   legjer->SetTextSize(0.045*1.5);
 
   c1jerx->cd(42);
-  TLegend *legjerx = tdrLeg(0.05,0.80-0.05*1.5*9,0.50,0.80);
+  TLegend *legjerx = tdrLeg(0.05,0.90-0.05*1.5*10,0.50,0.90);
   legjerx->SetTextSize(0.045*1.5);
 
   c1jec->cd(42);
-  TLegend *legjec = tdrLeg(0.05,0.80-0.05*1.5*3,0.50,0.80);
+  TLegend *legjec = tdrLeg(0.05,0.80-0.05*1.5*4,0.50,0.80);
   legjec->SetTextSize(0.045*1.5);
 
   c1jecx->cd(42);
   TLegend *legjecx = tdrLeg(0.05,0.90-0.05*1.5*9,0.50,0.90);
   legjecx->SetTextSize(0.045*1.5);
 
+  c1jer_mc->cd(42);
+  TLegend *legjer_mc = tdrLeg(0.05,0.80-0.05*1.5*3,0.50,0.80);
+  legjer_mc->SetTextSize(0.045*1.5);
+  
 
   double eps = 1e-4;
 
@@ -340,6 +351,11 @@ void MCTruth(string set="Summer24MC_Flat") {
     f1jer->Draw("SAME");
 
 
+    c1jer_mc->cd(i);
+    gPad->SetLogx();
+    hjer->Draw("AXIS");
+    
+
 
     /////////////////////////
     // Step 1.4 JET counts //
@@ -448,9 +464,10 @@ void MCTruth(string set="Summer24MC_Flat") {
     c1eff->cd(i);
 
     f1eff->SetRange(15.,ptmax);
-    he->Fit(f1eff,"QRN");
+    TFitResultPtr f1eff_fp = he->Fit(f1eff,"QRNS");
 
-    tdrDraw(he_raw,"Pz",kOpenCircle,kRed+1,kSolid,-1,kNone,0,1.5,1);
+    tdrDraw(he_raw,"Pz",kOpenCircle,kRed-9,kSolid,-1,kNone,0,1.5,1);
+    f1eff_raw->SetLineColor(kRed-9);
     f1eff_raw->Draw("SAME");
     tdrDraw(he,"Pz",kFullCircle,kBlack,kSolid,-1,kNone,0,2.0,1);
     f1eff->SetLineColor(kGreen+2);
@@ -462,13 +479,32 @@ void MCTruth(string set="Summer24MC_Flat") {
       legeff->AddEntry(f1eff_raw," "," ");
     }
 
-    
+    // Save EFF to rootfiles/MCTruth.root for comparisons
+    for (int ipt = 1; ipt != h2eff->GetNbinsY()+1; ++ipt) {
+      double eta = 0.5*(etamin+etamax);
+      double ieta = h2eff->GetXaxis()->FindBin(eta);
+      double pt = h2eff->GetYaxis()->GetBinCenter(ipt);
+      double ptmin = h2eff->GetYaxis()->GetBinLowEdge(ipt);
+      int jpt = he->FindBin(pt);
+      h2effRaw->SetBinContent(ieta, ipt, he_raw->GetBinContent(jpt));
+      h2effRaw->SetBinError(ieta, ipt, he_raw->GetBinError(jpt));
+      h2eff->SetBinContent(ieta, ipt, he->GetBinContent(jpt));
+      h2eff->SetBinError(ieta, ipt, he->GetBinError(jpt));
+      double erg = ptmin*cosh(etamin);
+      if (erg<0.5*13600.) {
+	h2effFit->SetBinContent(ieta, ipt, f1eff->Eval(pt));
+	h2effFit->SetBinError(ieta, ipt, tools::getFitErr(f1eff, f1eff_fp, pt));
+      }
+    } // for i
+
+       
     c1jer->cd(i);
 
     f1jer->SetRange(15.,ptmax);
     TFitResultPtr f1jer_fp = hs->Fit(f1jer,"QRNS");
 
-    tdrDraw(hs_raw,"Pz",kOpenCircle,kRed+1,kSolid,-1,kNone,0,1.5,1);
+    tdrDraw(hs_raw,"Pz",kOpenCircle,kRed-9,kSolid,-1,kNone,0,1.5,1);
+    f1jer_raw->SetLineColor(kRed-9);
     f1jer_raw->Draw("SAME");
     tdrDraw(hs,"Pz",kFullCircle,kBlack,kSolid,-1,kNone,0,2.0,1);
     f1jer->SetLineColor(kGreen+2);
@@ -501,7 +537,7 @@ void MCTruth(string set="Summer24MC_Flat") {
 
     c1jerx->cd(i);
 	
-    tdrDraw(hs_raw,"Pz",kOpenCircle,kRed+1,kSolid,-1,kNone,0,1.5,1);
+    tdrDraw(hs_raw,"Pz",kOpenCircle,kRed-9,kSolid,-1,kNone,0,1.5,1);
     f1jer_raw->Draw("SAME");
     tdrDraw(hs,"Pz",kFullCircle,kBlack,kSolid,-1,kNone,0,2.0,1);
     f1jer->Draw("SAME");
@@ -514,11 +550,11 @@ void MCTruth(string set="Summer24MC_Flat") {
       else legjerx->SetHeader(set.c_str());
       legjerx->AddEntry(hs_raw,"Raw RMS","PLE");
       legjerx->AddEntry(f1jer_raw,"Raw fit","L");
-      legjerx->AddEntry(hs,"Corrected RMS","PLE");
-      legjerx->AddEntry(f1jer_raw,"Corrected fit","L");
+      legjerx->AddEntry(hs,"Corrected RMS v2","PLE");
+      legjerx->AddEntry(f1jer,"Corrected fit","L");
     }
 
-        
+
     c1jes->cd(i);
 
     f1jes->SetRange(15.,ptmax);
@@ -569,7 +605,7 @@ void MCTruth(string set="Summer24MC_Flat") {
     f1jes_raw->Draw("SAME");
     f1jes->Draw("SAME");
 
-    tdrDraw(hr_raw,"Pz",kOpenCircle,kRed+1,kSolid,-1,kNone,0,1.5,1);
+    tdrDraw(hr_raw,"Pz",kOpenCircle,kRed-9,kSolid,-1,kNone,0,1.5,1);
     tdrDraw(hr,"Pz",kFullCircle,kBlack,kSolid,-1,kNone,0,2.0,1);
 
     if (i==1) {
@@ -600,6 +636,7 @@ void MCTruth(string set="Summer24MC_Flat") {
     if (i==1) {
       legjec->AddEntry(hc,"Data","PLE");
       legjec->AddEntry(hc_raw,"Orig. data","PLE");
+      legjec->AddEntry(hc_raw,"JES/fit","PLE");
     }
 
 
@@ -612,7 +649,7 @@ void MCTruth(string set="Summer24MC_Flat") {
 		   Form("%1.3f<|#eta_{rec}|<%1.3f",etamin,etamax));
 
 
-    tdrDraw(hc_raw,"Pz",kOpenCircle,kRed+1,kSolid,-1,kNone,0,1.5,1);
+    tdrDraw(hc_raw,"Pz",kOpenCircle,kRed-9,kSolid,-1,kNone,0,1.5,1);
     tdrDraw(hc,"Pz",kFullCircle,kBlack,kSolid,-1,kNone,0,2.0,1);
     //tdrDraw(hr_ratio,"Pz",kFullDiamond,kGreen+2,kSolid,-1,kNone,0,2.0,1);
 
@@ -639,7 +676,7 @@ void MCTruth(string set="Summer24MC_Flat") {
   c1jet->SaveAs(Form("pdf/MCTruth/MCTruth_JET_%s.pdf",cs));
   c1jec->SaveAs(Form("pdf/MCTruth/MCTruth_JEC_%s.pdf",cs));
 
-
+  
   ///////////////////////////////////////////////////////////
   // Step 3. Add median/CI68 and Gaus mean/sigma from TH3D //
   ///////////////////////////////////////////////////////////
@@ -669,16 +706,24 @@ void MCTruth(string set="Summer24MC_Flat") {
     double etamin = h3r->GetXaxis()->GetBinLowEdge(i);
     double etamax = h3r->GetXaxis()->GetBinLowEdge(i+1);
     
-    TH1D *h1r = h3r->ProjectionY(Form("h1r_%d",i)); h1r->Reset();
-    TH1D *h1c = h3c->ProjectionY(Form("h1c_%d",i)); h1c->Reset();
-    TH1D *h1s = h3c->ProjectionY(Form("h1s_%d",i)); h1s->Reset();
+    TH1D *h1r_mean = h3r->ProjectionY(Form("h1r_mean_%d",i)); h1r_mean->Reset();
+    TH1D *h1c_mean = h3c->ProjectionY(Form("h1c_mean_%d",i)); h1c_mean->Reset();
+    TH1D *h1s_rms  = h3c->ProjectionY(Form("h1s_rms_%d",i)); h1s_rms->Reset();
     
     TH1D *h1r_median = h3r->ProjectionY(Form("h1r_median_%d",i));
     h1r_median->Reset();
+    TH1D *h1r_median_effcorr = h3r->ProjectionY(Form("h1r_median_effcorr_%d",i));
+    h1r_median_effcorr->Reset();
     TH1D *h1c_median = h3c->ProjectionY(Form("h1c_median_%d",i));
     h1c_median->Reset();
+    TH1D *h1c_median_effcorr = h3c->ProjectionY(Form("h1c_median_effcorr_%d",i));
+    h1c_median_effcorr->Reset();
     TH1D *h1s_CI68 = h3c->ProjectionY(Form("h1s_CI68_%d",i));
     h1s_CI68->Reset();
+    TH1D *h1s_CI68_effcorr = h3c->ProjectionY(Form("h1s_CI68_effcor_%d",i));
+    h1s_CI68_effcorr->Reset();
+    TH1D *h1s_mcjer = h3c->ProjectionY(Form("h1s_mcjer_%d",i));
+    h1s_mcjer->Reset();
 
     TH1D *h1r_mu = h3r->ProjectionY(Form("h1r_mu_%d",i));
     h1r_mu->Reset();
@@ -687,7 +732,7 @@ void MCTruth(string set="Summer24MC_Flat") {
     TH1D *h1s_sigma = h3c->ProjectionY(Form("h1s_sigma_%d",i));
     h1s_sigma->Reset();
     
-    for (int j = 1; j != h1r->GetNbinsX()+1; ++j) {
+    for (int j = 1; j != h1r_mean->GetNbinsX()+1; ++j) {
       
       TH1D *hr = h3r->ProjectionZ(Form("hzr_%d_%d",i,j),i,i,j,j);
       TH1D *hc = h3c->ProjectionZ(Form("hzc_%d_%d",i,j),i,i,j,j);
@@ -699,31 +744,55 @@ void MCTruth(string set="Summer24MC_Flat") {
       double emeanc = hc->GetMeanError();
       double rms = hc->GetRMS();
       double erms = hc->GetRMSError();
-      h1r->SetBinContent(j, mean);
-      h1r->SetBinError(j, emean);
-      h1c->SetBinContent(j, meanc);
-      h1c->SetBinError(j, emeanc);
+      h1r_mean->SetBinContent(j, mean);
+      h1r_mean->SetBinError(j, emean);
+      h1c_mean->SetBinContent(j, meanc);
+      h1c_mean->SetBinError(j, emeanc);
       // This is weird, rms and mean from hr are closer to TProfile pc
-      h1s->SetBinContent(j, meanc!=0 ? rms/meanc : rms);
-      h1s->SetBinError(j, meanc!=0 ? erms/meanc : erms);
+      h1s_rms->SetBinContent(j, meanc!=0 ? rms/meanc : rms);
+      h1s_rms->SetBinError(j, meanc!=0 ? erms/meanc : erms);
 
       // Median and CI68
       // probabilities where to evaluate the quantiles in [0,1]
       const int nq = 3;
-      Double_t p[nq] = {0.16, 0.5, 0.84};
-      Double_t xpr[nq], xpc[nq];
+      Double_t p1[nq] = {0.16, 0.5, 0.84};
+      Double_t xpr1[nq], xpc1[nq];
       if (hr->GetEntries()>5) {
-	hr->GetQuantiles(nq,xpr,p);
-	hc->GetQuantiles(nq,xpc,p);
+	hr->GetQuantiles(nq,xpr1,p1);
+	hc->GetQuantiles(nq,xpc1,p1);
 	
-	if (xpr[1]!=0) {
-	  h1r_median->SetBinContent(j, xpr[1]);
-	  h1r_median->SetBinError(j, xpr[1] * (mean!=0 ? emean / mean : 1));
-	  h1c_median->SetBinContent(j, xpc[1]);
-	  h1c_median->SetBinError(j, xpc[1] * (meanc!=0 ? emeanc / meanc : 1));
-	  h1s_CI68->SetBinContent(j, 0.5*(xpc[2]-xpc[0]) / xpr[1]);
-	  h1s_CI68->SetBinError(j, 0.5*(xpc[2]-xpc[0]) / xpr[1] *
+	if (xpr1[1]!=0) {
+	  h1r_median->SetBinContent(j, xpr1[1]);
+	  h1r_median->SetBinError(j, xpr1[1] * (mean!=0 ? emean / mean : 1));
+	  h1c_median->SetBinContent(j, xpc1[1]);
+	  h1c_median->SetBinError(j, xpc1[1] * (meanc!=0 ? emeanc / meanc : 1));
+	  h1s_CI68->SetBinContent(j, 0.5*(xpc1[2]-xpc1[0]) / xpc1[1]);
+	  h1s_CI68->SetBinError(j, 0.5*(xpc1[2]-xpc1[0]) / xpc1[1] *
 				(meanc!=0 ? erms / meanc : 1));
+	}
+      }
+      
+      // Median and CI68 corrected for efficiency
+      // probabilities where to evaluate the quantiles in [0,1]
+      TH1D *he = veff[i-1];
+      double eff = max(1e-3,he->GetBinContent(j));
+      double p = 1-eff;
+      Double_t p2[nq] = {(0.16-p)/eff, (0.5-p)/eff, (0.84-p)/eff};
+      Double_t xpr2[nq], xpc2[nq];
+      if (hr->GetEntries()>5) {
+	hr->GetQuantiles(nq,xpr2,p2);
+	hc->GetQuantiles(nq,xpc2,p2);
+	
+	if (xpr2[1]!=0 && eff>=0.5) {
+	  h1r_median_effcorr->SetBinContent(j, xpr2[1]);
+	  h1r_median_effcorr->SetBinError(j, xpr2[1] * (mean!=0 ? emean / mean : 1));
+	  h1c_median_effcorr->SetBinContent(j, xpc2[1]);
+	  h1c_median_effcorr->SetBinError(j, xpc2[1] * (meanc!=0 ? emeanc / meanc : 1));
+	}
+	if (xpr2[1]!=0 && eff>=0.16) {
+	  h1s_CI68_effcorr->SetBinContent(j, 0.5*(xpc2[2]-xpc2[0]) / xpc2[1]);
+	  h1s_CI68_effcorr->SetBinError(j, 0.5*(xpc2[2]-xpc2[0]) / xpc2[1] *
+				       (meanc!=0 ? erms / meanc : 1));
 	}
       }
 
@@ -760,8 +829,10 @@ void MCTruth(string set="Summer24MC_Flat") {
 	h1r_mu->SetBinContent(j, fgaus->GetParameter(0));
 	h1r_mu->SetBinError(j, fgaus->GetParError(0));
 
-	double ptmin_gaus(86), ptmax_gaus(110);
-	if (pt>ptmin_gaus && pt<ptmax_gaus) {
+	//double ptmin_gaus(86), ptmax_gaus(110);
+	double ptmin_gaus(32.), ptmax_gaus(33.);
+	//double ptmin_gaus(21.), ptmax_gaus(28.);
+	if (pt>=ptmin_gaus && pt<ptmax_gaus) {
 	//if (pt>86 && pt<110) {
 	  //if (pt>21 && pt<28) {
 	  //if (pt>=10 && pt<15) {
@@ -839,25 +910,28 @@ void MCTruth(string set="Summer24MC_Flat") {
 
       }
       
-    } // for j
+    } // for j (pt)
 
     if (correctLowPtBias) {
       TF1 *f1jer = vjer[i-1];
       TH1D *he = veff[i-1];
-      fixJESandJER(h1r, h1c, h1s, he, f1jer);
+      fixJESandJER(h1r_mean, h1c_mean, h1s_rms, he, f1jer);
     }
 
     
     c1jesx->cd(i);
 
-    tdrDraw(h1r_median,"Pz",kOpenDiamond,kMagenta+1,kSolid,-1,kNone,0,2.0);
-    tdrDraw(h1r,"Pz",kFullDiamond,kOrange+1,kSolid,-1,kNone,0,2.0);
+    tdrDraw(h1r_median,"Pz",kOpenDiamond,kMagenta-9,kSolid,-1,kNone,0,2.0);
+    tdrDraw(h1r_median_effcorr,"Pz",kOpenDiamond,kMagenta+1,kSolid,-1,kNone,0,2.0);
+    tdrDraw(h1r_mean,"Pz",kFullDiamond,kOrange+1,kSolid,-1,kNone,0,2.0);
     //tdrDraw(h1r_mu,"Pz",kOpenStar,kCyan+1,kSolid,-1,kNone,0,2.0);
     tdrDraw(h1r_mu,"Pz",kFullDotSmall,kCyan+1,kSolid,-1,kNone,0,2.0);
 
     if (i==1) {
       legjesx->AddEntry(h1r_median,"Raw Median","PLE");
-      legjesx->AddEntry(h1r,"Corrected Median","PLE");
+      legjesx->AddEntry(h1r_median_effcorr,"Corrected Median","PLE");
+      //legjesx->AddEntry(h1r,"Corrected Median","PLE");
+      legjesx->AddEntry(h1r_mean,"Corrected Mean","PLE");
       //legjesx->AddEntry(h1r_mu,"Gauss Mean (fixed)","PLE");
       legjesx->AddEntry(h1r_mu,"Gauss Mean","PLE");
     }
@@ -865,16 +939,20 @@ void MCTruth(string set="Summer24MC_Flat") {
     
     c1jecx->cd(i);
 	
-    evalJEC(h1c);
+    evalJEC(h1c_mean);
     evalJEC(h1c_median);
+    evalJEC(h1c_median_effcorr);
     evalJEC(h1c_mu);
-    tdrDraw(h1c,"Pz",kFullDiamond,kOrange+1,kSolid,-1,kNone,0,2.0);
-    tdrDraw(h1c_median,"Pz",kOpenDiamond,kMagenta+1,kSolid,-1,kNone,0,2.0);
+    tdrDraw(h1c_mean,"Pz",kFullDiamond,kOrange+1,kSolid,-1,kNone,0,2.0);
+    tdrDraw(h1c_median,"Pz",kOpenDiamond,kMagenta-9,kSolid,-1,kNone,0,2.0);
+    tdrDraw(h1c_median_effcorr,"Pz",kOpenDiamond,kMagenta+1,kSolid,-1,kNone,0,2.0);
     tdrDraw(h1c_mu,"Pz",kFullDotSmall,kCyan+1,kSolid,-1,kNone,0,2.0);
 
     if (i==1) {
       legjecx->AddEntry(h1c_median,"Raw Median","PLE");
-      legjecx->AddEntry(h1c,"Corrected Median","PLE");
+      legjecx->AddEntry(h1c_median_effcorr,"Corrected Median","PLE");
+      //legjecx->AddEntry(h1c,"Corrected Median","PLE");
+      legjecx->AddEntry(h1c_mean,"Corrected Mean","PLE");
       //legjecx->AddEntry(h1c_mu,"Gauss Mean (fixed)","PLE");
       legjecx->AddEntry(h1c_mu,"Gauss Mean","PLE");
     }
@@ -882,25 +960,70 @@ void MCTruth(string set="Summer24MC_Flat") {
     
     c1jerx->cd(i);
 
-    tdrDraw(h1s,"Pz",kFullDiamond,kOrange+1,kSolid,-1,kNone,0,2.0);
-    tdrDraw(h1s_CI68,"Pz",kOpenDiamond,kMagenta+1,kSolid,-1,kNone,0,2.0);
+    tex->DrawLatex(i%7==1 ? 0.30 : 0.20, 0.90,
+		   Form("%1.3f<|#eta|<%1.3f",etamin,etamax));
+    tdrDraw(h1s_rms,"Pz",kFullDiamond,kOrange+1,kSolid,-1,kNone,0,2.0);
+    tdrDraw(h1s_CI68,"Pz",kOpenDiamond,kMagenta+2,kSolid,-1,kNone,0,2.0);
+    tdrDraw(h1s_CI68_effcorr,"Pz",kOpenDiamond,kMagenta,kSolid,-1,kNone,0,2.0);
     tdrDraw(h1s_sigma,"Pz",kFullDotSmall,kCyan+1,kSolid,-1,kNone,0,2.0);
 
     if (i==1) {
       legjerx->AddEntry(h1s_CI68,"Raw CI68","PLE");
-      legjerx->AddEntry(h1s,"Corrected CI68","PLE");
+      legjerx->AddEntry(h1s_CI68_effcorr,"Corrected CI68","PLE");
+      //legjerx->AddEntry(h1s,"Corrected CI68","PLE");
+      legjerx->AddEntry(h1s_rms,"Corrected RMS v2","PLE");
       //legjerx->AddEntry(h1s_sigma,"Gauss Sigma (fixed)","PLE");
       legjerx->AddEntry(h1s_sigma,"Gauss Sigma","PLE");
     }
-  } // for i
+
+
+    ////////////////////////////////////////////////////
+    // Step 3.1 Do MC JER from hybrid of best results //
+    ////////////////////////////////////////////////////
+
+    c1jer_mc->cd(i);
+
+    double ptmin = 30.;
+    double ptmax = min(4000.,0.7*6800./cosh(etamax));
+    TH1D *h1s_mc = (TH1D*)h1s_rms->Clone(Form("hs_mc_%d",i));
+    TF1 *f1jer_mc = new TF1(Form("f1jer_mc_%d",i),
+			    "sqrt([0]*[0]/(x*x)+[1]*[1]/x+[2]*[2])",
+			    ptmin,ptmax);
+    f1jer_mc->SetParameters(1,1,0.05);
+    f1jer_mc->SetParLimits(0,0,10.);
+    f1jer_mc->SetParLimits(1,0.5,1.5);
+    f1jer_mc->SetParLimits(2,0.03,0.12);
+    if (etamin>3.139) {
+      f1jer_mc->FixParameter(2,0.08);
+    }
+    h1s_mc->Fit(f1jer_mc,"QRN");
+
+    tex->DrawLatex(i%7==1 ? 0.30 : 0.20, 0.90,
+		   Form("%1.3f<|#eta|<%1.3f",etamin,etamax));
+    tdrDraw(h1s_mc,"Pz",kFullCircle,kBlack,kSolid,-1,kNone,0,2.0,1);
+    f1jer_mc->Draw("SAME");
+
+    if (i==1) {
+      legjer_mc->SetHeader(set.c_str());
+      legjer_mc->AddEntry(h1s_mc,"Resolution","PLE");
+      legjer_mc->AddEntry(f1jer_mc,"Fit","L");
+    }
+
+  } // for i (eta)
 
   c1jesx->SaveAs(Form("pdf/MCTruth/MCTruth_JES_xtra_%s.pdf",cs));
   c1jecx->SaveAs(Form("pdf/MCTruth/MCTruth_JEC_xtra_%s.pdf",cs));
   c1jerx->SaveAs(Form("pdf/MCTruth/MCTruth_JER_xtra_%s.pdf",cs));
   c1gaus->SaveAs(Form("pdf/MCTruth/MCTruth_Gaus_%s.pdf",cs));
 
+  // Official MC JER
+  c1jer_mc->SaveAs(Form("pdf/MCTruth/MCTruth_JER_MC_%s.pdf",cs));
+    
   // Save results to rootfiles/MCTruth.root for comparisons
   fout->cd();
+  h2effRaw->Write(h2effRaw->GetName(),TObject::kOverwrite);
+  h2eff->Write(h2eff->GetName(),TObject::kOverwrite);
+  h2effFit->Write(h2effFit->GetName(),TObject::kOverwrite);
   h2jesRaw->Write(h2jesRaw->GetName(),TObject::kOverwrite);
   h2jes->Write(h2jes->GetName(),TObject::kOverwrite);
   h2jesFit->Write(h2jesFit->GetName(),TObject::kOverwrite);
