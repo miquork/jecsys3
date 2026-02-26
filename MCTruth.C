@@ -14,6 +14,8 @@
 #include "tools.C"
 #include "tdrstyle_mod22.C"
 
+#include <utility>
+
 bool debug = false;
 bool correctLowPtBias = true;//false;
 
@@ -154,7 +156,7 @@ void MCTruth(string set="Summer24MC_Flat") {
   legjecx->SetTextSize(0.045*1.5);
 
   c1jer_mc->cd(42);
-  TLegend *legjer_mc = tdrLeg(0.05,0.80-0.05*1.5*3,0.50,0.80);
+  TLegend *legjer_mc = tdrLeg(0.05,0.80-0.05*1.5*5,0.50,0.80);
   legjer_mc->SetTextSize(0.045*1.5);
   
 
@@ -163,6 +165,7 @@ void MCTruth(string set="Summer24MC_Flat") {
   vector<TF1*> vjer(p2r->GetNbinsX());
   vector<TF1*> vjes(p2r->GetNbinsX());
   vector<TH1D*> veff(p2r->GetNbinsX());
+  vector<TH1D*> vhs(p2r->GetNbinsX());
   for (int i = 1; i != p2r->GetNbinsX()+1; ++i) {
     //for (int j = 1; j != p2r->GetNbinsY()+1; ++j) {
 
@@ -439,6 +442,7 @@ void MCTruth(string set="Summer24MC_Flat") {
     vjer[i-1] = f1jer;
     vjes[i-1] = f1jes;
     veff[i-1] = he;
+    vhs[i-1] = hs;
 
     
     /////////////////////////////////////////////////////////////////////////
@@ -491,7 +495,7 @@ void MCTruth(string set="Summer24MC_Flat") {
       h2eff->SetBinContent(ieta, ipt, he->GetBinContent(jpt));
       h2eff->SetBinError(ieta, ipt, he->GetBinError(jpt));
       double erg = ptmin*cosh(etamin);
-      if (erg<0.5*13600.) {
+      if (erg<0.5*13600. && pt>15.) {
 	h2effFit->SetBinContent(ieta, ipt, f1eff->Eval(pt));
 	h2effFit->SetBinError(ieta, ipt, tools::getFitErr(f1eff, f1eff_fp, pt));
       }
@@ -528,7 +532,7 @@ void MCTruth(string set="Summer24MC_Flat") {
       h2jer->SetBinContent(ieta, ipt, hs->GetBinContent(jpt));
       h2jer->SetBinError(ieta, ipt, hs->GetBinError(jpt));
       double erg = ptmin*cosh(etamin);
-      if (erg<0.5*13600.) {
+      if (erg<0.5*13600. && pt>15) {
 	h2jerFit->SetBinContent(ieta, ipt, f1jer->Eval(pt));
 	h2jerFit->SetBinError(ieta, ipt, tools::getFitErr(f1jer, f1jer_fp, pt));
       }
@@ -550,7 +554,7 @@ void MCTruth(string set="Summer24MC_Flat") {
       else legjerx->SetHeader(set.c_str());
       legjerx->AddEntry(hs_raw,"Raw RMS","PLE");
       legjerx->AddEntry(f1jer_raw,"Raw fit","L");
-      legjerx->AddEntry(hs,"Corrected RMS v2","PLE");
+      legjerx->AddEntry(hs,"Corrected RMS v1","PLE");
       legjerx->AddEntry(f1jer,"Corrected fit","L");
     }
 
@@ -590,7 +594,7 @@ void MCTruth(string set="Summer24MC_Flat") {
       h2jes->SetBinContent(ieta, ipt, hr->GetBinContent(jpt));
       h2jes->SetBinError(ieta, ipt, hr->GetBinError(jpt));
       double erg = ptmin*cosh(etamin);
-      if (erg<0.5*13600.) {
+      if (erg<0.5*13600. && pt>15) {
 	h2jesFit->SetBinContent(ieta, ipt, f1jes->Eval(pt));
 	h2jesFit->SetBinError(ieta, ipt, tools::getFitErr(f1jes, f1jes_fp, pt));
       }
@@ -701,6 +705,8 @@ void MCTruth(string set="Summer24MC_Flat") {
   leggaus->SetTextSize(0.045*1.5);
 
   // x=eta_gen, y=pTgen, z=pTreco/pTgen
+  vector<pair<double,double>> veta_mc(h3r->GetNbinsX());
+  vector<TF1*> vjer_mc(h3r->GetNbinsX());
   for (int i = 1; i != h3r->GetNbinsX()+1; ++i) {
 
     double etamin = h3r->GetXaxis()->GetBinLowEdge(i);
@@ -983,32 +989,79 @@ void MCTruth(string set="Summer24MC_Flat") {
 
     c1jer_mc->cd(i);
 
-    double ptmin = 30.;
-    double ptmax = min(4000.,0.7*6800./cosh(etamax));
+    double ptmin = 15.;//30.;
+    double ptmax = min(4000.,6800./cosh(etamax));
+    double ptmax2 = min(4000.,0.7*6800./cosh(etamax));
+
+    // Hybridize MC resolution from smaller of CI68 and RMS
+    // This avoid bias from low tail in RMS (v1) at high pT,
+    // and keeps the more sensible behavior of RMS at low pT
+    // Clone RMS and CI68 to avoid changing earlier marker styles and colors
     TH1D *h1s_mc = (TH1D*)h1s_rms->Clone(Form("hs_mc_%d",i));
+    //TH1D *h1s_rms_clone = (TH1D*)h1s_rms->Clone(Form("hs_mc_rms_clone_%d",i));
+    TH1D *h1s_rms_clone = (TH1D*)vhs[i-1]->Clone(Form("hs_mc_rms_clone_%d",i));
+    TH1D *h1s_CI68_clone = (TH1D*)h1s_CI68_effcorr->Clone(Form("hs_mc_CI68_clone_%d",i));
+    for (int i = 1; i != h1s_mc->GetNbinsX()+1; ++i) {
+      double pt = h1s_mc->GetBinCenter(i);
+      double rms = h1s_rms_clone->GetBinContent(i);
+      double erms = h1s_rms_clone->GetBinError(i);
+      double ci68 = h1s_CI68_clone->GetBinContent(i);
+      double eci68 = h1s_CI68_clone->GetBinError(i);
+      double res = ci68>0 ? min(rms,ci68) : rms;
+      double eres = ci68>0 && ci68<rms ? eci68 : erms;
+      if (pt>ptmax2 && res>0 && eres>0) eres = max(eci68, erms);
+      double minerr = (etamin<0.879 ? 0.005 : (etamin<2.5 ? 0.002 : (etamin>=2.964 ? 0.005 : 0.01)));
+      if (res>0 && eres>0) {
+	h1s_mc->SetBinContent(i, res);
+	h1s_mc->SetBinError(i, sqrt(pow(minerr,2) + pow(eres,2)));
+      }
+      else {
+	h1s_mc->SetBinContent(i, 0);
+	h1s_mc->SetBinError(i, 0);
+      }	 
+    }
     TF1 *f1jer_mc = new TF1(Form("f1jer_mc_%d",i),
-			    "sqrt([0]*[0]/(x*x)+[1]*[1]/x+[2]*[2])",
+			    "sqrt([0]*[0]/(x*x)+[1]*[1]/x+[2]*[2]+pow([3]/x,4))",
 			    ptmin,ptmax);
-    f1jer_mc->SetParameters(1,1,0.05);
-    f1jer_mc->SetParLimits(0,0,10.);
+    //			    "sqrt([0]*[0]/(x*x)+[1]*[1]/x+[2]*[2])",
+    //f1jer_mc->SetParameters(10,1,0.05,1);
+    f1jer_mc->SetParameters(10,1,0.05,0);
+    f1jer_mc->SetParLimits(0,0,20.);
     f1jer_mc->SetParLimits(1,0.5,1.5);
     f1jer_mc->SetParLimits(2,0.03,0.12);
-    if (etamin>3.139) {
+    f1jer_mc->SetParLimits(3,0,20);//0.5,1.5);
+    if (etamin<2.853) f1jer_mc->FixParameter(3,0);
+    else              f1jer_mc->SetParameter(3,10);
+    if (etamin>4.013) {//3.139) {
       f1jer_mc->FixParameter(2,0.08);
     }
     h1s_mc->Fit(f1jer_mc,"QRN");
 
-    tex->DrawLatex(i%7==1 ? 0.30 : 0.20, 0.90,
+    //tex->DrawLatex(i%7==1 ? 0.30 : 0.20, 0.90,
+    tex->DrawLatex(i%7==1 ? 0.50 : 0.40, 0.90,
 		   Form("%1.3f<|#eta|<%1.3f",etamin,etamax));
+    tex->DrawLatex(i%7==1 ? 0.50 : 0.40, 0.82,
+		   Form("#chi^{2}/ndf = %1.1f/%d",
+			f1jer_mc->GetChisquare(),f1jer_mc->GetNDF()));
+    //tdrDraw(h1s_rms_clone,"Pz",kOpenSquare,kBlue,kSolid,-1,kNone,0,2.0,1);
+    //tdrDraw(h1s_CI68_clone,"Pz",kOpenCircle,kGreen+2,kSolid,-1,kNone,0,2.0,1);
+    tdrDraw(h1s_rms_clone,"Pz",kFullDiamond,kOrange+1,kSolid,-1,kNone,0,2.0);
+    tdrDraw(h1s_CI68_clone,"Pz",kOpenDiamond,kMagenta,kSolid,-1,kNone,0,2.0);
     tdrDraw(h1s_mc,"Pz",kFullCircle,kBlack,kSolid,-1,kNone,0,2.0,1);
+    f1jer_mc->SetLineColor(kGreen+2);
     f1jer_mc->Draw("SAME");
 
     if (i==1) {
       legjer_mc->SetHeader(set.c_str());
       legjer_mc->AddEntry(h1s_mc,"Resolution","PLE");
+      legjer_mc->AddEntry(h1s_rms_clone,"Corrected RMS v1","PLE");
+      legjer_mc->AddEntry(h1s_CI68_clone,"Corrected CI68","PLE");
       legjer_mc->AddEntry(f1jer_mc,"Fit","L");
     }
 
+    //veta_mc[i-1] = make_pair<double,double>(etamin,etamax);
+    veta_mc[i-1].first = etamin; veta_mc[i-1].second = etamax;
+    vjer_mc[i-1] = f1jer_mc;
   } // for i (eta)
 
   c1jesx->SaveAs(Form("pdf/MCTruth/MCTruth_JES_xtra_%s.pdf",cs));
@@ -1018,7 +1071,35 @@ void MCTruth(string set="Summer24MC_Flat") {
 
   // Official MC JER
   c1jer_mc->SaveAs(Form("pdf/MCTruth/MCTruth_JER_MC_%s.pdf",cs));
-    
+
+  // Write text file
+  ofstream ftxt(Form("textfiles/Prompt25_JRV3M/%s_JRV3M_MC_PtResolution_AK4PFPuppi.txt",cs));
+  TString formula = vjer_mc[0]->GetExpFormula();
+  formula.ReplaceAll("[p","[");
+  //ftxt << Form("{1     JetEta  2  JetPt    Rho   %s  Resolution}\n",
+  ftxt << Form("{1     JetEta  2  JetPt   Rho   min(%s,1.) Correction L2Relative}\n",
+	       formula.Data());
+  for (int i = veta_mc.size()-1; i != -1; --i) {
+    TF1 *f1jer = vjer_mc[i];
+    ftxt << Form("%6.3f %6.3f  %d  5 6800  0 200           ",
+		 i==veta_mc.size()-1 ? -6 : -veta_mc[i].second,
+		 -veta_mc[i].first, f1jer->GetNpar()+4);
+    assert(f1jer->GetNpar()==4);
+    ftxt << Form("%6.3f        %6.4f    %6.4f   %5.2f\n",
+		 f1jer->GetParameter(0), f1jer->GetParameter(1),
+		 f1jer->GetParameter(2), f1jer->GetParameter(3));
+  }
+  for (int i = 0; i != veta_mc.size(); ++i) {
+    TF1 *f1jer = vjer_mc[i];
+    ftxt << Form("%6.3f %6.3f  %d  5 6800  0 200           ",
+		 veta_mc[i].first, i==veta_mc.size()-1 ? +6 : veta_mc[i].second,
+		 f1jer->GetNpar()+4);
+    assert(f1jer->GetNpar()==4);
+    ftxt << Form("%6.3f        %6.4f    %6.4f   %5.2f\n",
+		 f1jer->GetParameter(0), f1jer->GetParameter(1),
+		 f1jer->GetParameter(2), f1jer->GetParameter(3));
+  }
+  
   // Save results to rootfiles/MCTruth.root for comparisons
   fout->cd();
   h2effRaw->Write(h2effRaw->GetName(),TObject::kOverwrite);
