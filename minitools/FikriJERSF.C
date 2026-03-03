@@ -66,6 +66,8 @@ void FikriJERSF() {
   //TFile *fm = new TFile("rootfiles/Fikri_JetDepths_2025E_ReRecoV2/Histo_MC25Winter_GJ_LO_MG.root","READ");
   TFile *fm = new TFile("rootfiles/Fikri_JetDepths_2025E_ReReco_v6p0/Histo_MC25Winter_GJ_LO_MG.root","READ");
   assert(fm && !fm->IsZombie());
+  TFile *fn = new TFile("rootfiles/Fikri_JetDepths_2025MC_ReRecoV4/Histo_SinglePhoton_RAWToNano_GTv9HcalRespCorrs2025MOYv4mc_MC25Win_GJ_LO_MG.root","READ");
+  assert(fn && !fn->IsZombie());
 
   curdir->cd();
   
@@ -79,8 +81,12 @@ void FikriJERSF() {
   p2xb = (TProfile2D*)fb->Get("hp2_ProbeJet0_abseta_TagPhotonCand_pt_vs_resp_mpfx"); assert(p2xb);
   p2m = (TProfile2D*)fm->Get("hp2_ProbeJet0_abseta_TagPhotonCand_pt_vs_resp_mpf"); assert(p2m);
   p2xm = (TProfile2D*)fm->Get("hp2_ProbeJet0_abseta_TagPhotonCand_pt_vs_resp_mpfx"); assert(p2xm);
+  TProfile2D *p2n(0), *p2xn(0);
+  p2n = (TProfile2D*)fn->Get("hp2_ProbeJet0_abseta_TagPhotonCand_pt_vs_resp_mpf"); assert(p2n);
+  p2xn = (TProfile2D*)fn->Get("hp2_ProbeJet0_abseta_TagPhotonCand_pt_vs_resp_mpfx"); assert(p2xn);
 
-  TH1D *h = tdrHist("h","JES proxy",0.80+1e-4,1.15-1e-4,"Jet |#eta|",0,5.2);
+  TH1D *h = tdrHist("h","JES proxy",0.80+1e-4,1.20-1e-4,"Jet |#eta|",0,5.2);
+  //TH1D *h = tdrHist("h","JES proxy",0.80+1e-4,1.15-1e-4,"Jet |#eta|",0,5.2);
   //TH1D *h = tdrHist("h","JES proxy",0.75+1e-4,1.20-1e-4,"Jet |#eta|",0,5.2);
   lumi_136TeV = "2025E EGamma";
   extraText = "Private";
@@ -100,15 +106,19 @@ void FikriJERSF() {
   TProfile *pr = p2r->ProfileX("pr",j1,j2,"");
   TProfile *ps = p2s->ProfileX("ps",j1,j2,"");
   TProfile *pm = p2m->ProfileX("pm",j1,j2,"");
+  TProfile *pn = p2n->ProfileX("pn",j1,j2,"");
   TProfile *pxb = p2xb->ProfileX("pxb",j1,j2,"");
   TProfile *pxr = p2xr->ProfileX("pxr",j1,j2,"");
   TProfile *pxs = p2xs->ProfileX("pxs",j1,j2,"");
   TProfile *pxm = p2xm->ProfileX("pxm",j1,j2,"");
+  TProfile *pxn = p2xn->ProfileX("pxn",j1,j2,"");
 
   tdrDraw(pm,"HIST",kNone,kRed+2,kSolid,-1,kNone,0);
+  tdrDraw(pn,"HIST",kNone,kBlack,kSolid,-1,kNone,0,1,2);
   tdrDraw(pb,"Pz",kOpenSquare,kRed,kSolid,-1,kNone,0,1,2);
-  tdrDraw(pr,"Pz",kOpenCircle,kGray+2,kSolid,-1,kNone);
-  tdrDraw(ps,"Pz",kFullCircle,kBlack,kSolid,-1,kNone);
+  tdrDraw(pr,"Pz",kFullCircle,kBlack,kSolid,-1,kNone);
+  //tdrDraw(pr,"Pz",kOpenCircle,kGray+2,kSolid,-1,kNone);
+  //tdrDraw(ps,"Pz",kFullCircle,kBlack,kSolid,-1,kNone);
 
   TLatex *tex = new TLatex();
   tex->SetNDC(); tex->SetTextSize(0.045);
@@ -117,8 +127,9 @@ void FikriJERSF() {
   
   TLegend *leg = tdrLeg(0.35,0.90-0.045*4,0.60,0.90);
   leg->AddEntry(pr,"FTV31Oct25v2 re-reco","PLE");
-  leg->AddEntry(ps,"FTV25Nov25 re-reco","PLE");
+  //leg->AddEntry(ps,"FTV25Nov25 re-reco","PLE");
   leg->AddEntry(pb,"Prompt data","PLE");
+  leg->AddEntry(pn,"Winter25 MCv4 re-reco","LF");
   leg->AddEntry(pm,"Winter25 MC (w/o QCD bkg)","LF");
   
   c1->SaveAs("pdf/FikriJERSF/FikriJERSF_Mean.pdf");
@@ -128,24 +139,31 @@ void FikriJERSF() {
   TCanvas *c2 = tdrCanvas("c2",h2,8,11,kSquare);
 
   TH1D *hm = getRMS(pm,"hm");
+  TH1D *hn = getRMS(pn,"hn");
   TH1D *hb = getRMS(pb,"hb");
   TH1D *hr = getRMS(pr,"hr");
   TH1D *hs = getRMS(ps,"hs");
   TH1D *hxm = getRMS(pxm,"hxm");
+  TH1D *hxn = getRMS(pxn,"hxn");
   TH1D *hxb = getRMS(pxb,"hxb");
   TH1D *hxr = getRMS(pxr,"hxr");
   TH1D *hxs = getRMS(pxs,"hxs");
 
+  tdrDraw(hxn,"HE",kNone,kRed+3,kSolid,-1,kNone,0,1,2);
   tdrDraw(hxm,"HE",kNone,kRed+2,kSolid,-1,kNone,0,1,2);
   tdrDraw(hxb,"HE",kNone,kRed+1,kSolid,-1,kNone,0,1,2);
   tdrDraw(hxr,"HE",kNone,kGray+2,kSolid,-1,kNone);
-  tdrDraw(hxs,"HE",kNone,kBlack,kSolid,-1,kNone);
+  //tdrDraw(hxr,"HE",kNone,kGray+2,kSolid,-1,kNone);
+  //tdrDraw(hxs,"HE",kNone,kBlack,kSolid,-1,kNone);
+  tdrDraw(hn,"Pz",kOpenDiamond,kRed+2,kSolid,-1,kNone,0);
   tdrDraw(hm,"Pz",kOpenDiamond,kRed+1,kSolid,-1,kNone,0);
   tdrDraw(hb,"Pz",kOpenSquare,kRed,kSolid,-1,kNone,0,1,2);
-  tdrDraw(hr,"Pz",kOpenCircle,kGray+2,kSolid,-1,kNone);
-  tdrDraw(hs,"Pz",kFullCircle,kBlack,kSolid,-1,kNone);
+  tdrDraw(hr,"Pz",kFullCircle,kGray+2,kSolid,-1,kNone);
+  //tdrDraw(hr,"Pz",kOpenCircle,kGray+2,kSolid,-1,kNone);
+  //tdrDraw(hs,"Pz",kFullCircle,kBlack,kSolid,-1,kNone);
 
   TH1D *hm2 = subRMS(hm,hxm,"hm2");
+  TH1D *hn2 = subRMS(hn,hxn,"hn2");
   TH1D *hb2 = subRMS(hb,hxb,"hb2");
   TH1D *hr2 = subRMS(hr,hxr,"hr2");
   TH1D *hs2 = subRMS(hs,hxs,"hs2");
@@ -155,18 +173,21 @@ void FikriJERSF() {
   TCanvas *c3 = tdrDiCanvas("c3",h3,h3d,8,11);
 
   c3->cd(1);
+  tdrDraw(hn2,"HIST",kNone,kBlack,kSolid,-1,kNone,0,1,2);
   tdrDraw(hm2,"HIST",kNone,kRed+1,kSolid,-1,kNone,0);
   tdrDraw(hb2,"Pz",kOpenSquare,kRed,kSolid,-1,kNone,0,1,2);
-  tdrDraw(hr2,"Pz",kOpenCircle,kGray+1,kSolid,-1,kNone);
-  tdrDraw(hs2,"Pz",kFullCircle,kBlack,kSolid,-1,kNone);
+  tdrDraw(hr2,"Pz",kFullCircle,kBlack,kSolid,-1,kNone);
+  //tdrDraw(hr2,"Pz",kOpenCircle,kGray+1,kSolid,-1,kNone);
+  //tdrDraw(hs2,"Pz",kFullCircle,kBlack,kSolid,-1,kNone);
 
   tex->DrawLatex(0.35,0.85,"Photon+jet 130<p_{T,#gamma}<200 GeV");
   tex->DrawLatex(0.35,0.80,"Photon110EB");
   
   TLegend *leg3 = tdrLeg(0.22,0.72-0.045*4,0.47,0.72);
   leg3->AddEntry(hr2,"FTV31Oct25v2 re-reco","PLE");
-  leg3->AddEntry(hs2,"FTV12Nov25 re-reco","PLE");
+  //leg3->AddEntry(hs2,"FTV12Nov25 re-reco","PLE");
   leg3->AddEntry(hb2,"Prompt data","PLE");
+  leg3->AddEntry(hn2,"Winter25  MCv4 re-reco","LF");
   leg3->AddEntry(hm2,"Winter25  MC (w/o QCD bkg)","LF");
   
   c3->cd(2);
@@ -174,6 +195,8 @@ void FikriJERSF() {
   hrb->Divide(hb2);
   TH1D *hsb = (TH1D*)hs2->Clone("hsb");
   hsb->Divide(hb2);
+  TH1D *hnb = (TH1D*)hn2->Clone("hnb");
+  hnb->Divide(hm2);
 
   l->SetLineStyle(kDashed);
   l->DrawLine(0,1,5.2,1);
@@ -181,9 +204,12 @@ void FikriJERSF() {
   l->DrawLine(0,0.9,5.2,0.9);
   
   scaleRMSerr(hrb,0.3);
-  tdrDraw(hrb,"Pz",kOpenCircle,kGray+1,kSolid,-1,kNone);
-  scaleRMSerr(hsb,0.3);
-  tdrDraw(hsb,"Pz",kFullCircle,kBlack,kSolid,-1,kNone);
+  tdrDraw(hrb,"Pz",kFullCircle,kBlack,kSolid,-1,kNone);
+  //tdrDraw(hrb,"Pz",kOpenCircle,kGray+1,kSolid,-1,kNone);
+  //scaleRMSerr(hsb,0.3);
+  //tdrDraw(hsb,"Pz",kFullCircle,kBlack,kSolid,-1,kNone);
+  scaleRMSerr(hnb,0.3);
+  tdrDraw(hnb,"HIST",kNone,kBlack,kSolid,-1,kNone,0,1,2);
 
   c3->SaveAs("pdf/FikriJERSF/FikriJERSF_RMS.pdf");
 
@@ -207,7 +233,8 @@ void FikriJERSF() {
     double etamin(vy[iy][0]), etamax(vy[iy][1]);
     double ptmin(vy[iy][2]), ptmax(vy[iy][3]);
     
-    TH1D *h4 = tdrHist(Form("h4_%d",iy),"JES proxy",0.80+1e-4,1.15-1e-4,
+    //TH1D *h4 = tdrHist(Form("h4_%d",iy),"JES proxy",0.80+1e-4,1.15-1e-4,
+    TH1D *h4 = tdrHist(Form("h4_%d",iy),"JES proxy",0.80+1e-4,1.20-1e-4,
 		       "Jet p_{T} (GeV)",ptmin,ptmax);
     lumi_136TeV = "2025E EGamma";
     extraText = "Private";
@@ -230,15 +257,19 @@ void FikriJERSF() {
     TProfile *pptr = p2r->ProfileY(Form("pptr_%d",iy),k1,k2,"");
     TProfile *ppts = p2s->ProfileY(Form("ppts_%d",iy),k1,k2,"");
     TProfile *pptm = p2m->ProfileY(Form("pptm_%d",iy),k1,k2,"");
+    TProfile *pptn = p2n->ProfileY(Form("pptn_%d",iy),k1,k2,"");
     TProfile *pptxb = p2xb->ProfileY(Form("pptxb_%d",iy),k1,k2,"");
     TProfile *pptxr = p2xr->ProfileY(Form("pptxr_%d",iy),k1,k2,"");
     TProfile *pptxs = p2xs->ProfileY(Form("pptxs_%d",iy),k1,k2,"");
     TProfile *pptxm = p2xm->ProfileY(Form("pptxm_%d",iy),k1,k2,"");
+    TProfile *pptxn = p2xn->ProfileY(Form("pptxn_%d",iy),k1,k2,"");
 
+    tdrDraw(pptn,"HIST",kNone,kBlack,kSolid,-1,kNone,0,1,2);
     tdrDraw(pptm,"HIST",kNone,kRed+2,kSolid,-1,kNone,0);
     tdrDraw(pptb,"Pz",kOpenSquare,kRed,kSolid,-1,kNone,0,1,2);
-    tdrDraw(pptr,"Pz",kOpenCircle,kGray+2,kSolid,-1,kNone);
-    tdrDraw(ppts,"Pz",kFullCircle,kBlack,kSolid,-1,kNone);
+    tdrDraw(pptr,"Pz",kFullCircle,kBlack,kSolid,-1,kNone);
+    //tdrDraw(pptr,"Pz",kOpenCircle,kGray+2,kSolid,-1,kNone);
+    //tdrDraw(ppts,"Pz",kFullCircle,kBlack,kSolid,-1,kNone);
     
     tex->SetNDC(); tex->SetTextSize(0.045);
     tex->DrawLatex(0.18,0.20,Form("Photon+jet %1.3f<#eta_{jet}<%1.3f",ymin,ymax));
@@ -246,8 +277,9 @@ void FikriJERSF() {
     
     TLegend *leg4 = tdrLeg(0.35,0.90-0.045*4,0.60,0.90);
     leg4->AddEntry(ppts,"FTV12Nov25 re-reco","PLE");
-    leg4->AddEntry(pptr,"FTV31Oct25 re-reco","PLE");
+    //leg4->AddEntry(pptr,"FTV31Oct25 re-reco","PLE");
     leg4->AddEntry(pptb,"Prompt data","PLE");
+    leg4->AddEntry(pptn,"Winter25 MCv4 re-reco)","LF");
     leg4->AddEntry(pptm,"Winter25 MC (w/o QCD bkg)","LF");
   
     c4->SaveAs(Form("pdf/FikriJERSF/FikriJERSF_VsPt_eta%d_%d_Mean.pdf",
@@ -259,24 +291,30 @@ void FikriJERSF() {
     gPad->SetLogx();
     
     TH1D *hptm = getRMS(pptm,Form("hptm_%d",iy));
+    TH1D *hptn = getRMS(pptn,Form("hptn_%d",iy));
     TH1D *hptb = getRMS(pptb,Form("hptb_%d",iy));
     TH1D *hptr = getRMS(pptr,Form("hptr_%d",iy));
     TH1D *hpts = getRMS(ppts,Form("hpts_%d",iy));
     TH1D *hptxm = getRMS(pptxm,Form("hptxm_%d",iy));
+    TH1D *hptxn = getRMS(pptxn,Form("hptxn_%d",iy));
     TH1D *hptxb = getRMS(pptxb,Form("hptxb_%d",iy));
     TH1D *hptxr = getRMS(pptxr,Form("hptxr_%d",iy));
     TH1D *hptxs = getRMS(pptxs,Form("hptxs_%d",iy));
 
+    tdrDraw(hptxn,"HE",kNone,kBlack,kSolid,-1,kNone,0,1,2);
     tdrDraw(hptxm,"HE",kNone,kRed+2,kSolid,-1,kNone,0,1,2);
     tdrDraw(hptxb,"HE",kNone,kRed+1,kSolid,-1,kNone,0,1,2);
-    tdrDraw(hptxr,"HE",kNone,kGray+2,kSolid,-1,kNone);
-    tdrDraw(hptxs,"HE",kNone,kBlack,kSolid,-1,kNone);
+    tdrDraw(hptxr,"HE",kNone,kBlack,kSolid,-1,kNone);
+    //tdrDraw(hptxr,"HE",kNone,kGray+2,kSolid,-1,kNone);
+    //tdrDraw(hptxs,"HE",kNone,kBlack,kSolid,-1,kNone);
     tdrDraw(hptm,"Pz",kOpenDiamond,kRed+1,kSolid,-1,kNone,0);
     tdrDraw(hptb,"Pz",kOpenSquare,kRed,kSolid,-1,kNone,0,1,2);
-    tdrDraw(hptr,"Pz",kOpenCircle,kGray+2,kSolid,-1,kNone);
-    tdrDraw(hpts,"Pz",kFullCircle,kBlack,kSolid,-1,kNone);
+    tdrDraw(hptn,"Pz",kOpenCircle,kGray+2,kSolid,-1,kNone);
+    //tdrDraw(hptr,"Pz",kOpenCircle,kGray+2,kSolid,-1,kNone);
+    //tdrDraw(hpts,"Pz",kFullCircle,kBlack,kSolid,-1,kNone);
     
     TH1D *hptm2 = subRMS(hptm,hptxm,Form("hm2_%d",iy));
+    TH1D *hptn2 = subRMS(hptn,hptxn,Form("hn2_%d",iy));
     TH1D *hptb2 = subRMS(hptb,hptxb,Form("hb2_%d",iy));
     TH1D *hptr2 = subRMS(hptr,hptxr,Form("hr2_%d",iy));
     TH1D *hpts2 = subRMS(hpts,hptxs,Form("hs2_%d",iy));
@@ -289,19 +327,22 @@ void FikriJERSF() {
     
     c6->cd(1);
     gPad->SetLogx();  
-    
+
+    tdrDraw(hptn2,"HIST",kNone,kBlack,kSolid,-1,kNone,0,1,2);
     tdrDraw(hptm2,"HIST",kNone,kRed+1,kSolid,-1,kNone,0);
     tdrDraw(hptb2,"Pz",kOpenSquare,kRed,kSolid,-1,kNone,0,1,2);
-    tdrDraw(hptr2,"Pz",kOpenCircle,kGray+2,kSolid,-1,kNone);
-    tdrDraw(hpts2,"Pz",kFullCircle,kBlack,kSolid,-1,kNone);
+    tdrDraw(hptr2,"Pz",kFullCircle,kBlack,kSolid,-1,kNone);
+    //tdrDraw(hptr2,"Pz",kOpenCircle,kGray+2,kSolid,-1,kNone);
+    //tdrDraw(hpts2,"Pz",kFullCircle,kBlack,kSolid,-1,kNone);
     
     tex->DrawLatex(0.35,0.85,Form("Photon+jet %1.3f<#eta_{jet}<%1.3f",ymin,ymax));
     tex->DrawLatex(0.35,0.80,"Photon110EB");
     
     TLegend *leg6 = tdrLeg(0.22,0.72-0.045*4,0.47,0.72);
     leg6->AddEntry(hpts2,"FTV12Nov25 re-reco","PLE");
-    leg6->AddEntry(hptr2,"FTV31Oct25 re-reco","PLE");
+    //leg6->AddEntry(hptr2,"FTV31Oct25 re-reco","PLE");
     leg6->AddEntry(hptb2,"Prompt data","PLE");
+    leg6->AddEntry(hptn2,"Winter25  MCv4 re-reco","LF");
     leg6->AddEntry(hptm2,"Winter25  MC (w/o QCD bkg)","LF");
     
     gPad->RedrawAxis();
@@ -313,6 +354,8 @@ void FikriJERSF() {
     hptrb->Divide(hptb2);
     TH1D *hptsb = (TH1D*)hpts2->Clone(Form("hptsb_%d",iy));
     hptsb->Divide(hptb2);
+    TH1D *hptnb = (TH1D*)hptn2->Clone(Form("hptnb_%d",iy));
+    hptnb->Divide(hptm2);
     
     l->SetLineStyle(kDashed);
     l->DrawLine(ptmin,1,ptmax,1);
@@ -320,9 +363,12 @@ void FikriJERSF() {
     l->DrawLine(ptmin,0.9,ptmax,0.9);
     
     scaleRMSerr(hptrb,0.3);
-    tdrDraw(hptrb,"Pz",kOpenCircle,kGray+2,kSolid,-1,kNone);
-    scaleRMSerr(hptsb,0.3);
-    tdrDraw(hptsb,"Pz",kFullCircle,kBlack,kSolid,-1,kNone);
+    tdrDraw(hptrb,"Pz",kFullCircle,kBlack,kSolid,-1,kNone);
+    //tdrDraw(hptrb,"Pz",kOpenCircle,kGray+2,kSolid,-1,kNone);
+    //scaleRMSerr(hptsb,0.3);
+    //tdrDraw(hptsb,"Pz",kFullCircle,kBlack,kSolid,-1,kNone);
+    scaleRMSerr(hptnb,0.3);
+    tdrDraw(hptnb,"HIST",kNone,kBlack,kSolid,-1,kNone,0,1,2);
 
     c6->SaveAs(Form("pdf/FikriJERSF/FikriJERSF_VsPt_eta%d_%d_RMS.pdf",
 		    int(1000*ymin),int(1000*ymax)));
