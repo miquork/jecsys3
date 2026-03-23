@@ -21,8 +21,8 @@ bool fitD = true; // Dijet (pT,ave)
 bool fitP = true; // Dijet (pT,probe)
 bool fitJ = true; // Dijet (pT,tag)
 // NB: automatically switched off for closure
-bool fitRC = true; // Random Cone (rootfiles/randomConeL2L3Res.root)
-bool fitRC1 = true; // Random Cone eta+/eta- (rootfiles/randomConeL2L3Res.root)
+bool fitRC = false;//true; // Random Cone (rootfiles/randomConeL2L3Res.root)
+bool fitRC1 = false;//true; // Random Cone eta+/eta- (rootfiles/randomConeL2L3Res.root)
 
 bool drawPlusMinus = false; // draw eta+, eta- splits
 bool drawUncleaned = false; // Draw uncleaned data in *AllEta*.pdf
@@ -327,7 +327,7 @@ TH1D *drawCleaned(TH1D *h, double eta, string data, string sdraw,
     //{0, 0.087, 0.174, 0.261, 0.348, 0.435, 0.522, 0.609, 0.696, 0.783, 0.879, 0.957, 1.044, 1.131, 1.218, 1.305, 1.392, 1.479, 1.566, 1.653, 1.74, 1.83, 1.93, 2.043, 2.172, 2.322, 2.5, 2.65, 2.853, 2.964, 3.139, 3.314, 3.489, 3.664, 3.839, 4.013, 4.191, 4.363, 4.538, 4.716, 4.889, 5.191};
 
     TString tr = TString(_run);
-    if (tr.Contains("2024") || tr.Contains("2025")) {
+    if (tr.Contains("2024") || tr.Contains("2025") || tr.Contains("2026")) {
 	
     // Prompt24
     if (data=="Z") { // Zmm+jet
@@ -357,7 +357,8 @@ TH1D *drawCleaned(TH1D *h, double eta, string data, string sdraw,
       }
       if (tr.Contains("25B") || tr.Contains("25C") || tr.Contains("25D") ||
 	  tr.Contains("25E") || tr.Contains("25F") || tr.Contains("25G") ||
-	  tr.Contains("25DEFG") || tr.Contains("25CDEFG")) {
+	  tr.Contains("25DEFG") || tr.Contains("25CDEFG") ||
+	  tr.Contains("26")) {
 	//if (ptmax>200.) keep = false; // V3M
 	if (ptmax>200.) keep = keep && doClosure; // V4M
 	//if (eta>4.538) keep = false; // V3M
@@ -367,7 +368,8 @@ TH1D *drawCleaned(TH1D *h, double eta, string data, string sdraw,
       // TMP patch for primarily 25G
       if (tr.Contains("25B") || tr.Contains("25C") || tr.Contains("25D") ||
 	  tr.Contains("25E") || tr.Contains("25F") || tr.Contains("25G") ||
-	  tr.Contains("25DEFG") || tr.Contains("25CDEFG")) {
+	  tr.Contains("25DEFG") || tr.Contains("25CDEFG") ||
+	  tr.Contains("26")) {
 	//if (tr.Contains("25G") || tr.Contains("25CDEFG")) {
 	//if (eta>2.500 && eta<3.139) keep = false; // V3M
 	if (eta>2.500 && eta<3.139) keep = keep && doClosure; // V4M
@@ -405,7 +407,8 @@ TH1D *drawCleaned(TH1D *h, double eta, string data, string sdraw,
       }
       if (tr.Contains("25C") || tr.Contains("25D") || tr.Contains("25E") ||
 	  tr.Contains("25F") || tr.Contains("25G") ||
-	  tr.Contains("25DEFG") || tr.Contains("25CDEFG")) {
+	  tr.Contains("25DEFG") || tr.Contains("25CDEFG") ||
+	  tr.Contains("26")) {
 	//if (pt>800) keep = false; // V3M
 	if (pt>800) keep = keep && doClosure; // V4M
 	//if (eta>1.218 && pt>600) keep = false; // V3M
@@ -414,7 +417,8 @@ TH1D *drawCleaned(TH1D *h, double eta, string data, string sdraw,
       // TMP patch for primarily 25G
       if (tr.Contains("25C") || tr.Contains("25D") || tr.Contains("25E") ||
 	  tr.Contains("25F") || tr.Contains("25G") ||
-	  tr.Contains("25DEFG") || tr.Contains("25CDEFG")) {
+	  tr.Contains("25DEFG") || tr.Contains("25CDEFG") ||
+	  tr.Contains("26")) {
 	//if (eta>2.5 && pt<110) keep = false; // V3M
 	if (eta>2.5 && pt<110) keep = keep && doClosure; // V4M
       }
@@ -466,7 +470,8 @@ TH1D *drawCleaned(TH1D *h, double eta, string data, string sdraw,
       }
       if (tr.Contains("25C") || tr.Contains("25D") || tr.Contains("25E") ||
 	  tr.Contains("25F") || tr.Contains("25G") ||
-	  tr.Contains("25DEFG") || tr.Contains("25CDEFG")) {
+	  tr.Contains("25DEFG") || tr.Contains("25CDEFG") ||
+	  tr.Contains("26")) {
 	//if (pt*cosh(eta)>2000. && eta<0.783) keep = false;
 	//if (pt*cosh(eta)>2500. && eta<1.566) keep = false;
 	//if (pt*cosh(eta)>3500. && eta<2.655) keep = false;
@@ -475,7 +480,8 @@ TH1D *drawCleaned(TH1D *h, double eta, string data, string sdraw,
       // Potentially bad (forward) jet trigger turn-on in 25G (hence 25CDEFG)
       // TMP patch for primarily 25G
       if (tr.Contains("25G") ||
-	  tr.Contains("25DEFG") || tr.Contains("25CDEFG")) {
+	  tr.Contains("25DEFG") || tr.Contains("25CDEFG") ||
+	  tr.Contains("26")) {
 	//if (pt>170 && pt<236) keep = false; // V3M
 	if (pt>170 && pt<236) keep = keep && doClosure; // V4M
 	//if (eta>2.500 && eta<3.489 && pt>59 && pt<86) keep = false; // V3M
@@ -660,17 +666,23 @@ void L2Res(bool _doClosure = doClosure) {
 
       //"2024B_nib1",
       /*
-      "2024_nib",
+      //"2024_nib",
       "2024C_nib1","2024D_nib1",//"2024Ev1_nib1","2024Ev2_nib1",
       "2024E_nib1",
       "2024F_nib1","2024F_nib2","2024F_nib3","2024G_nib1","2024G_nib2",
       "2024H_nib1",
       "2024I_nib1",  // V9M (V8M)
-      */
+
+      "2024FGHI_nib","2024CDE_nib","2024_nib",
       //"2025B",
       //"2025C","2025CDEF"
+
       "2025C","2025D","2025E","2025F","2025G",
       "2025DEFG", "2025CDEFG"
+      */
+
+      //"2025CDEFG", "2025G", "2026A",
+      "2026B",
       //"2025C0","2025CT"
     };
 
@@ -687,19 +699,25 @@ void L2Res(bool _doClosure = doClosure) {
       //"Winter24","Winter24","Winter24","Winter24","Winter24",
       //"Winter24","Winter24"  // V8M
       /*
-      "Summer24",
+      //"Summer24",
       "Summer24","Summer24",//"Summer24","Summer24",
       "Summer24",
       "Summer24","Summer24","Summer24","Summer24","Summer24",
       "Summer24",
       "Summer24",
-      */
+
+      "Summer24","Summer24","Summer24",
       //"Winter25","Winter25",
       //"Winter25","Winter25","Winter25","Winter25","Winter25",
       //"Winter25"
+
       "Summer24","Summer24","Summer24","Summer24","Summer24",
       "Summer24", "Summer24"
+      */
       //"Winter25","Winter25"
+
+      //"Summer24", "Summer24", "Summer24",
+      "Summer24"
     };  // V9M
 
   //"Summer24"};  // V9M
@@ -965,9 +983,11 @@ void L2Res(bool _doClosure = doClosure) {
 
   // Add eta-asymmetry
   TDirectory *dg1 = fg->GetDirectory("Gamjet1"); assert(dg1);
-  //TDirectory *dgm1 = fgm->GetDirectory("Gamjet1"); assert(dgm1);
+  TDirectory *dgm1 = fgm->GetDirectory("Gamjet1"); assert(dgm1);
   //TDirectory *dg1 = fg->GetDirectory("Gamjet2"); assert(dg1); // TMP PATCH
-  TDirectory *dgm1 = fgm->GetDirectory("Gamjet2"); assert(dgm1); // TMP PATCH
+  //TDirectory *dgm1 = fgm->GetDirectory("Gamjet2"); assert(dgm1); // TMP PATCH
+  //if (!dg1) dg1 = fg->GetDirectory("Gamjet2"); assert(dg1); // TMP PATCH
+  //if (!dgm1) dgm1 = fgm->GetDirectory("Gamjet2"); assert(dgm1); // TMP PATCH
 
   
   // Load dijet
@@ -1090,13 +1110,14 @@ void L2Res(bool _doClosure = doClosure) {
   
   // Load Random Cone
   TFile *frc(0), *frc1(0);
-  if (tr.Contains("2024") && tr.Contains("nib") ||
-      tr.Contains("2025")) {// &&
+  if (tr.Contains("2024") && tr.Contains("nib")) {
     //(tr.Contains("F") || tr.Contains("G") || tr.Contains("H") ||
     //tr.Contains("I"))) {
     //frc = new TFile("rootfiles/randomConeL2L3Res.root","READ");
-    //frc = new TFile("rootfiles/randomConeL2L3Res_for_V9M.root","READ");
+    frc = new TFile("rootfiles/randomConeL2L3Res_for_V9M.root","READ");
     //frc = new TFile("rootfiles/randomConeL2L3Res_for_V9M_plus_2025C.root","READ");
+  }
+  else if (tr.Contains("2025") || tr.Contains("2026")) {// &&
     //frc1 = new TFile("rootfiles/randomConeL2L3Res_for_asymm_V2M.root","READ");
     frc = frc1 = new TFile("rootfiles/randomConeL2L3Res_for_Prompt25_V3M.root","READ");
   }
@@ -1119,14 +1140,22 @@ void L2Res(bool _doClosure = doClosure) {
     if (!hrc_vsEta && tr.Contains("2025CDEFG"))
       hrc_vsEta = (TH1D*)frc->Get(Form("hrc13jes_%s","2025C"));
     */
+    if (!hrc_vsEta && tr.Contains("2026"))
+      hrc_vsEta = (TH1D*)frc->Get(Form("hrc13jes_%s","2025G"));
     if (!hrc_vsEta && tr.Contains("2025DEFG"))
       hrc_vsEta = (TH1D*)frc->Get(Form("hrc13jes_%s","2025CDEFG"));
     if (!hrc_vsEta && (tr.Contains("2024E_nib1") || tr=="2024_nib"))
+      hrc_vsEta = (TH1D*)frc->Get(Form("hrc13jes_%s","2024Ev1_nib1"));
+    if (!hrc_vsEta && (tr.Contains("2024FGHI_nib")))
+      hrc_vsEta = (TH1D*)frc->Get(Form("hrc13jes_%s","2024G_nib2"));
+    if (!hrc_vsEta && (tr.Contains("2024CDE_nib")))
       hrc_vsEta = (TH1D*)frc->Get(Form("hrc13jes_%s","2024Ev1_nib1"));
     assert(hrc_vsEta);
   }
   if (frc1) {
     hrc1_vsEta = (TH1D*)frc1->Get(Form("hrc13jes_%s",cr));
+    if (!hrc1_vsEta && tr.Contains("2026"))
+      hrc1_vsEta = (TH1D*)frc->Get(Form("hrc13jes_%s","2025G"));
     if (!hrc1_vsEta && tr.Contains("2025DEFG"))
       hrc1_vsEta = (TH1D*)frc->Get(Form("hrc13jes_%s","2025CDEFG"));
     if (hrc1_vsEta) { // Recalculate symmetric hrc_vsEta from this
@@ -1295,6 +1324,35 @@ void L2Res(bool _doClosure = doClosure) {
   TH2D *h2merged = p2d->ProjectionXY(Form("h2merged_%s",cr)); h2merged->Reset();
   TH2D *h2merged1 = p2j1->ProjectionXY(Form("h2merged1_%s",cr)); h2merged1->Reset();
 
+  // Save JEC for use in minitools/timeDep2D.C
+  TH2D *h2res1 = p2jx1->ProjectionXY(Form("h2res_%s",cr)); h2res1->Reset();
+  // loop over all graphs in the multigraph
+  const int np2x(3);
+  TProfile2D* vp2x[np2x] = {p2jx1, p2gx1, p2zx1};
+  for (int k = 0; k != np2x; ++k) {
+
+    TProfile2D* p2 = vp2x[k];
+    for (int ieta = 1; ieta != p2->GetNbinsX()+1; ++ieta) {
+      for (int ipt = 1; ipt != p2->GetNbinsX()+1; ++ipt) {
+
+	double eta = p2->GetXaxis()->GetBinCenter(ieta);
+	double pt = p2->GetYaxis()->GetBinCenter(ipt);
+	int ib = h2res1->FindBin(eta, pt);
+	double y_old = h2res1->GetBinContent(ib); 
+	double ey_old = h2res1->GetBinError(ib);
+	double w_old = (ey_old> 0) ? 1.0 / pow(ey_old, 2) : 0.;
+	double y = p2->GetBinContent(ieta, ipt);
+	double ey = p2->GetBinError(ieta, ipt);
+	double w = (ey>0) ? 1.0 / pow(ey,2) : 0;
+	double y_new  = w_old+w>0 ? (y_old * w_old + y * w) / (w_old + w) : 0;
+	double w_new = w_old+w;
+	double ey_new = (w_new>0 ? 1.0 / sqrt(w_new) : 0); 
+	h2res1->SetBinContent(ib, y_new);
+	h2res1->SetBinError(ib, ey_new);
+      } // for ipt
+    } // for ieta
+  } // for k in vp2x
+
   // Another giant canvas to show final results:
   // merged cleaned data, final fit, uncertainty band, deviations from fit
   TCanvas *cxf = new TCanvas(Form("cxf_%s",cr),"cxf",9*300,5*300);
@@ -1349,8 +1407,8 @@ void L2Res(bool _doClosure = doClosure) {
   pzm1_p = drawPt(p2zm1,+etamin,+etamax,"HISTE",kNone,kRed+2,
 		  "",0,0,drawPlusMinus);
   pzm = drawPt(p2zm,etamin,etamax,"HISTE",kNone,kRed);
-  //pgm1_m = drawPt(p2gm1,-etamax,-etamin,"HISTE",kNone,kBlue+1,
-  pgm1_m = drawPt(p2gm1,etamin,etamax,"HISTE",kNone,kBlue+1, // TMP PATCH
+  pgm1_m = drawPt(p2gm1,-etamax,-etamin,"HISTE",kNone,kBlue+1,
+//pgm1_m = drawPt(p2gm1,etamin,etamax,"HISTE",kNone,kBlue+1, // TMP PATCH
 		  "",0,0,drawPlusMinus);
   pgm1_p = drawPt(p2gm1,+etamin,+etamax,"HISTE",kNone,kBlue+2,
 		  "",0,0,drawPlusMinus);
@@ -2997,6 +3055,7 @@ void L2Res(bool _doClosure = doClosure) {
   if (fout) {
     cout << "Saving results to " << fout->GetName() << endl << flush;
     fout->cd();
+    h2res1->Write(Form("h2res1_%s",cr),TObject::kOverwrite);
     h2merged->Write(Form("h2merged_%s",cr),TObject::kOverwrite);
     h2merged1->Write(Form("h2merged1_%s",cr),TObject::kOverwrite);
     //

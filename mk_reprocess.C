@@ -27,9 +27,10 @@
   //     are already available in 'rootfiles/jecdata.root'
   string epoch = "Run22C";//"Run23B";//"Run3";//"RunCD";
   #ifdef epochname
-  std::cout << epoch.c_str()<< std::endl;
-  std::cout << inputepoch.c_str()<< std::endl;
+  //std::cout << epoch.c_str()<< std::endl;
+  //std::cout << inputepoch.c_str()<< std::endl;
   epoch = inputepoch;
+  std::cout << epoch.c_str()<< std::endl;
   #endif
 
   int doClosure(0);
@@ -82,11 +83,16 @@
   //globalFitEtaBin(0.0, 1.3, epoch, "Prompt24_V6M");
   //globalFitEtaBin(0.0, 1.3, epoch, "Prompt24_V7M");
   //globalFitEtaBin(0.0, 1.3, epoch, "Prompt24_V8N");
-  if (TString(epoch.c_str()).Contains("25"))
+  if (TString(epoch.c_str()).Contains("26"))
+    globalFitEtaBin(0.0, 1.3, epoch, "Prompt26_V0M", doClosure);
+  else if (TString(epoch.c_str()).Contains("25"))
     globalFitEtaBin(0.0, 1.3, epoch, "Prompt25_V4M", doClosure);
+  else if (TString(epoch.c_str()).Contains("24"))
+    globalFitEtaBin(0.0, 1.3, epoch, "ReReco24_V10M", doClosure);
   else
     //globalFitEtaBin(0.0, 1.3, epoch, "ReReco24_V9M");
-    globalFitEtaBin(0.0, 1.3, epoch, "ReReco24_V10M");
+    //globalFitEtaBin(0.0, 1.3, epoch, "ReReco24_V10M");
+    globalFitEtaBin(0.0, 1.3, epoch, "Run3_VXM");
 
   
   exit(0); // Avoid page full of THastList::Delete errors

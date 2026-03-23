@@ -35,7 +35,7 @@
 using namespace std;
 
 const bool rp_debug = true; // verbose messages
-bool correctWqq = 0; // 0 or 1 for no correction
+double correctWqq = 0.98; // 0 or 1 for no correction
 bool correctZMass = false; // pT with Run 2 Z+jet mass (def:true)
 double scaleEM = 1;//0.98; // scale EM+jet in data in absence of QCD bkg
 bool scaleEMperEra = true;
@@ -59,7 +59,8 @@ string CorLevel = "L1L2L3Res"; // Closure test for L2L3Res
 // Override settings below to use full range (latest true applies)
 const bool useFullRange(false);
 const bool usePrompt24Range(false);
-const bool usePrompt24RangeV2(true);
+const bool usePrompt24RangeV2(false);//true);
+const bool usePrompt2425RangeV3(true);
 
 // Wqq vs pT,paiar
 double fwptmin(50.); // 15.
@@ -97,6 +98,10 @@ bool doMultijetRecoil = false;//true; // use pT,recoil binning
 // PF composition (incjet)
 double fijptmin(15);
 double fijptmax(3103);
+
+// Inclusive jet cross section (xsec)
+double fxsptmin(18.); // avoid PromptNano 15 GeV cutoff biases
+double fxsptmax(3103);
 
 
 // Helper functions to handle JEC
@@ -152,16 +157,26 @@ void reprocess(string epoch="") {
     fzptmin  = 15; fzptmax  = 1000;
 
     //fgptmin =  (epoch=="Run24F" || epoch=="Run24G" || epoch=="Run24FG" || epoch=="Run24H" || epoch=="Run24I" || tepoch.Contains("nib") ? 75 : 110);
-    fgptmin = 230; // V8M; TightIso_TightID small discontinuity in MPF?
+    fgptmin = 30;//55;//230; // V8M; TightIso_TightID small discontinuity in MPF?
     //fgptmin = 50; // V9M, if can get QCD background to help JES below 230 GeV
     fgptmax = 1750;//1200;//1750;
 
     fijptmin = 15; fijptmax = 2787;
     //doMultijetRecoil = (epoch=="Run24CP" || epoch=="Run24BCD" || epoch=="Run24BCDE" || epoch=="Run24C" || epoch=="Run24E");// || epoch=="2024B_nib1" || epoch=="2024C_nib1" || epoch=="2024D_nib1" || epoch=="2024Ev1_nib1" || epoch=="2024Ev2_nib1");
     doMultijetRecoil = (epoch=="Run24CP"); // Fixed in 24CDE re-reco now
-    fmjptmin = (doMultijetRecoil ? 600 : 220);//245);//220);//133);
+    fmjptmin = (doMultijetRecoil ? 600 : 60);//114);//220);//245);//220);//133);
     fmjptmax = 2500;
 
+    // Prompt26 studies
+    if (tr.Contains("2026") || tr.Contains("2025G") || tr.Contains("2025F")) {
+      fzptmax = 400;
+      fgptmin = 50;
+      fgptmax = 1000;
+    }
+    if (tr.Contains("2026B")) {
+      fwptmax = 180;
+    }
+    
     if (tr.Contains("2025")) {
       //fgptmin = 40; // default 230
     }
@@ -218,6 +233,29 @@ void reprocess(string epoch="") {
 	fmjptmax = 2500;
       }
     }
+  } // usePrompt24RangeV2
+
+  if (usePrompt2425RangeV3) {
+    fzptmin = 15;
+    fzptmax = 1000;
+    fwptmin = 50;
+    fwptmax = 230;
+    fgptmin = 30;
+    fgptmax = 2000;
+    doMultijetRecoil = true;
+    fmjptmin = 74;
+    fmjptmax = 2500;
+    fijptmin = 15;
+    fijptmax = 3103;
+
+    // Special cases to fix some bad fits
+    if (tr.Contains("2025E")) fgptmax = 1800;
+    if (tr.Contains("2024I_nib1")) { fgptmax = 1500; fmjptmax = 1500; }
+    if (tr.Contains("2024H_nib1")) { fgptmax = 1500; fmjptmax = 1500; }
+    if (tr.Contains("2024F_nib3")) { fgptmax = 1500; fmjptmax = 1500; }
+
+    // Extended range to capitalize on full 2025 statistics
+    if (tr.Contains("2025CDEFG")) { fgptmax = 2500; fmjptmax = fijptmax = 3450;  fwptmax = 300; fzptmax = 1500; }//3103; }
   }
   
   TDirectory *curdir = gDirectory;
@@ -421,7 +459,7 @@ void reprocess(string epoch="") {
   TH1D *hcounts(0);
   TH1D *hmz_dt(0), *hmz_mc(0);
   if (tepoch.Contains("UL") || tepoch.Contains("nib") ||
-      tepoch.Contains("2025") ||
+      tepoch.Contains("2025") || tepoch.Contains("2026") ||
       tepoch.Contains("rereco") ||
       epoch=="RunCD" ||
       epoch=="Run22C" || epoch=="Run22D" || epoch=="Run22CD" ||
@@ -900,7 +938,7 @@ void reprocess(string epoch="") {
   assert(fmjd && !fmjd->IsZombie());
   assert(fmjm && !fmjm->IsZombie());
 
-  // Inclusive jets from same file as multijets
+  // Inclusive jets from same file as multijets (except for cross section)
   TFile *fijd = fmjd;
   TFile *fijm = fmjm;
   // 19Dec2023 special JetMET re-reco first iteration works for incjet
@@ -908,6 +946,13 @@ void reprocess(string epoch="") {
   //if (epoch=="Run23C4")
   //fijd = new TFile(Form("../dijet/rootfiles/jmenano_data_cmb_%s_JME_v35_19Dec2023.root",mmjd["Run23C123"]),"READ"); // 19Dec2023
   //TFile *fijm = new TFile(Form("../dijet/rootfiles/jmenano_mc_out_%s_v35a.root",mmjm[epoch]),"READ"); // 19Dec2023 using 22Sep2023
+
+  TFile *fijr(fijd);
+  if (!tepoch.Contains("2026")) {
+    //fijr = new TFile("rootfiles/timeDep2D.root","READ");
+    fijr = new TFile("rootfiles/timeDep2D_2024_V3M_2025_V9M_v2.root","READ");
+    assert(fijr && !fijr->IsZombie());
+  }
   
   assert(fmjd && !fmjd->IsZombie());
   assert(fmjm && !fmjm->IsZombie());
@@ -956,7 +1001,8 @@ void reprocess(string epoch="") {
   files["multijet_ratio"] = fmjd;
   files["incjet_data"] = fijd;
   files["incjet_mc"] = fijm;
-  files["incjet_ratio"] = fijm; // => should be fijd? or doesn't matter
+  //files["incjet_ratio"] = fijm; // => should be fijd? or doesn't matter
+  files["incjet_ratio"] = fijr; // => for cross section
 
   // Add flavor stuff
   const int nf = 6;
@@ -991,7 +1037,7 @@ void reprocess(string epoch="") {
 
   // Results from Sami's Z+b analysis
   if (tepoch.Contains("UL") || tepoch.Contains("nib") ||
-      tepoch.Contains("2025") ||
+      tepoch.Contains("2025") || tepoch.Contains("2026") ||
       tepoch.Contains("rereco") ||
       epoch=="RunCD" ||
       epoch=="Run22C" || epoch=="Run22D" || epoch=="Run22CD" ||
@@ -1342,12 +1388,15 @@ void reprocess(string epoch="") {
   color["multijet_cef"] = kCyan+1;
   color["multijet_muf"] = kMagenta+1;
 
+  style["incjet"]["xsec"] = kFullSquare;
   style["incjet"]["chf"] = kFullCircle;
   style["incjet"]["nhf"] = kFullDiamond;
   style["incjet"]["nef"] = kFullSquare;
   style["incjet"]["cef"] = kFullDiamond;
   style["incjet"]["muf"] = kFullDiamond;
 
+  color["incjet"] = kBlack;
+  color["incjet_xsec"] = kBlack;
   color["incjet_chf"] = kRed;
   color["incjet_nhf"] = kGreen+2;
   color["incjet_nef"] = kBlue;
@@ -1365,12 +1414,13 @@ void reprocess(string epoch="") {
 
   vector<string> types;
   types.push_back("counts");
+  if (!tepoch.Contains("2026")) types.push_back("xsec");
   types.push_back("crecoil");
   types.push_back("mpfchs1"); // Type-I MET
   types.push_back("ptchs");
   // for pfjet only (activate puf, cef, muf later?)
   if (tepoch.Contains("UL") || tepoch.Contains("nib") ||
-      tepoch.Contains("2025") ||
+      tepoch.Contains("2025") || tepoch.Contains("2026") ||
       tepoch.Contains("rereco") ||
       epoch=="RunCD" || 
       epoch=="Run22C" || epoch=="Run22D" || epoch=="Run22CD" ||
@@ -1398,7 +1448,7 @@ void reprocess(string epoch="") {
   types.push_back("mpfu");
   types.push_back("crecoil");
   if (tepoch.Contains("UL") || tepoch.Contains("nib") ||
-      tepoch.Contains("2025") ||
+      tepoch.Contains("2025") || tepoch.Contains("2026") ||
       tepoch.Contains("rereco") ||
       epoch=="RunCD" || 
       epoch=="Run22C" || epoch=="Run22D" || epoch=="Run22CD" ||
@@ -1420,7 +1470,7 @@ void reprocess(string epoch="") {
 
   // <pT,reco> and <pT,gen> vs ref pT (MC only)
   if (tepoch.Contains("UL") || tepoch.Contains("nib") ||
-      tepoch.Contains("2025") ||
+      tepoch.Contains("2025") || tepoch.Contains("2026") ||
       tepoch.Contains("rereco") ||
       epoch=="RunCD" ||
       epoch=="Run22C" || epoch=="Run22D" || epoch=="Run22CD" ||
@@ -1570,7 +1620,9 @@ void reprocess(string epoch="") {
 	  bool ismpfc = (t=="mpf1" || t=="mpfn" || t=="mpfu");// || t=="rho");
 	  bool isfrac = (t=="chf"||t=="nef"||t=="nhf"||
 			 t=="cef"||t=="muf"||t=="puf");
-	  if (s=="incjet" && !isfrac) continue;
+	  bool isxsec = (t=="xsec");
+	  if (t=="xsec" && (s!="incjet" || d!="ratio")) continue;
+	  if (s=="incjet" && !isfrac && !(isxsec && d=="ratio")) continue;
 
 	  bool isflavor = 
 	    (s=="zi"  || s=="zb"  || s=="zc"  || s=="zq"  || s=="zg"||s=="zn")||
@@ -1634,7 +1686,7 @@ void reprocess(string epoch="") {
 	  } // "zjav"
 	  if (s=="zjet") {
 	    if (tepoch.Contains("UL") || tepoch.Contains("nib") ||
-		tepoch.Contains("2025") ||
+		tepoch.Contains("2025") || tepoch.Contains("2026") ||
 		tepoch.Contains("rereco") ||
 		epoch=="RunCD" ||
 		epoch=="Run22C" || epoch=="Run22D" || epoch=="Run22CD" ||
@@ -1709,7 +1761,11 @@ void reprocess(string epoch="") {
             //if (d=="data") f = fijd;
             //if (d=="mc") f = fijm;
             //if (d=="ratio") f = fijd; // patch
-	    c = Form("Incjet/PFcomposition/p%s13",tt);//rename[s][t]);
+	    if (isfrac)
+	      c = Form("Incjet/PFcomposition/p%s13",tt);//rename[s][t]);
+	    if (isxsec)
+	      c = Form("h1jes_%s",ccr); // 2025CDEFG JES undone
+	    //c = Form("h1rel_%s",ccr); // relative to 2025CDEFG
 	    //if (d=="mc") // patch 22Sep2023, not 19Dec2023
 	    //c = Form("HLT_MC/Incjet/PFcomposition/p%s13",tt);//rename[s][t]);
 	  }
@@ -1730,9 +1786,15 @@ void reprocess(string epoch="") {
 	  // Add flavor stuff for gamma+jet
 	  if (sp=="gamjet") {
 	    if (s=="gi"||s=="gb"||s=="gc"||s=="gq"||s=="gg"||s=="gn")
-	      c = Form("flavor/%s_%si",tt,ss);
+	      if (d=="mc" || tepoch.Contains("2024") || tepoch.Contains("2025"))
+		c = Form("flavor_old/%s_%si",tt,ss); // TMP
+	      else
+		c = Form("flavor/%s_%si",tt,ss);
 	    else
-	      c = Form("flavor/%s_%s",tt,ss);//s.c_str());
+	      if (d=="mc" || tepoch.Contains("2024") || tepoch.Contains("2025"))
+		c = Form("flavor_old/%s_%s",tt,ss);//s.c_str()); // TMP
+	      else
+		c = Form("flavor/%s_%s",tt,ss);//s.c_str());
 	    if (isfrac) continue;
 	    if (t=="rho") continue;
 	  }
@@ -1878,8 +1940,11 @@ void reprocess(string epoch="") {
 	    else if (s=="multijet" &&
 		     (g->GetX()[i]<fmjptmin || g->GetX()[i]>fmjptmax))
 	      g->RemovePoint(i);
-	    else if (s=="incjet" &&
+	    else if (s=="incjet" && t!="xsec" &&
 		     (g->GetX()[i]<fijptmin || g->GetX()[i]>fijptmax))
+	      g->RemovePoint(i);
+	    else if (s=="incjet" && t=="xsec" &&
+		     (g->GetX()[i]<fxsptmin || g->GetX()[i]>fxsptmax))
 	      g->RemovePoint(i);
 	  } // for i
 
@@ -1958,7 +2023,7 @@ void reprocess(string epoch="") {
 	  g->SetMarkerStyle(style[s][t]);
 	  g->SetMarkerColor(color[s]);
 	  g->SetLineColor(color[s]);
-	  if (isfrac || ismpfc) {
+	  if (isfrac || ismpfc || isxsec) {
 	    g->SetMarkerStyle((d=="mc" && style[s+"_"+d][t]!=0) ?
 			      style[s+"_"+d][t] : style[s][t]);
 	    g->SetMarkerColor(color[s+"_"+t]!=0 ? color[s+"_"+t] : color[s]);
@@ -2148,7 +2213,7 @@ void reprocess(string epoch="") {
     TProfile *pjes(0), *pres(0);
     TProfile *presp(0), *presz(0), *presm(0), *presw(0);
     if (tepoch.Contains("nib") ||
-	tepoch.Contains("2025") ||
+	tepoch.Contains("2025") || tepoch.Contains("2026") ||
 	tepoch.Contains("rereco") ||
 	(epoch=="2024E_noRW" || epoch=="2024E_692mb" || epoch=="2024E_753mb")) {
       TProfile2D *p2jesp(0), *p2jesz(0);//, *p2jesm(0);
@@ -2184,7 +2249,7 @@ void reprocess(string epoch="") {
       pres->Add(presm);
 
       // Patch Wqq
-      if (presw) {
+      if (presw && false) {
 	TProfile *presw_old = presw;
 	presw = (TProfile*)presw_old->Clone(Form("presw_%s",epoch.c_str()));
 	presw->Reset();
@@ -2903,15 +2968,50 @@ double getJES(TProfile2D *p2jes, double eta, double ptcorr) {
   int i = p2jes->GetXaxis()->FindBin(eta);
   int j = p2jes->GetYaxis()->FindBin(ptcorr);
   double jes = p2jes->GetBinContent(i,j);
-  if (jes<=0) return 1;
+  //if (jes<=0) return 1;
+  if (jes<=0) { // log-linear extrapolation from last non-empty bins
+    int k;
+    for (k = j; p2jes->GetBinContent(i,k)<=0 && k>1; --k);
+    double logpt = log(ptcorr);
+    double jes2 = p2jes->GetBinContent(i,k);
+    double logpt2 = log(p2jes->GetYaxis()->GetBinCenter(k));
+    double jes1 = p2jes->GetBinContent(i,k-1);
+    double logpt1 = log(p2jes->GetYaxis()->GetBinCenter(k-1));
+    jes = (jes1 + (jes2-jes1)/(logpt2-logpt1)*(logpt-logpt1));
+  }
   return jes;
 } // getJES(2D)
 
+TF1 *_f1jes(0);
 double getJES(TProfile *pjes, double ptcorr) {
   int i = pjes->FindBin(ptcorr);
   double jes = pjes->GetBinContent(i);
-  if (jes<=0) return 1;
-  jes = pjes->Interpolate(ptcorr);
+  //if (jes<=0) return 1;
+  if (jes<=0) { // log-linear extrapolation from last non-empty bins
+    /*
+    int k;
+    for (k = i; pjes->GetBinContent(k)<=0 && k>1; --k);
+    double logpt = log(ptcorr);
+    double jes2 = pjes->GetBinContent(k);
+    double logpt2 = log(pjes->GetBinCenter(k));
+    double jes1 = pjes->GetBinContent(k-1);
+    double logpt1 = log(pjes->GetBinCenter(k-1));
+    jes = (jes1 + (jes2-jes1)/(logpt2-logpt1)*(logpt-logpt1));
+    */
+    int k(i), k0(i);
+    for (k = i; pjes->GetBinContent(k)<=0 && k>1; --k);
+    k0 = max(1,min(pjes->FindBin(1000.),k-5));
+    double pt0 = pjes->GetBinLowEdge(k0);
+    double pt1 = pjes->GetBinLowEdge(k+1);
+    if (!_f1jes) _f1jes = new TF1("_f1jes","[0]+[1]*log(x/1000.)",pt0,pt1);
+    _f1jes->SetParameters(1,0);
+    pjes->Fit(_f1jes,"QRN");
+    jes = _f1jes->Eval(ptcorr);
+
+  }
+  else {
+    jes = pjes->Interpolate(ptcorr);
+  }
   return jes;
 } // getJES(1D)
 

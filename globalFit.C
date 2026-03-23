@@ -222,6 +222,10 @@ void globalFitEtaBin(double etamin, double etamax, string run, string version,
 	  g->SetPointError(i, g->GetEX()[i], k * g->GetEY()[i]);
 	}
       }
+      // Also inclusive jets as a special case => not anymore, scaled L2L3Res
+      //else if (TString(name).Contains("xsec")) {
+      // do  nothing for now; needs extra treatment for closure test
+      //}
       else  {
 	scaleGraph(g, _hjesref);
       }
@@ -236,6 +240,7 @@ void globalFitEtaBin(double etamin, double etamax, string run, string version,
 
     // Jet+Z special
     if (TString(name).Contains("jetz")) { // default: 0.985, 16/fb
+      scaleJZ = 1.000;
       if (scaleJZperEra && trun.Contains("24I")) scaleJZ = 1.0050;
       //if (scaleJZperEra && trun.Contains("24I")) scaleJZ = 0.979;
       if (scaleJZperEra && trun.Contains("24H")) scaleJZ = 1.0050;
@@ -247,11 +252,13 @@ void globalFitEtaBin(double etamin, double etamax, string run, string version,
       if (scaleJZperEra && trun.Contains("24B")) scaleJZ = 0.989;
 
       if (scaleJZperEra && trun.Contains("25")) scaleJZ = 1.000;
+      if (scaleJZperEra && trun.Contains("26")) scaleJZ = 1.000;
       
       scaleGraph(data.input, scaleJZ);
     }
     // Z+jet ave special
     if (TString(name).Contains("zjav")) { // default: 0.9925, half of JZ
+      scaleJZAperEra = 1.0000;
       if (scaleJZAperEra && trun.Contains("24I")) scaleJZA = 1.0025;
       //if (scaleJZAperEra && trun.Contains("24I")) scaleJZA = 0.9945;
       if (scaleJZAperEra && trun.Contains("24H")) scaleJZA = 1.0025;
@@ -263,6 +270,7 @@ void globalFitEtaBin(double etamin, double etamax, string run, string version,
       if (scaleJZAperEra && trun.Contains("24B")) scaleJZA = 0.9945;
 
       if (scaleJZAperEra && trun.Contains("25")) scaleJZA = 1.000;
+      if (scaleJZAperEra && trun.Contains("26")) scaleJZA = 1.000;
       
       scaleGraph(data.input, scaleJZA);
     }
@@ -429,6 +437,7 @@ void globalFitEtaBin(double etamin, double etamax, string run, string version,
   if (run=="Run24C_nib1") nfit = 3;
   if (run=="Run24F_nib3") nfit = 2;
   if (run=="Run24I_nib1") nfit = 3;//1;
+  if (run=="2024B") nfit = 1;
   cnt = 0;
   for (int i = 0; i != nfit; ++i)
     fitter->ExecuteCommand("MINI", 0, 0);
@@ -631,16 +640,24 @@ void globalFitDraw(string run, string version) {
 
     // Graphical settings in globalFitStyles.h
     #include "globalFitStyles.h"
+    // Luminosities listed in Config.C
+    #include "Config.C"
     curdir->cd();
 
     // Update date on directory when doing new plots
     gROOT->ProcessLine(".! touch pdf/globalFit");
     
     // Create canvas
-    lumi_136TeV = Form("globalFit.C(\"%s\")",run.c_str());
+    //lumi_136TeV = Form("globalFit.C(\"%s\")",run.c_str());
+    const char *cr = run.c_str();
+    string lum = (mlum[run]!="" ? Form(", %s",mlum[run].c_str()) : "");
+    const char *cm = "Summer24";
+    const char *cl = lum.c_str();
+    lumi_136TeV = Form("%s - %s%s",cr,cm,cl);
+    //lumi_136TeV = Form("%s%s",cr,cm,cl);
     if (run=="Run3") lumi_136TeV = "Run3, 64 fb^{-1}";
     //TH1D *h = tdrHist("h","JES",0.982+1e-5,1.025-1e-5); // ratio (hdm)
-    TH1D *h = tdrHist("h","JES",
+    TH1D *h = tdrHist("h", _gf_undoJESref ? "JES" : "JEC closure",
 		      0.85+1e-5,1.15-1e-5, // Prompt24BCD
 		      //0.75+1e-5,1.20-1e-5, // Summer23_V2
 		      //0.75+1e-5,1.20-1e-5, // Summer23_V1
@@ -1007,6 +1024,7 @@ void globalFitDraw(string run, string version) {
 	run=="Run24CP" || run=="Run24CR" || run=="Run24CS")  nhf_off = 0.0;
     if (trun.Contains("2024")) nhf_off = 0.0;
     if (trun.Contains("2025")) nhf_off = 0.0;
+    if (trun.Contains("2026")) nhf_off = 0.0;
     if (run=="Run3")  {
       nhf_off = ((5.1+3.0)*2.0 + 5.9*3.0 + (18.0+3.1)*3.0 +
 		 //8.7*1.0 + 9.8*4.0 + 9.5*4.5) / //Summer22

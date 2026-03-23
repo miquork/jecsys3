@@ -7,6 +7,7 @@
 //          Keep these in a separate file not to clutter main code
 
 map<string, int> _gf_color;
+_gf_color["xsec_incjet_a100"]        = kMagenta+2;
 _gf_color["ptchs_zjet_a100"]    = kRed;//kPink+2;
 _gf_color["mpfchs1_zjet_a100"]    = kRed;//kPink+2;
 _gf_color["ptchs_zjav_a100"]    = kRed+2;//kPink+2;
@@ -82,6 +83,7 @@ _gf_color["nhf_cmb_ren"]      = kGreen+2;
 _gf_color["nef_cmb_ren"]      = kBlue;
 
 map<string, int> _gf_marker;
+_gf_marker["xsec_incjet_a100"]          = kFullSquare;
 _gf_marker["hdm_mpfchs1_multijet"] = kFullTriangleUp;
 _gf_marker["ptchs_multijet_a100"]  = kFullTriangleUp;
 _gf_marker["mpfchs1_multijet_a100"]  = kFullTriangleUp;
@@ -148,6 +150,7 @@ _gf_marker["nhf_cmb_ren"]      = kFullDiamond;
 _gf_marker["nef_cmb_ren"]      = kFullSquare;
 
 map<string, double> _gf_size;
+_gf_size["xsec_incjet_a100"] = 0.5;
 _gf_size["hdm_mpfchs1_multijet"] = 1.0;
 _gf_size["ptchs_multijet_a100"] = 0.8;
 _gf_size["mpfchs1_multijet_a100"] = 0.8;
@@ -173,6 +176,7 @@ _gf_size["nef_incjet_a100"] = 0.6;
 _gf_size["nhf_incjet_a100"] = 0.6;
 
 map<string, const char*> _gf_label;
+_gf_label["xsec_incjet_a100"] = "Inc.jet (xsec)";
 _gf_label["hdm_mpfchs1_multijet"] = "Multijet (HDM)";//(p_{T,HDM}^{avp})";//(p_{T}^{leading})";
 _gf_label["ptchs_multijet_a100"] = "Multijet (MJB)";//(p_{T,MJB}^{avp})";
 _gf_label["mpfchs1_multijet_a100"] = "Multijet (MPF)";//(p_{T,MPF}^{avp})";

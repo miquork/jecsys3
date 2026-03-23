@@ -66,6 +66,7 @@ bool _gf_undoJESref = true;//false;//true; // Set 'false' to produce "*_closure.
 // How to use: comment out datasets that are not needed to switch them off
 const unsigned int ndt = 44;
 const array<array<string,3>,ndt> _gf_datasets = {{
+    {"xsec_incjet_a100", "Rjet",""},
     {"mpfchs1_wqq_a100", "Rjet",""},
     {"ptchs_jetz_a100", "Rjet",""},
     {"mpfchs1_jetz_a100", "Rjet",""},
@@ -101,6 +102,7 @@ const array<array<string,3>,ndt> _gf_datasets = {{
 // 'name' should match the dataset name in the list above
 // How to use: uncomment individual datasets to use only those
 const array<string,29> _gf_datasets_whitelist = {
+  "xsec_incjet_a100",
   "mpfchs1_wqq_a100",
   //"ptchs_zjet_a100",
   //"mpfchs1_zjet_a100",
@@ -148,8 +150,10 @@ const array<string,29> _gf_shapes_whitelist = {
   //"const", // log^0 constant scale factor
   //"off", // Summer23
   //"off_ho", // V9M test
+  
   "off_nhf", // Prompt24, no hhpfc+hhnoise+hbtime+hbsipm+off with this
   "dd_nhf", // Prompt25, model HCAL problems in 2025C
+  
   //"ecalcc", // ECAL cc timing for 2024BCD, not 2024CR/CS/F
   //"qie11"
   //"x1p5",
