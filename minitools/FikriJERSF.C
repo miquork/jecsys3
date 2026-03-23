@@ -54,7 +54,8 @@ void FikriJERSF() {
   gROOT->ProcessLine(".! mkdir pdf/FikriJERSF");
   gROOT->ProcessLine(".! touch pdf/FikriJERSF");
 
-  TFile *fs = new TFile("rootfiles/Fikri_JetDepths_2026DR/studies_2026_rehearsal/Histo_SinglePhoton_RAWToNano_Rehearsal26_Data25G_EGamma.root","READ"); // Prompt + HCAL + PFHC (2026 dress rehearsal conditions)
+  TFile *fs = new TFile("rootfiles/Fikri_JetDepths_2026DR_v2/studies_2026_rehearsal/Histo_SinglePhoton_RAWToNano_Rehearsal26_Data25G_EGamma_Winter26L2Relative.root","READ"); // Prompt + HCAL + PFHC+JES (2026 dress rehearsal conditions)
+  //TFile *fs = new TFile("rootfiles/Fikri_JetDepths_2026DR/studies_2026_rehearsal/Histo_SinglePhoton_RAWToNano_Rehearsal26_Data25G_EGamma.root","READ"); // Prompt + HCAL + PFHC (2026 dress rehearsal conditions)
   //TFile *fs = new TFile("rootfiles/Fikri_JetDepths_2025E_ReReco_v6p0/Histo_RAWToPFNano_Data25E_EGamma_FTV12Nov25.root","READ");
   //TFile *fs = new TFile("rootfiles/Fikri_JetDepths_2025E_ReReco_v6p0/Histo_RAWToPFNano_Data25E_EGamma_FTV31Oct25.root","READ"); // check old one
   assert(fs && !fs->IsZombie());
@@ -72,7 +73,8 @@ void FikriJERSF() {
   TFile *fn = new TFile("rootfiles/Fikri_JetDepths_2025MC_ReRecoV4/Histo_SinglePhoton_RAWToNano_GTv9HcalRespCorrs2025MOYv4mc_MC25Win_GJ_LO_MG.root","READ");
   assert(fn && !fn->IsZombie());
   //TFile *fk = new TFile("rootfiles/Fikri_JetDepths_2026DR/studies_2026_rehearsal/Histo_SinglePhoton_MC25Win_GJ_LO_MG.root","READ"); // baseline repeat
-  TFile *fk = new TFile("rootfiles/Fikri_JetDepths_2026DR/studies_2026_rehearsal/Histo_SinglePhoton_RAWToNano_Rehearsal26_MC25Win_GJ_LO_MG.root","READ"); // 2026 conditions
+  //TFile *fk = new TFile("rootfiles/Fikri_JetDepths_2026DR/studies_2026_rehearsal/Histo_SinglePhoton_RAWToNano_Rehearsal26_MC25Win_GJ_LO_MG.root","READ"); // 2026 conditions
+  TFile *fk = new TFile("rootfiles/Fikri_JetDepths_2026DR_v2/studies_2026_rehearsal/Histo_SinglePhoton_RAWToNano_Rehearsal26_MC25Win_GJ_LO_MG_Winter26L2Relative.root","READ"); // 2026 conditions + MCJEC
   assert(fk && !fk->IsZombie());
 
   curdir->cd();
@@ -143,10 +145,10 @@ void FikriJERSF() {
   
   TLegend *leg = tdrLeg(0.35,0.90-0.035*6,0.60,0.90);
   leg->SetTextSize(0.035);
-  leg->AddEntry(ps,"Prompt data + HCAL + PFHC","PLE");
+  leg->AddEntry(ps,"Prompt data + HCAL+PFHC+JEC","PLE");
   leg->AddEntry(pr,"Prompt data + HCAL (25E)","PLE"); // FTV31Oct25v2
   leg->AddEntry(pb,"Prompt data","PLE");
-  leg->AddEntry(pk,"Winter25 MC + HCAL + PFHC","LF");
+  leg->AddEntry(pk,"Winter25 MC + HCAL+PFHC+JEC","LF");
   leg->AddEntry(pn,"Winter25 MC + HCAL","LF");
   leg->AddEntry(pm,"Winter25 MC","LF"); // no QCD bkg
   
@@ -185,7 +187,7 @@ void FikriJERSF() {
   
   TLegend *leg1r = tdrLeg(0.35,0.90-0.035*3,0.60,0.90);
   leg1r->SetTextSize(0.035);
-  leg1r->AddEntry(hsr,"Prompt data + HCAL + PFHC","PLE");
+  leg1r->AddEntry(hsr,"Prompt data + HCAL+PFHC+JEC","PLE");
   leg1r->AddEntry(hrr,"Prompt data + HCAL (25E)","PLE"); // FTV31Oct25v2
   leg1r->AddEntry(hbr,"Prompt data","PLE");
   
@@ -249,10 +251,10 @@ void FikriJERSF() {
   
   TLegend *leg3 = tdrLeg(0.22,0.72-0.035*6,0.47,0.72);
   leg3->SetTextSize(0.035);
-  leg3->AddEntry(hs2,"Prompt + HCAL + PFHC","PLE");
+  leg3->AddEntry(hs2,"Prompt + HCAL+PFHC+JEC","PLE");
   leg3->AddEntry(hr2,"Prompt + HCAL (25E)","PLE"); // FTV31Oct25v2
   leg3->AddEntry(hb2,"Prompt data","PLE");
-  leg3->AddEntry(hk2,"Winter25  MC + HCAL + PFHC","LF");
+  leg3->AddEntry(hk2,"Winter25  MC + HCAL+PFHC+JEC","LF");
   leg3->AddEntry(hn2,"Winter25  MC + HCAL","LF");
   leg3->AddEntry(hm2,"Winter25  MC","LF");
   
@@ -351,11 +353,11 @@ void FikriJERSF() {
     
     TLegend *leg4 = tdrLeg(0.35,0.90-0.035*6,0.60,0.90);
     leg4->SetTextSize(0.035);
-    leg4->AddEntry(ppts,"Prompt data + HCAL + PFHC","PLE");
+    leg4->AddEntry(ppts,"Prompt data + HCAL+PFHC+JEC","PLE");
     leg4->AddEntry(pptr,"Prompt data + HCAL (25E)","PLE"); // FTV12Nov25
     //leg4->AddEntry(pptr,"FTV31Oct25 re-reco","PLE");
     leg4->AddEntry(pptb,"Prompt data","PLE");
-    leg4->AddEntry(pptk,"Winter25 MC + HCAL + PFHC","LF");
+    leg4->AddEntry(pptk,"Winter25 MC + HCAL+PFHC+JEC","LF");
     leg4->AddEntry(pptn,"Winter25 MC + HCAL","LF");
     leg4->AddEntry(pptm,"Winter25 MC","LF"); // w/o QCD bkg
   
@@ -423,10 +425,10 @@ void FikriJERSF() {
     
     TLegend *leg6 = tdrLeg(0.22,0.72-0.035*6,0.47,0.72);
     leg6->SetTextSize(0.035);
-    leg6->AddEntry(hpts2,"Prompt + HCAL + PFHC","PLE");
+    leg6->AddEntry(hpts2,"Prompt + HCAL+PFHC+JEC","PLE");
     leg6->AddEntry(hptr2,"Prompt + HCAL (25E)","PLE"); // FTV12Nov25, FTV31Oct25
     leg6->AddEntry(hptb2,"Prompt data","PLE");
-    leg6->AddEntry(hptk2,"Winter25  MC + HCAL + PFHC","LF");
+    leg6->AddEntry(hptk2,"Winter25  MC + HCAL+PFHC+JEC","LF");
     leg6->AddEntry(hptn2,"Winter25  MC + HCAL","LF");
     leg6->AddEntry(hptm2,"Winter25  MC","LF"); // w/o QCD bkg
     
