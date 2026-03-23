@@ -22,17 +22,26 @@ void FikriDepths() {
 
   //string se("24E");
   //string se("25C");
-  string se("25Cv2");
+  string se("25Cv1");
+  //string se("25Cv2");
+  //string se("25D");
+  //string se("25E");
+  //string se("25Fv1");
+  //string se("25Fv2");
+  //string se("25");
   //string sf("24F");
   //string sf("25C");
   //string sf("24E");
-  string sf("24Iv2");
-  string sm("S24");
-  //string sm("W25");
+  //string sf("24Iv2");
+  string sf("25");
+  //string sf("25D");
+  //string sm("S24");
+  string sm("W25");
 
   //string shfd("24Iv2");
   string shfd("25Cv2");
-  string shfm("S24");
+  //string shfm("S24");
+  string shfm("W25");
   
   map<string,const char*> mapsm;
   mapsm["S24"] = "MC24_GJ_Sherpa";
@@ -49,17 +58,20 @@ void FikriDepths() {
   
   //TFile *fe = new TFile("rootfiles/Fikri_JetDepths/Histo_Data24E_EGamma.root",
   //TFile *fe = new TFile(Form("rootfiles/Fikri_JetDepths_v2/Histo_Data%s_EGamma.root",ce),
-  TFile *fe = new TFile(Form("rootfiles/Fikri_JetDepths_2025C/Histo_Data%s_EGamma.root",ce),
+  //TFile *fe = new TFile(Form("rootfiles/Fikri_JetDepths_2025C/Histo_Data%s_EGamma.root",ce),
+  TFile *fe = new TFile(Form("rootfiles/Fikri_JetDepths_2025CDEF/Histo_Data%s_EGamma.root",ce),
 			"READ");
   assert(fe && !fe->IsZombie());
 
   //TFile *ff = new TFile("rootfiles/Fikri_JetDepths/Histo_Data24F_EGamma.root",
-  TFile *ff = new TFile(Form("rootfiles/Fikri_JetDepths_v2/Histo_Data%s_EGamma.root",cf),
+  //TFile *ff = new TFile(Form("rootfiles/Fikri_JetDepths_v2/Histo_Data%s_EGamma.root",cf), // 24Iv2
+  TFile *ff = new TFile(Form("rootfiles/Fikri_JetDepths_2025CDEF/Histo_Data%s_EGamma.root",cf), // 25
 			"READ");
   assert(ff && !ff->IsZombie());
 
   //TFile *fm = new TFile("rootfiles/Fikri_JetDepths/Histo_MC24_GJ_Sherpa.root",
-  TFile *fm = new TFile(Form("rootfiles/Fikri_JetDepths_v2/Histo_%s.root",cm2),
+  //TFile *fm = new TFile(Form("rootfiles/Fikri_JetDepths_v2/Histo_%s.root",cm2),
+  TFile *fm = new TFile(Form("rootfiles/Fikri_JetDepths_2025CDEF/Histo_%s.root",cm2),
 			"READ");
   assert(fm && !fm->IsZombie());
 
@@ -67,9 +79,11 @@ void FikriDepths() {
   //assert(fm2 && !fm2->IsZombie());
 
   //TFile *fhfd = new TFile(Form("rootfiles/Fikri_JetDepths_v2/Histo_Data%s_EGamma.root",chfd),"READ");
-  TFile *fhfd = new TFile(Form("rootfiles/Fikri_JetDepths_2025C/Histo_Data%s_EGamma.root",chfd),"READ");
+  //TFile *fhfd = new TFile(Form("rootfiles/Fikri_JetDepths_2025C/Histo_Data%s_EGamma.root",chfd),"READ");
+  TFile *fhfd = new TFile(Form("rootfiles/Fikri_JetDepths_2025CDEF/Histo_Data%s_EGamma.root",chfd),"READ");
   assert(fhfd && !fhfd->IsZombie());
-  TFile *fhfm = new TFile(Form("rootfiles/Fikri_JetDepths_v2/Histo_%s.root",chfm2),"READ");
+  //TFile *fhfm = new TFile(Form("rootfiles/Fikri_JetDepths_v2/Histo_%s.root",chfm2),"READ");
+  TFile *fhfm = new TFile(Form("rootfiles/Fikri_JetDepths_2025CDEF/Histo_%s.root",chfm2),"READ");
   assert(fhfm && !fhfm->IsZombie());
   
   curdir->cd();
@@ -81,28 +95,43 @@ void FikriDepths() {
   TProfile2D *p2e(0), *p2f(0), *p2c(0), *p2m(0);
   //p2e = (TProfile2D*)fe->Get("hp2_ProbePhotonCand_pt_vs_ProbeJet0_eta_vs_fracRespDBDepth1"); assert(p2e);
   p2e = (TProfile2D*)fe->Get("hp2_TagPhotonCand_pt_vs_ProbeJet0_eta_vs_fracRespDBDepth1"); assert(p2e);
+  /*
   p2f = (TProfile2D*)ff->Get("hp2_ProbePhotonCand_pt_vs_ProbeJet0_eta_vs_fracRespDBDepth1"); assert(p2f);
-  p2f = (TProfile2D*)ff->Get("hp2_ProbePhotonCand_pt_vs_ProbeJet0_eta_vs_fracRespDBDepth1"); assert(p2f);
+  p2f = (TProfile2D*)ff->Get("hp2_ProbePhotonCand_pt_vs_ProbeJet0_eta_vs_fracRespDBDepth1"); assert(p2f); // duplicate?
   p2m = (TProfile2D*)fm->Get("hp2_ProbePhotonCand_pt_vs_ProbeJet0_eta_vs_fracRespDBDepth1"); assert(p2m);
+  */
+  p2f = (TProfile2D*)ff->Get("hp2_TagPhotonCand_pt_vs_ProbeJet0_eta_vs_fracRespDBDepth1"); assert(p2f);
+  p2m = (TProfile2D*)fm->Get("hp2_TagPhotonCand_pt_vs_ProbeJet0_eta_vs_fracRespDBDepth1"); assert(p2m);
 
+  
   // 1b. Same for HO
   TProfile2D *p2e_ho(0), *p2f_ho(0), *p2m_ho(0);
   //p2e_ho = (TProfile2D*)fe->Get("hp2_ProbePhotonCand_pt_vs_ProbeJet0_eta_vs_fracRespDBDepth8"); assert(p2e_ho);
   p2e_ho = (TProfile2D*)fe->Get("hp2_TagPhotonCand_pt_vs_ProbeJet0_eta_vs_fracRespDBDepth8"); assert(p2e_ho);
+  /*
   p2f_ho = (TProfile2D*)ff->Get("hp2_ProbePhotonCand_pt_vs_ProbeJet0_eta_vs_fracRespDBDepth8"); assert(p2f_ho);
   p2m_ho = (TProfile2D*)fm->Get("hp2_ProbePhotonCand_pt_vs_ProbeJet0_eta_vs_fracRespDBDepth8"); assert(p2m_ho);
+  */
+  p2f_ho = (TProfile2D*)ff->Get("hp2_TagPhotonCand_pt_vs_ProbeJet0_eta_vs_fracRespDBDepth8"); assert(p2f_ho);
+  p2m_ho = (TProfile2D*)fm->Get("hp2_TagPhotonCand_pt_vs_ProbeJet0_eta_vs_fracRespDBDepth8"); assert(p2m_ho);
 
+  
   // 1b. Same for HF
   TProfile2D *p2e_hf(0), *p2f_hf(0), *p2m_hf(0);
   p2e_hf = (TProfile2D*)fe->Get("hp2_tnpHFLongShort_TagPhotonCand_pt_vs_ProbeJet0_eta_vs_fracRespDBhfLong"); assert(p2e_hf);
+  /*
   p2f_hf = (TProfile2D*)ff->Get("hp2_tnpHFLongShort_ProbePhotonCand_pt_vs_ProbeJet0_eta_vs_fracRespDBhfLong"); assert(p2f_hf);
   p2m_hf = (TProfile2D*)fm->Get("hp2_tnpHFLongShort_ProbePhotonCand_pt_vs_ProbeJet0_eta_vs_fracRespDBhfLong"); assert(p2m_hf);
+  */
+  p2f_hf = (TProfile2D*)ff->Get("hp2_tnpHFLongShort_TagPhotonCand_pt_vs_ProbeJet0_eta_vs_fracRespDBhfLong"); assert(p2f_hf);
+  p2m_hf = (TProfile2D*)fm->Get("hp2_tnpHFLongShort_TagPhotonCand_pt_vs_ProbeJet0_eta_vs_fracRespDBhfLong"); assert(p2m_hf);
+
   //TProfile2D *p2e_hfs(0), *p2f_hfs(0), *p2m_hfs(0);
 
   
   TH1D *hu = tdrHist("hu","Jet energy fraction vs tag",0,0.3,
 		     "Jet #eta",-3.15,3.15);
-  TH1D *hd = tdrHist("hd","Data / MC",0.1,1.7,
+  TH1D *hd = tdrHist("hd","Data / MC",0.4,1.6,//0.1,1.7,
 		     "Jet #eta",-3.15,3.15);
   extraText = "Private";
   //lumi_136TeV = "2024E (Re-reco) vs 2024F (Prompt)";
@@ -162,6 +191,11 @@ void FikriDepths() {
   int markerf[] = {kOpenCircle,kOpenCircle,kFullCircle};
   int colorf[] = {kRed-9,kRed,kRed};
   double sizef[] = {0.3,0.4,0.5};
+  //
+  int markerfe[] = {kOpenDiamond,kOpenDiamond,kFullDiamond};
+  int colorfe[] = {kOrange-9,kOrange+1,kOrange+1};
+  double sizefe[] = {0.4,0.5,0.6};
+  
   for (int ipt = 0; ipt != npt; ++ipt) {
     
     c1->cd(1);
@@ -240,10 +274,13 @@ void FikriDepths() {
     h1e->Divide(p1m);
     TH1D *h1f = p1f->ProjectionX(Form("h1f_%d",k_ho));
     h1f->Divide(p1m);
+    TH1D *h1fe = p1f->ProjectionX(Form("h1fe_%d",k_ho));
+    h1fe->Divide(p1e);
     
     tdrDraw(h1m,"HIST][",kNone,colorm[ipt],kSolid,-1,kNone, 0,0.5,sizem[ipt]);
     tdrDraw(h1e,"Pz",markere[ipt],colore[ipt],kSolid,-1,kNone,0,sizee[ipt]);
     tdrDraw(h1f,"Pz",markerf[ipt],colorf[ipt],kSolid,-1,kNone,0,sizef[ipt]);
+    tdrDraw(h1fe,"Pz",markerfe[ipt],colorfe[ipt],kSolid,-1,kNone,0,sizefe[ipt]);
 
     c1_ho->cd(2);
 
@@ -361,7 +398,8 @@ void FikriDepths() {
     TProfile2D *p2e(0), *p2m(0);
     //p2e = (TProfile2D*)fe->Get(Form("hp2_ProbePhotonCand_pt_vs_ProbeJet0_eta_vs_fracRespDBDepth%d",id)); assert(p2e);
     p2e = (TProfile2D*)fe->Get(Form("hp2_TagPhotonCand_pt_vs_ProbeJet0_eta_vs_fracRespDBDepth%d",id)); assert(p2e);
-    p2m = (TProfile2D*)fm->Get(Form("hp2_ProbePhotonCand_pt_vs_ProbeJet0_eta_vs_fracRespDBDepth%d",id)); assert(p2m);
+    //p2m = (TProfile2D*)fm->Get(Form("hp2_ProbePhotonCand_pt_vs_ProbeJet0_eta_vs_fracRespDBDepth%d",id)); assert(p2m);
+    p2m = (TProfile2D*)fm->Get(Form("hp2_TagPhotonCand_pt_vs_ProbeJet0_eta_vs_fracRespDBDepth%d",id)); assert(p2m);
 
     TProfile *p1e = p2e->ProfileY(Form("p1e_depth%d",id),k1,k2);
     TProfile *p1m = p2m->ProfileY(Form("p1m_depth%d",id),k1,k2);
@@ -460,11 +498,13 @@ void FikriDepths() {
 
   //p2d_hfl = (TProfile2D*)fhfd->Get("hp2_tnpHFLongShort_ProbePhotonCand_pt_vs_ProbeJet0_eta_vs_fracRespDBhfLong"); assert(p2d_hfl);
   p2d_hfl = (TProfile2D*)fhfd->Get("hp2_tnpHFLongShort_TagPhotonCand_pt_vs_ProbeJet0_eta_vs_fracRespDBhfLong"); assert(p2d_hfl);
-  p2m_hfl = (TProfile2D*)fhfm->Get("hp2_tnpHFLongShort_ProbePhotonCand_pt_vs_ProbeJet0_eta_vs_fracRespDBhfLong"); assert(p2m_hfl);
+  //p2m_hfl = (TProfile2D*)fhfm->Get("hp2_tnpHFLongShort_ProbePhotonCand_pt_vs_ProbeJet0_eta_vs_fracRespDBhfLong"); assert(p2m_hfl);
+  p2m_hfl = (TProfile2D*)fhfm->Get("hp2_tnpHFLongShort_TagPhotonCand_pt_vs_ProbeJet0_eta_vs_fracRespDBhfLong"); assert(p2m_hfl); // new 2025CDEF
 
   //p2d_hfs = (TProfile2D*)fhfd->Get("hp2_tnpHFLongShort_ProbePhotonCand_pt_vs_ProbeJet0_eta_vs_fracRespDBhfShort"); assert(p2d_hfs);
   p2d_hfs = (TProfile2D*)fhfd->Get("hp2_tnpHFLongShort_TagPhotonCand_pt_vs_ProbeJet0_eta_vs_fracRespDBhfShort"); assert(p2d_hfs);
-  p2m_hfs = (TProfile2D*)fhfm->Get("hp2_tnpHFLongShort_ProbePhotonCand_pt_vs_ProbeJet0_eta_vs_fracRespDBhfShort"); assert(p2m_hfs);
+  //p2m_hfs = (TProfile2D*)fhfm->Get("hp2_tnpHFLongShort_ProbePhotonCand_pt_vs_ProbeJet0_eta_vs_fracRespDBhfShort"); assert(p2m_hfs);
+  p2m_hfs = (TProfile2D*)fhfm->Get("hp2_tnpHFLongShort_TagPhotonCand_pt_vs_ProbeJet0_eta_vs_fracRespDBhfShort"); assert(p2m_hfs); // new 2025CDEF
 
   
   //p2d_hfe = (TProfile2D*)fhfd->Get("hp2_tnpHF_ProbePhotonCand_pt_vs_ProbeJet0_eta_vs_fracRespDBhfem"); assert(p2d_hfe);
