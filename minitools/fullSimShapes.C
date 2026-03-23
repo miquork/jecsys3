@@ -17,12 +17,13 @@
 
 // Settings
 bool patchECALm3 = false;//true;
-bool plotToyPF = true;
+bool plotToyPF = false;//true;
 bool doProduction = true; // produce lines for globalFitSettings.h
 string CorLevel = "L1L2L3";
 bool is1M = false;
 #include "../../jecsys2020/globalFitL3Res.C" // toyPF parameterizations
 
+using std::move;
 
 // Helper functions
 void scaleError(TH1D *h, double scale); // scale histogram error
@@ -56,8 +57,13 @@ void fullSimShapes() {
   //fullSimShape("hhpfc"); // HcalPFcut in MC
   //fullSimShape("hhnoise"); // HB noise in data (RunC, RunG)
   //fullSimShape("hbtime"); // HB noise in data (RunC, RunG)
-  fullSimShape("hbsipm"); // SiPM parameters
+  //fullSimShape("hbsipm"); // SiPM parameters
 
+  fullSimShape("hbd1");
+  fullSimShape("hbd2");
+  fullSimShape("hbd3");
+  fullSimShape("hbd4");
+  
   /*
   Fullsimshape("hp3");
   fullSimShape("hc3");
@@ -145,7 +151,8 @@ void fullSimShape(string mode) {
   //TFile *f = new TFile("rootfiles/HBtiming_v1.root","READ");
   //TFile *f = new TFile("rootfiles/HBtiming_v2.root","READ"); // hbtime
   //TFile *f = new TFile("rootfiles/HB_SiPM_down_100k.root","READ"); // hbsipm
-  TFile *f = new TFile("rootfiles/HB_SiPM_down_1M.root","READ"); // hbsipm
+  //TFile *f = new TFile("rootfiles/HB_SiPM_down_1M.root","READ"); // hbsipm
+  TFile *f = new TFile("rootfiles/Mikael_fullSimShapes/JME-Run3Summer22_1M_variations.root","READ"); // hbsipm
   assert(f && !f->IsZombie()); is1M = true;
 
   // Open input file for toyPF placeholders
@@ -380,6 +387,10 @@ void fullSimShape(string mode) {
   func["hhnoise"] = clogpol6;
   func["hbtime"] = clogpol6;//3_fix15;//6;
   func["hbsipm"] = clogpol6;
+  func["hbd1"] = clogpol6;
+  func["hbd2"] = clogpol6;
+  func["hbd3"] = clogpol6;
+  func["hbd4"] = clogpol6;
   //
   func["cmb"] = clogpol6;
   // observables
@@ -436,6 +447,10 @@ void fullSimShape(string mode) {
   funcs["chf"]["hhnoise"] = clogpol6;
   funcs["chf"]["hbtime"] = clogpol6;//3_fix15;//6;
   funcs["chf"]["hbsipm"] = clogpol6;
+  funcs["chf"]["hbd1"] = clogpol6;
+  funcs["chf"]["hbd2"] = clogpol6;
+  funcs["chf"]["hbd3"] = clogpol6;
+  funcs["chf"]["hbd4"] = clogpol6;
   //
   funcs["cmb"]["chf"] = clogpol6;
   //
@@ -484,6 +499,10 @@ void fullSimShape(string mode) {
   funcs["nhf"]["hhnoise"] = clogpol6;
   funcs["nhf"]["hbtime"] = clogpol6;//3_fix15;//6;
   funcs["nhf"]["hbsipm"] = clogpol6;
+  funcs["nhf"]["hbd1"] = clogpol6;
+  funcs["nhf"]["hbd2"] = clogpol6;
+  funcs["nhf"]["hbd3"] = clogpol6;
+  funcs["nhf"]["hbd4"] = clogpol6;
   //
   funcs["cmb"]["nhf"] = clogpol6;
   //
@@ -532,6 +551,10 @@ void fullSimShape(string mode) {
   funcs["nef"]["hhnoise"] = clogpol6;
   funcs["nef"]["hbtime"] = clogpol6;//3_fix15;//6;
   funcs["nef"]["hbsipm"] = clogpol6;
+  funcs["nef"]["hbd1"] = clogpol6;
+  funcs["nef"]["hbd2"] = clogpol6;
+  funcs["nef"]["hbd3"] = clogpol6;
+  funcs["nef"]["hbd4"] = clogpol6;
   //
   funcs["cmb"]["nef"] = clogpol6;
 
@@ -602,6 +625,10 @@ void fullSimShape(string mode) {
   toyf["chf"]["hhnoise"] = 0;
   toyf["chf"]["hbtime"] = 0;
   toyf["chf"]["hbsipm"] = 0;
+  toyf["chf"]["hbd1"] = 0;
+  toyf["chf"]["hbd2"] = 0;
+  toyf["chf"]["hbd3"] = 0;
+  toyf["chf"]["hbd4"] = 0;
   toyf["chf"]["cmb"] = 0;
   //
   toyf["nhf"]["hp3"] = 0;
@@ -625,6 +652,10 @@ void fullSimShape(string mode) {
   toyf["nhf"]["hhnoise"] = 0;
   toyf["nhf"]["hbtime"] = 0;
   toyf["nhf"]["hbsipm"] = 0;
+  toyf["nhf"]["hbd1"] = 0;
+  toyf["nhf"]["hbd2"] = 0;
+  toyf["nhf"]["hbd3"] = 0;
+  toyf["nhf"]["hbd4"] = 0;
   toyf["nhf"]["cmb"] = 0;
   //
   toyf["nef"]["hp3"] = 0;
@@ -648,6 +679,10 @@ void fullSimShape(string mode) {
   toyf["nef"]["hhnoise"] = 0;
   toyf["nef"]["hbtime"] = 0;
   toyf["nef"]["hbsipm"] = 0;
+  toyf["nef"]["hbd1"] = 0;
+  toyf["nef"]["hbd2"] = 0;
+  toyf["nef"]["hbd3"] = 0;
+  toyf["nef"]["hbd4"] = 0;
   toyf["nef"]["cmb"] = 0;
 
   // Map new fullSimShapes
@@ -708,13 +743,18 @@ void fullSimShape(string mode) {
   //name["hbtime"] = "delayQIE5";
   name["hbtime"] = "delayQIEfixm5";
   name["hbsipm"] = "sipmNonlinDn";
+  name["hbd1"] = "HBdepth1div1p2_eta1p3";
+  name["hbd2"] = "HBdepth2div1p2_eta1p3";
+  name["hbd3"] = "HBdepth3div1p2_eta1p3";
+  name["hbd4"] = "HBdepth4div1p2_eta1p3";
   //
   name["cmb"] = "Combined";
   // observables
   name["Rjet"] = "Rjet";
   name["chf"] = "chf";
   name["nhf"] = "nhf";
-  name["nef"] = "gammaf";
+  //name["nef"] = "gammaf";
+  name["nef"] = "nemf";
 
   // Maps variations/observables to labels
   map<string,const char*> label;
@@ -893,13 +933,20 @@ void fullSimShape(string mode) {
   for (unsigned int i = 0; i != vars.size(); ++i) {
 
     string sv = vars[i];
+    assert(name.find(mode)!=name.end());
+    assert(name.find(sv)!=name.end());
     const char *cobs = (sysMode ? name[mode] : name[sv]);
     const char *csys = (sysMode ? name[sv] : name[mode]);
     string obs = cobs;
     string sys = csys;
 
-    TH1D *hv = (TH1D*)f->Get(Form("%s_%s",cobs,csys));
-    if (!hv) hv = (TH1D*)f->Get(Form("%sPuppi_%s",cobs,csys));
+    TObject *obj = f->Get(Form("%s_%s",cobs,csys));
+    if (!obj) obj = f->Get(Form("%sPuppi_%s",cobs,csys));
+    if (!obj) cout << "Missing " << cobs << " " << csys << endl << flush;
+    assert(obj);
+    TH1D *hv = (obj->InheritsFrom("TProfile") ?
+		((TProfile*)obj)->ProjectionX(Form("h%s_%s",cobs,csys)) :
+		(TH1D*)obj);
     if (mode=="cmb") { // Combination mode
 
       assert(cmbs.size()!=0);
@@ -1077,6 +1124,7 @@ void fullSimShape(string mode) {
       if (isn1 && obs=="chf")  hv->SetBinContent(1,-1.0*k);
       if (isn1 && obs=="nhf")  hv->SetBinContent(1,+0.5*k);
       if (isn1 && obs=="gammaf")  hv->SetBinContent(1,+0.5*k);
+      if (isn1 && obs=="nemf")  hv->SetBinContent(1,+0.5*k);
       // Special treatment of tv402 to improve 15-100 GeV for global fit
       if (sv2=="tv402") {
 	//if (obs=="Rjet") hv->SetBinContent(1,-0.3);
@@ -1094,7 +1142,7 @@ void fullSimShape(string mode) {
 	  hv->SetBinContent(7, hv->GetBinContent(7)-0.10); // 100
 	  hv->SetBinContent(8, hv->GetBinContent(8)-0.10); // 150
 	}
-	if (obs=="gammaf")  { //hv->SetBinContent(1,+0.1);
+	if (obs=="gammaf" || obs=="nemf")  { //hv->SetBinContent(1,+0.1);
 	  // Ensure ECAL>HCAL>0 at pT<100 GeV, fix points with anomalous Rjet
 	  hv->SetBinContent(3, hv->GetBinContent(3)-0.30+0.03); // 30
 	  hv->SetBinError(3, 0.05); // 30
@@ -1210,6 +1258,9 @@ void fullSimShape(string mode) {
   double maxy(3-1e-5), miny(-2+1e-5);
   if (mode=="tv3") { maxy = 10; miny = -10; }
   if (mode=="hbsipm") { maxy = 6-1e-5; miny = -8+1e-5; }
+  if (mode=="hbd1" || mode=="hbd2" || mode=="hbd3" || mode=="hbd4") {
+    miny = -4+1e-5; maxy = 4-1e-5; 
+  }
   const char *title = (mode=="Rjet" ? "Response change (%)" :
 		       sysMode ? "PF composition change (10^{-2})" :
 		       "PF changes (% or 10^{-2})");
