@@ -21,8 +21,8 @@ bool fitD = true; // Dijet (pT,ave)
 bool fitP = true; // Dijet (pT,probe)
 bool fitJ = true; // Dijet (pT,tag)
 // NB: automatically switched off for closure
-bool fitRC = false;//true; // Random Cone (rootfiles/randomConeL2L3Res.root)
-bool fitRC1 = false;//true; // Random Cone eta+/eta- (rootfiles/randomConeL2L3Res.root)
+bool fitRC = true; // Random Cone (rootfiles/randomConeL2L3Res.root)
+bool fitRC1 = true; // Random Cone eta+/eta- (rootfiles/randomConeL2L3Res.root)
 
 bool drawPlusMinus = false; // draw eta+, eta- splits
 bool drawUncleaned = false; // Draw uncleaned data in *AllEta*.pdf
@@ -381,7 +381,7 @@ TH1D *drawCleaned(TH1D *h, double eta, string data, string sdraw,
       if (eta<2.650 && ptmin>600.) {
 	if (h->GetBinError(i)>0.05 || hc->GetBinError(i-1)==0) keep = false;
       }
-
+      
     } // data=="Z"
     
     if (data=="G") { // HLT_Photon50EB_TightId_TightIso, HLT_Photon30EB...
@@ -491,6 +491,21 @@ TH1D *drawCleaned(TH1D *h, double eta, string data, string sdraw,
       }
       // Additional veto for 2024BC 3.3/fb golden closure (bad errors?)
       //if (doClosure && emax>0.5*sqrts) keep = false;
+
+      // Additional cuts for early low statistics 2026B
+      if (tr.Contains("26B")) {
+
+	double err = hc->GetBinError(i);
+	//if (emin>1000 && err<0.01) keep = false;
+	//if (emin>1500 && err<0.01) keep = false;
+	//if (emin>2000 && err<0.01) keep = false;
+	if (eta<1.566 && emin>2000 && err<0.01) keep = false;
+	if (eta>1.566 && emin>2500 && err<0.01) keep = false;
+        //if (emin>2000 && err<0.02) keep = false;
+	//if (emin>3000 && err<0.04) keep = false;
+	if (fabs(eta)>4 && emin>3000 && err<0.04) keep = false;
+      }
+      
     } // data=="J"
     
     if (data=="P") {
@@ -573,7 +588,11 @@ TH1D *drawCleaned(TH1D *h, double eta, string data, string sdraw,
 	 (eta>=4.191 && eta<5.191 && (y>1.65 || y<0.50)))) {
       keep = false;
     }
-      
+
+    // Remove couple of extra points in early 2026B
+    if (tr.Contains("26B") && eta>4.014 && eta<4.191 && y<0.8) keep = false;
+    if (tr.Contains("26B") && eta>4.363 && eta<4.538 && y<0.7) keep = false;
+    
     
     // Remove points we don't want to keep
     if (!keep) {
@@ -682,7 +701,7 @@ void L2Res(bool _doClosure = doClosure) {
       */
 
       //"2025CDEFG", "2025G", "2026A",
-      "2026B",
+      "2025G", "2026B",
       //"2025C0","2025CT"
     };
 
@@ -717,7 +736,7 @@ void L2Res(bool _doClosure = doClosure) {
       //"Winter25","Winter25"
 
       //"Summer24", "Summer24", "Summer24",
-      "Summer24"
+      "Summer24", "Summer24"
     };  // V9M
 
   //"Summer24"};  // V9M
@@ -1117,9 +1136,12 @@ void L2Res(bool _doClosure = doClosure) {
     frc = new TFile("rootfiles/randomConeL2L3Res_for_V9M.root","READ");
     //frc = new TFile("rootfiles/randomConeL2L3Res_for_V9M_plus_2025C.root","READ");
   }
-  else if (tr.Contains("2025") || tr.Contains("2026")) {// &&
+  else if (tr.Contains("2025")) {
     //frc1 = new TFile("rootfiles/randomConeL2L3Res_for_asymm_V2M.root","READ");
     frc = frc1 = new TFile("rootfiles/randomConeL2L3Res_for_Prompt25_V3M.root","READ");
+  }
+  else if (tr.Contains("2026")) {
+    frc = frc1 = new TFile("rootfiles/randomConeL2L3Res_for_Prompt26_V1M.root","READ");
   }
   TH1D *hrc_vsEta(0), *hrc1_vsEta(0);
   if (frc) {

@@ -48,7 +48,7 @@ void randomConeL2L3Res() {
   randomConeL2L3Res_era("2024H_nib1");
   randomConeL2L3Res_era("2024I_nib1");
   */
-
+  /*
   //randomConeL2L3Res_era("2025B");
   randomConeL2L3Res_era("2025C");
   randomConeL2L3Res_era("2025D");
@@ -56,6 +56,11 @@ void randomConeL2L3Res() {
   randomConeL2L3Res_era("2025F");
   randomConeL2L3Res_era("2025G");
   randomConeL2L3Res_era("2025CDEFG");
+  */
+
+  //randomConeL2L3Res_era("2026A");
+  randomConeL2L3Res_era("2025G");
+  randomConeL2L3Res_era("2026B");
   
   exit(0);
 }
@@ -78,10 +83,15 @@ void randomConeL2L3Res_era(string era) {
   TFile *frc25 = new TFile("rootfiles/Hirak_2025CDEFG/compare_sf_Run2025-Summer24MC.root","READ");
   assert(frc25 && !frc25->IsZombie());
 
+  //TFile *frc26 = new TFile("rootfiles/Hirak_2026B/compare_sf_Run2026-Summer24MC.root","READ");
+  TFile *frc26 = new TFile("rootfiles/Hirak_2026B/compare_sf_Run2026-Summer24MC_mu60-v3.root","READ");
+  assert(frc26 && !frc26->IsZombie());
+
   
   curdir->cd();
 
   const char *cr = era.c_str();
+  TString so = cr;
   TString s = cr; TPRegexp r("_nib[0-9]+");
   if (s.Contains("2024H") || s.Contains("2024I"))
       r.Substitute(s, "", "g");
@@ -94,6 +104,8 @@ void randomConeL2L3Res_era(string era) {
   if (s.Contains("2024E")) {
     s.ReplaceAll("E-v1","E"); s.ReplaceAll("E-v2","E");
   }
+  if (so.Contains("2026"))
+    s.ReplaceAll("20","");
     
   const char *cr2 = s.Data();
   cout << "Reading RC for era " << cr2 << endl << flush;
@@ -103,6 +115,7 @@ void randomConeL2L3Res_era(string era) {
   TH1D *hrc(0);
   if (s.Contains("2024")) hrc = (TH1D*)frc->Get(Form("Run%s",cr2));
   if (s.Contains("2025")) hrc = (TH1D*)frc25->Get(Form("Run%s",cr2));
+  if (so.Contains("2026")) hrc = (TH1D*)frc26->Get(Form("%s",cr2));
   /*
   if (s.Contains("2025C") && !hrc) hrc = (TH1D*)frc25->Get("Run2025B");
   if (s.Contains("2025D") && !hrc) hrc = (TH1D*)frc25->Get("Run2025B");
@@ -116,7 +129,8 @@ void randomConeL2L3Res_era(string era) {
   
   // Correct for sigmaMB=69.2mb->75.3mb
   TH1D *hrc753 = (TH1D*)hrc->Clone(Form("hrc753_%s",cr));
-  hrc753->Scale(69.2/75.3);
+  if (s.Contains("2024") || s.Contains("2025"))
+    hrc753->Scale(69.2/75.3);
 
   // For 2024CDE re-reco, apply extra scaling to match HF
   if (s.Contains("reReco") &&
@@ -165,6 +179,12 @@ void randomConeL2L3Res_era(string era) {
 	//hrc753jes->SetBinContent(i, era=="2025C" ? 0.85*r : 0.90*r);
 	hrc753jes->SetBinContent(i, era=="2025C" ? 0.83*r : 0.88*r);
       if (i==1) cout << "Extra scaling for 2025 HF" << endl;
+    }
+    else if (so.Contains("2026")) {
+      //if (i==1) cout << "2026: no extra scalings so far " << endl << flush;
+      if (fabs(eta)>2.964)
+	hrc753jes->SetBinContent(i, 0.93*r);
+      if (i==1) cout << "Extra scaling for 2026 HF, as in 2025, but smaller (0.93 vs 0.83-0.88" << endl;
     }
     else if (fabs(eta)<2.65) {
       hrc753jes->SetBinContent(i, (r-1)*0.4+1);
@@ -267,9 +287,13 @@ void randomConeL2L3Res_era(string era) {
   //TFile *fl2 = new TFile("rootfiles/L2Res_2025CDEFG_V2M.root","READ");
   //TFile *fl2 = new TFile("rootfiles/L2Res_2025CDEFG_V3M_withoutRC_v1.root","READ");
   TFile *fl2_norc = new TFile("rootfiles/L2Res_2025CDEFG_V3M_withoutRC.root","READ");
+  if (so.Contains("2026"))
+    fl2_norc = new TFile("rootfiles/L2Res_2026B_noincjet_norc.root","READ");
   assert(fl2_norc && !fl2_norc->IsZombie());
   //TFile *fl2_wrc = new TFile("rootfiles/L2Res_2025CDEFG_V3M_withRC_v2.root","READ");
   TFile *fl2_wrc = new TFile("rootfiles/L2Res_2025CDEFG_V3M_withRC_v3.root","READ");
+  if (so.Contains("2026"))
+    fl2_wrc = new TFile("rootfiles/L2Res_2026B_withRC_v2.root","READ");
   //TFile *fl2 = new TFile("rootfiles/L2Res_2025CDEFG_V2M_withRC.root","READ");
   assert(fl2_wrc && !fl2_wrc->IsZombie());
 
@@ -400,6 +424,9 @@ void randomConeL2L3Res_era(string era) {
   //leg->AddEntry(hrc,"RC@69.2 mb","L");
   //leg->AddEntry(hrc753,"RC@75.3 mb","L");
   leg->AddEntry(hrc13,"RC SF / (|#eta|<1.3)","L");
+  //if (so.Contains("2026"))
+  //leg->AddEntry(hrc13jes,"RC / (|#eta|<1.3)","FL");
+  //else
   leg->AddEntry(hrc13jes,"RC#otimesf(neutral) / (|#eta|<1.3)","FL");
   leg->AddEntry(hl2_norc_1_rc,"JES(L2Res)@10 GeV (pre-RC)","PLE");
   leg->AddEntry(hl2_wrc_1_rc,"JES(L2Res)@10 GeV (post-RC)","PLE");
