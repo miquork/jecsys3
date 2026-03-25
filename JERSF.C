@@ -360,8 +360,11 @@ void JERSF() {
     "2024G_nib1","2024G_nib2","2024H_nib1","2024I_nib1",
     //"2024E_noRW","2024E_692mb","2024E_753mb"
     */
+    /*
     "2025C","2025D","2025E","2025F","2025G",
     "2025CDEFG","2025DEFG"
+    */
+    "2025G","2026B"
     //"2025C0","2025CT"
     //"2025C","2025D"
     //"PhiBase","PhiIM","PhiMoM"
@@ -421,7 +424,10 @@ void JERSF() {
     //"2024E_noRW","2024E_692mb","2024E_753mb" //Pr24
     */
     //"Winter25","Winter25","Winter25","Winter25","Winter25"
+    /*
     "Summer24","Summer24","Summer24","Summer24","Summer24",
+    "Summer24","Summer24"
+    */
     "Summer24","Summer24"
     //"Winter25","Winter25"
     //"Winter25","Winter25","Winter25"
@@ -863,13 +869,13 @@ void JERSF() {
   TLatex *tex = new TLatex();
   tex->SetNDC(); tex->SetTextSize(0.045);
 
-  #include "Config.C"
+  //#include "Config.C"
   
   // Draw reference region JER
   double eps = 1e-4;
-  TH1D *h0 = tdrHist("h0","JER",0.+eps,0.3-eps);
+  TH1D *h0 = tdrHist(Form("h0_%s",cr),"JER",0.+eps,0.3-eps);
   //TH1D *h0d = tdrHist("h0d","JER SF",0.5+eps,3.0-eps);
-  TH1D *h0d = tdrHist("h0d","JER SF",0.5+eps,2.0-eps);
+  TH1D *h0d = tdrHist(Form("h0d_%s",cr),"JER SF",0.5+eps,2.0-eps);
   if (skipG) h0d->GetYaxis()->SetRangeUser(0.75+eps,1.5-eps);
   lumi_136TeV = Form("%s - %s",cr,cm);
   extraText = "Private";
@@ -1320,10 +1326,10 @@ void JERSF() {
 
   // Draw summary of final results in a single plot
   double ymin(0.9), ymax(2.8);
-  TH1D *hy = tdrHist("hy","JER SF",ymin,ymax,"|#eta|",0,5.2);
+  TH1D *hy = tdrHist(Form("hy_%s",cr),"JER SF",ymin,ymax,"|#eta|",0,5.2);
   lumi_136TeV = Form("%s - %s",cr,cm);
   extraText = "Private";
-  TCanvas *cy = tdrCanvas("cy",hy,8,33,kSquare);
+  TCanvas *cy = tdrCanvas(Form("cy_%s",cr),hy,8,33,kSquare);
 
   l->SetLineStyle(kDotted);
   l->DrawLine(1.3,ymin,1.3,2.0);
@@ -1364,8 +1370,8 @@ void JERSF() {
 
   
   // Draw chi2 to have quick control of fit quality
-  TH1D *hz = tdrHist("hz","Fit #chi^{2} / NDF",0,10,"|#eta|",0,5.2);
-  TCanvas *cz = tdrCanvas("cz",hz,8,33,kSquare);
+  TH1D *hz = tdrHist(Form("hz_%s",cr),"Fit #chi^{2} / NDF",0,10,"|#eta|",0,5.2);
+  TCanvas *cz = tdrCanvas(Form("cz_%s",cr),hz,8,33,kSquare);
 
   l->SetLineStyle(kDashed);
   l->DrawLine(0,1,5.2,1);
@@ -1391,7 +1397,7 @@ void JERSF() {
   //ofstream txt(Form("textFiles/Prompt24/Prompt24_%s_JRV6M_MC_SF_AK4PFPuppi.txt",cr));
   //ofstream txt(Form("textFiles/Prompt24/Prompt24_%s_JRV7M_MC_SF_AK4PFPuppi.txt",cr));
   //ofstream txt(Form("textFiles/Prompt24/Prompt24_%s_JRV9M_MC_SF_AK4PFPuppi.txt",cr));
-  ofstream txt(TString(cr).Contains("25") ? Form("textFiles/Prompt25/Prompt25_%s_JRV3M_MC_SF_AK4PFPuppi.txt",cr) : Form("textFiles/ReReco24/ReReco24_%s_JRV9M_MC_SF_AK4PFPuppi.txt",cr));
+  ofstream txt(tr.Contains("25") ? Form("textFiles/Prompt25/Prompt25_%s_JRV3M_MC_SF_AK4PFPuppi.txt",cr) : tr.Contains("26") ? Form("textFiles/Prompt26/Prompt26_%s_JRV0M_MC_SF_AK4PFPuppi.txt",cr) : Form("textFiles/ReReco24/ReReco24_%s_JRV9M_MC_SF_AK4PFPuppi.txt",cr));
   txt << "{1 JetEta 1 JetPt "
       << "sqrt([0]*fabs([0])/(x*x)+[1]*[1]/x+[2]*[2])/"
       << "sqrt([3]*fabs([3])/(x*x)+[4]*[4]/x+[5]*[5])"

@@ -2778,7 +2778,7 @@ void L2Res(bool _doClosure = doClosure) {
   //////////////////////////////////
   
   // 10a: Original eta-symmetric parameterization vs pTref
-  string ftxtname = (tr.Contains("25") ? Form("textfiles/Prompt25/Prompt25_Run%s_V4M_DATA_L2ResidualVsPtRef_AK4PFPuppi.txt",cr) : Form("textfiles/ReReco24/ReReco24_Run%s_V10M_DATA_L2ResidualVsPtRef_AK4PFPuppi.txt",cr));
+  string ftxtname = (tr.Contains("25") ? Form("textfiles/Prompt25/Prompt25_Run%s_V4M_DATA_L2ResidualVsPtRef_AK4PFPuppi.txt",cr) : tr.Contains("26") ? Form("textfiles/Prompt26/Prompt26_Run%s_V0M_DATA_L2ResidualVsPtRef_AK4PFPuppi.txt",cr) : Form("textfiles/ReReco24/ReReco24_Run%s_V10M_DATA_L2ResidualVsPtRef_AK4PFPuppi.txt",cr));
   cout << "Writing results to text file " << ftxtname << endl << flush;
   ofstream ftxt(ftxtname.c_str());
 
@@ -2808,7 +2808,7 @@ void L2Res(bool _doClosure = doClosure) {
   }
 
   // 10b: Original eta-asymmetric parameterization vs pTref
-  string ftxtname1 = (tr.Contains("25") ? Form("textfiles/Prompt25/Prompt25_Run%s_V4M_DATA_L2ResidualVsPtRefAsymm_AK4PFPuppi.txt",cr) : Form("textfiles/ReReco24/ReReco24_Run%s_V10M_DATA_L2ResidualVsPtRefAsymm_AK4PFPuppi.txt",cr));
+  string ftxtname1 = (tr.Contains("25") ? Form("textfiles/Prompt25/Prompt25_Run%s_V4M_DATA_L2ResidualVsPtRefAsymm_AK4PFPuppi.txt",cr) : tr.Contains("26") ? Form("textfiles/Prompt26/Prompt26_Run%s_V0M_DATA_L2ResidualVsPtRefAsymm_AK4PFPuppi.txt",cr) : Form("textfiles/ReReco24/ReReco24_Run%s_V10M_DATA_L2ResidualVsPtRefAsymm_AK4PFPuppi.txt",cr));
   cout << "Writing results to text file " << ftxtname1 << endl << flush;
   ofstream ftxt1(ftxtname1.c_str());
 
@@ -2841,7 +2841,7 @@ void L2Res(bool _doClosure = doClosure) {
   }
 
   // 10c: Re-parameterization vs pTraw (of symmetric response)
-  string ftxtname2 = (tr.Contains("25") ? Form("textfiles/Prompt25/Prompt25_Run%s_V4M_DATA_L2Residual_AK4PFPuppi.txt",cr) : Form("textfiles/ReReco24/ReReco24_Run%s_V10M_DATA_L2Residual_AK4PFPuppi.txt",cr));
+  string ftxtname2 = (tr.Contains("25") ? Form("textfiles/Prompt25/Prompt25_Run%s_V4M_DATA_L2Residual_AK4PFPuppi.txt",cr) : tr.Contains("26") ? Form("textfiles/Prompt26/Prompt26_Run%s_V0M_DATA_L2Residual_AK4PFPuppi.txt",cr) : Form("textfiles/ReReco24/ReReco24_Run%s_V10M_DATA_L2Residual_AK4PFPuppi.txt",cr));
   cout << "Writing results to text file " << ftxtname2 << endl << flush;
   ofstream ftxt2(ftxtname2.c_str());
   

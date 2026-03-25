@@ -51,7 +51,8 @@ void createL2L3ResTextFile() {
 		    //0.88+1e-4,1.21-1e-4,"p_{T,ref} (GeV)",ptmin,ptmax);
   //lumi_136TeV = Form("2024, %s","109 fb^{-1}");
   //lumi_136TeV = Form("2025, %s","X fb^{-1}");
-  lumi_136TeV = Form("2024 partial re-reco, %s","109 fb^{-1}");
+  //lumi_136TeV = Form("2024 partial re-reco, %s","109 fb^{-1}");
+  lumi_136TeV = Form("2026B, %s","1.2 fb^{-1}");
   TCanvas *c1 = tdrCanvas("c1",h,8,11,kSquare);
   c1->SetLeftMargin(0.17);
   c1->SetRightMargin(0.03);
@@ -105,6 +106,7 @@ void createL2L3ResTextFile() {
   createL2L3ResTextFiles("2024_nib");
   */
 
+  /*
   //createL2L3ResTextFiles("2024F_nib1");
   //createL2L3ResTextFiles("2024I_nib1");
   createL2L3ResTextFiles("2025CDEFG");
@@ -114,6 +116,9 @@ void createL2L3ResTextFile() {
   createL2L3ResTextFiles("2025E");
   createL2L3ResTextFiles("2025F");
   createL2L3ResTextFiles("2025G");
+  */
+  createL2L3ResTextFiles("2025G");
+  createL2L3ResTextFiles("2026B");
   
   c1->cd();
   gPad->RedrawAxis();
@@ -124,7 +129,8 @@ void createL2L3ResTextFile() {
   //c1->SaveAs("pdf/createL2L3ResTextFile_ReReco24_V10M_VsPtRef.pdf");
   //c1->SaveAs("pdf/createL2L3ResTextFile_Prompt25_V2M_VsPtRef.pdf");
   //c1->SaveAs("pdf/createL2L3ResTextFile_Prompt25_V3M_VsPtRef.pdf");
-  c1->SaveAs("pdf/createL2L3ResTextFile_Prompt25_V4M_VsPtRef.pdf");
+  //c1->SaveAs("pdf/createL2L3ResTextFile_Prompt25_V4M_VsPtRef.pdf");
+  c1->SaveAs("pdf/createL2L3ResTextFile_Prompt26_V0M_VsPtRef.pdf");
   
   c3->cd();
   gPad->RedrawAxis();
@@ -135,7 +141,8 @@ void createL2L3ResTextFile() {
   //c3->SaveAs("pdf/createL2L3ResTextFile_ReReco24_V10M_VsPtRaw.pdf");
   //c3->SaveAs("pdf/createL2L3ResTextFile_Prompt25_V2M_VsPtRaw.pdf");
   //c3->SaveAs("pdf/createL2L3ResTextFile_Prompt25_V3M_VsPtRaw.pdf");
-  c3->SaveAs("pdf/createL2L3ResTextFile_Prompt25_V4M_VsPtRaw.pdf");
+  //c3->SaveAs("pdf/createL2L3ResTextFile_Prompt25_V4M_VsPtRaw.pdf");
+  c3->SaveAs("pdf/createL2L3ResTextFile_Prompt26_V0M_VsPtRaw.pdf");
 
 } // createL2L3ResTextFile
 
@@ -252,6 +259,8 @@ void createL2L3ResTextFiles(string set) {
   color["2025E"] = kOrange;
   color["2025F"] = kPink;//kPink+1;
   color["2025G"] = kRed;//kPink;
+
+  color["2026B"] = kGreen+2;
   
   h->Fit(f1,"QRN");
   h->Fit(f1,"QRNM");
@@ -417,12 +426,12 @@ void createL2L3ResTextFiles(string set) {
   // Remember to copy L2Res .txt files by hand to input directory
   // Hand-copying reduces risk of accidental overwriting after L2Res closed
   //sin = (tr.Contains("25") ? Form("textFiles/Prompt25_V3M/Prompt25_Run%s_V3M_DATA_L2ResidualVsPtRef_AK4PFPuppi.txt",cs) : Form("textFiles/ReReco24_V10M/ReReco24_Run%s_V10M_DATA_L2ResidualVsPtRef_AK4PFPuppi.txt",cs));
-  sin = (tr.Contains("25") ? Form("textFiles/Prompt25/Prompt25_Run%s_V4M_DATA_L2ResidualVsPtRefAsymm_AK4PFPuppi.txt",cs) : Form("textFiles/ReReco24_V10M/ReReco24_Run%s_V10M_DATA_L2ResidualVsPtRef_AK4PFPuppi.txt",cs)); // TMPT
+  sin = (tr.Contains("25") ? Form("textFiles/Prompt25/Prompt25_Run%s_V4M_DATA_L2ResidualVsPtRefAsymm_AK4PFPuppi.txt",cs) : tr.Contains("26") ? Form("textFiles/Prompt26/Prompt26_Run%s_V0M_DATA_L2ResidualVsPtRefAsymm_AK4PFPuppi.txt",cs) : Form("textFiles/ReReco24_V10M/ReReco24_Run%s_V10M_DATA_L2ResidualVsPtRef_AK4PFPuppi.txt",cs)); // TMPT
   // Output files go to generic directory. Copy by hand to final output
   // Hand-copying reduces risk of accidental overwriting if rerunning L2L3Res
   //sout2 = (tr.Contains("25") ? Form("textFiles/Prompt25/Prompt25_Run%s_V3M_DATA_L2L3ResidualVsPtRef_AK4PFPuppi.txt",cs) : Form("textFiles/ReReco24/ReReco24_Run%s_V10M_DATA_L2L3ResidualVsPtRef_AK4PFPuppi.txt",cs));
-  sout2 = (tr.Contains("25") ? Form("textFiles/Prompt25/Prompt25_Run%s_V4M_DATA_L2L3ResidualVsPtRefAsymmm_AK4PFPuppi.txt",cs) : Form("textFiles/ReReco24/ReReco24_Run%s_V10M_DATA_L2L3ResidualVsPtRef_AK4PFPuppi.txt",cs)); // TMP
-  sout3 = (tr.Contains("25") ? Form("textFiles/Prompt25/Prompt25_Run%s_V4M_DATA_L2L3Residual_AK4PFPuppi.txt",cs) : Form("textFiles/ReReco24/ReReco24_Run%s_V10M_DATA_L2L3Residual_AK4PFPuppi.txt",cs));
+  sout2 = (tr.Contains("25") ? Form("textFiles/Prompt25/Prompt25_Run%s_V4M_DATA_L2L3ResidualVsPtRefAsymmm_AK4PFPuppi.txt",cs) : tr.Contains("26") ? Form("textFiles/Prompt26/Prompt26_Run%s_V0M_DATA_L2L3ResidualVsPtRefAsymmm_AK4PFPuppi.txt",cs) : Form("textFiles/ReReco24/ReReco24_Run%s_V10M_DATA_L2L3ResidualVsPtRef_AK4PFPuppi.txt",cs)); // TMP
+  sout3 = (tr.Contains("25") ? Form("textFiles/Prompt25/Prompt25_Run%s_V4M_DATA_L2L3Residual_AK4PFPuppi.txt",cs) : tr.Contains("26") ? Form("textFiles/Prompt26/Prompt26_Run%s_V0M_DATA_L2L3Residual_AK4PFPuppi.txt",cs) : Form("textFiles/ReReco24/ReReco24_Run%s_V10M_DATA_L2L3Residual_AK4PFPuppi.txt",cs));
   
   assert(sin!="");
   assert(sout2!="");

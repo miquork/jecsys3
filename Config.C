@@ -95,7 +95,7 @@ mlum["2025C0"] = "20.8 fb^{-1}";
 mlum["2025CT"] = "TrkRadDam<<20.8 fb^{-1}";
 
 mlum["2026A"] = "0.4 fb^{-1}";
-mlum["2026B"] = "1? fb^{-1}";
+mlum["2026B"] = "1.2 fb^{-1}";
 
 ////////////////////
 // File listings  //
@@ -521,7 +521,7 @@ mfile["ZMM_2026B_MC"]     = mfile["ZMM_2025MC"];
 //
 //mfile["GAM_2026B_DATA"]   = "rootfiles/Prompt2026/Gam_w75/GamHistosFill_data_2026B_w75_17Mar2026_L2Rel2026MC_L2L3Res2025G.root";
 //mfile["GAM_2026B_DATA"]   = "rootfiles/Prompt2026/Gam_w75/GamHistosFill_data_2026B_w75_17Mar2026_onlyL2Rel2026MC.root";
-mfile["GAM_2026B_DATA"]   = "rootfiles/Prompt2026/Gam_w76/GamHistosFill_data_2026B_w75_onlyL2Rel2026MC.root";
+mfile["GAM_2026B_DATA"]   = "rootfiles/Prompt2026/Gam_w76/GamHistosFill_data_2026B_w76_onlyL2Rel2026MC.root";
 mfile["GAM_2026B_MC"]     = mfile["GAM_2025_MC"];
 mfile["GAM_2026B_MIX"]    = mfile["GAM_2025_MIX"];
 

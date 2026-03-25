@@ -164,18 +164,19 @@ void reprocess(string epoch="") {
     fijptmin = 15; fijptmax = 2787;
     //doMultijetRecoil = (epoch=="Run24CP" || epoch=="Run24BCD" || epoch=="Run24BCDE" || epoch=="Run24C" || epoch=="Run24E");// || epoch=="2024B_nib1" || epoch=="2024C_nib1" || epoch=="2024D_nib1" || epoch=="2024Ev1_nib1" || epoch=="2024Ev2_nib1");
     doMultijetRecoil = (epoch=="Run24CP"); // Fixed in 24CDE re-reco now
-    fmjptmin = (doMultijetRecoil ? 600 : 60);//114);//220);//245);//220);//133);
+    fmjptmin = (doMultijetRecoil ? 600 : 220);//245);//220);//133);
     fmjptmax = 2500;
 
     // Prompt26 studies
     if (tr.Contains("2026") || tr.Contains("2025G") || tr.Contains("2025F")) {
+      fwptmax = 180;
       fzptmax = 400;
-      fgptmin = 50;
+    //fgptmin = 50;
       fgptmax = 1000;
     }
-    if (tr.Contains("2026B")) {
-      fwptmax = 180;
-    }
+    //if (tr.Contains("2026B")) {
+    //fwptmax = 180;
+    //}
     
     if (tr.Contains("2025")) {
       //fgptmin = 40; // default 230
@@ -242,7 +243,7 @@ void reprocess(string epoch="") {
     fwptmax = 230;
     fgptmin = 30;
     fgptmax = 2000;
-    doMultijetRecoil = true;
+    doMultijetRecoil = false;//true;
     fmjptmin = 74;
     fmjptmax = 2500;
     fijptmin = 15;
@@ -948,9 +949,12 @@ void reprocess(string epoch="") {
   //TFile *fijm = new TFile(Form("../dijet/rootfiles/jmenano_mc_out_%s_v35a.root",mmjm[epoch]),"READ"); // 19Dec2023 using 22Sep2023
 
   TFile *fijr(fijd);
-  if (!tepoch.Contains("2026")) {
+  if (true) {//!tepoch.Contains("2026")) {
     //fijr = new TFile("rootfiles/timeDep2D.root","READ");
-    fijr = new TFile("rootfiles/timeDep2D_2024_V3M_2025_V9M_v2.root","READ");
+    //fijr = new TFile("rootfiles/timeDep2D_2024_V3M_2025_V9M_v2.root","READ");
+    //fijr = new TFile("rootfiles/timeDep2D_2024_V3M_2025_V9M_2026B.root","READ");
+    //fijr = new TFile("rootfiles/timeDep2D_2024_V3M_2025_V9M_2026B_v2.root","READ");
+    fijr = new TFile("rootfiles/timeDep2D_2024_V3M_2025_V9M_2026B_v3.root","READ");
     assert(fijr && !fijr->IsZombie());
   }
   
@@ -1414,7 +1418,8 @@ void reprocess(string epoch="") {
 
   vector<string> types;
   types.push_back("counts");
-  if (!tepoch.Contains("2026")) types.push_back("xsec");
+  //if (!tepoch.Contains("2026"))
+  types.push_back("xsec");
   types.push_back("crecoil");
   types.push_back("mpfchs1"); // Type-I MET
   types.push_back("ptchs");

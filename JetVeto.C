@@ -14,7 +14,7 @@
 #include "tdrstyle_mod22.C"
 
 // Threshold for veto maps
-double pullThreshold = 70; // default: 70
+double pullThreshold = 50;//70; // default: 70
 
 // Separate threshold for outer HF
 double pullThresholdHF45 = 70; // default: 70
@@ -92,9 +92,15 @@ void JetVeto(string run = "", string version = "vx") {
   //JetVetos("2025C0","V3M");
   //JetVetos("2025CT","V3M");
 
+  /*
   JetVetos("2025F","V3M");
   JetVetos("2025G","V3M");
   JetVetos("2025CDEFG","V3M");
+  */
+
+  JetVetos("2025G","V4M");
+  //JetVetos("2026A","V0M");
+  JetVetos("2026B","V0M");
 }
 
 void JetVetos(string run, string version) {
@@ -105,12 +111,15 @@ void JetVetos(string run, string version) {
   TDirectory *curdir = gDirectory;
   string sr = (run+"_"+version);
   const char *cr = sr.c_str();
+  TString t(run.c_str());
 
   TFile *fout = new TFile(Form("rootfiles/jetveto%s.root",cr),
 			  "RECREATE");
   fout->mkdir("trigs");
 
   gROOT->ProcessLine(".! touch pdf/JetVeto");
+
+  if (run=="2026B" || run=="2026A") { nMinPull = 1; nMinJES = 1; } // Why?
   
   TFile *f(0), *fg(0), *fpark(0);
   if (run=="2022CD") { // Summer22
@@ -245,7 +254,8 @@ void JetVetos(string run, string version) {
   vtrg.push_back("HLT_PFJet40");
   vtrg.push_back("HLT_PFJet60");
   vtrg.push_back("HLT_PFJet80");
-  vtrg.push_back("HLT_PFJet140");
+  if (t.Contains("26"))  vtrg.push_back("HLT_PFJet110");
+  if (!t.Contains("26A")) vtrg.push_back("HLT_PFJet140");
   vtrg.push_back("HLT_PFJet200");
   vtrg.push_back("HLT_PFJet260");
   vtrg.push_back("HLT_PFJet320");
@@ -267,7 +277,7 @@ void JetVetos(string run, string version) {
   vtrg.push_back("HLT_PFJetFwd500");
   //} 
   //else { // 2024BCD
-  vtrg.push_back("HLT_ZeroBias");
+  if (!t.Contains("26")) vtrg.push_back("HLT_ZeroBias");
   //}
   
   // Add dijet average triggers for better h2jes
@@ -662,6 +672,7 @@ void JetVetos(string run, string version) {
   h2bpix->SetTitle("Barrel pixel failure. Reduction of tracking efficiency in 2023D and later");
   h2fpix->SetTitle("Forward pixel failure. Reduction of tracking efficiency in 2024F and later");
   h2all->SetTitle("Union of hot and cold maps");
+  TString tr(run.c_str());
   if (run=="2022E" || run=="2022F" || run=="2022G" ||
       run=="2022EF" || run=="2022EFG") {
     h2veto->SetTitle("JME recommended map, used for JEC. Hot+Cold+EEP");
@@ -683,6 +694,10 @@ void JetVetos(string run, string version) {
   }
   if (run=="2025C" || run=="2025D" || run=="2025E" || run=="2025CDE" ||
       run=="2025F" || run=="2025CDEF" || run=="2025CDEFG") {
+    h2veto->SetTitle("JME recommended map. Hot+Cold+FPIX(+not BPIX)");
+    h2all->SetTitle("Union of all maps, used for JEC. Hot+cold+FPIX+BPIX");
+  }
+  if (tr.Contains("2026")) {
     h2veto->SetTitle("JME recommended map. Hot+Cold+FPIX(+not BPIX)");
     h2all->SetTitle("Union of all maps, used for JEC. Hot+cold+FPIX+BPIX");
   }
@@ -761,6 +776,12 @@ void JetVetos(string run, string version) {
 	  h2bpix->SetBinContent(i,j,100); // drop
 	  h2all->SetBinContent(i,j,100);  // drop
 	}
+	if (tr.Contains("2026")) {
+	  // Keep BPix for recommended, drop for JEC
+	  h2veto->SetBinContent(i,j,0);   // keep!
+	  h2bpix->SetBinContent(i,j,100); // drop
+	  h2all->SetBinContent(i,j,100);  // drop
+	}
       } // BPIX
 
       // FPIX reference region (2024F and later)
@@ -776,6 +797,11 @@ void JetVetos(string run, string version) {
 	}
 	if (run=="2025C" || run=="2025D" || run=="2025E" || run=="2025CDE" ||
 	    run=="2025F" || run=="2025CDEF" || run=="2025CDEFG"){
+	  h2veto->SetBinContent(i,j,100);
+	  h2fpix->SetBinContent(i,j,100);
+	  h2all->SetBinContent(i,j,100);
+	}
+	if (tr.Contains("2026")) {
 	  h2veto->SetBinContent(i,j,100);
 	  h2fpix->SetBinContent(i,j,100);
 	  h2all->SetBinContent(i,j,100);

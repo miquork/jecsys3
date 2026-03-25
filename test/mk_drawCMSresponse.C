@@ -44,7 +44,8 @@
   drawCMSresponse("Prompt25_Run2025D_V2M","Prompt25D_V2M",l2res);
   drawCMSresponse("Prompt25_Run2025E_V2M","Prompt25E_V2M",l2res);
   */
-
+  
+  /*
   drawCMSresponse("Prompt25_Run2025CDEFG_V3M","Prompt25CDEFG_V3M",l2res);
   drawCMSresponse("Prompt25_Run2025DEFG_V3M","Prompt25DEFG_V3M",l2res);
   drawCMSresponse("Prompt25_Run2025C_V3M","Prompt25C_V3M",l2res);
@@ -52,6 +53,9 @@
   drawCMSresponse("Prompt25_Run2025E_V3M","Prompt25E_V3M",l2res);
   drawCMSresponse("Prompt25_Run2025F_V3M","Prompt25F_V3M",l2res);
   drawCMSresponse("Prompt25_Run2025G_V3M","Prompt25G_V3M",l2res);
+  */
+
+  drawCMSresponse("Prompt26_Run2026B_V0M","Prompt26B_V0M",l2res);
   }
   
   //drawCMSresponse("Winter24Run3_V1_MC","Winter24Run3_V1_MC", false);
