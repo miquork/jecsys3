@@ -1,0 +1,31 @@
+# check new golden JSON
+cd /eos/user/c/cmsdqm/www/CAF/certification/Collisions22/; ls -ltrh *Golden.json
+
+# calculate luminosity for it
+bash -l
+#export PATH=$HOME/.local/bin:/afs/cern.ch/cms/lumi/brilconda-1.1.7/bin:$PATH
+source /cvmfs/cms-bril.cern.ch/cms-lumi-pog/brilws-docker/brilws-env
+
+brilcalc lumi -b "STABLE BEAMS" -u /fb -i  /eos/user/c/cmsdqm/www/CAF/certification/Collisions22/
+
+# https://twiki.cern.ch/twiki/bin/viewauth/CMS/LumiRecommendationsRun3#Luminosity_for_pp_13_6_TeV_data, accessed 12 Nov 2024
+
+brilcalc lumi --normtag /cvmfs/cms-bril.cern.ch/cms-lumi-pog/Normtags/normtag_BRIL.json --datatag online -u /fb -i Merged_Collisions26_401624_402537_Golden_401630_402825_MLEnhancedGolden_ML.json > 2026.txt
+#brilcalc lumi --normtag /cvmfs/cms-bril.cern.ch/cms-lumi-pog/Normtags/normtag_BRIL.json --datatag online -u /fb -i Collisions26_401630_402399_MLEnhancedGolden.json > 2026.txt.v1
+
+brilcalc lumi --normtag /cvmfs/cms-bril.cern.ch/cms-lumi-pog/Normtags/normtag_BRIL.json --datatag online -u /fb -i Cert_Collisions2025_391658_398860_Golden.json > 2025.txt
+# brilcalc lumi --normtag /cvmfs/cms-bril.cern.ch/cms-lumi-pog/Normtags/normtag_BRIL.json --datatag online -u /fb -i daily_dials_Nov06.json > 2025.txt
+
+brilcalc lumi --normtag /cvmfs/cms-bril.cern.ch/cms-lumi-pog/Normtags/normtag_PHYSICS.json -u /fb -i Cert_Collisions2024_378981_386951_Golden.json > 2024.txt
+# brilcalc lumi --normtag /cvmfs/cms-bril.cern.ch/cms-lumi-pog/Normtags/normtag_BRIL.json --datatag online -u /fb -i Cert_Collisions2024_378981_386951_Golden.Oct29.json > 2024.Oct29.txt
+brilcalc lumi --normtag /cvmfs/cms-bril.cern.ch/cms-lumi-pog/Normtags/normtag_PHYSICS.json -u /fb -i Cert_Collisions2023_366442_370790_Golden.json > 2023.txt
+brilcalc lumi --normtag /cvmfs/cms-bril.cern.ch/cms-lumi-pog/Normtags/normtag_PHYSICS.json -u /fb -i Cert_Collisions2022_355100_362760_Golden.json > 2022.txt
+
+# create tree luminosity_data.root of the luminosity information
+root -l -b -q treeRuns.C+g
+
+# cluster runs and create clusterRuns.root and fibs.txt
+root -l -b -q clusterRuns.C+g
+
+# print out integrated luminosity per year, nib and fib
+python3 sumfibs.py
