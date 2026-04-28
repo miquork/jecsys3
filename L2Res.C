@@ -27,9 +27,9 @@ bool fitRC1 = true; // Random Cone eta+/eta- (rootfiles/randomConeL2L3Res.root)
 bool drawPlusMinus = false; // draw eta+, eta- splits
 bool drawUncleaned = false; // Draw uncleaned data in *AllEta*.pdf
 bool drawStat = true; // Draw c0.pdf for statistical uncertainty
-bool doVsEtaPt = true;
+bool doVsEtaPt = false;//true; // Slow, but detailed
 
-bool refitPtRaw = true; // Re-parameterize L2Res vs pTraw instead of pTref
+//bool refitPtRaw = true; // Re-parameterize L2Res vs pTraw instead of pTref
 bool doClosure = false;//true;//false; // Do not undo L2L3Res for closure test
 
 bool flattenHF = false; // Const vs pT for HF
@@ -128,8 +128,8 @@ TProfile* drawEta(TProfile2D *p2, double ptmin, double ptmax,
       double entries = p->GetBinEntries(i);
       if (x<0) {
 	int j = p->FindBin(-x);
-	double mean_value_p = p->GetBinContent(i);
-	double entries_p = p->GetBinEntries(i);
+	double mean_value_p = p->GetBinContent(j);
+	double entries_p = p->GetBinEntries(j);
 	p->SetBinEntries(i, entries_p);
 	p->SetBinContent(i, entries_p * mean_value_p);
 	p->SetBinEntries(j, entries);
@@ -580,7 +580,7 @@ TH1D *drawCleaned(TH1D *h, double eta, string data, string sdraw,
 
     // Remove points outside of plot ranges
     double y = h->GetBinContent(i);
-    if (doClosure && tr.Contains("25") &&
+    if (doClosure && (tr.Contains("25") || tr.Contains("26")) &&
 	((eta<0.783 && (y>1.10 || y<0.95)) ||
 	 (eta>=0.783 && eta<1.566 && (y>1.20 || y<0.75)) ||
 	 (eta>=1.566 && eta<2.650 && (y>1.20 || y<0.50)) ||
@@ -684,7 +684,7 @@ void L2Res(bool _doClosure = doClosure) {
      //"2024I","2024H","2024G","2024F","2024E","2024BCD"}; // V7M
 
       //"2024B_nib1",
-      /*
+
       //"2024_nib",
       "2024C_nib1","2024D_nib1",//"2024Ev1_nib1","2024Ev2_nib1",
       "2024E_nib1",
@@ -696,13 +696,15 @@ void L2Res(bool _doClosure = doClosure) {
       //"2025B",
       //"2025C","2025CDEF"
 
-      "2025C","2025D","2025E","2025F","2025G",
-      "2025DEFG", "2025CDEFG"
-      */
+      "2025C","2025D","2025E","2025F","2025G", "2025CDEFG",
+      //"2025DEFG", "2025CDEFG"
+
 
       //"2025CDEFG", "2025G", "2026A",
-      "2025G", "2026B",
+      //"2025G", "2026B", "2026C",
       //"2025C0","2025CT"
+
+      "2026B", "2026C",
     };
 
   //"2024D_nib1"};
@@ -717,7 +719,7 @@ void L2Res(bool _doClosure = doClosure) {
      //"Winter24","Winter24","Winter24","Winter24","Winter24",
       //"Winter24","Winter24","Winter24","Winter24","Winter24",
       //"Winter24","Winter24"  // V8M
-      /*
+
       //"Summer24",
       "Summer24","Summer24",//"Summer24","Summer24",
       "Summer24",
@@ -730,13 +732,15 @@ void L2Res(bool _doClosure = doClosure) {
       //"Winter25","Winter25","Winter25","Winter25","Winter25",
       //"Winter25"
 
-      "Summer24","Summer24","Summer24","Summer24","Summer24",
-      "Summer24", "Summer24"
-      */
+      "Summer24","Summer24","Summer24","Summer24","Summer24", "Summer24",
+      //"Summer24", "Summer24",
+
       //"Winter25","Winter25"
 
       //"Summer24", "Summer24", "Summer24",
-      "Summer24", "Summer24"
+      //"Summer24", "Summer24", "Summer24",
+
+      "Summer24", "Summer24",
     };  // V9M
 
   //"Summer24"};  // V9M
@@ -790,11 +794,16 @@ void L2Res(bool _doClosure = doClosure) {
     string mcfile = mfile[Form("ZMM_%s_MC",cr)];
     cout << "Reading ZMM_" << run << "_MC from Config.C: " << mcfile <<endl;
     fzm = new TFile(mcfile.c_str(),"READ");
+
+    assert(fz);
+    assert(fzm);
   }
   else if (mfile.find(Form("ZMM_%s_DATAMC",cr))!=mfile.end()) {
     string file = mfile[Form("ZMM_%s_DATAMC",cr)];
     cout << "Reading ZMM_" << run << "_DATAMC from Config.C: " << file << endl;
     fz = new TFile(file.c_str(),"READ");
+
+    assert(fz);
   }
   else if (run=="2024CS") {
     fz = new TFile(Form("rootfiles/Prompt2024/jme_bplusZ_%s_Zmm_sync_v83.root","2024BCD"),"READ"); // June 5 hybrid, 15.6/fb
@@ -883,7 +892,7 @@ void L2Res(bool _doClosure = doClosure) {
   }
   assert(fz && !fz->IsZombie());
   if (fzm==0) fzm = fz;
-  assert(fz && !fz->IsZombie());
+  assert(fzm && !fzm->IsZombie());
   
   TDirectory *dz = fz->GetDirectory("data/l2res"); assert(dz);
   TDirectory *dzm = fzm->GetDirectory("mc/l2res");
@@ -910,6 +919,9 @@ void L2Res(bool _doClosure = doClosure) {
     string file_mc = mfile[Form("GAM_%s_MC",cr)];
     cout << "Reading GAM_" << run << "_MC from Config.C: " << file_mc << endl;
     fgm = new TFile(file_mc.c_str(),"READ");
+
+    assert(fg);
+    assert(fgm);
   }
   else if (run=="2024CS") {
     fg = new TFile(Form("rootfiles/Prompt2024/GamHistosFill_data_%s-ECALR-HCALDI_w29.root","2024C"),"READ");
@@ -1019,6 +1031,9 @@ void L2Res(bool _doClosure = doClosure) {
     string file_mc = mfile[Form("JET_%s_MC",cr)];
     cout << "Reading JET_" << run << "_MC from Config.C: " << file_mc << endl;
     fdm = new TFile(file_mc.c_str(),"READ");
+
+    assert(fd);
+    assert(fdm);
   }
   else if (run=="2024CS") {
     fd = new TFile(Form("rootfiles/Prompt2024/v77_2024/jmenano_data_cmb_%sS_JME_v77_2024.root","2024C"),"READ"); // was v76/*2024Crs*
@@ -1206,6 +1221,10 @@ void L2Res(bool _doClosure = doClosure) {
 	 << ", replacing with symmetric RC **" << endl;
     hrc1_vsEta = hrc_vsEta;
   }
+  if (tr.Contains("2026C")) {
+    cout << " ** RC missing for 2026C, switching it off" << endl;
+    fitRC = fitRC1 = false;
+  }
   
   double ptmin = 9;//(fitRC ? 9. : 15.);
 
@@ -1332,6 +1351,8 @@ void L2Res(bool _doClosure = doClosure) {
 		   cr,int(1000.*eta1),int(1000.*eta2),cr,cc,"c13"));
   
   // Create giant canvas for all eta bins (7*3=21; more in the future)
+  assert(p2d);
+  assert(p2j1);
   int nxy = p2d->GetNbinsX();
   //TCanvas *cx = new TCanvas("cx","cx",9*250,5*250);
   //TCanvas *cx = new TCanvas("cx","cx",9*400,5*400);
@@ -1347,34 +1368,40 @@ void L2Res(bool _doClosure = doClosure) {
   TH2D *h2merged1 = p2j1->ProjectionXY(Form("h2merged1_%s",cr)); h2merged1->Reset();
 
   // Save JEC for use in minitools/timeDep2D.C
-  TH2D *h2res1 = p2jx1->ProjectionXY(Form("h2res_%s",cr)); h2res1->Reset();
-  // loop over all graphs in the multigraph
-  const int np2x(3);
-  TProfile2D* vp2x[np2x] = {p2jx1, p2gx1, p2zx1};
-  for (int k = 0; k != np2x; ++k) {
-
-    TProfile2D* p2 = vp2x[k];
-    for (int ieta = 1; ieta != p2->GetNbinsX()+1; ++ieta) {
-      for (int ipt = 1; ipt != p2->GetNbinsX()+1; ++ipt) {
-
-	double eta = p2->GetXaxis()->GetBinCenter(ieta);
-	double pt = p2->GetYaxis()->GetBinCenter(ipt);
-	int ib = h2res1->FindBin(eta, pt);
-	double y_old = h2res1->GetBinContent(ib); 
-	double ey_old = h2res1->GetBinError(ib);
-	double w_old = (ey_old> 0) ? 1.0 / pow(ey_old, 2) : 0.;
-	double y = p2->GetBinContent(ieta, ipt);
-	double ey = p2->GetBinError(ieta, ipt);
-	double w = (ey>0) ? 1.0 / pow(ey,2) : 0;
-	double y_new  = w_old+w>0 ? (y_old * w_old + y * w) / (w_old + w) : 0;
-	double w_new = w_old+w;
-	double ey_new = (w_new>0 ? 1.0 / sqrt(w_new) : 0); 
-	h2res1->SetBinContent(ib, y_new);
-	h2res1->SetBinError(ib, ey_new);
-      } // for ipt
-    } // for ieta
-  } // for k in vp2x
-
+  //assert(p2jx1);
+  TH2D *h2res1(0);
+  if (p2jx1) {
+    h2res1 = p2jx1->ProjectionXY(Form("h2res_%s",cr));
+    h2res1->Reset();
+    
+    // loop over all graphs in the multigraph
+    const int np2x(3);
+    TProfile2D* vp2x[np2x] = {p2jx1, p2gx1, p2zx1};
+    for (int k = 0; k != np2x; ++k) {
+      
+      TProfile2D* p2 = vp2x[k];
+      for (int ieta = 1; ieta != p2->GetNbinsX()+1; ++ieta) {
+	for (int ipt = 1; ipt != p2->GetNbinsX()+1; ++ipt) {
+	  
+	  double eta = p2->GetXaxis()->GetBinCenter(ieta);
+	  double pt = p2->GetYaxis()->GetBinCenter(ipt);
+	  int ib = h2res1->FindBin(eta, pt);
+	  double y_old = h2res1->GetBinContent(ib); 
+	  double ey_old = h2res1->GetBinError(ib);
+	  double w_old = (ey_old> 0) ? 1.0 / pow(ey_old, 2) : 0.;
+	  double y = p2->GetBinContent(ieta, ipt);
+	  double ey = p2->GetBinError(ieta, ipt);
+	  double w = (ey>0) ? 1.0 / pow(ey,2) : 0;
+	  double y_new  = w_old+w>0 ? (y_old * w_old + y * w) / (w_old + w) : 0;
+	  double w_new = w_old+w;
+	  double ey_new = (w_new>0 ? 1.0 / sqrt(w_new) : 0); 
+	  h2res1->SetBinContent(ib, y_new);
+	  h2res1->SetBinError(ib, ey_new);
+	} // for ipt
+      } // for ieta
+    } // for k in vp2x
+  }
+    
   // Another giant canvas to show final results:
   // merged cleaned data, final fit, uncertainty band, deviations from fit
   TCanvas *cxf = new TCanvas(Form("cxf_%s",cr),"cxf",9*300,5*300);
@@ -1790,6 +1817,16 @@ void L2Res(bool _doClosure = doClosure) {
     fref->SetParLimits(3,-0.5,0.5); // offset no more than 50% at 10 GeV
     fref->SetParLimits(4,0.,0.25); // 1/x^2
   }
+  if (tr.Contains("2026C") || // Low PU data, smaller sample (1/fb)
+      tr.Contains("2026B")) { // Same for rest of 2026 for consistency
+    fref->SetParameter(0, f2->GetParameter(0)); // loglin+1/pt (const)
+    fref->SetParameter(1, f2->GetParameter(1)); // loglin+1/pt (loglin)
+    fref->FixParameter(2, 0.); // remove log(x)^2
+    fref->SetParameter(3, f2->GetParameter(2)); // loglin+1/pt (1/pt)
+    fref->FixParameter(4, 0.); // remove 1/x^2
+  }
+  
+
   /*
   if (!doClosure) { // 2024, early 2025 version
     fref->SetParLimits(0, 0.5, 1.5); // constant
@@ -2778,7 +2815,7 @@ void L2Res(bool _doClosure = doClosure) {
   //////////////////////////////////
   
   // 10a: Original eta-symmetric parameterization vs pTref
-  string ftxtname = (tr.Contains("25") ? Form("textfiles/Prompt25/Prompt25_Run%s_V4M_DATA_L2ResidualVsPtRef_AK4PFPuppi.txt",cr) : tr.Contains("26") ? Form("textfiles/Prompt26/Prompt26_Run%s_V0M_DATA_L2ResidualVsPtRef_AK4PFPuppi.txt",cr) : Form("textfiles/ReReco24/ReReco24_Run%s_V10M_DATA_L2ResidualVsPtRef_AK4PFPuppi.txt",cr));
+  string ftxtname = (tr.Contains("25") ? Form("textfiles/Prompt/Prompt25_Run%s_V4M_DATA_L2ResidualVsPtRef_AK4PFPuppi.txt",cr) : tr.Contains("26") ? Form("textfiles/Prompt/Prompt26_Run%s_V1M_DATA_L2ResidualVsPtRef_AK4PFPuppi.txt",cr) : tr.Contains("24") ? Form("textfiles/Prompt/ReReco24_Run%s_V10M_DATA_L2ResidualVsPtRef_AK4PFPuppi.txt",cr) : "textiles/Prompt/error.txt");
   cout << "Writing results to text file " << ftxtname << endl << flush;
   ofstream ftxt(ftxtname.c_str());
 
@@ -2808,7 +2845,7 @@ void L2Res(bool _doClosure = doClosure) {
   }
 
   // 10b: Original eta-asymmetric parameterization vs pTref
-  string ftxtname1 = (tr.Contains("25") ? Form("textfiles/Prompt25/Prompt25_Run%s_V4M_DATA_L2ResidualVsPtRefAsymm_AK4PFPuppi.txt",cr) : tr.Contains("26") ? Form("textfiles/Prompt26/Prompt26_Run%s_V0M_DATA_L2ResidualVsPtRefAsymm_AK4PFPuppi.txt",cr) : Form("textfiles/ReReco24/ReReco24_Run%s_V10M_DATA_L2ResidualVsPtRefAsymm_AK4PFPuppi.txt",cr));
+  string ftxtname1 = (tr.Contains("25") ? Form("textfiles/Prompt/Prompt25_Run%s_V4M_DATA_L2ResidualVsPtRefAsymm_AK4PFPuppi.txt",cr) : tr.Contains("26") ? Form("textfiles/Prompt/Prompt26_Run%s_V1M_DATA_L2ResidualVsPtRefAsymm_AK4PFPuppi.txt",cr) : tr.Contains("24") ? Form("textfiles/Prompt/Prompt24_Run%s_V10M_DATA_L2ResidualVsPtRefAsymm_AK4PFPuppi.txt",cr) : "textfiles/Prompt/error.txt");
   cout << "Writing results to text file " << ftxtname1 << endl << flush;
   ofstream ftxt1(ftxtname1.c_str());
 
@@ -2841,7 +2878,7 @@ void L2Res(bool _doClosure = doClosure) {
   }
 
   // 10c: Re-parameterization vs pTraw (of symmetric response)
-  string ftxtname2 = (tr.Contains("25") ? Form("textfiles/Prompt25/Prompt25_Run%s_V4M_DATA_L2Residual_AK4PFPuppi.txt",cr) : tr.Contains("26") ? Form("textfiles/Prompt26/Prompt26_Run%s_V0M_DATA_L2Residual_AK4PFPuppi.txt",cr) : Form("textfiles/ReReco24/ReReco24_Run%s_V10M_DATA_L2Residual_AK4PFPuppi.txt",cr));
+  string ftxtname2 = (tr.Contains("25") ? Form("textfiles/Prompt/Prompt25_Run%s_V4M_DATA_L2Residual_AK4PFPuppi.txt",cr) : tr.Contains("26") ? Form("textfiles/Prompt/Prompt26_Run%s_V1M_DATA_L2Residual_AK4PFPuppi.txt",cr) : tr.Contains("24") ? Form("textfiles/Prompt/Prompt24_Run%s_V10M_DATA_L2Residual_AK4PFPuppi.txt",cr) : "textfiles/Prompt/error.txt");
   cout << "Writing results to text file " << ftxtname2 << endl << flush;
   ofstream ftxt2(ftxtname2.c_str());
   
@@ -3077,7 +3114,7 @@ void L2Res(bool _doClosure = doClosure) {
   if (fout) {
     cout << "Saving results to " << fout->GetName() << endl << flush;
     fout->cd();
-    h2res1->Write(Form("h2res1_%s",cr),TObject::kOverwrite);
+    if (h2res1) h2res1->Write(Form("h2res1_%s",cr),TObject::kOverwrite);
     h2merged->Write(Form("h2merged_%s",cr),TObject::kOverwrite);
     h2merged1->Write(Form("h2merged1_%s",cr),TObject::kOverwrite);
     //
