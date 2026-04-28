@@ -1381,7 +1381,7 @@ void L2Res(bool _doClosure = doClosure) {
       
       TProfile2D* p2 = vp2x[k];
       for (int ieta = 1; ieta != p2->GetNbinsX()+1; ++ieta) {
-	for (int ipt = 1; ipt != p2->GetNbinsX()+1; ++ipt) {
+	for (int ipt = 1; ipt != p2->GetNbinsY()+1; ++ipt) {
 	  
 	  double eta = p2->GetXaxis()->GetBinCenter(ieta);
 	  double pt = p2->GetYaxis()->GetBinCenter(ipt);
