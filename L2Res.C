@@ -1803,17 +1803,25 @@ void L2Res(bool _doClosure = doClosure, string onlyEra = "", string onlyMC  = ""
   fref->SetParameters(f5->GetParameter(0), f5->GetParameter(1),
 		      f5->GetParameter(2), f5->GetParameter(3),
 		      f5->GetParameter(4));
+  fref->SetParLimits(3,-0.5,0.5); // offset no more than 50% at 10 GeV
+  fref->SetParLimits(4,0.,0.25); // 1/x^2
 
-  if (true) { // V4M
-    fref->SetParLimits(3,-0.5,0.5); // offset no more than 50% at 10 GeV
-    fref->SetParLimits(4,0.,0.25); // 1/x^2
-  }
   if (tr.Contains("2024")) { // switch off 1/pT^2 term (f5->f4)
     fref->SetParameter(0, f4->GetParameter(0)); // logquad+1/pt (const)
     fref->SetParameter(1, f4->GetParameter(1)); // logquad+1/pt (loglin)
     fref->SetParameter(2, f4->GetParameter(2)); // logquad+1/pt (logquad)
     fref->SetParameter(3, f4->GetParameter(3)); // logquad+1/pt (1/pt)
     fref->FixParameter(4, 0.); // remove 1/x^2
+    fref->SetParLimits(3,-0.5,0.5); // offset no more than 50% at 10 GeV
+  }
+  if (tr.Contains("2025")) { // full quadlog+1/pt+1/pt^2
+    fref->SetParameter(0, f5->GetParameter(0)); // logquad+1/ptN (const)
+    fref->SetParameter(1, f5->GetParameter(1)); // logquad+1/ptN (loglin)
+    fref->SetParameter(2, f5->GetParameter(2)); // logquad+1/ptN (logquad)
+    fref->SetParameter(3, f5->GetParameter(3)); // logquad+1/ptN (1/pt)
+    fref->SetParameter(4, f5->GetParameter(4)); // logquad+1/ptN (1/pt2)
+    fref->SetParLimits(3,-0.5,0.5); // offset no more than 50% at 10 GeV
+    fref->SetParLimits(4,0.,0.25); // 1/x^2
   }
   if (tr.Contains("2026")) { // switch off 1/pT^2 term (f5->f4)
     fref->SetParameter(0, f4->GetParameter(0)); // logquad+1/pt (const)
@@ -1822,16 +1830,16 @@ void L2Res(bool _doClosure = doClosure, string onlyEra = "", string onlyMC  = ""
     fref->SetParameter(3, f4->GetParameter(3)); // logquad+1/pt (1/pt)
     //fref->SetParameter(4, 0.); // allow 1/x^2
     fref->FixParameter(4, 0.); // remove 1/x^2
+    fref->SetParLimits(3,-0.5,0.5); // offset no more than 50% at 10 GeV
   }
-  /*
-  if (tr.Contains("2026C")) { // switch off log^2 and 1/pT^2 (f5->f2)
+  // Constrain HF to simpler log-lin+1/pT
+  if (fabs(eta)>2.964) { // switch off log^2 and 1/pT^2 (f5->f2)
     fref->SetParameter(0, f2->GetParameter(0)); // loglin+1/pt (const)
     fref->SetParameter(1, f2->GetParameter(1)); // loglin+1/pt (loglin)
     fref->FixParameter(2, 0.); // remove log(x)^2
     fref->SetParameter(3, f2->GetParameter(2)); // loglin+1/pt (1/pt)
     fref->FixParameter(4, 0.); // remove 1/x^2
   }
-  */
   
   mg->Fit(fref,"QRN");
 
