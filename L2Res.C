@@ -27,6 +27,7 @@ bool usePrompt24to26cuts = true;
 
 // Print chi2/NDF on AllPull plots to make finding outliers easier
 bool drawPullChi2 = true;
+bool drawPullChi2Extra = true;
 
 // NB: automatically switched off for closure, modifiable with input parameter
 bool fitRC = true; // Random Cone (rootfiles/randomConeL2L3Res.root)
@@ -40,9 +41,9 @@ bool doVsEtaPt = false;//true; // Slow, but detailed
 //bool refitPtRaw = true; // Re-parameterize L2Res vs pTraw instead of pTref
 bool doClosure = false;//true;//false; // Do not undo L2L3Res for closure test
 
-bool flattenHF = false; // Const vs pT for HF
-double flatHFptmin = 80; // If flat, use only high pT
-double flatHFetamin = 3.139;
+//bool flattenHF = false; // Const vs pT for HF
+//double flatHFptmin = 80; // If flat, use only high pT
+//double flatHFetamin = 3.139;
 //bool posOffHF = true; // Positive offset for HF (2024BCD,E,CS,CR patch)
 //bool posOffEC27 = true; // Positive offset for EC (2024BCD,E,CS,CR patch)
 //bool posOffEC25 = true; // Positive offset for EC (2024BCD,E,CS,CR patch)
@@ -312,25 +313,80 @@ TH1D *drawCleaned(TH1D *h, double eta, string data, string sdraw,
     TString tr = TString(_run);
     if (usePrompt24to26cuts) {
 
+      // Lowest unprescaled photon trigger HLT_Photon[X]EB_TightId_TightIso
+      double ptg = (tr.Contains("2024") ? 50 : 
+		    tr.Contains("2025") ? 40 :
+		    tr.Contains("2026B") ? 40 :
+		    tr.Contains("2026C") ? 30 : 50);
+      
+      // Core ranges
       if (data=="Z") {
 	// core range
 	if (ptmin>=15 && ptmax<200 && emax<3000) keep = true;
-	// cutout misbehaving range again
-	if (eta>2.650) keep = false;
       }
       if (data=="G") {
-	double ptg = (tr.Contains("2024") ? 50 :
-		      tr.Contains("2025") ? 40 :
-		      tr.Contains("2026C") ? 30 :
-		      tr.Contains("2026") ? 40 : 50);
 	// core range
 	if (ptmin>=ptg && ptmax<600. && emax<4500.) keep = true;
-	// cutout misbehaving range again
-	if (eta>2.650 && ptmax<ptg*1.2) keep = false;
       }
       if (data=="J") {
 	if (ptmin>=15. && ptmax<2000. && emax<6800.) keep = true;
       }
+
+      //////////////////
+      // Data cleanup //
+      //////////////////
+
+      // Broad vetoes
+      if (data=="Z" && eta>2.650) keep = false;
+      if (data=="G" && eta>2.650 && ptmax<ptg*1.2) keep = false;
+
+      // Annual broad
+      if (tr.Contains("2024")) {
+	if (data=="Z" && eta>1.044 && eta<2.650 && pt<50)  keep = false;
+	if (data=="G" && eta>2.500 && eta<3.489 && pt<200) keep = false;
+      }
+      if (tr.Contains("2025")) {
+	if (data=="Z" && eta>1.044 && eta<2.650 && pt<20)  keep = false;
+	if (data=="G" && eta>2.500 && eta<3.489 && pt<100) keep = false;
+      }
+      if (tr.Contains("2026B")) {
+	if (data=="Z" && eta>2.500 && eta<2.650)  keep = false;
+	if (data=="G" && eta>2.500 && eta<2.650)  keep = false;
+	if (data=="G" && eta>3.839)               keep = false;
+      }
+      if (tr.Contains("2026C")) {
+	if (data=="Z" && pt<50)                   keep = false;
+	if (data=="Z" && eta>2.322 && eta<2.650)  keep = false;
+	if (data=="G" && eta>2.500 && eta<2.650)  keep = false;
+	if (data=="G" && eta>2.650 && pt<100)     keep = false;
+	if (data=="G" && eta>3.839)               keep = false;
+      }
+
+      // Targeted snipes
+      if (tr.Contains("24C") || tr.Contains("24D") || tr.Contains("24E")) {
+	if (data=="G" && eta>3.314 && eta<4.013) keep = false;
+	if (data=="J" && eta>3.664 && eta<3.839 && pt>270) keep = false;
+	if (data=="J" && eta>4.716 && eta<4.889 && pt>64 && pt<84) keep=false;
+      }
+      if (tr.Contains("24F") || tr.Contains("24G") || tr.Contains("24H") ||
+	  tr.Contains("24I")) {
+	if (data=="Z" && eta>2.322 && eta<2.500 && pt<80) keep = false;
+      }
+      if (tr.Contains("2025")) {
+	if (data=="Z" && eta>2.500 && eta<2.650)           keep = false;
+	if (data=="G" && eta>2.500 && eta<2.964)           keep = false;
+	if (data=="G" && eta>3.139 && eta<3.314 && pt<150) keep = false;
+	if (data=="G" && eta>3.489 && eta<3.664 && pt<150) keep = false;
+	if (data=="G" && eta>4.013 && eta<4.191 && pt<150) keep = false;
+      	//if (data=="J" && eta>2.500 && eta<2.650 && pt<20)  keep = false;
+      }
+      if (tr.Contains("2026C")) {
+	if (data=="J" && eta>0.957 && eta<1.044 && pt>1500) keep = false;
+	if (data=="J" && eta>1.740 && eta<1.830 && pt>1000) keep = false;
+	if (data=="J" && eta>3.839 && eta<4.013 && pt>133 && pt<174) keep=false;
+	if (data=="J" && eta>4.013 && eta<4.191 && pt>97 && pt<114)  keep=false;
+      }
+      
     } // usePrompt24to26cuts
     else if (tr.Contains("2024") || tr.Contains("2025") || tr.Contains("2026")) {
 	
@@ -522,7 +578,7 @@ TH1D *drawCleaned(TH1D *h, double eta, string data, string sdraw,
     }
 
     // Remove low pT for flat HF fits
-    if (flattenHF && eta>flatHFetamin && pt<flatHFptmin) keep = false;
+    //if (flattenHF && eta>flatHFetamin && pt<flatHFptmin) keep = false;
 
     // Remove points with zero error for closure
     if (doClosure &&
@@ -1755,19 +1811,27 @@ void L2Res(bool _doClosure = doClosure, string onlyEra = "", string onlyMC  = ""
   if (tr.Contains("2024")) { // switch off 1/pT^2 term (f5->f4)
     fref->SetParameter(0, f4->GetParameter(0)); // logquad+1/pt (const)
     fref->SetParameter(1, f4->GetParameter(1)); // logquad+1/pt (loglin)
-    fref->FixParameter(2, f4->GetParameter(2)); // logquad+1/pt (logquad)
+    fref->SetParameter(2, f4->GetParameter(2)); // logquad+1/pt (logquad)
     fref->SetParameter(3, f4->GetParameter(3)); // logquad+1/pt (1/pt)
     fref->FixParameter(4, 0.); // remove 1/x^2
   }
-  //if (tr.Contains("2026C") || // Low PU data, smaller sample (1/fb)
-  //  tr.Contains("2026B")) { // Same for rest of 2026 for consistency
-  if (tr.Contains("2026")) { // switch off log^2 and 1/pT^2 (f5->f2)
+  if (tr.Contains("2026")) { // switch off 1/pT^2 term (f5->f4)
+    fref->SetParameter(0, f4->GetParameter(0)); // logquad+1/pt (const)
+    fref->SetParameter(1, f4->GetParameter(1)); // logquad+1/pt (loglin)
+    fref->SetParameter(2, f4->GetParameter(2)); // logquad+1/pt (logquad)
+    fref->SetParameter(3, f4->GetParameter(3)); // logquad+1/pt (1/pt)
+    //fref->SetParameter(4, 0.); // allow 1/x^2
+    fref->FixParameter(4, 0.); // remove 1/x^2
+  }
+  /*
+  if (tr.Contains("2026C")) { // switch off log^2 and 1/pT^2 (f5->f2)
     fref->SetParameter(0, f2->GetParameter(0)); // loglin+1/pt (const)
     fref->SetParameter(1, f2->GetParameter(1)); // loglin+1/pt (loglin)
     fref->FixParameter(2, 0.); // remove log(x)^2
     fref->SetParameter(3, f2->GetParameter(2)); // loglin+1/pt (1/pt)
     fref->FixParameter(4, 0.); // remove 1/x^2
   }
+  */
   
   mg->Fit(fref,"QRN");
 
@@ -1872,31 +1936,38 @@ void L2Res(bool _doClosure = doClosure, string onlyEra = "", string onlyMC  = ""
     double jes0 = f0->Eval(pt); //const
     double jesref = fref->Eval(pt); //loglin+1/x, loglin or const (vs eta)
     double jes = jesref; // loglin+1/x+1/x^2
-    double ejes = sqrt(pow(jes2-jes,2)+pow(jes3-jes,2)+pow(jes4-jes,2)
-		       +pow(jes5-jes,2)); // V9M
-    if (eta>flatHFetamin && flattenHF) {
-      ejes = sqrt(pow(jes0-jes,2) + pow(jes1-jes,2));
-    }
+    //double ejes = sqrt(pow(jes2-jes,2)+pow(jes3-jes,2)+pow(jes4-jes,2)
+    //		       +pow(jes5-jes,2)); // V9M
+    double ejes = max(max(max(fabs(jes2-jes),fabs(jes3-jes)),fabs(jes4-jes)),fabs(jes5-jes)); // Prompt24to26C
+    //if (eta>flatHFetamin && flattenHF) {
+    //ejes = sqrt(pow(jes0-jes,2) + pow(jes1-jes,2));
+    //}
     if (emax1 < 13600.*0.5) {
       h2jes->SetBinContent(ieta, ipt, jes);
       h2jes->SetBinError(ieta, ipt, ejes);
 
       double jes_m = fref_m->Eval(pt);
-      double ejes_m = sqrt(pow(jes2-jes_m,2)+pow(jes3-jes_m,2)+pow(jes4-jes_m,2)+pow(jes5-jes_m,2));
+      //double ejes_m = sqrt(pow(jes2-jes_m,2)+pow(jes3-jes_m,2)+pow(jes4-jes_m,2)+pow(jes5-jes_m,2));
+      double ejes_m = max(max(max(fabs(jes2-jes_m),fabs(jes3-jes_m)),fabs(jes4-jes_m)),fabs(jes5-jes_m)); // Prompt24to26C
       //
       double ejes_stat_m = tools::getFitErr(fref_m, pfit_m, pt);
       double jes_cm = fref_cm->Eval(pt);
       double ejes_stat_cm = tools::getFitErr(fref_cm, pfit_cm, pt);
+      double ejes_cm = max(max(max(fabs(jes2-jes_cm),fabs(jes3-jes_cm)),fabs(jes4-jes_cm)),fabs(jes5-jes_cm)); // Prompt24to26C
+      //
       double jes_p = fref_p->Eval(pt);
-      double ejes_p = sqrt(pow(jes2-jes_p,2)+pow(jes3-jes_p,2)+pow(jes4-jes_p,2)+pow(jes5-jes_p,2));
+      //double ejes_p = sqrt(pow(jes2-jes_p,2)+pow(jes3-jes_p,2)+pow(jes4-jes_p,2)+pow(jes5-jes_p,2));
+      double ejes_p = max(max(max(fabs(jes2-jes_p),fabs(jes3-jes_p)),fabs(jes4-jes_p)),fabs(jes5-jes_p)); // Prompt24to26C
       //
       double ejes_stat_p = tools::getFitErr(fref_p, pfit_p, pt);
       double jes_cp = fref_cp->Eval(pt);
       double ejes_stat_cp = tools::getFitErr(fref_cp, pfit_cp, pt);
-      if (eta>flatHFetamin && flattenHF) {
-	ejes_m = sqrt(pow(jes0-jes_m,2) + pow(jes1-jes_m,2));
-	ejes_p = sqrt(pow(jes0-jes_p,2) + pow(jes1-jes_p,2));
-      }
+      double ejes_cp = max(max(max(fabs(jes2-jes_cp),fabs(jes3-jes_cp)),fabs(jes4-jes_cp)),fabs(jes5-jes_cp)); // Prompt24to26C
+      //if (eta>flatHFetamin && flattenHF) {
+	//ejes_m = sqrt(pow(jes0-jes_m,2) + pow(jes1-jes_m,2));
+	//ejes_p = sqrt(pow(jes0-jes_p,2) + pow(jes1-jes_p,2));
+      //}
+      
       int ieta_m = h2jes1->GetXaxis()->FindBin(-eta);
       h2jes1->SetBinContent(ieta_m, ipt, jes_m);
       h2jes1->SetBinError(ieta_m, ipt, ejes_stat_m);
@@ -1949,9 +2020,9 @@ void L2Res(bool _doClosure = doClosure, string onlyEra = "", string onlyMC  = ""
     tdrDraw(hjrn,"Pz",kOpenDiamond,kGreen+2-9);
   }
 
-  if (eta>flatHFetamin && flattenHF) {
-    f0->Draw("SAME");
-  }
+  //if (eta>flatHFetamin && flattenHF) {
+  //f0->Draw("SAME");
+  //}
   f1->Draw("SAME");
   f2->Draw("SAME");
   f3->Draw("SAME");
@@ -2165,7 +2236,9 @@ void L2Res(bool _doClosure = doClosure, string onlyEra = "", string onlyMC  = ""
 
   sizf = tex->GetTextSize();
   tex->SetTextSize(1.5*0.045);
-  tex->DrawLatex(0.50,0.85,Form("[%1.3f,%1.3f]",eta1,eta2));
+  double texoff = (ieta%9==1 ? 0.08 : 0.0); // right side
+  double texoff2 = (ieta%9==1 ? 0.16 : 0.0); // left side
+  tex->DrawLatex(0.55+texoff,0.85,Form("[%1.3f,%1.3f]",eta1,eta2));
   tex->SetTextSize(sizf);
 
   double chi2_m(0);
@@ -2180,7 +2253,7 @@ void L2Res(bool _doClosure = doClosure, string onlyEra = "", string onlyMC  = ""
       double yfit = fref->Eval(pt);
       hmerged_diff->SetBinContent(i, (y - yfit)*100.);
       hmerged_diff->SetBinError(i, ey*100.);
-      chi2_m += (y - yfit) / ey;
+      chi2_m += pow((y - yfit) / ey, 2);
       ++ndf_m;
     }
 
@@ -2202,6 +2275,9 @@ void L2Res(bool _doClosure = doClosure, string onlyEra = "", string onlyMC  = ""
 
   TList *lst = mg->GetListOfGraphs();
   vector<TGraphErrors*> vgd(lst->GetEntries());
+  vector<double> vchi2(lst->GetEntries(),0);
+  vector<int> vndf(lst->GetEntries(),0);
+  vector<int> vcol(lst->GetEntries(),0);
   int entry(0);
   for (TObject *obj: *lst) {
     auto *g = dynamic_cast<TGraphErrors*>(obj);
@@ -2210,16 +2286,26 @@ void L2Res(bool _doClosure = doClosure, string onlyEra = "", string onlyMC  = ""
     auto *gdiff = (TGraphErrors*)g->Clone(g->GetName());
 
     int n = gdiff->GetN();
-    double x, y;
+    double x, y, chi2(0);
+    int ndf(0), col(0);
     for (int i = 0; i != n; ++i) {
       gdiff->GetPoint(i, x, y);
       double yfit = fref->Eval(x);
       gdiff->SetPoint(i, x, (y - yfit)*100.); // subtract fit, make %
       gdiff->SetPointError(i, g->GetEX()[i],g->GetEY()[i]*100.);
+
+      double ey = g->GetEY()[i];
+      if (ey>0) {
+	chi2 += pow((y - yfit)/ ey, 2);
+	++ndf;
+      }
     }
 
     tdrDraw(gdiff,string(gdiff->GetName())=="Tag+jet" ? "P" : "Pz",
 	    g->GetMarkerStyle(),g->GetMarkerColor()-9,kSolid,-1);
+    vchi2[entry] = chi2;
+    vndf[entry] = ndf;
+    vcol[entry] = g->GetMarkerColor()-9;
     vgd[entry++] = gdiff;
   }
 
@@ -2242,19 +2328,46 @@ void L2Res(bool _doClosure = doClosure, string onlyEra = "", string onlyMC  = ""
     tex->DrawLatex(0.05,0.65,cm);
     tex->DrawLatex(0.05,0.50,mlum[run].c_str());
     tex->SetTextSize(siz);
+    cxfd->cd(ieta);
   }
 
   // Add information on chi2 of the merged data and each channel
   if (drawPullChi2) {
     double sizf = tex->GetTextSize();
     double col = tex->GetTextColor();
-    tex->SetTextSize(1.5*0.045);
-    double c = (ndf_m!=0 ? chi2/ndf_m : 0);
-    tex->SetTextColor(fabs(c-1)<0.5 ? kGreen : c<1 ? kBlue : c>3 ? kRed : kOrange);
-    tex->DrawLatex(0.50,0.85,Form("#chi^{2}/NDF=%1.1f/%d",eta1,eta2));
+    tex->SetTextSize(1.5*0.035);
+    double c = (fref->GetNDF()!=0 ? fref->GetChisquare()/fref->GetNDF() : 0);
+    tex->SetTextColor(fabs(c-1)<0.5 ? kGreen+2 : c<1 ? kBlue : c>3 ? kRed : kOrange);
+    if (!drawPullChi2Extra)
+      tex->DrawLatex(0.55+texoff,0.78,
+		     Form("#chi^{2} / ndf = %1.1f / %d",fref->GetChisquare(),fref->GetNDF()));
+
+    if (drawPullChi2Extra) {
+      tex->SetTextColor(kBlack);
+      tex->DrawLatex(0.10+texoff2,0.85,"#chi^{2} / ndf");
+      tex->DrawLatex(0.55+texoff,0.78,Form("%1.1f / %d",fref->GetChisquare(),fref->GetNDF()));
+      tex->SetTextColor(fabs(c-1)<0.5 ? kGreen+2 : c<1 ? kBlue : c>3 ? kRed : kOrange);
+      tex->DrawLatex(0.75+texoff,0.78,Form("(%1.1f)",c));
+
+      tex->SetTextColor(kBlack);
+      tex->DrawLatex(0.10+texoff2,0.78,Form("%1.1f / %d",chi2_m,ndf_m));
+      double c = (ndf_m!=0 ? chi2_m/ndf_m : 0);
+      tex->SetTextColor(fabs(c-1)<0.5 ? kGreen+2 : c<1 ? kBlue : c>3 ? kRed : kOrange);
+      tex->DrawLatex(0.30+texoff2,0.78,Form("(%1.1f)",c));
+      
+      for (unsigned int i = 0; i != vchi2.size(); ++i) {
+	tex->SetTextColor(vcol[i]);
+	tex->DrawLatex(0.10+texoff2,0.73-0.05*i,
+		       Form("%1.1f / %d",vchi2[i],vndf[i]));
+	c = (vndf[i]>0 ? vchi2[i]/vndf[i] : 0);
+	tex->SetTextColor(fabs(c-1)<0.5 ? kGreen+2 : c<1 ? kBlue : c>3 ? kRed : kOrange);
+	tex->DrawLatex(0.30+texoff2,0.73-0.05*i,Form("(%1.1f)",c));
+      }
+    } // drawPullChi2Extra
+    
     tex->SetTextSize(sizf);
     tex->SetTextColor(col);
-  }
+  } // drawPullChi2Extra
   
   gPad->RedrawAxis();
   
