@@ -35,10 +35,12 @@
 using namespace std;
 
 const bool rp_debug = true; // verbose messages
-double correctWqq = 0.98; // 0 or 1 for no correction
+double correctWqq = 0.985;//1.00;//0.98; // 0 or 1 for no correction
 bool correctZMass = false; // pT with Run 2 Z+jet mass (def:true)
 double scaleEM = 1;//0.98; // scale EM+jet in data in absence of QCD bkg
-bool scaleEMperEra = true;
+bool scaleEMperEra = false;//true;
+bool scaleEMforQCDBkgInHDM = true; // apply effective scale for photon+jet HDM
+bool scaleEMforDataGluonJES = true; // apply effective scale for photon+jet
 
 // PS weight variations, 0,1,2,3 and "" for reference
 string sPSWgtZ = ""; // use 'PSWeight[X]/' variant of Z+jet MC (def:"") [PSWeight0 has very poor effective statistics]
@@ -238,11 +240,16 @@ void reprocess(string epoch="") {
 
   if (usePrompt2425RangeV3) {
     fzptmin = 15;
-    fzptmax = 1000;
+    fzptmax = 700;//1000;
+    fjzptmin = 15;
+    fjzptmax = 700;//1000;
+    fzjaptmin = 15;
+    fzjaptmax = 700;//1000;
+    
     fwptmin = 50;
     fwptmax = 230;
     fgptmin = 30;
-    fgptmax = 2000;
+    fgptmax = 1500;//2000;
     doMultijetRecoil = false;//true;
     fmjptmin = 74;
     fmjptmax = 2500;
@@ -254,6 +261,8 @@ void reprocess(string epoch="") {
     if (tr.Contains("2024I_nib1")) { fgptmax = 1500; fmjptmax = 1500; }
     if (tr.Contains("2024H_nib1")) { fgptmax = 1500; fmjptmax = 1500; }
     if (tr.Contains("2024F_nib3")) { fgptmax = 1500; fmjptmax = 1500; }
+
+    if (tr.Contains("2026C")) { fgptmax = 1500; fmjptmax = 2200; }
 
     // Extended range to capitalize on full 2025 statistics
     if (tr.Contains("2025CDEFG")) { fgptmax = 2500; fmjptmax = fijptmax = 3450;  fwptmax = 300; fzptmax = 1500; }//3103; }
@@ -332,12 +341,17 @@ void reprocess(string epoch="") {
     //fz = fzd;
   }
   else if (mfile.find(Form("ZMM_%s_DATAMC",ccr))!=mfile.end()) {
+    assert(false); // should have migrated to separate DATA and MC by now
     string file_datamc = mfile[Form("ZMM_%s_DATAMC",ccr)];
     cout << "Reading ZMM_" << ccr << "_DATAMC from Config.C:\n" << file_datamc << endl;
     fz = new TFile(file_datamc.c_str(),"READ");
 
     //cout << "Reading ZMM_" << ccr << "_DATAMC from Config.C" << endl;
     //fz = new TFile(mfile[Form("ZMM_%s_DATAMC",ccr)].c_str(),"READ");
+  }
+  else if (true) {
+    cout << "Missing ZMM_"<<ccr<<"_DATA or ZMM_"<<ccr<<"_MC" << endl << flush;
+    assert(false); // should have migrated to Config.C by now
   }
   else if (tepoch.Contains("UL")) {
     fz = new TFile(Form("%s/jme_bplusZ_%s_Zmm_sync_v53.root",
@@ -954,7 +968,9 @@ void reprocess(string epoch="") {
     //fijr = new TFile("rootfiles/timeDep2D_2024_V3M_2025_V9M_v2.root","READ");
     //fijr = new TFile("rootfiles/timeDep2D_2024_V3M_2025_V9M_2026B.root","READ");
     //fijr = new TFile("rootfiles/timeDep2D_2024_V3M_2025_V9M_2026B_v2.root","READ");
-    fijr = new TFile("rootfiles/timeDep2D_2024_V3M_2025_V9M_2026B_v3.root","READ");
+    //fijr = new TFile("rootfiles/timeDep2D_2024_V3M_2025_V9M_2026B_v3.root","READ");
+    //fijr = new TFile("rootfiles/timeDep2D_2024_V3M_2025_V9M_2026B_V0M.root","READ");
+    fijr = new TFile("rootfiles/timeDep2D_2024_V3M_2025_V9M_2026BC_V0M.root","READ");
     assert(fijr && !fijr->IsZombie());
   }
   
@@ -1007,6 +1023,9 @@ void reprocess(string epoch="") {
   files["incjet_mc"] = fijm;
   //files["incjet_ratio"] = fijm; // => should be fijd? or doesn't matter
   files["incjet_ratio"] = fijr; // => for cross section
+  files["dijet_data"] = fmjd;
+  files["dijet_mc"] = fmjm;
+  files["dijet_ratio"] = fmjd; // => for cross section
 
   // Add flavor stuff
   const int nf = 6;
@@ -1393,6 +1412,7 @@ void reprocess(string epoch="") {
   color["multijet_muf"] = kMagenta+1;
 
   style["incjet"]["xsec"] = kFullSquare;
+  style["incjet"]["rho"] = kFullSquare;
   style["incjet"]["chf"] = kFullCircle;
   style["incjet"]["nhf"] = kFullDiamond;
   style["incjet"]["nef"] = kFullSquare;
@@ -1401,12 +1421,15 @@ void reprocess(string epoch="") {
 
   color["incjet"] = kBlack;
   color["incjet_xsec"] = kBlack;
+  color["incjet_rho"] = kRed;
   color["incjet_chf"] = kRed;
   color["incjet_nhf"] = kGreen+2;
   color["incjet_nef"] = kBlue;
   color["incjet_cef"] = kCyan+1;
   color["incjet_muf"] = kMagenta+1;
 
+  style["dijet"]["rho"] = kFullSquare;
+  color["dijet_rho"] = kGreen+2;
 
   // Select which subsets of data to process:
   // datamc x method x sample x etabin (x alphacut
@@ -1419,6 +1442,8 @@ void reprocess(string epoch="") {
   vector<string> types;
   types.push_back("counts");
   //if (!tepoch.Contains("2026"))
+  //if (epoch!="2026C")
+  if (epoch!="2026BJS"&&epoch!="2026BNS"&&epoch!="2026CJS"&&epoch!="2026CNS")
   types.push_back("xsec");
   types.push_back("crecoil");
   types.push_back("mpfchs1"); // Type-I MET
@@ -1506,6 +1531,7 @@ void reprocess(string epoch="") {
   sets.push_back("gamjet");
   sets.push_back("multijet");
   sets.push_back("incjet");
+  sets.push_back("dijet");
 
   // Add flavor stuff for Z+jet
   for (int i = 0; i != nf; ++i) {
@@ -1625,9 +1651,12 @@ void reprocess(string epoch="") {
 	  bool ismpfc = (t=="mpf1" || t=="mpfn" || t=="mpfu");// || t=="rho");
 	  bool isfrac = (t=="chf"||t=="nef"||t=="nhf"||
 			 t=="cef"||t=="muf"||t=="puf");
+	  bool isrho = (t=="rho");
 	  bool isxsec = (t=="xsec");
 	  if (t=="xsec" && (s!="incjet" || d!="ratio")) continue;
-	  if (s=="incjet" && !isfrac && !(isxsec && d=="ratio")) continue;
+	  if (s=="incjet" && !isfrac && !isrho && t!="counts" && !(isxsec && d=="ratio")) continue;
+	  if (s=="incjet" && d=="ratio" && t=="counts") continue;
+	  if (s=="dijet" && !isrho && t!="counts") continue;
 
 	  bool isflavor = 
 	    (s=="zi"  || s=="zb"  || s=="zc"  || s=="zq"  || s=="zg"||s=="zn")||
@@ -1766,13 +1795,21 @@ void reprocess(string epoch="") {
             //if (d=="data") f = fijd;
             //if (d=="mc") f = fijm;
             //if (d=="ratio") f = fijd; // patch
-	    if (isfrac)
+	    if (t=="counts")
+	      c = "Incjet/hpt13";
+	    if (isfrac || isrho)
 	      c = Form("Incjet/PFcomposition/p%s13",tt);//rename[s][t]);
 	    if (isxsec)
 	      c = Form("h1jes_%s",ccr); // 2025CDEFG JES undone
 	    //c = Form("h1rel_%s",ccr); // relative to 2025CDEFG
 	    //if (d=="mc") // patch 22Sep2023, not 19Dec2023
 	    //c = Form("HLT_MC/Incjet/PFcomposition/p%s13",tt);//rename[s][t]);
+	  }
+	  if (s=="dijet") {
+	    if (t=="counts")
+	      c = "Dijet/hpttag";
+	    else
+	      c = Form("Dijet/PFcomposition/p%s13",tt);
 	  }
 
 	  // Add flavor stuff for Z+jet
@@ -1791,12 +1828,14 @@ void reprocess(string epoch="") {
 	  // Add flavor stuff for gamma+jet
 	  if (sp=="gamjet") {
 	    if (s=="gi"||s=="gb"||s=="gc"||s=="gq"||s=="gg"||s=="gn")
-	      if (d=="mc" || tepoch.Contains("2024") || tepoch.Contains("2025"))
+	      //if (d=="mc"||tepoch.Contains("2024")||tepoch.Contains("2025"))
+	      if (d!="mc"&&(tepoch.Contains("2024")||tepoch.Contains("2025")))
 		c = Form("flavor_old/%s_%si",tt,ss); // TMP
 	      else
 		c = Form("flavor/%s_%si",tt,ss);
 	    else
-	      if (d=="mc" || tepoch.Contains("2024") || tepoch.Contains("2025"))
+	      //if (d=="mc"||tepoch.Contains("2024")||tepoch.Contains("2025"))
+	      if (d!="mc"&&(tepoch.Contains("2024")||tepoch.Contains("2025")))
 		c = Form("flavor_old/%s_%s",tt,ss);//s.c_str()); // TMP
 	      else
 		c = Form("flavor/%s_%s",tt,ss);//s.c_str());
@@ -1829,12 +1868,12 @@ void reprocess(string epoch="") {
 	    obj = (TObject*)g;
 	  }
 	  if ((s=="jetz" || s=="zjav" || s=="zjet" ||
-	       s=="multijet" || s=="incjet" ||
+	       s=="multijet" || s=="incjet" || s=="dijet" ||
 	       (s=="pjet" || s=="jetp" || s=="pjav" || s=="gamjet" && fp==0)) &&
 	      d=="ratio" &&
 	      // bug: 20231114...
 	      //(isfrac || t=="rmpf1" || t=="rmpfn" || t=="rpmfu")) {
-	      (isfrac || ismpfc)) {
+	      (isfrac || isrho || ismpfc)) {
 	    TGraphErrors *gd = grs["data"][t][s][ieta];
 	    TGraphErrors *gm = grs["mc"][t][s][ieta];
 	    assert(gd);
@@ -1849,15 +1888,16 @@ void reprocess(string epoch="") {
 	    cout << "s="<<s<<", d="<<d<<", t="<<t<<endl<<flush;
 	  }
 	  assert(obj);
-	  
+
 	  // write out counts to jecdata.root (as TH1F)
 	  if (t=="counts") {
 	      
 	    assert(obj->InheritsFrom("TH1D") ||obj->InheritsFrom("TH1F"));
 	    dout->cd();
 	    TH1D *h = (TH1D*)obj;
-	    h->SetName(Form("%s_%s_a%1.0f",tt,ss,100.*alpha));
-
+	    //h->SetName(Form("%s_%s_a%1.0f",tt,ss,100.*alpha));
+	    h = (TH1D*)h->Clone(Form("%s_%s_a%1.0f",tt,ss,100.*alpha));
+	    
 	    h->Write();
 	    counts[d][s][ieta] = h;
 	    continue;
@@ -1951,6 +1991,9 @@ void reprocess(string epoch="") {
 	    else if (s=="incjet" && t=="xsec" &&
 		     (g->GetX()[i]<fxsptmin || g->GetX()[i]>fxsptmax))
 	      g->RemovePoint(i);
+	    else if (s=="dijet" && 
+		     (g->GetX()[i]<fijptmin || g->GetX()[i]>fijptmax))
+	      g->RemovePoint(i);
 	  } // for i
 
 	  // FSR correction for Wqq (on-the-fly d=="ratio" through data)
@@ -1979,17 +2022,20 @@ void reprocess(string epoch="") {
 
 	  // PATCH EM scale corrections for gamma+jet in absence of QCD bkg
 	  if ((s=="pjet" || s=="jetp" || s=="pjav" ||
-	       s=="gamjet") && (d=="data" || d=="ratio") &&
+	       //s=="gamjet") && (d=="data" || d=="ratio") &&
+	       s=="gamjet") && d=="data" && // "ratio" re-calculated on the fly
 	      (ismpfc || t=="ptchs" || t=="mpfchs1"))  { // 20240227 add mpfchs1
 	    for (int i = 0; i != g->GetN(); ++i) {
 	      double pt = g->GetX()[i];
+	      scaleEM = 1;
 	      if (scaleEMperEra) {
-		scaleEM = 1;
 		if (epoch=="Run23C123") scaleEM = 0.996;//0.998;
 		if (epoch=="Run23C4")   scaleEM = 0.994;
 		if (epoch=="Run23D")    scaleEM = 0.990;
 
-		if (epoch=="2025CDEFG") scaleEM = 1.000;//1.003;
+		//if (epoch=="2025CDEFG") scaleEM = 1.000;//1.003;
+		if (tr.Contains("2025")) scaleEM = 1.003;//1.005;
+		if (epoch=="2026B") scaleEM = 1.015;
 		// minitools/drawTimeStabilityPairs.C (GamVsZmm_DB,MPF)
 		// double-check these
 		/*
@@ -2000,6 +2046,26 @@ void reprocess(string epoch="") {
 		if (epoch=="2024I_nib1") scaleEM = 1.005;
 		if (epoch=="2024_nib")   scaleEM = 1.005;
 		*/
+	      }
+	      if (scaleEMforQCDBkgInHDM) {
+		// HDM from minitools/photonBkgCorrection.C
+		TF1 *f1h = new TF1("f1h","[0]+[1]*pow(x,[2])+[3]/x",15,4500);
+		f1h->SetParameters(1.0030, -0.366, -0.624, 1.326);
+
+		// f1h=GJet+QCD/GJet for MC, so invert correction for data
+		scaleEM /= f1h->Eval(pt);
+		
+		delete f1h; // could cache this later
+	      }
+	      if (scaleEMforDataGluonJES) {
+		// Data gluon JES impact from minitools/photonBkgCorrection.C
+		TF1 *f1d = new TF1("f1d","[0]+[1]*pow(x,[2])+[3]/x",15,4500);
+		f1d->SetParameters(-0.277, 0.0760, 0.177, -4.57);
+
+		// MC is in denominator, so invert correction for data
+		scaleEM /= (1+0.01*f1d->Eval(pt));
+		
+		delete f1d; // could cache this later
 	      }
 	      g->SetPoint(i, g->GetX()[i], g->GetY()[i]*scaleEM);
 	    }
@@ -2215,14 +2281,15 @@ void reprocess(string epoch="") {
     }
     // New method 2024-12-13 of using stored JES
     TProfile2D *p2jes(0), *p2res(0);
-    TProfile *pjes(0), *pres(0);
-    TProfile *presp(0), *presz(0), *presm(0), *presw(0);
+    TProfile *pjes(0), *pjesw(0), *pjesz(0), *pjesp(0), *pjesm(0);
+    TProfile *pres(0), *presw(0), *presz(0), *presp(0), *presm(0);
+    //TProfile *presp(0), *presz(0), *presm(0), *presw(0);
     if (tepoch.Contains("nib") ||
 	tepoch.Contains("2025") || tepoch.Contains("2026") ||
 	tepoch.Contains("rereco") ||
 	(epoch=="2024E_noRW" || epoch=="2024E_692mb" || epoch=="2024E_753mb")) {
       TProfile2D *p2jesp(0), *p2jesz(0);//, *p2jesm(0);
-      TProfile *pjesp(0), *pjesz(0);//, *pjesm(0);
+      //TProfile *pjesp(0), *pjesz(0);//, *pjesm(0);
     //pjesp = (TProfile*)fp0->Get("resp_JES_DATA_a100_eta00_13"); assert(pjesp);
       p2jesp = (TProfile2D*)fp0->Get("Gamjet2/p2corr"); assert(p2jesp);//!!
       pjesp = p2jesp->ProfileY(Form("pjesp_%s",epoch.c_str()),1,15);//|eta|<1.3
@@ -2245,16 +2312,17 @@ void reprocess(string epoch="") {
       presz = p2resz->ProfileY(Form("presz_%s",epoch.c_str()),1,15);//|eta|<1.3
       presm = (TProfile*)fmjd->Get("Multijet/presa"); assert(presm);
       p2res = (TProfile2D*)p2resz->Clone(Form("p2res_%s",epoch.c_str()));
+      //pres = (TProfile*)presp->Clone(Form("pres_%s",epoch.c_str()));
       pres = (TProfile*)presp->Clone(Form("pres_%s",epoch.c_str()));
       if (fwd) {
 	presw = (TProfile*)fwd->Get("prof_L2L3Res_ptpair"); assert(presw);
       }
       //pres = (TProfile*)presm->Clone(Form("pres_%s",epoch.c_str()));
       pres->Add(presz);
-      pres->Add(presm);
+      //pres->Add(presm); // ratio of scales so not applicable? 2026-03-27
 
       // Patch Wqq
-      if (presw && false) {
+      if (presw && true) {
 	TProfile *presw_old = presw;
 	presw = (TProfile*)presw_old->Clone(Form("presw_%s",epoch.c_str()));
 	presw->Reset();
@@ -2778,6 +2846,10 @@ void reprocess(string epoch="") {
       dout2->cd();
 
       if (pjes) pjes->Write();
+      if (pjesw) presw->Write(Form("pjesw_%s",cr),TObject::kOverwrite);
+      if (pjesz) presz->Write(Form("pjesz_%s",cr),TObject::kOverwrite);
+      if (pjesp) presp->Write(Form("pjesp_%s",cr),TObject::kOverwrite);
+      if (pjesm) presm->Write(Form("pjesm_%s",cr),TObject::kOverwrite);
       if (pres) pres->Write();
       if (presw) presw->Write(Form("presw_%s",cr),TObject::kOverwrite);
       if (presz) presz->Write(Form("presz_%s",cr),TObject::kOverwrite);
@@ -3015,7 +3087,10 @@ double getJES(TProfile *pjes, double ptcorr) {
 
   }
   else {
-    jes = pjes->Interpolate(ptcorr);
+    if (pjes->GetBinContent(i+1)<=0)
+      jes = pjes->GetBinContent(i);
+    else
+      jes = pjes->Interpolate(ptcorr);
   }
   return jes;
 } // getJES(1D)
