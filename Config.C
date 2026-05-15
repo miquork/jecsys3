@@ -271,11 +271,11 @@ mfile["WQQ_2024F_nib2_DATA"] = "rootfiles/Prompt2024/Wqq_e2/Muon_Run2024F_nib2_P
 mfile["WQQ_2024F_nib3_MC"]   = mfile["WQQ_2024_nib_MC"];
 mfile["WQQ_2024F_nib3_DATA"] = "rootfiles/Prompt2024/Wqq_e2/Muon_Run2024F_nib3_Prompt_V9M.root";
 mfile["WQQ_2024G_nib1_MC"]   = mfile["WQQ_2024_nib_MC"];
-mfile["WQQ_2024G_nib1_DATA"] = "rootfiles/Prompt2024/Wqq_e2/Muon_Run2024G_nib1__V9M.root";
+mfile["WQQ_2024G_nib1_DATA"] = "rootfiles/Prompt2024/Wqq_e2/Muon_Run2024G_nib1_Prompt_V9M.root";
 mfile["WQQ_2024G_nib2_MC"]   = mfile["WQQ_2024_nib_MC"];
 mfile["WQQ_2024G_nib2_DATA"] = "rootfiles/Prompt2024/Wqq_e2/Muon_Run2024G_nib2_Prompt_V9M.root";
 mfile["WQQ_2024H_nib1_MC"]   = mfile["WQQ_2024_nib_MC"];
-mfile["WQQ_2024H_nib1_DATA"] = "rootfiles/Prompt2025/Wqq_e2/Muon_Run2024H_nib1_Prompt_V9M.root";
+mfile["WQQ_2024H_nib1_DATA"] = "rootfiles/Prompt2024/Wqq_e2/Muon_Run2024H_nib1_Prompt_V9M.root";
 mfile["WQQ_2024I_nib1_MC"]   = mfile["WQQ_2024_nib_MC"];
 mfile["WQQ_2024I_nib1_DATA"] = "rootfiles/Prompt2024/Wqq_e2/Muon_Run2024I_nib1_Prompt_V9M.root";
 //

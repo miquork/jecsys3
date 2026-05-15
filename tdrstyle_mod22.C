@@ -665,4 +665,81 @@ TCanvas* tdrDiCanvas(const char* canvName, TH1D *hup, TH1D *hdw,
   return canv;
 }
 
+#include <vector>
+#include <cmath>
+
+void drawCustomLogXLabels(TH1 *h,
+                          const std::vector<double> &vals = {30,100,300,1000,3000},
+                          double yoffset = 0.015,
+                          double textsize = -1,
+                          bool drawTicks = false,
+                          double tickFrac = 0.012)
+{
+  if (!h || !gPad) return;
+
+  TPad *pad = (TPad*)gPad;
+  pad->Update();
+
+  // Require log-x
+  if (!pad->GetLogx()) {
+    cout << "drawCustomLogXLabels: pad is not in log-x mode." << endl;
+    return;
+  }
+
+  const double xmin = h->GetXaxis()->GetXmin();
+  const double xmax = h->GetXaxis()->GetXmax();
+  if (xmin<=0 || xmax<=0) {
+    cout << "drawCustomLogXLabels: x-axis limits must be > 0 for log-x." << endl;
+    return;
+  }
+
+  // Hide default x-axis labels
+  h->GetXaxis()->SetLabelOffset(999.);
+  pad->Modified();
+  pad->Update();
+
+  const double l = pad->GetLeftMargin();
+  const double r = pad->GetRightMargin();
+  const double b = pad->GetBottomMargin();
+  const double t = pad->GetTopMargin();
+
+  const double logxmin = log10(xmin);
+  const double logxmax = log10(xmax);
+
+  TLatex latex;
+  latex.SetNDC();
+  latex.SetTextFont(h->GetXaxis()->GetLabelFont());
+  latex.SetTextAlign(23); // centered, top-aligned
+  latex.SetTextAngle(0);
+
+  double ls = (textsize>0 ? textsize : h->GetXaxis()->GetLabelSize());
+  latex.SetTextSize(ls);
+
+  const double ylab = b - yoffset;
+  const double ytick0 = b;
+  const double ytick1 = b + tickFrac*(1. - t - b);
+
+  TLine line;
+  line.SetNDC();
+  line.SetLineColor(h->GetXaxis()->GetAxisColor());
+  line.SetLineStyle(kSolid);
+  line.SetLineWidth(1);
+
+  for (double x : vals) {
+    if (x < xmin || x > xmax) continue;
+
+    double u = (log10(x) - logxmin) / (logxmax - logxmin);
+    double xndc = l + u*(1. - l - r);
+
+    latex.DrawLatex(xndc, ylab, Form("%g", x));
+
+    if (drawTicks) {
+      line.DrawLineNDC(xndc, ytick0, xndc, ytick1);
+    }
+  }
+
+  pad->Modified();
+  pad->Update();
+}
+
 #endif /* __TDRSTYLEMOD15__ */

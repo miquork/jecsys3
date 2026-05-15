@@ -23,11 +23,32 @@ import os
 #           '2024H_nib1','2024I_nib1',
 #           '2024_nib']
 #           '2025C']
-IOV_list= ['2025C','2025D','2025E','2025CDE']
-#IOV_list= ['2025C']
+#IOV_list= ['2025C','2025D','2025E','2025CDE']
+#IOV_list= ['2025F']
+#IOV_list= ['2025C','2025D','2025E','2025F','2025G','2025DEFG','2025CDEFG']
+
+# 2024-2026 broad listing with full 2025CDEGH to compare incjet
+#IOV_list= ['2025CDEFG',
+#           '2024_nib','2024CDE_nib','2024FGHI_nib',
+#           '2026B','2026C','2026D']
+
+# 2024-2026 grand listing with full 2025CDEGH to compare incjet
+IOV_list= ['2025CDEFG',
+           '2024C_nib1','2024D_nib1','2024E_nib1','2024CDE_nib',
+           '2024F_nib1','2024F_nib2','2024F_nib3','2024G_nib1','2024G_nib2',
+           '2024H_nib1','2024I_nib1','2024FGHI_nib','2024_nib',
+           '2025C','2025D','2025E','2025F','2025G','2025CDEFG',
+           '2026B','2026C','2026D']
+
+# run first element once to recompile
+os.system("root -b -q 'mk_reprocess_RunEpoch.C(\""+IOV_list[0]+"\",1,1)'")
+
+#for iov in IOV_list:
+#os.system("mkdir pdf/"+iov)
+#    os.system("root -b -q 'mk_reprocess_RunEpoch.C(\""+iov+"\",1,0)'")
+#os.system("root -b -q 'recombine.C'")
+#os.system("root -b -q 'mk_reprocess_RunEpoch.C(\"Run3\")'")
 
 for iov in IOV_list:
 #os.system("mkdir pdf/"+iov)
-    os.system("root -b -q 'mk_reprocess_RunEpoch.C(\""+iov+"\")'")
-#os.system("root -b -q 'recombine.C'")
-#os.system("root -b -q 'mk_reprocess_RunEpoch.C(\"Run3\")'")
+    os.system("root -b -q 'mk_reprocess_RunEpoch.C(\""+iov+"\",0,0)'")

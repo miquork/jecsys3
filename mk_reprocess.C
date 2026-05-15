@@ -12,16 +12,29 @@
   gROOT->ProcessLine(".L CondFormats/JetMETObjects/src/SimpleJetCorrectionUncertainty.cc+");
   gROOT->ProcessLine(".L CondFormats/JetMETObjects/src/JetCorrectionUncertainty.cc+");
 
+  int doRecompile(1);
+  #ifdef recompilebool
+  std::cout << "Was doRecompile = " << doRecompile << std::endl;
+  if (recompile!=-1) doRecompile = recompile;
+  std::cout << "Is doRecompile = " << doRecompile << std::endl;
+  #endif
+  
   // Compile with +g to make sure asserts are run
   gROOT->ProcessLine(".L tools.C+g");
   gROOT->ProcessLine(".L Flavor.C+g");
-  gROOT->ProcessLine(".L reprocess.C++g"); // ++g to pick updates in Config.C
+  if (doRecompile)
+    gROOT->ProcessLine(".L reprocess.C++g"); // ++g to pick updates in Config.C
+  else
+    gROOT->ProcessLine(".L reprocess.C+g");
   gROOT->ProcessLine(".L scaleJES.C+g");
   gROOT->ProcessLine(".L softrad3.C+g");
   //gROOT->ProcessLine(".L globalFitSyst.C+g");
-  //gROOT->ProcessLine(".L globalFitRenormPF.C+g");
-  gROOT->ProcessLine(".L globalFit.C++g");
-
+  gROOT->ProcessLine(".L globalFitRenormPF.C+g");
+  if (doRecompile)
+    gROOT->ProcessLine(".L globalFit.C++g");
+  else
+    gROOT->ProcessLine(".L globalFit.C+g");
+  
   // Merge inputs from separate groups
   // NB: this does not need to be run, if the merged inputs
   //     are already available in 'rootfiles/jecdata.root'
@@ -63,7 +76,7 @@
 
   // Produce central systematic uncertainties for globalFitL3Res
   //globalFitSyst(epoch);     // also for globalFitRun2.C
-  //globalFitRenormPF(epoch); // for globalFitRun2.C
+  globalFitRenormPF(epoch); // for globalFitRun.C
 
   // Run global fit
   /////////////////
@@ -84,7 +97,7 @@
   //globalFitEtaBin(0.0, 1.3, epoch, "Prompt24_V7M");
   //globalFitEtaBin(0.0, 1.3, epoch, "Prompt24_V8N");
   if (TString(epoch.c_str()).Contains("26"))
-    globalFitEtaBin(0.0, 1.3, epoch, "Prompt26_V0M", doClosure);
+    globalFitEtaBin(0.0, 1.3, epoch, "Prompt26_V1M", doClosure);
   else if (TString(epoch.c_str()).Contains("25"))
     globalFitEtaBin(0.0, 1.3, epoch, "Prompt25_V4M", doClosure);
   else if (TString(epoch.c_str()).Contains("24"))

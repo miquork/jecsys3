@@ -35,12 +35,21 @@
 using namespace std;
 
 const bool rp_debug = true; // verbose messages
-double correctWqq = 0.985;//1.00;//0.98; // 0 or 1 for no correction
+
+////////////////////////////////////////////////////////////////////////
+// Ad-hoc scale corrections for various still missing effects         //
+// These are used to improve channel consistency before nuisances and //
+// official object scaling, smearing and flavor response corrections  //
+////////////////////////////////////////////////////////////////////////
+double correctWqq = 0.985; // 0 or 1 for no correction (def:1)
 bool correctZMass = false; // pT with Run 2 Z+jet mass (def:true)
-double scaleEM = 1;//0.98; // scale EM+jet in data in absence of QCD bkg
-bool scaleEMperEra = false;//true;
-bool scaleEMforQCDBkgInHDM = true; // apply effective scale for photon+jet HDM
-bool scaleEMforDataGluonJES = true; // apply effective scale for photon+jet
+double scaleEM = 1;//0.98; // scale EM+jet in data in absence of QCD bkg (def:1)
+bool scaleEMperEra = true; // more granular EM scale vs time (def:false)
+bool scaleEMforQCDBkgInHDM = true; // apply effective scale for QCD background
+bool scaleEMforDataGluonJES = true; // apply effective scale for data gluon JES
+bool scaleEMtoZmmGluonFrac = true; // scale g+jet to Z+jet gluon fraction
+bool scaleMultijet = 1; // 0 or 1 for no correction (def:1)
+bool scaleMultijetForDataGluonJES = false; // to be implemented
 
 // PS weight variations, 0,1,2,3 and "" for reference
 string sPSWgtZ = ""; // use 'PSWeight[X]/' variant of Z+jet MC (def:"") [PSWeight0 has very poor effective statistics]
@@ -247,11 +256,11 @@ void reprocess(string epoch="") {
     fzjaptmax = 700;//1000;
     
     fwptmin = 50;
-    fwptmax = 230;
-    fgptmin = 30;
-    fgptmax = 1500;//2000;
+    fwptmax = 200;//230;
+    fgptmin = 50;//35;//30;
+    fgptmax = 1200;//1500;//2000;
     doMultijetRecoil = false;//true;
-    fmjptmin = 74;
+    fmjptmin = 430;//114;//430;//395;//133;//114;//74;
     fmjptmax = 2500;
     fijptmin = 15;
     fijptmax = 3103;
@@ -262,11 +271,16 @@ void reprocess(string epoch="") {
     if (tr.Contains("2024H_nib1")) { fgptmax = 1500; fmjptmax = 1500; }
     if (tr.Contains("2024F_nib3")) { fgptmax = 1500; fmjptmax = 1500; }
 
+    //if (tr.Contains("2026")) { fgptmin = 50; }
     if (tr.Contains("2026C")) { fgptmax = 1500; fmjptmax = 2200; }
 
     // Extended range to capitalize on full 2025 statistics
-    if (tr.Contains("2025CDEFG")) { fgptmax = 2500; fmjptmax = fijptmax = 3450;  fwptmax = 300; fzptmax = 1500; }//3103; }
-  }
+    //if (tr.Contains("2025CDEFG")) { fgptmax = 1700;/*2500;*/ fmjptmax = fijptmax = 3450;  fwptmax = 230; fzptmax = 1000; }//1500; }//3103; }
+    if (tr.Contains("2025CDEFG")) { fmjptmax = fijptmax = 3450; }
+
+    // Reduced range for low statistics eras
+    if (tr.Contains("2026D")) { fzptmax = 400; fmjptmax = 1500; }
+  } // usePrompt2425RangeV3
   
   TDirectory *curdir = gDirectory;
 
@@ -1443,7 +1457,9 @@ void reprocess(string epoch="") {
   types.push_back("counts");
   //if (!tepoch.Contains("2026"))
   //if (epoch!="2026C")
-  if (epoch!="2026BJS"&&epoch!="2026BNS"&&epoch!="2026CJS"&&epoch!="2026CNS")
+  if (epoch!="2026BJS"&&epoch!="2026BNS"&&epoch!="2026CJS"&&epoch!="2026CNS"&&
+      epoch!="2024_nib"&&epoch!="2024CDE_nib"&&epoch!="2024FGHI_nib"&&
+      epoch!="2026D")
   types.push_back("xsec");
   types.push_back("crecoil");
   types.push_back("mpfchs1"); // Type-I MET
@@ -1828,14 +1844,14 @@ void reprocess(string epoch="") {
 	  // Add flavor stuff for gamma+jet
 	  if (sp=="gamjet") {
 	    if (s=="gi"||s=="gb"||s=="gc"||s=="gq"||s=="gg"||s=="gn")
-	      //if (d=="mc"||tepoch.Contains("2024")||tepoch.Contains("2025"))
-	      if (d!="mc"&&(tepoch.Contains("2024")||tepoch.Contains("2025")))
+	      if (d=="mc"||tepoch.Contains("2024")||tepoch.Contains("2025"))
+		//if (d!="mc"&&(tepoch.Contains("2024")||tepoch.Contains("2025")))
 		c = Form("flavor_old/%s_%si",tt,ss); // TMP
 	      else
 		c = Form("flavor/%s_%si",tt,ss);
 	    else
-	      //if (d=="mc"||tepoch.Contains("2024")||tepoch.Contains("2025"))
-	      if (d!="mc"&&(tepoch.Contains("2024")||tepoch.Contains("2025")))
+	      if (d=="mc"||tepoch.Contains("2024")||tepoch.Contains("2025"))
+		//if (d!="mc"&&(tepoch.Contains("2024")||tepoch.Contains("2025")))
 		c = Form("flavor_old/%s_%s",tt,ss);//s.c_str()); // TMP
 	      else
 		c = Form("flavor/%s_%s",tt,ss);//s.c_str());
@@ -2034,8 +2050,10 @@ void reprocess(string epoch="") {
 		if (epoch=="Run23D")    scaleEM = 0.990;
 
 		//if (epoch=="2025CDEFG") scaleEM = 1.000;//1.003;
-		if (tr.Contains("2025")) scaleEM = 1.003;//1.005;
-		if (epoch=="2026B") scaleEM = 1.015;
+		if (tr.Contains("2025")) scaleEM = 1.000;//1.003;//1.005;
+		if (tr.Contains("2026B")) scaleEM = 1.012;//1.015;
+		if (tr.Contains("2026C")) scaleEM = 1.012;//1.015;
+		if (tr.Contains("2026D")) scaleEM = 1.005;//1.015;
 		// minitools/drawTimeStabilityPairs.C (GamVsZmm_DB,MPF)
 		// double-check these
 		/*
@@ -2059,13 +2077,27 @@ void reprocess(string epoch="") {
 	      }
 	      if (scaleEMforDataGluonJES) {
 		// Data gluon JES impact from minitools/photonBkgCorrection.C
-		TF1 *f1d = new TF1("f1d","[0]+[1]*pow(x,[2])+[3]/x",15,4500);
-		f1d->SetParameters(-0.277, 0.0760, 0.177, -4.57);
-
+		//TF1 *f1d = new TF1("f1d","[0]+[1]*pow(x,[2])+[3]/x",15,4500);
+		//f1d->SetParameters(-0.277, 0.0760, 0.177, -4.57);
+		// Version 2 with proper reference gamma+jet gluon fraction
+		TF1 *f1d = new TF1("f1d","[0]+[1]*pow(max(x,40.),[2])+[3]/max(x,40.)",15,4500);
+		f1d->SetParameters(-1.008, 0.8165, 0.030, -7.92);
+		
 		// MC is in denominator, so invert correction for data
 		scaleEM /= (1+0.01*f1d->Eval(pt));
 		
 		delete f1d; // could cache this later
+	      }
+	      if (scaleEMtoZmmGluonFrac) {
+		// Z+jet gluon fraction from minitools/photonBkgCorrection.C
+
+		TF1 *f1z = new TF1("f1z","[0]+[1]*pow(max(x,40.),[2])+[3]/max(x,40.)",15,4500);
+		f1z->SetParameters(-0.007, 434.38, -1.970, 0.);
+  
+		// MC is in denominator, so invert correction for data
+		scaleEM /= (1+0.01*f1z->Eval(pt));
+		
+		delete f1z; // could cache this later
 	      }
 	      g->SetPoint(i, g->GetX()[i], g->GetY()[i]*scaleEM);
 	    }
@@ -2310,7 +2342,8 @@ void reprocess(string epoch="") {
       presp = p2resp->ProfileY(Form("presp_%s",epoch.c_str()),1,15);//|eta|<1.3
       p2resz = (TProfile2D*)fz->Get("data/l2res/p2res"); assert(p2resz);
       presz = p2resz->ProfileY(Form("presz_%s",epoch.c_str()),1,15);//|eta|<1.3
-      presm = (TProfile*)fmjd->Get("Multijet/presa"); assert(presm);
+      //presm = (TProfile*)fmjd->Get("Multijet/presa"); assert(presm);
+      presm = (TProfile*)fmjd->Get("Multijet/presm"); assert(presm);
       p2res = (TProfile2D*)p2resz->Clone(Form("p2res_%s",epoch.c_str()));
       //pres = (TProfile*)presp->Clone(Form("pres_%s",epoch.c_str()));
       pres = (TProfile*)presp->Clone(Form("pres_%s",epoch.c_str()));

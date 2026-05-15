@@ -9,12 +9,18 @@ using std::string;
 using std::map;
 
 // Global minimum (stat.) uncertainty for input data
-double globalErrMin = 0.005;//0.003;//0.002559; // chi2/NDF=101.0/101
+double globalErrMin = 0.003;//0.005;//0.003;//0.002559; // chi2/NDF=101.0/101
+
+// Use one era as global fit reference for inclusive jets
+// Always run this era first to update the reference fit
+bool _gf_useIncjetRef = true;
+string _gf_incjetRef = "2025CDEFG";
+bool _gf_fitIncjet = false; // plot incjet if enabled, but don't fit
 
 //double scaleJZ = 0.98;  // default 0.98 for 2022-23
 //double scaleJZA = 0.99;  // default for 2022-23
-bool scaleJZperEra = true; // Enable custom scales per era (hard-coded)
-bool scaleJZAperEra = true; // Enable custom scales per era (hard-coded)
+bool scaleJZperEra = false; // Enable custom scales per era (hard-coded)
+bool scaleJZAperEra = false; // Enable custom scales per era (hard-coded)
 double scaleJZ = 0.985;  // default 0.985 for 2024CS
 double scaleJZA = 0.9925;  // default 0.9925 for 2024CS
 
@@ -66,7 +72,7 @@ bool _gf_undoJESref = true;//false;//true; // Set 'false' to produce "*_closure.
 // How to use: comment out datasets that are not needed to switch them off
 const unsigned int ndt = 44;
 const array<array<string,3>,ndt> _gf_datasets = {{
-    {"xsec_incjet_a100", "Rjet",""},
+    //    {"xsec_incjet_a100", "Rjet",""},
     {"mpfchs1_wqq_a100", "Rjet",""},
     {"ptchs_jetz_a100", "Rjet",""},
     {"mpfchs1_jetz_a100", "Rjet",""},
@@ -95,6 +101,11 @@ const array<array<string,3>,ndt> _gf_datasets = {{
     {"chf_incjet_a100",  "chf",""},
     {"nhf_incjet_a100",  "nhf",""},
     {"nef_incjet_a100",  "nef",""},
+    //
+    {"hdm_cmb_mj", "Rjet",""},
+    {"chf_cmb_ren",  "chf",""},
+    {"nhf_cmb_ren",  "nhf",""},
+    {"nef_cmb_ren",  "nef",""},
   }};
 
 // Use only these data sets (empty for all)
@@ -102,31 +113,44 @@ const array<array<string,3>,ndt> _gf_datasets = {{
 // 'name' should match the dataset name in the list above
 // How to use: uncomment individual datasets to use only those
 const array<string,29> _gf_datasets_whitelist = {
-  "xsec_incjet_a100",
-  "mpfchs1_wqq_a100",
+  //"xsec_incjet_a100",
+  //"mpfchs1_wqq_a100",
+
   //"ptchs_zjet_a100",
   //"mpfchs1_zjet_a100",
   //"hdm_mpfchs1_jetz", // V8M
   //"hdm_mpfchs1_zjav", // V8M
   "hdm_mpfchs1_zjet",
+  /*
   "chf_zjet_a100",
   "nhf_zjet_a100",
   "nef_zjet_a100",
+  */
   //"ptchs_gamjet_a100",
   //"mpfchs1_gamjet_a100",
   "hdm_mpfchs1_gamjet",
+  /*
   "chf_gamjet_a100",
   "nhf_gamjet_a100",
   "nef_gamjet_a100",
+  */
   //"ptchs_multijet_a100", // use ptchs before v34d bug fixed
   //"mpfchs1_multijet_a100",
   "hdm_mpfchs1_multijet", // mpfchs->hdm botched before v34d
   //"chf_multijet_a100",
   //"nhf_multijet_a100",
   //"nef_multijet_a100",
+  /*
   "chf_incjet_a100",
   "nhf_incjet_a100",
   "nef_incjet_a100",
+  */
+  
+  //"hdm_cmb_mj",
+  "chf_cmb_ren",
+  "nhf_cmb_ren",
+  "nef_cmb_ren",
+
 };
 
 // Use only these shapes (empty for all)
@@ -135,9 +159,10 @@ const array<string,29> _gf_datasets_whitelist = {
 // How to use: uncomment individual datasets to use only those
 const array<string,29> _gf_shapes_whitelist = {
   "em3", // EM scale -3%
-  "tv402","tv3n1","tv300pn", // tracking -1% Ntrk=1, Ntrk>=1; eff=0.998^{N-1}
+  //"tv402","tv3n1","tv300pn", // tracking -1% Ntrk=1, Ntrk>=1; eff=0.998^{N-1}
+  "tv3n1","tv402","tv300pn", // tracking -1% Ntrk=1, Ntrk>=1; eff=0.998^{N-1}
   "hhp3", // HCAL scale -3%
-  //"hhpfc", // Run23
+  "hhpfc", // Run23, Prompt25 again
   //"hhnoise", // Run22
   //"x0p5",
   //"x1", // 22Sep2023 V3, not 19Dec2023
@@ -153,6 +178,7 @@ const array<string,29> _gf_shapes_whitelist = {
   
   "off_nhf", // Prompt24, no hhpfc+hhnoise+hbtime+hbsipm+off with this
   "dd_nhf", // Prompt25, model HCAL problems in 2025C
+  "off_pu", // Prompt26B (high PU) vs Prompt26C (low PU)
   
   //"ecalcc", // ECAL cc timing for 2024BCD, not 2024CR/CS/F
   //"qie11"
@@ -165,7 +191,7 @@ const array<string,29> _gf_shapes_whitelist = {
   //"x4", // test TeV scale
   //"hbtime", // test adding for Summer23; did nothing really on top of x2p5
   //"hbsipm", // 22Sep2023 V3, not 19Dec2023, off for 2025
-  "hhblue103",
+  //"hhblue103", // Run 2 source, now replaced by hbdX
   "hbd1","hbd2","hbd3","hbd4" // Depth variations by 20% (or 17%?) for 2025
 };
 
@@ -224,7 +250,11 @@ const array<array<string,3>, nshp> _gf_shapes = {{
     //{"off_nhf","Rjet","18.46*pow(x/15.6,1.840)/(1+0.5*pow(x/15.6,3.679))"},
     //{"off_nhf","Rjet","19.15*pow(x/15.6,1.912)/(1+0.5*pow(x/15.6,3.824))"},
   //{"off_nhf","Rjet","19.26*pow(x/15.6,1.927)/(1+0.5*pow(x/15.6,3.853))"},//V8M
-    {"off_nhf","Rjet","15.49*pow(x/15.1,1.939)/(1+0.5*pow(x/15.1,3.877))"},//V9M
+  //{"off_nhf","Rjet","15.49*pow(x/15.1,1.939)/(1+0.5*pow(x/15.1,3.877))"},//V9M
+    {"off_nhf","Rjet","12.64*pow(x/14.2,1.838)/(1+0.5*pow(x/14.2,3.675))"},//FGHI-V10M
+    {"off_pu","Rjet","1+8.521*(1-erf((log(x)-log(45.26))/log(1.6580)))"},//2026
+
+    
     //{"dd_nhf","Rjet","374.11/x-83.36*pow(x,-0.5104)"}, // Prompt2025, v1
     {"dd_nhf","Rjet","370.96/x-83.46*pow(x,-0.5103)"},
     {"g1","Rjet","-6.5*max(log(x/610.),0.)"},

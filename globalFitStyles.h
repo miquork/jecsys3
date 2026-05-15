@@ -192,8 +192,8 @@ _gf_label["mpfchs1_zjet_a100"] = "Z+jet (MPF)";
 _gf_label["hdm_mpfchs1_zlljet"] = "Z+jet (KIT)";
 _gf_label["mpfchs1_wqq_a100"] = "W#rightarrowq#bar{q}'";
 _gf_label["hdm_hadw"] = "W#rightarrowqq'";
-_gf_label["hdm_cmb"] = "Combined";
-_gf_label["hdm_cmb_mj"] = "Combined";//"Cmb+MJ";
+_gf_label["hdm_cmb"] = "Z+#gamma+multijet";//"Combined";
+_gf_label["hdm_cmb_mj"] = "Z+#gamma+multijet";//"Combined";//"Cmb+MJ";
 _gf_label["hdm_incjet"] = "Incl. jet";//"Cmb+MJ";
 
 _gf_label["hdm_cmb2"] = "R_{jet}"; // _pf.pdf
