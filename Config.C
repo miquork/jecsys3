@@ -100,12 +100,20 @@ mlum["2026"] = "17.1 fb^{-1}";
 // TOTAL-level:
 mlum["Run3"] = "283 fb^{-1}";
 
+mlum["24to26C"] = "236 fb^{-1}";
+
 mlum["2025C0"] = "20.8 fb^{-1}";
 mlum["2025CT"] = "TrkRadDam<<20.8 fb^{-1}";
 
 mlum["2026A"] = "0.64 fb^{-1}";
 mlum["2026B"] = "15.3 fb^{-1}";
 mlum["2026C"] = "1.18 fb^{-1}";
+
+// Jet spike test
+mlum["2026BJS"] = "15.3 fb^{-1}";
+mlum["2026BNS"] = "15.3 fb^{-1}";
+mlum["2026CJS"] = "1.18 fb^{-1}";
+mlum["2026CNS"] = "1.18 fb^{-1}";
 
 
 ////////////////////
@@ -142,81 +150,81 @@ mfile["JERC_Winter25MC_Flat_EEZS9p5_MC"] = "rootfiles/NestorEEZS25/jmenano_mc_ou
 // v152: golden JSON, rhovsmu tc.
 // v153: V3M closure
 // v155: new 2024 files (previous was v134)
-// 2024/Jet_v155->Jet_v159
+// 2024/Jet_v155->Jet_v159 -> v165
 //mfile["JET_2024_nib_MC"]     = mfile["JERC_Summer24MG_MC"];
 mfile["JET_2024_MC"] = "rootfiles/Prompt/Jet_v161/jmenano_mc_out_Summer24MG_JMENANO_2024CDEFGHI_JERSF_v161.root";
 //
 mfile["JET_2024_nib_MC"] = mfile["JET_2024_MC"];
-mfile["JET_2024_nib_DATA_OUT"] = "rootfiles/Prompt/Jet_v159/jmenano_data_out_2024CDEFGHI_JME_v159.root";
-mfile["JET_2024_nib_DATA_CMB"] = "rootfiles/Prompt/Jet_v159/jmenano_data_cmb_2024CDEFGHI_JME_v159.root";
+mfile["JET_2024_nib_DATA_OUT"] = "rootfiles/Prompt/Jet_v165/jmenano_data_out_2024CDEFGHI_JME_v165.root";
+mfile["JET_2024_nib_DATA_CMB"] = "rootfiles/Prompt/Jet_v165/jmenano_data_cmb_2024CDEFGHI_JME_v165.root";
 mfile["JET_2024FGHI_nib_MC"] = mfile["JET_2024_MC"];
-mfile["JET_2024FGHI_nib_DATA_OUT"] = "rootfiles/Prompt/Jet_v159/jmenano_data_out_2024FGHI_JME_v159.root";
-mfile["JET_2024FGHI_nib_DATA_CMB"] = "rootfiles/Prompt/Jet_v159/jmenano_data_cmb_2024FGHI_JME_v159.root";
+mfile["JET_2024FGHI_nib_DATA_OUT"] = "rootfiles/Prompt/Jet_v165/jmenano_data_out_2024FGHI_JME_v165.root";
+mfile["JET_2024FGHI_nib_DATA_CMB"] = "rootfiles/Prompt/Jet_v165/jmenano_data_cmb_2024FGHI_JME_v165.root";
 mfile["JET_2024CDE_nib_MC"]  = mfile["JET_2024_MC"];
-mfile["JET_2024CDE_nib_DATA_OUT"] = "rootfiles/Prompt/Jet_v159/jmenano_data_out_2024CDE_JME_v159.root";
-mfile["JET_2024CDE_nib_DATA_CMB"] = "rootfiles/Prompt/Jet_v159/jmenano_data_cmb_2024CDE_JME_v159.root";
+mfile["JET_2024CDE_nib_DATA_OUT"] = "rootfiles/Prompt/Jet_v165/jmenano_data_out_2024CDE_JME_v165.root";
+mfile["JET_2024CDE_nib_DATA_CMB"] = "rootfiles/Prompt/Jet_v165/jmenano_data_cmb_2024CDE_JME_v165.root";
 //
 mfile["JET_2024C_nib1_MC"]     = mfile["JET_2024_MC"];
-mfile["JET_2024C_nib1_DATA_OUT"] = "rootfiles/Prompt/Jet_v159/jmenano_data_out_2024C_Rp_JME_v159.root";
-mfile["JET_2024C_nib1_DATA_CMB"] = "rootfiles/Prompt/Jet_v159/jmenano_data_cmb_2024C_Rp_JME_v159.root";
+mfile["JET_2024C_nib1_DATA_OUT"] = "rootfiles/Prompt/Jet_v165/jmenano_data_out_2024C_Rp_JME_v165.root";
+mfile["JET_2024C_nib1_DATA_CMB"] = "rootfiles/Prompt/Jet_v165/jmenano_data_cmb_2024C_Rp_JME_v165.root";
 //
 mfile["JET_2024D_nib1_MC"]     = mfile["JET_2024_MC"];
-mfile["JET_2024D_nib1_DATA_OUT"] = "rootfiles/Prompt/Jet_v159/jmenano_data_out_2024D_Rp_JME_v159.root";
-mfile["JET_2024D_nib1_DATA_CMB"] = "rootfiles/Prompt/Jet_v159/jmenano_data_cmb_2024D_Rp_JME_v159.root";
+mfile["JET_2024D_nib1_DATA_OUT"] = "rootfiles/Prompt/Jet_v165/jmenano_data_out_2024D_Rp_JME_v165.root";
+mfile["JET_2024D_nib1_DATA_CMB"] = "rootfiles/Prompt/Jet_v165/jmenano_data_cmb_2024D_Rp_JME_v165.root";
 //
 mfile["JET_2024E_nib1_MC"]     = mfile["JET_2024_MC"];
-mfile["JET_2024E_nib1_DATA_OUT"] = "rootfiles/Prompt/Jet_v159/jmenano_data_out_2024E_Rp_JME_v159.root";
-mfile["JET_2024E_nib1_DATA_CMB"] = "rootfiles/Prompt/Jet_v159/jmenano_data_cmb_2024E_Rp_JME_v159.root";
+mfile["JET_2024E_nib1_DATA_OUT"] = "rootfiles/Prompt/Jet_v165/jmenano_data_out_2024E_Rp_JME_v165.root";
+mfile["JET_2024E_nib1_DATA_CMB"] = "rootfiles/Prompt/Jet_v165/jmenano_data_cmb_2024E_Rp_JME_v165.root";
 //
 mfile["JET_2024F_nib1_MC"]     = mfile["JET_2024_MC"];
-mfile["JET_2024F_nib1_DATA_OUT"] = "rootfiles/Prompt/Jet_v159/jmenano_data_out_2024F_nib1_JME_v159.root";
-mfile["JET_2024F_nib1_DATA_CMB"] = "rootfiles/Prompt/Jet_v159/jmenano_data_cmb_2024F_nib1_JME_v159.root";
+mfile["JET_2024F_nib1_DATA_OUT"] = "rootfiles/Prompt/Jet_v165/jmenano_data_out_2024F_nib1_JME_v165.root";
+mfile["JET_2024F_nib1_DATA_CMB"] = "rootfiles/Prompt/Jet_v165/jmenano_data_cmb_2024F_nib1_JME_v165.root";
 mfile["JET_2024F_nib2_MC"]     = mfile["JET_2024_MC"];
-mfile["JET_2024F_nib2_DATA_OUT"] = "rootfiles/Prompt/Jet_v159/jmenano_data_out_2024F_nib2_JME_v159.root";
-mfile["JET_2024F_nib2_DATA_CMB"] = "rootfiles/Prompt/Jet_v159/jmenano_data_cmb_2024F_nib2_JME_v159.root";
+mfile["JET_2024F_nib2_DATA_OUT"] = "rootfiles/Prompt/Jet_v165/jmenano_data_out_2024F_nib2_JME_v165.root";
+mfile["JET_2024F_nib2_DATA_CMB"] = "rootfiles/Prompt/Jet_v165/jmenano_data_cmb_2024F_nib2_JME_v165.root";
 mfile["JET_2024F_nib3_MC"]     = mfile["JET_2024_MC"];
-mfile["JET_2024F_nib3_DATA_OUT"] = "rootfiles/Prompt/Jet_v159/jmenano_data_out_2024F_nib3_JME_v159.root";
-mfile["JET_2024F_nib3_DATA_CMB"] = "rootfiles/Prompt/Jet_v159/jmenano_data_cmb_2024F_nib3_JME_v159.root";
+mfile["JET_2024F_nib3_DATA_OUT"] = "rootfiles/Prompt/Jet_v165/jmenano_data_out_2024F_nib3_JME_v165.root";
+mfile["JET_2024F_nib3_DATA_CMB"] = "rootfiles/Prompt/Jet_v165/jmenano_data_cmb_2024F_nib3_JME_v165.root";
 //
 mfile["JET_2024G_nib1_MC"]     = mfile["JET_2024_MC"];
-mfile["JET_2024G_nib1_DATA_OUT"] = "rootfiles/Prompt/Jet_v159/jmenano_data_out_2024G_nib1_JME_v159.root";
-mfile["JET_2024G_nib1_DATA_CMB"] = "rootfiles/Prompt/Jet_v159/jmenano_data_cmb_2024G_nib1_JME_v159.root";
+mfile["JET_2024G_nib1_DATA_OUT"] = "rootfiles/Prompt/Jet_v165/jmenano_data_out_2024G_nib1_JME_v165.root";
+mfile["JET_2024G_nib1_DATA_CMB"] = "rootfiles/Prompt/Jet_v165/jmenano_data_cmb_2024G_nib1_JME_v165.root";
 mfile["JET_2024G_nib2_MC"]     = mfile["JET_2024_MC"];
-mfile["JET_2024G_nib2_DATA_OUT"] = "rootfiles/Prompt/Jet_v159/jmenano_data_out_2024G_nib2_JME_v159.root";
-mfile["JET_2024G_nib2_DATA_CMB"] = "rootfiles/Prompt/Jet_v159/jmenano_data_cmb_2024G_nib2_JME_v159.root";
+mfile["JET_2024G_nib2_DATA_OUT"] = "rootfiles/Prompt/Jet_v165/jmenano_data_out_2024G_nib2_JME_v165.root";
+mfile["JET_2024G_nib2_DATA_CMB"] = "rootfiles/Prompt/Jet_v165/jmenano_data_cmb_2024G_nib2_JME_v165.root";
 //
 mfile["JET_2024H_nib1_MC"]     = mfile["JET_2024_MC"];
-mfile["JET_2024H_nib1_DATA_OUT"] = "rootfiles/Prompt/Jet_v159/jmenano_data_out_2024H_JME_v159.root";
-mfile["JET_2024H_nib1_DATA_CMB"] = "rootfiles/Prompt/Jet_v159/jmenano_data_cmb_2024H_JME_v159.root";
+mfile["JET_2024H_nib1_DATA_OUT"] = "rootfiles/Prompt/Jet_v165/jmenano_data_out_2024H_nib1_JME_v159.root"; // was v163_v4
+mfile["JET_2024H_nib1_DATA_CMB"] = "rootfiles/Prompt/Jet_v165/jmenano_data_cmb_2024H_nib1_JME_v165.root";
 //
 mfile["JET_2024I_nib1_MC"]     = mfile["JET_2024_MC"];
-mfile["JET_2024I_nib1_DATA_OUT"] = "rootfiles/Prompt/Jet_v159/jmenano_data_out_2024I_JME_v159.root";
-mfile["JET_2024I_nib1_DATA_CMB"] = "rootfiles/Prompt/Jet_v159/jmenano_data_cmb_2024I_JME_v159.root";
+mfile["JET_2024I_nib1_DATA_OUT"] = "rootfiles/Prompt/Jet_v165/jmenano_data_out_2024I_nib1_JME_v165.root"; // was v163_v4
+mfile["JET_2024I_nib1_DATA_CMB"] = "rootfiles/Prompt/Jet_v165/jmenano_data_cmb_2024I_nib1_JME_v165.root";
 
 //mfile["JET_2025_MC"]        = "rootfiles/Prompt2025/Jet_v128/jmenano_mc_out_Winter25MG_v128.root"; // no JER SF
 //mfile["JET_2025_MC"] = "rootfiles/Prompt2025/Jet_v146/jmenano_mc_out_Winter25MG_v146.root"; // no JER SF
 mfile["JET_2025_MC"] = "rootfiles/Prompt/Jet_v161/jmenano_mc_out_Summer24MG_JMENANO_2025CDEFG_JERSF_v161.root";
 //mfile["JET_2025_MC"]        = "rootfiles/Prompt2025/Jet_v143/jmenano_mc_out_Winter25MG_JRSF2025CDE_v143.root"; // with JER SF
-// 2025/Jet_v153 -> Jet_v159
-mfile["JET_2025C_DATA_OUT"] = "rootfiles/Prompt/Jet_v159/jmenano_data_out_2025C_JME_v159.root";
-mfile["JET_2025C_DATA_CMB"] = "rootfiles/Prompt/Jet_v159/jmenano_data_cmb_2025C_JME_v159.root";
+// 2025/Jet_v153 -> Jet_v159 -> v166
+mfile["JET_2025C_DATA_OUT"] = "rootfiles/Prompt/Jet_v166/jmenano_data_out_2025C_JME_v166.root";
+mfile["JET_2025C_DATA_CMB"] = "rootfiles/Prompt/Jet_v166/jmenano_data_cmb_2025C_JME_v166.root";
 mfile["JET_2025C_MC"]       = mfile["JET_2025_MC"];
-mfile["JET_2025D_DATA_OUT"] = "rootfiles/Prompt/Jet_v159/jmenano_data_out_2025D_JME_v159.root";
-mfile["JET_2025D_DATA_CMB"] = "rootfiles/Prompt/Jet_v159/jmenano_data_cmb_2025D_JME_v159.root";
+mfile["JET_2025D_DATA_OUT"] = "rootfiles/Prompt/Jet_v166/jmenano_data_out_2025D_JME_v166.root";
+mfile["JET_2025D_DATA_CMB"] = "rootfiles/Prompt/Jet_v166/jmenano_data_cmb_2025D_JME_v166.root";
 mfile["JET_2025D_MC"]       = mfile["JET_2025_MC"];
-mfile["JET_2025E_DATA_OUT"] = "rootfiles/Prompt/Jet_v159/jmenano_data_out_2025E_JME_v159.root";
-mfile["JET_2025E_DATA_CMB"] = "rootfiles/Prompt/Jet_v159/jmenano_data_cmb_2025E_JME_v159.root";
+mfile["JET_2025E_DATA_OUT"] = "rootfiles/Prompt/Jet_v166/jmenano_data_out_2025E_JME_v166.root";
+mfile["JET_2025E_DATA_CMB"] = "rootfiles/Prompt/Jet_v166/jmenano_data_cmb_2025E_JME_v166.root";
 mfile["JET_2025E_MC"]       = mfile["JET_2025_MC"];
 // v146->v147 for more F
-mfile["JET_2025F_DATA_OUT"] = "rootfiles/Prompt/Jet_v159/jmenano_data_out_2025F_JME_v159.root";
-mfile["JET_2025F_DATA_CMB"] = "rootfiles/Prompt/Jet_v159/jmenano_data_cmb_2025F_JME_v159.root";
+mfile["JET_2025F_DATA_OUT"] = "rootfiles/Prompt/Jet_v166/jmenano_data_out_2025F_JME_v166.root";
+mfile["JET_2025F_DATA_CMB"] = "rootfiles/Prompt/Jet_v166/jmenano_data_cmb_2025F_JME_v166.root";
 mfile["JET_2025F_MC"]       = mfile["JET_2025_MC"];
-mfile["JET_2025G_DATA_OUT"] = "rootfiles/Prompt/Jet_v159/jmenano_data_out_2025G_JME_v159.root";
-mfile["JET_2025G_DATA_CMB"] = "rootfiles/Prompt/Jet_v159/jmenano_data_cmb_2025G_JME_v159.root"; //placeholder
+mfile["JET_2025G_DATA_OUT"] = "rootfiles/Prompt/Jet_v166/jmenano_data_out_2025G_JME_v166.root";
+mfile["JET_2025G_DATA_CMB"] = "rootfiles/Prompt/Jet_v166/jmenano_data_cmb_2025G_JME_v166.root"; //placeholder
 mfile["JET_2025G_MC"]       = mfile["JET_2025_MC"];
 // v141 CDE, v143 CDEF, v146 CDEF as v147 CDEFG placeholder
-mfile["JET_2025CDEFG_DATA_OUT"] = "rootfiles/Prompt/Jet_v159/jmenano_data_out_2025CDEFG_JME_v159.root";
-mfile["JET_2025CDEFG_DATA_CMB"] = "rootfiles/Prompt/Jet_v159/jmenano_data_cmb_2025CDEFG_JME_v159.root";
+mfile["JET_2025CDEFG_DATA_OUT"] = "rootfiles/Prompt/Jet_v166/jmenano_data_out_2025CDEFG_JME_v166.root";
+mfile["JET_2025CDEFG_DATA_CMB"] = "rootfiles/Prompt/Jet_v166/jmenano_data_cmb_2025CDEFG_JME_v166.root";
 mfile["JET_2025CDEFG_MC"]       = mfile["JET_2025_MC"];
 //
 mfile["JET_2025JER_DATA_OUT"] = mfile["JET_2025CDEFG_DATA_OUT"];
@@ -227,12 +235,12 @@ mfile["JET_2025JER_MC"]       = "rootfiles/Prompt2026/Jet_v158/jmenano_mc_out_Su
 //mfile["JET_2025DEFG_DATA_CMB"] = "rootfiles/Prompt2025/Jet_v153/jmenano_data_cmb_2025DEFG_JME_v153.root";
 //mfile["JET_2025DEFG_MC"]       = mfile["JET_2025_MC"];
 //
-mfile["JET_2025C0_DATA_OUT"] = "rootfiles/Prompt2025/Jet_v145/jmenano_data_out_2025C_JME_v145.root";
-mfile["JET_2025C0_DATA_CMB"] = "rootfiles/Prompt2025/Jet_v145/jmenano_data_cmb_2025C_JME_v145.root";
-mfile["JET_2025C0_MC"] = "rootfiles/Prompt2025/Jet_v145/jmenano_mc_out_Winter25MG_v145.root";
-mfile["JET_2025CT_DATA_OUT"] = "rootfiles/Prompt2025/Jet_v145/jmenano_data_out_2025C_Trk_JME_v145.root";
-mfile["JET_2025CT_DATA_CMB"] = "rootfiles/Prompt2025/Jet_v145/jmenano_data_cmb_2025C_Trk_JME_v145.root";
-mfile["JET_2025CT_MC"] = mfile["JET_2025C0_MC"]; 
+//mfile["JET_2025C0_DATA_OUT"] = "rootfiles/Prompt2025/Jet_v145/jmenano_data_out_2025C_JME_v145.root";
+//mfile["JET_2025C0_DATA_CMB"] = "rootfiles/Prompt2025/Jet_v145/jmenano_data_cmb_2025C_JME_v145.root";
+//mfile["JET_2025C0_MC"] = "rootfiles/Prompt2025/Jet_v145/jmenano_mc_out_Winter25MG_v145.root";
+//mfile["JET_2025CT_DATA_OUT"] = "rootfiles/Prompt2025/Jet_v145/jmenano_data_out_2025C_Trk_JME_v145.root";
+//mfile["JET_2025CT_DATA_CMB"] = "rootfiles/Prompt2025/Jet_v145/jmenano_data_cmb_2025C_Trk_JME_v145.root";
+//mfile["JET_2025CT_MC"] = mfile["JET_2025C0_MC"]; 
 
 
 // Wqq files
@@ -242,34 +250,34 @@ mfile["JET_2025CT_MC"] = mfile["JET_2025C0_MC"];
 // e2: updated jet veto map
 //mfile["WQQ_2024_nib_MC"] = "rootfiles/Prompt2025/Wqq_V2M/Summer24_TTtoLNu2Q.root";
 mfile["WQQ_2024_nib_MC"] = "rootfiles/Prompt2024/Wqq_e2/Summer24_TTtoLNu2Q_V9M_24V10MCSF.root";
-mfile["WQQ_2024_nib_DATA"]   = "rootfiles/Prompt2025/Wqq_e2/Muon_Run2024CDEFGHI_ReReco_V9M.root";
+mfile["WQQ_2024_nib_DATA"]   = "rootfiles/Prompt2024/Wqq_e2/Muon_Run2024CDEFGHI_ReReco_V9M.root";
 //
 mfile["WQQ_2024FGHI_nib_MC"]   = mfile["WQQ_2024_nib_MC"];
-mfile["WQQ_2024FGHI_nib_DATA"] = "rootfiles/Prompt2025/Wqq_e2/Muon_Run2024FGHI_Prompt_V9M.root";
+mfile["WQQ_2024FGHI_nib_DATA"] = "rootfiles/Prompt2024/Wqq_e2/Muon_Run2024FGHI_Prompt_V9M.root";
 mfile["WQQ_2024CDE_nib_MC"]    = mfile["WQQ_2024_nib_MC"];
-mfile["WQQ_2024CDE_nib_DATA"]  = "rootfiles/Prompt2025/Wqq_e2/Muon_Run2024CDE_ReReco_V9M.root";
+mfile["WQQ_2024CDE_nib_DATA"]  = "rootfiles/Prompt2024/Wqq_e2/Muon_Run2024CDE_ReReco_V9M.root";
 //
 mfile["WQQ_2024C_nib1_MC"]    = mfile["WQQ_2024_nib_MC"];
-mfile["WQQ_2024C_nib1_DATA"]  = "rootfiles/Prompt2025/Wqq_e2/Muon_Run2024C_ReReco_V9M.root";
+mfile["WQQ_2024C_nib1_DATA"]  = "rootfiles/Prompt2024/Wqq_e2/Muon_Run2024C_ReReco_V9M.root";
 mfile["WQQ_2024D_nib1_MC"]    = mfile["WQQ_2024_nib_MC"];
-mfile["WQQ_2024D_nib1_DATA"]  = "rootfiles/Prompt2025/Wqq_e2/Muon_Run2024D_ReReco_V9M.root";
+mfile["WQQ_2024D_nib1_DATA"]  = "rootfiles/Prompt2024/Wqq_e2/Muon_Run2024D_ReReco_V9M.root";
 mfile["WQQ_2024E_nib1_MC"]    = mfile["WQQ_2024_nib_MC"];
-mfile["WQQ_2024E_nib1_DATA"]  = "rootfiles/Prompt2025/Wqq_e2/Muon_Run2024E_ReReco_V9M.root";
+mfile["WQQ_2024E_nib1_DATA"]  = "rootfiles/Prompt2024/Wqq_e2/Muon_Run2024E_ReReco_V9M.root";
 //
 mfile["WQQ_2024F_nib1_MC"]   = mfile["WQQ_2024_nib_MC"];
-mfile["WQQ_2024F_nib1_DATA"] = "rootfiles/Prompt2025/Wqq_e2/Muon_Run2024F_nib1_Prompt_V9M.root";
+mfile["WQQ_2024F_nib1_DATA"] = "rootfiles/Prompt2024/Wqq_e2/Muon_Run2024F_nib1_Prompt_V9M.root";
 mfile["WQQ_2024F_nib2_MC"]   = mfile["WQQ_2024_nib_MC"];
-mfile["WQQ_2024F_nib2_DATA"] = "rootfiles/Prompt2025/Wqq_e2/Muon_Run2024F_nib2_Prompt_V9M.root";
+mfile["WQQ_2024F_nib2_DATA"] = "rootfiles/Prompt2024/Wqq_e2/Muon_Run2024F_nib2_Prompt_V9M.root";
 mfile["WQQ_2024F_nib3_MC"]   = mfile["WQQ_2024_nib_MC"];
-mfile["WQQ_2024F_nib3_DATA"] = "rootfiles/Prompt2025/Wqq_e2/Muon_Run2024F_nib3_Prompt_V9M.root";
+mfile["WQQ_2024F_nib3_DATA"] = "rootfiles/Prompt2024/Wqq_e2/Muon_Run2024F_nib3_Prompt_V9M.root";
 mfile["WQQ_2024G_nib1_MC"]   = mfile["WQQ_2024_nib_MC"];
-mfile["WQQ_2024G_nib1_DATA"] = "rootfiles/Prompt2025/Wqq_e2/Muon_Run2024G_nib1__V9M.root";
+mfile["WQQ_2024G_nib1_DATA"] = "rootfiles/Prompt2024/Wqq_e2/Muon_Run2024G_nib1__V9M.root";
 mfile["WQQ_2024G_nib2_MC"]   = mfile["WQQ_2024_nib_MC"];
-mfile["WQQ_2024G_nib2_DATA"] = "rootfiles/Prompt2025/Wqq_e2/Muon_Run2024G_nib2_Prompt_V9M.root";
+mfile["WQQ_2024G_nib2_DATA"] = "rootfiles/Prompt2024/Wqq_e2/Muon_Run2024G_nib2_Prompt_V9M.root";
 mfile["WQQ_2024H_nib1_MC"]   = mfile["WQQ_2024_nib_MC"];
 mfile["WQQ_2024H_nib1_DATA"] = "rootfiles/Prompt2025/Wqq_e2/Muon_Run2024H_nib1_Prompt_V9M.root";
 mfile["WQQ_2024I_nib1_MC"]   = mfile["WQQ_2024_nib_MC"];
-mfile["WQQ_2024I_nib1_DATA"] = "rootfiles/Prompt2025/Wqq_e2/Muon_Run2024I_nib1_Prompt_V9M.root";
+mfile["WQQ_2024I_nib1_DATA"] = "rootfiles/Prompt2024/Wqq_e2/Muon_Run2024I_nib1_Prompt_V9M.root";
 //
 //mfile["WQQ_2025_MC"]     = "rootfiles/Prompt2025/Wqq_V2M/Summer24_TTtoLNu2Q.root"; // Summer24
 mfile["WQQ_2025_MC"]     = "rootfiles/Prompt2025/Wqq_e2/Summer24_TTtoLNu2Q_V9M_25V3MCSF.root"; // Summer24
@@ -312,15 +320,16 @@ mfile["WQQ_2025JER_DATA"]   = mfile["WQQ_2025CDEFG_DATA"];
 //mfile["ZMM_2024_nib_MC"]   = "rootfiles/Prompt2025/Zmm_v103_2024_V9M/jme_Zj_2024_Zmm_V9M_v103.root";
 mfile["ZMM_2024_nib_DATA"] = "rootfiles/Prompt/Zmm_v113/jme_Zj_2024_Zmm_V9M_v113.root";
 mfile["ZMM_2024_nib_MC"]   = "rootfiles/Prompt/Zmm_v113/jme_Zj_2024DY_Zmm_2024V2_v112_nomu_2024Smearing.root";
+//mfile["ZMM_2024_nib_MC"]   = "rootfiles/Prompt/Zmm_v113/jme_Zj_2024DYTT_Zmm_V9M_v113.root"; // includes JER SF?
 //
 //mfile["ZMM_2024FGHI_nib_DATAMC"]   = "rootfiles/Prompt2025/Zmm_v103_2024_V9M/jme_Zj_2024FGHI_nib_Zmm_V9M_v103.root";
 //mfile["ZMM_2024FGHI_nib_DATA"]   = "rootfiles/Prompt2025/Zmm_v103_2024_V9M/jme_Zj_2024FGHI_nib_Zmm_V9M_v103.root";
-mfile["ZMM_2024FGHI_nib_DATA"]   = "rootfiles/Prompt/Zmm_v113/jme_Zj_2024FGHI_nib_Zmm_V9M_v113.root";
+mfile["ZMM_2024FGHI_nib_DATA"]   = "rootfiles/Prompt/Zmm_v113/jme_Zj_2024FGHI_Zmm_V9M_v113.root"; // FGHI_nib broken for L3Res due to hadd, was used for L2Res
 mfile["ZMM_2024FGHI_nib_MC"]   = mfile["ZMM_2024_nib_MC"];
 //
 //mfile["ZMM_2024CDE_nib_DATAMC"]   = "rootfiles/Prompt2025/Zmm_v103_2024_V9M/jme_Zj_2024CDEReprocessing_v1_2024CDE_nib_Zmm_V9M_v103.root";
 //mfile["ZMM_2024CDE_nib_DATA"]   = "rootfiles/Prompt2025/Zmm_v103_2024_V9M/jme_Zj_2024CDEReprocessing_v1_2024CDE_nib_Zmm_V9M_v103.root";
-mfile["ZMM_2024CDE_nib_DATA"]   = "rootfiles/Prompt/Zmm_v113/jme_Zj_2024CDE_nib_Zmm_V9M_v113.root";
+mfile["ZMM_2024CDE_nib_DATA"]   = "rootfiles/Prompt/Zmm_v113/jme_Zj_2024CDE_Zmm_V9M_v113.root"; // CDE_nib broken for L3Res due to hadd, was used for L2Res
 mfile["ZMM_2024CDE_nib_MC"]   = mfile["ZMM_2024_nib_MC"];
 //
 //mfile["ZMM_2024C_nib1_DATAMC"]   = "rootfiles/Prompt2025/Zmm_v103_2024_V9M/jme_Zj_2024CDEReprocessing_v1_2024C_nib1_Zmm_V9M_v103.root";
@@ -411,6 +420,9 @@ mfile["ZMM_2026B_DATA"] = "rootfiles/Prompt/Zmm_v113/jme_Zj_2026B_Zmm_V0M_v113_n
 mfile["ZMM_2026B_MC"]     = mfile["ZMM_2025MC"];
 mfile["ZMM_2026C_DATA"] = "rootfiles/Prompt/Zmm_v113/jme_Zj_2026C_Zmm_V0M_v113_nomu_16042026.root";
 mfile["ZMM_2026C_MC"]     = mfile["ZMM_2025MC"];
+//mfile["ZMM_2026D_DATA"] = "rootfiles/Prompt/Zmm_v113/jme_Zj_2026D_Zmm_V0M_v113_nomu_07052026.root";
+mfile["ZMM_2026D_DATA"] = "rootfiles/Prompt/Zmm_v114/jme_Zj_2026D_Zmm_V0M_v114_nomu_10052026.root";
+mfile["ZMM_2026D_MC"]     = mfile["ZMM_2025MC"];
 
 
 
@@ -428,6 +440,7 @@ mfile["GAM_2024_nib_DATA"] = "rootfiles/Prompt2024/Gam_w73/GamHistosFill_data_20
 //mfile["Gam_2024_MC"] = "rootfiles/Prompt2024/w48_Gam/GamHistosFill_mc_summer2024P8_pu-2024CDEFGHI_w48.root";
 mfile["GAM_2024_nib_MC"]= //"rootfiles/Prompt2024/w48_Gam/GamHistosFill_mc_summer2024P8_no-pu_w48.root"; // Summer24 MC, noPU
   "rootfiles/Prompt2024/Gam_w73/GamHistosFill_mc_summer2024P8_no-pu_w73.root"; // Summer24 MC, noPU
+  //"rootfiles/Prompt/Gam_w80/GamHistosFill_mc_summer2024P8-jmenano_no-pu_JERSFX_w80.root"; // wrong bin weights, breaks L2Res
 //"rootfiles/Prompt2025/Gam_w65/GamHistosFill_mc_summer2024P8_no-pu_w65.root"; // Summer24 MC, noPU
 //
 //mfile["GAM_2024FGHI_nib_DATA"] = "rootfiles/Prompt2024/Gam_w56/GamHistosFill_data_2024FGHI_V9M_w56.root";
@@ -471,10 +484,11 @@ mfile["GAM_2024I_nib1_MC"]    = mfile["GAM_2024_nib_MC"];
 //mfile["GAM_2025_MC"]    = "rootfiles/Prompt2024/w48_Gam/GamHistosFill_mc_summer2024P8_pu-2024CDEFGHI_w48.root"; // Summer24 MC, withPU
 //mfile["GAM_2025_MC"]    = "rootfiles/Prompt2024/w48_Gam/GamHistosFill_mc_summer2024P8_no-pu_w48.root"; // Summer24 MC, noPU
 mfile["GAM_2025_MC"]    =
-  "rootfiles/Prompt2025/Gam_w73/GamHistosFill_mc_summer2024P8_no-pu_w73.root"; // Summer24 MC, noPU
+  //"rootfiles/Prompt2025/Gam_w73/GamHistosFill_mc_summer2024P8_no-pu_w73.root"; // Summer24 MC, noPU
+  mfile["GAM_2024_nib_MC"];
   //"rootfiles/Prompt2025/Gam_w65/GamHistosFill_mc_summer2024P8_no-pu_w65.root"; // Summer24 MC, noPU
-mfile["GAM_Summer24_MC"]    = "rootfiles/Prompt2025/Gam_w73/GamHistosFill_mc_summer2024P8_no-pu_w73.root"; // Summer24 MC, noPU
-mfile["GAM_Winter25_MC"]    = "rootfiles/Prompt2025/Gam_w73/GamHistosFill_mc_winter2025P8_no-pu_w73.root"; // Winter24 MC, noPU
+//mfile["GAM_Summer24_MC"]    = "rootfiles/Prompt2025/Gam_w73/GamHistosFill_mc_summer2024P8_no-pu_w73.root"; // Summer24 MC, noPU
+//mfile["GAM_Winter25_MC"]    = "rootfiles/Prompt2025/Gam_w73/GamHistosFill_mc_winter2025P8_no-pu_w73.root"; // Winter24 MC, noPU
   // "rootfiles/Prompt2025/Gam_w65/GamHistosFill_mc_winter2025P8_no-pu_w65.root"; // Winter24 MC, noPU
 //mfile["GAM_2025_MC"]    = "rootfiles/Prompt2025/Gam_w65/GamHistosFill_mc_summer2024QCD_no-pu_w65.root"; // Summer24 MC QCD, noPU, TEST ONLY!!
 //mfile["GAM_2025_MC"]    = "rootfiles/Prompt2025/Gam_w65/GamHistosMix_mc_summer2024P8_Summer2024QCD_no-pu_w65.root"; // Summer24 MC, noPU
@@ -540,12 +554,15 @@ mfile["WQQ_2026A_MC"]     = mfile["WQQ_2025_MC"];
 // 2026B first Prompt2026 JECs with new HB+HE+HF+PFHC+Winter26 MC JEC
 mfile["JET_2026B_DATA_OUT"] = "rootfiles/Prompt/Jet_v163_v2/jmenano_data_out_2026B_JME_v163_v2.root";
 mfile["JET_2026B_DATA_CMB"] = "rootfiles/Prompt/Jet_v163_v2/jmenano_data_cmb_2026B_JME_v163_v2.root";
-//mfile["JET_2026B_MC"]       = mfile["JET_2025_MC"];
-mfile["JET_2026B_MC"]       = mfile["JERC_Summer24MG_MC_NOJERSF"];
+mfile["JET_2026B_MC"]       = mfile["JET_2025_MC"];
+//mfile["JET_2026B_MC"]       = mfile["JERC_Summer24MG_MC_NOJERSF"];
 // v2: old trig mix + high PU contamination, v4: both fixed
 mfile["JET_2026C_DATA_OUT"] = "rootfiles/Prompt/Jet_v163_v4/jmenano_data_out_2026C_JME_v163_v4.root";
 mfile["JET_2026C_DATA_CMB"] = "rootfiles/Prompt/Jet_v163_v4/jmenano_data_cmb_2026C_JME_v163_v4.root";
 mfile["JET_2026C_MC"]       = mfile["JET_2025_MC"];
+mfile["JET_2026D_DATA_OUT"] = "rootfiles/Prompt/Jet_v165/jmenano_data_out_2026D_JME_v165.root";
+mfile["JET_2026D_DATA_CMB"] = "rootfiles/Prompt/Jet_v165/jmenano_data_cmb_2026D_JME_v165.root";
+mfile["JET_2026D_MC"]       = mfile["JET_2025_MC"];
 
 mfile["GAM_2026B_DATA"]   = "rootfiles/Prompt/Gam_w79/GamHistosFill_data_2026B_w79.root"; // with L2L3Res, for V0M closure
 mfile["GAM_2026B_MC"]     = mfile["GAM_2025_MC"];
@@ -554,6 +571,10 @@ mfile["GAM_2026B_MIX"]    = mfile["GAM_2025_MIX"];
 mfile["GAM_2026C_DATA"]   = "rootfiles/Prompt/Gam_w79/GamHistosFill_data_2026C_w79.root"; // with L2L3Res, new low PU data
 mfile["GAM_2026C_MC"]     = mfile["GAM_2025_MC"];
 mfile["GAM_2026C_MIX"]    = mfile["GAM_2025_MIX"];
+//
+mfile["GAM_2026D_DATA"]   = "rootfiles/Prompt/Gam_w81/GamHistosFill_data_2026D_w81.root";
+mfile["GAM_2026D_MC"]     = mfile["GAM_2025_MC"];
+mfile["GAM_2026D_MIX"]    = mfile["GAM_2025_MIX"];
 
 mfile["WQQ_2026B_DATA"]   = "rootfiles/Prompt/Wqq_e4/Muon_Run2026B_Prompt_V0M_GoldenJSON_e4.root"; // v2: no L2L3Res, e2,e4: L3L2Res
 //mfile["WQQ_2026B_MC"]     = mfile["WQQ_2025_MC"];
@@ -561,6 +582,23 @@ mfile["WQQ_2026B_MC"]     = "rootfiles/Prompt2026/Wqq_e2/Summer24_TTtoLNu2Q_V9M_
 //
 mfile["WQQ_2026C_DATA"]   = "rootfiles/Prompt/Wqq_e4/Muon_Run2026C_Prompt_V0M_CombinedJSON_e4.root"; // v2: no L2L3Res, e2, e3, e4: L3L2Res
 mfile["WQQ_2026C_MC"]     = mfile["WQQ_2026B_MC"];
+//
+mfile["WQQ_2026D_DATA"]   = "rootfiles/Prompt/Wqq_e5/Muon_Run2026D_Prompt_V0M_CombinedJSON_e5.root";
+mfile["WQQ_2026D_MC"]     = mfile["WQQ_2026B_MC"];
 
+// Jet spike tests
+mfile["WQQ_2026BJS_DATA"]=mfile["WQQ_2026BNS_DATA"]=mfile["WQQ_2026B_DATA"];
+mfile["WQQ_2026BJS_MC"]  =mfile["WQQ_2026BNS_MC"]  =mfile["WQQ_2026B_MC"];
+mfile["GAM_2026BJS_DATA"]=mfile["GAM_2026BNS_DATA"]=mfile["GAM_2026B_DATA"];
+mfile["GAM_2026BJS_MC"]  =mfile["GAM_2026BNS_MC"]  =mfile["GAM_2026B_MC"];
+mfile["JET_2026BJS_DATA_CMB"]=mfile["JET_2026BNS_DATA_CMB"]=mfile["JET_2026B_DATA_CMB"];
+mfile["JET_2026BJS_MC"]  =mfile["JET_2026BNS_MC"]  =mfile["JET_2026B_MC"];
+//
+mfile["ZMM_2026BJS_DATA"]="rootfiles/Prompt/Zmm_v113_jetspike/jme_Zj_2026B_Zmm_V0M_NewJetSpikeCut_nomu.root";
+mfile["ZMM_2026BNS_DATA"]="rootfiles/Prompt/Zmm_v113_jetspike/jme_Zj_2026B_Zmm_V0M_NoJetSpikeCut_nomu.root";
+mfile["ZMM_2026CJS_DATA"]="rootfiles/Prompt/Zmm_v113_jetspike/jme_Zj_2026C_Zmm_V0M_NewJetSpikeCut_nomu.root";
+mfile["ZMM_2026CNS_DATA"]="rootfiles/Prompt/Zmm_v113_jetspike/jme_Zj_2026C_Zmm_V0M_NoJetSpikeCut_nomu.root";
+mfile["ZMM_2026BJS_MC"]=mfile["ZMM_2026BNS_MC"]=mfile["ZMM_2026B_MC"];
+mfile["ZMM_2026CJS_MC"]=mfile["ZMM_2026CJS_MC"]=mfile["ZMM_2026C_MC"];
 
 //#endif

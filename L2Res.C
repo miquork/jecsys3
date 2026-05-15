@@ -41,6 +41,11 @@ bool doVsEtaPt = false;//true; // Slow, but detailed
 //bool refitPtRaw = true; // Re-parameterize L2Res vs pTraw instead of pTref
 bool doClosure = false;//true;//false; // Do not undo L2L3Res for closure test
 
+// Switch off deprecated parts of ploting and drawing
+bool plotRefitVsPtRaw = false;
+bool writeRefitVsPtRaw = false;
+bool writeEtaSymmetricVsPtRef = false;
+
 //bool flattenHF = false; // Const vs pT for HF
 //double flatHFptmin = 80; // If flat, use only high pT
 //double flatHFetamin = 3.139;
@@ -1182,6 +1187,8 @@ void L2Res(bool _doClosure = doClosure, string onlyEra = "", string onlyMC  = ""
       hrc_vsEta = (TH1D*)frc->Get(Form("hrc13jes_%s","2024E_nib1"));
     if (!hrc_vsEta && (tr.Contains("2024_nib")))
       hrc_vsEta = (TH1D*)frc->Get(Form("hrc13jes_%s","2024E_nib1"));
+    if (!hrc_vsEta && (tr.Contains("2026D")))
+      hrc_vsEta = (TH1D*)frc->Get(Form("hrc13jes_%s","2026B"));
     assert(hrc_vsEta);
   }
   if (frc1) {
@@ -1194,6 +1201,8 @@ void L2Res(bool _doClosure = doClosure, string onlyEra = "", string onlyMC  = ""
       hrc1_vsEta = (TH1D*)frc1->Get(Form("hrc13jes_%s","2024E_nib1"));
     if (!hrc1_vsEta && tr.Contains("2024_nib"))
       hrc1_vsEta = (TH1D*)frc1->Get(Form("hrc13jes_%s","2024E_nib1"));
+    if (!hrc1_vsEta && tr.Contains("2026D"))
+      hrc1_vsEta = (TH1D*)frc1->Get(Form("hrc13jes_%s","2026B"));
     assert(hrc1_vsEta); // force check for production JECs
     
     if (hrc1_vsEta) { // Recalculate symmetric hrc_vsEta from this
@@ -2567,11 +2576,12 @@ void L2Res(bool _doClosure = doClosure, string onlyEra = "", string onlyMC  = ""
 
 
   // Step 9. Remap [pT,ref] to <pT,jet,uncorr> before writing out .txt file
-  TCanvas *cx2 = new TCanvas(Form("cx2_%s",cr),"cx2",9*300,5*300);
-  cx2->Divide(7,6,0,0);
   vector<TF1*> vf2(p2d->GetNbinsX()+1);
   vector<TF1*> vf2_m(p2d->GetNbinsX()+1);
   vector<TF1*> vf2_p(p2d->GetNbinsX()+1);
+  if (plotRefitVsPtRaw || writeRefitVsPtRaw) {
+  TCanvas *cx2 = new TCanvas(Form("cx2_%s",cr),"cx2",9*300,5*300);
+  cx2->Divide(7,6,0,0);
   for (int ieta = 1; ieta != p2d->GetNbinsX()+1; ++ieta) {
 
     double eta1 = p2d->GetXaxis()->GetBinLowEdge(ieta);
@@ -2580,7 +2590,6 @@ void L2Res(bool _doClosure = doClosure, string onlyEra = "", string onlyMC  = ""
     TF1 *f1 = vf1[ieta-1]; assert(f1);
     TF1 *f1_m = vf1_cm[ieta-1]; assert(f1_m);
     TF1 *f1_p = vf1_cp[ieta-1]; assert(f1_p);
-
     
     // Generate graph with 100 points logarithmically distributed between
     // pTref=15 GeV / 1.40 (JER 40%*1) and E=sqrt(s)/2. * 1.2 (JER 10%*2)
@@ -2688,13 +2697,15 @@ void L2Res(bool _doClosure = doClosure, string onlyEra = "", string onlyMC  = ""
 
     }
   } // for ieta
-  cx2->SaveAs(Form("pdf/L2Res/L2Res_AllRefit_%s.pdf",cr));
-
+  if (plotRefitVsPtRaw) cx2->SaveAs(Form("pdf/L2Res/L2Res_AllRefit_%s.pdf",cr));
+  } // plotRefitVsPtRaw || writeRefitVsPtRaw
 
   /////////////////////////////////
   // Step 10. Print out text file //
   //////////////////////////////////
-  
+
+  if (writeEtaSymmetricVsPtRef) {
+    
   // 10a: Original eta-symmetric parameterization vs pTref
   string ftxtname = (doClosure ? "textfiles/Prompt/foo.txt" : tr.Contains("25") ? Form("textfiles/Prompt/Prompt25_Run%s_V4M_DATA_L2ResidualVsPtRef_AK4PFPuppi.txt",cr) : tr.Contains("26") ? Form("textfiles/Prompt/Prompt26_Run%s_V1M_DATA_L2ResidualVsPtRef_AK4PFPuppi.txt",cr) : tr.Contains("24") ? Form("textfiles/Prompt/ReReco24_Run%s_V10M_DATA_L2ResidualVsPtRef_AK4PFPuppi.txt",cr) : "textiles/Prompt/error.txt");
   cout << "Writing results to text file " << ftxtname << endl << flush;
@@ -2724,6 +2735,7 @@ void L2Res(bool _doClosure = doClosure, string onlyEra = "", string onlyMC  = ""
     }
     ftxt << endl;
   }
+  } // writeEtaSymmetricVsPtRef
 
   // 10b: Original eta-asymmetric parameterization vs pTref
   string ftxtname1 = (doClosure ? "textfiles/Prompt/foo.txt" : tr.Contains("25") ? Form("textfiles/Prompt/Prompt25_Run%s_V4M_DATA_L2ResidualVsPtRefAsymm_AK4PFPuppi.txt",cr) : tr.Contains("26") ? Form("textfiles/Prompt/Prompt26_Run%s_V1M_DATA_L2ResidualVsPtRefAsymm_AK4PFPuppi.txt",cr) : tr.Contains("24") ? Form("textfiles/Prompt/Prompt24_Run%s_V10M_DATA_L2ResidualVsPtRefAsymm_AK4PFPuppi.txt",cr) : "textfiles/Prompt/error.txt");
@@ -2756,6 +2768,7 @@ void L2Res(bool _doClosure = doClosure, string onlyEra = "", string onlyMC  = ""
     ftxt1 << endl;
   }
 
+  if (writeRefitVsPtRaw) {
   // 10c: Re-parameterization vs pTraw (of symmetric response)
   string ftxtname2 = (doClosure ? "textfiles/Prompt/foo.txt" : tr.Contains("25") ? Form("textfiles/Prompt/Prompt25_Run%s_V4M_DATA_L2Residual_AK4PFPuppi.txt",cr) : tr.Contains("26") ? Form("textfiles/Prompt/Prompt26_Run%s_V1M_DATA_L2Residual_AK4PFPuppi.txt",cr) : tr.Contains("24") ? Form("textfiles/Prompt/Prompt24_Run%s_V10M_DATA_L2Residual_AK4PFPuppi.txt",cr) : "textfiles/Prompt/error.txt");
   cout << "Writing results to text file " << ftxtname2 << endl << flush;
@@ -2784,6 +2797,7 @@ void L2Res(bool _doClosure = doClosure, string onlyEra = "", string onlyMC  = ""
       ftxt2 << Form(" %7.4f",f2->GetParameter(i));
     }
     ftxt2 << endl;
+  }
   }
   
   // Loop over gamjet pT bins for plotting
