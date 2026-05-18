@@ -46,18 +46,34 @@ Double_t fJECPt(Double_t *x, Double_t *p) {
 
 // Response as a function of pTprime (instead of JEC vs pTmeas)
 TF1 *_jecpt(0);
-double getResp(double ptgen, double eta, double jeta, double mu) {
+double getResp(double ptgen, double eta, double jeta, double mu,
+	       bool useptref = false) {
 
-  _jecpt->SetParameters(eta, jeta, rhoFromMu(mu));
-  double ptmeas = _jecpt->GetX(ptgen, 1, emax);
-  double resp = ptmeas / _jecpt->Eval(ptmeas); // 1/jec
-
+  double resp(0);
+  if (useptref) {
+    double ptref = ptgen*1.1;
+    _jec->setJetPt(ptref);
+    _jec->setJetEta(eta);
+    _jec->setJetPhi(0.);
+    _jec->setJetA(jeta);
+    _jec->setRho(rhoFromMu(mu));
+    double jec = _jec->getCorrection();
+    resp = (jec!=0 ? 1./jec : 0.);
+  }
+  else {  
+    _jecpt->SetParameters(eta, jeta, rhoFromMu(mu));
+    double ptmeas = _jecpt->GetX(ptgen, 1, emax);
+    resp = ptmeas / _jecpt->Eval(ptmeas); // 1/jec
+  }
+  
   return resp;
 }
 
 void drawCMSresponse(string era, string id="", bool isl2 = false) {
 
   const char *cera = era.c_str();
+  string sc = Form("%s_%s_%s",cera,id.c_str(),isl2 ? "L2Res" : "L2L3Res");
+  const char *cc = sc.c_str();
   
   // New style settings
   // #include "tdrstyle_mod14.C"
@@ -71,6 +87,7 @@ void drawCMSresponse(string era, string id="", bool isl2 = false) {
   // mode generally : 
   //   iPos = 10*(alignement 1/2/3) + position (1/2/3 = left/center/right)
 
+  string ss;
   if (!_jec) {
 
     //const char *sd = "textFiles";
@@ -84,7 +101,8 @@ void drawCMSresponse(string era, string id="", bool isl2 = false) {
     //const char *sd = "textFiles/Prompt25_V1M";
     //const char *sd = "textFiles/Prompt25_V2M";
     //const char *sd = "textFiles/Prompt25";
-    const char *sd = "textFiles/Prompt26_V0M";
+    //const char *sd = "textFiles/Prompt26_V0M";
+    const char *sd = "textFiles/Prompt";
     //const char *sd = "textFiles/ReReco24";
     //const char *sd = "textFiles/ReReco24_V9M";
     //const char *sd = "textFiles/Prompt24_V5M";
@@ -104,7 +122,8 @@ void drawCMSresponse(string era, string id="", bool isl2 = false) {
     //s = Form("%s/%s_L2Relative_AK4PUPPI.txt",sd,st); cout << s << endl;
     //s = Form("%s/%s_L3Absolute_AK4PFchs.txt",sd,st); cout << s << endl;
     //s = Form("%s/%s_L2L3Residual_AK4PFchs.txt",sd,st); cout << s << endl;
-    if (isl2) s = Form("%s/%s_DATA_L2Residual_AK4PFPuppi.txt",sd,st);
+    //if (isl2) s = Form("%s/%s_DATA_L2Residual_AK4PFPuppi.txt",sd,st);
+    if (isl2) s = Form("%s/%s_DATA_L2ResidualVsPtRefAsymm_AK4PFPuppi.txt",sd,st);
     else      s = Form("%s/%s_DATA_L2L3Residual_AK4PFPuppi.txt",sd,st);
     cout << s << endl;
     JetCorrectorParameters *l2l3 = new JetCorrectorParameters(s);
@@ -115,6 +134,7 @@ void drawCMSresponse(string era, string id="", bool isl2 = false) {
     //v.push_back(*l3);
     v.push_back(*l2l3);
     _jec = new FactorizedJetCorrector(v);
+    ss = s;
   }
   if (!_jecpt) {
     _jecpt = new TF1("jecpt",fJECPt,ptmin,emax,3);
@@ -140,6 +160,9 @@ void drawCMSresponse(string era, string id="", bool isl2 = false) {
   const double jeta = TMath::Pi()*0.4*0.4;
   const double mu = 25;
 
+  // Check that calculated response is within this range
+  double ymin(0.3), ymax(1.65);
+
   TGraph *gs[npt];
   //for (int ie = 0; ie != ne; ++ie) {
   for (int ipt = 0; ipt != npt; ++ipt) {
@@ -157,13 +180,28 @@ void drawCMSresponse(string era, string id="", bool isl2 = false) {
       if (pt >= ptmin && energy < emax) { // 13 TeV
 
 	//double jes = getResp(pt, eta, jeta, mu);
-	double jes_plus = getResp(pt, eta, jeta, mu);
-	double jes_minus = getResp(pt, -eta, jeta, mu);
+	double jes_plus = getResp(pt, eta, jeta, mu, isl2);
+	double jes_minus = getResp(pt, -eta, jeta, mu, isl2);
 	double jes = 0.5 * (jes_plus + jes_minus);
 	//double jes = jes_plus;
 	//double jes = jes_minus;
 	int n = g->GetN();
 	g->SetPoint(n, eta, jes);
+
+	// careful to catch 'nan' for which all comparisons are false)
+	// have to use inversion '!' for these
+	if (!(jes_plus>=ymin && jes_plus<=ymax &&
+	      jes_minus>=ymin && jes_minus<=ymax)) {
+	  cout << "Error, JES out of range ["<<ymin<<","<<ymax<<"] in "
+	    //<< era << "/"<<id<<(isl2?" L2Res" : " L2L3Res") << ":\n"
+	       << ss << endl
+	       << "  eta = " << eta << " pt = " << pt
+	       << "  jes_plus = " << jes_plus
+	       << "  jes_minus = " << jes_minus << endl << flush;
+	  assert(false);
+	  exit(0);
+	}
+
       }
     } // for ie
   } // for ieta
@@ -174,13 +212,14 @@ void drawCMSresponse(string era, string id="", bool isl2 = false) {
   //TH1D *h = new TH1D("h",";Jet |#eta|;Simulated jet response+offset",40,0,4.8);
   //TH1D *h = new TH1D("h",";Jet |#eta|;Data/simulated jet response",40,0,4.8);
   //TH1D *h = new TH1D("h",";Jet |#eta|;Data jet response",40,0,4.8);
-  TH1D *h = new TH1D("h",";Jet |#eta|;Data jet response",52,0,5.191);
+  TH1D *h = new TH1D(Form("h_%s",cc),
+		     ";Jet |#eta|;Data jet response",52,0,5.191);
   //TH1D *h = new TH1D("h",";Jet |#eta|;Data L2Res",40,0,4.8);
   //TH1D *h = new TH1D("h",";Jet |#eta|;Data response+offset",40,0,4.8);
   //h->SetMaximum(1.25);
   //h->SetMinimum(0.5);
-  h->SetMaximum(1.65);//1.55);//1.35);//1.30);//1.20);
-  h->SetMinimum(0.50);//0.00);//0.40);//0.55);//0.65);
+  h->SetMaximum(ymax);//1.65);//1.55);//1.35);//1.30);//1.20);
+  h->SetMinimum(ymin);//0.50);//0.00);//0.40);//0.55);//0.65);
   //extraText = "Simulation";
   //extraText = "Simulation Preliminary";
   //extraText = "Preliminary";
@@ -194,7 +233,7 @@ void drawCMSresponse(string era, string id="", bool isl2 = false) {
   //lumi_13TeV = "2.1 fb^{-1}";
   //TCanvas *c1 = tdrCanvas("c1",h,2,0,kSquare);
   //TCanvas *c1 = tdrCanvas("c1",h,4,0,kSquare);
-  TCanvas *c1 = tdrCanvas("c1",h,8,0,kSquare);
+  TCanvas *c1 = tdrCanvas(Form("c1_%s",cc),h,8,0,kSquare);
 
   TLegend *leg1 = tdrLeg(0.25,0.25,0.55,0.30);
   TLegend *leg2 = tdrLeg(0.25,0.20,0.55,0.25);

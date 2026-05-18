@@ -34,6 +34,7 @@ void createL2L3ResTextFileV2() {
 
   createL2L3ResTextFileV2s("2024CDE_nib");
   createL2L3ResTextFileV2s("2024FGHI_nib");
+  createL2L3ResTextFileV2s("2024_nib");
   createL2L3ResTextFileV2s("2025CDEFG");
 
   createL2L3ResTextFileV2s("2024C_nib1");
@@ -56,7 +57,7 @@ void createL2L3ResTextFileV2() {
   createL2L3ResTextFileV2s("2026B");
   createL2L3ResTextFileV2s("2026C");
   createL2L3ResTextFileV2s("2026D");
-  
+
 } // createL2L3ResTextFileV2
 
 void createL2L3ResTextFileV2s(string run) {
@@ -182,13 +183,14 @@ void createL2L3ResTextFileV2s(string run) {
   const int nx = sizeof(vx)/sizeof(vx[0]);
 
   // Listing of increasingly complex functional forms for iterative fitting
+  // NB: default of 0 must evaluate ok for all parameters except first!
   const int npar3(9); // maximum number of fit parameters
   vector<string> vfit;
   vfit.push_back("[0]+[1]/x+[2]*pow(x,-0.3)");
   vfit.push_back("[0]+[1]/x+[2]*pow(x,-0.3)+[3]*log(0.01*x)");
   vfit.push_back("[0]+[1]/x+[2]*pow(x,-0.3)+[3]*log(0.01*x)+[4]*pow(log(0.01*x),2)");
   vfit.push_back("[0]+[1]/x+[2]*pow(x,-0.3)+[3]*log(0.01*x)+[4]*pow(log(0.01*x),2)+[5]/pow(0.1*x,2)");
-  vfit.push_back("[0]+[1]/x+[2]*pow(x,-0.3)+[3]*log(0.01*x)+[4]*pow(log(0.01*x),2)+[5]/pow(0.1*x,2)+[6]*(1-erf((log(x)-log([7]*45.))/log([8]*1.67)))");
+  vfit.push_back("[0]+[1]/x+[2]*pow(x,-0.3)+[3]*log(0.01*x)+[4]*pow(log(0.01*x),2)+[5]/pow(0.1*x,2)+[6]*(1-erf((log(x)-log((1+[7])*45.))/log((1+[8])*1.67)))");
   //const char *cfunc = func.c_str();
 
   // Set initial values and fit ranges for each parameter
@@ -202,12 +204,13 @@ void createL2L3ResTextFileV2s(string run) {
   mparmin[4] = -0.2;  mparmax[4] = +0.2; mparset[4] = 0.01; // log(x)^2
   mparmin[5] = -0.7;  mparmax[5] = +1.4; mparset[5] = 0.01; // x^-2
   mparmin[6] =  0.0;  mparmax[6] =  0.2; mparset[6] = 0.10; // c*erf
-  mparmin[7] =  0.3;  mparmax[7] =  1.5; mparset[7] = 1.00; // erf(mu)
-  mparmin[8] =  0.5;  mparmax[8] =  2.0; mparset[8] = 1.00; // erf(sigma)
+  mparmin[7] = -0.7;  mparmax[7] =  0.5; mparset[7] = 0.01; // erf(mu)
+  mparmin[8] = -0.5;  mparmax[8] =  1.0; mparset[8] = 0.01; // erf(sigma)
 		 
   vector<TGraphErrors*> vgl2l3res(vetamin.size());
   vector<TGraphErrors*> vgdiff(vetamin.size());
   vector<TF1*> vfl2l3res(vetamin.size());
+  const double diffmaxmin(-2), diffmaxmax(+3);
   TGraphErrors *gdmax = new TGraphErrors(vetamin.size());
   TGraphErrors *gd30max = new TGraphErrors(vetamin.size());
   for (int ieta = 0; ieta != int(vetamin.size()); ++ieta) {
@@ -297,7 +300,7 @@ void createL2L3ResTextFileV2s(string run) {
     TGraphErrors *gd = new TGraphErrors(g->GetN());
     gd->SetName(Form("gd_%+04dto%+04d_%s",
 		     int(etamin*1000),int(etamax*1000),cr));
-
+  
     double diffmax(0.), diff30max(0);
     for (int i = 0; i != g->GetN(); ++i) {
       double pt = g->GetX()[i];
@@ -312,12 +315,22 @@ void createL2L3ResTextFileV2s(string run) {
     vgdiff[ieta] = gd;
 
     double deta = 0.5*(etamax-etamin);
-    gdmax->SetPoint(ieta, eta, min(2.95,max(-1.95,100.*diffmax)));
+    // Limit diffs to plot range so don't miss really bad outliers
+    gdmax->SetPoint(ieta, eta, min(diffmaxmax-0.05,max(diffmaxmin+0.05,100.*diffmax)));
     gdmax->SetPointError(ieta, deta, 0.001);
-    gd30max->SetPoint(ieta, eta, min(2.95,max(-1.95,100.*diff30max)));
+    gd30max->SetPoint(ieta, eta, min(diffmaxmax-0.05,max(diffmaxmin+0.05,100.*diff30max)));
     gd30max->SetPointError(ieta, deta, 0.001);
   } // for ieta
 
+  // Determine absolute maximum deviations
+  double diffmax(0), diffmin(0), diff30max(0), diff30min(0);
+  for (int i = 0; i != gdmax->GetN(); ++i) {
+    if (gdmax->GetY()[i]<diffmin) diffmin = gdmax->GetY()[i];
+    if (gdmax->GetY()[i]>diffmax) diffmax = gdmax->GetY()[i];
+    if (gd30max->GetY()[i]<diff30min) diff30min = gd30max->GetY()[i];
+    if (gd30max->GetY()[i]>diff30max) diff30max = gd30max->GetY()[i];
+  }
+  
   
   //////////////////////
   // Setup DB mapping //
@@ -341,9 +354,10 @@ void createL2L3ResTextFileV2s(string run) {
 
   #include "Config.C"
   
-  TH1D *h0 = tdrHist(Form("h0_%s",cr),"Re-fit max(#DeltaJES) (%)",-2,+3,
+  TH1D *h0 = tdrHist(Form("h0_%s",cr),"Re-fit max(#DeltaJES) (%)",
+		     diffmaxmin,diffmaxmax,
 		     "#eta",-5.2,5.2);
-  lumi_136TeV = mlum["24to26C"];
+  lumi_136TeV = Form("%s, %s",cr,mlum[cr].c_str());//mlum["24to26C"];
   extraText = "Work-in-progress";
   TCanvas *c0 = tdrCanvas("c0",h0,8,11,kSquare);
   
@@ -351,14 +365,27 @@ void createL2L3ResTextFileV2s(string run) {
   l->SetLineStyle(kDashed);
   l->SetLineColor(kGray+1);
   l->DrawLine(-5.2,0,+5.2,0);
-  l->SetLineStyle(kDotted);
+  l->SetLineStyle(kDashDotted);
   l->DrawLine(-5.2,+0.5,+5.2,+0.5);
   l->DrawLine(-5.2,-0.5,+5.2,-0.5);
+  l->SetLineStyle(kDotted);
+  l->DrawLine(-5.2,+0.1,+5.2,+0.1);
+  l->DrawLine(-5.2,-0.1,+5.2,-0.1);
+
+  l->SetLineStyle(kSolid);
+  l->SetLineColor(kBlue);
+  l->DrawLine(-5.2,diffmin,+5.2,diffmin);
+  l->DrawLine(-5.2,diffmax,+5.2,diffmax);
+  l->SetLineColor(kRed);
+  l->DrawLine(-5.2,diff30min,+5.2,diff30min);
+  l->DrawLine(-5.2,diff30max,+5.2,diff30max);
+  
   
   tdrDraw(gdmax,"Pz",kOpenSquare,kBlue,kSolid,-1,kNone,0);
   tdrDraw(gd30max,"Pz",kFullCircle,kRed,kSolid,-1,kNone,0);
 
-  TLegend *leg = tdrLeg(0.55,0.85-0.05*2,0.80,0.85);
+  TLegend *leg = tdrLeg(0.50,0.85-0.05*2,0.75,0.85);
+  //leg->SetHeader(cr);
   leg->AddEntry(gdmax,"Any p_{T} > 15 GeV","PLE");
   leg->AddEntry(gd30max,"Only p_{T} > 30 GeV","PLE");
 
@@ -393,6 +420,7 @@ void createL2L3ResTextFileV2s(string run) {
 		      "1/L2L3Res",ymin,ymax,"p_{T,L2} (GeV)",xmin,xmax);
     h->Draw("AXIS");
 
+    l->SetLineColor(kGray+1);
     l->SetLineStyle(kDashed);
     l->DrawLine(xmin,1,xmax,1);
     l->SetLineStyle(kDotted);
