@@ -57,7 +57,7 @@ void createL2L3ResTextFileV2() {
   createL2L3ResTextFileV2s("2026B");
   createL2L3ResTextFileV2s("2026C");
   createL2L3ResTextFileV2s("2026D");
-
+				    
 } // createL2L3ResTextFileV2
 
 void createL2L3ResTextFileV2s(string run) {
@@ -213,8 +213,12 @@ void createL2L3ResTextFileV2s(string run) {
   const double diffmaxmin(-2), diffmaxmax(+3);
   TGraphErrors *gdmax = new TGraphErrors(vetamin.size());
   TGraphErrors *gd30max = new TGraphErrors(vetamin.size());
-  for (int ieta = 0; ieta != int(vetamin.size()); ++ieta) {
-    
+  //for (int ieta = 0; ieta != int(vetamin.size()); ++ieta) {
+  // Re-order fitting from inside out and cache previous to stabilize results
+  map<int, map<int, map<int, double> > > mpar;
+  for (int jeta = 0; jeta != int(vetamin.size()); ++jeta) {
+    int ieta = (vetamin.size())/2 + (jeta%2==0 ? +jeta/2 : -jeta/2-1);
+      
     double eta = 0.5*(vetamin[ieta]+vetamax[ieta]);
     double etamin = vetamin[ieta];
     double etamax = vetamax[ieta];
@@ -258,7 +262,7 @@ void createL2L3ResTextFileV2s(string run) {
     double chi2min(9999.);
     for (int i = 0; i != int(vfit.size()); ++i) {
 
-      // Try both fit iterative fit and a fresh fit; keep better one
+      // Try both two iterative fits and a fresh fit; keep best one
       const char *cfunc = vfit[i].c_str();
       TF1 *f23a = new TF1(Form("f23a_%+04dto%+04d_%d_%s",
 			       int(etamin*1000),int(etamax*1000),i,cr),
@@ -266,28 +270,53 @@ void createL2L3ResTextFileV2s(string run) {
       TF1 *f23b = new TF1(Form("f23b_%+04dto%+04d_%d_%s",
 			       int(etamin*1000),int(etamax*1000),i,cr),
 			  cfunc,ptmin,ptmax);
+      TF1 *f23c = new TF1(Form("f23c_%+04dto%+04d_%d_%s",
+			       int(etamin*1000),int(etamax*1000),i,cr),
+			  cfunc,ptmin,ptmax);
       int npar = f23a->GetNpar();
+      // Fresh starting point
       for (int j = 0; j != npar; ++j) {
 	f23a->SetParameter(j, mparset[j]);
 	f23a->SetParLimits(j, mparmin[j], mparmax[j]);
 	f23b->SetParameter(j, mparset[j]);
 	f23b->SetParLimits(j, mparmin[j], mparmax[j]);
+	f23c->SetParameter(j, mparset[j]);
+	f23c->SetParLimits(j, mparmin[j], mparmax[j]);
       } // for j
+      // Iterative fit values from lower-order functiom
       if (f23prev!=0) {
 	for (int j = 0; j != f23prev->GetNpar(); ++j) {
 	  f23b->SetParameter(j, f23prev->GetParameter(j));
 	} // for j
       }
+      // Iterative fit values from previous inner eta bin or from plus side
+      if (mpar[jeta-1][i][0]!=0) {
+	for (int j = 0; j != npar; ++j) {
+	  f23c->SetParameter(j, mpar[jeta-1][i][j]);
+	} // for j
+      }
       g->Fit(f23a,"QRN");
       g->Fit(f23b,"QRN");
+      g->Fit(f23c,"QRN");
 
       double chi2a = f23a->GetChisquare() / max(f23a->GetNDF(),1);
-      double chi2b = f23b->GetChisquare() / max(f23a->GetNDF(),1);
+      double chi2b = f23b->GetChisquare() / max(f23b->GetNDF(),1);
+      double chi2c = f23c->GetChisquare() / max(f23c->GetNDF(),1);
       if (f23a->GetNDF()<1) chi2a = 9999.;
       if (f23b->GetNDF()<1) chi2b = 9999.;
+      if (f23c->GetNDF()<1) chi2c = 9999.;
       if (f23best==0 || chi2a<chi2min) { f23best = f23a; chi2min = chi2a; }
       if (f23best==0 || chi2b<chi2min) { f23best = f23b; chi2min = chi2b; }
-      f23prev = (chi2a<=chi2b ? f23a : f23b);
+      if (f23best==0 || chi2c<chi2min) { f23best = f23c; chi2min = chi2c; }
+      //f23prev = (chi2a<=chi2b ? f23a : f23b);
+      if (chi2a<=chi2b && chi2a<=chi2c)  f23prev = f23a;
+      if (chi2b<chi2a  && chi2b<=chi2c)  f23prev = f23b;
+      if (chi2c<chi2a  && chi2c<chi2b)   f23prev = f23b;
+      
+      // Store best fit parameters for starting point later
+      for (int j = 0; j != npar; ++j) {
+	mpar[jeta][i][j] = f23prev->GetParameter(j);
+      }
     } // for i
     
     //if (vetamin[ieta]==0) {
