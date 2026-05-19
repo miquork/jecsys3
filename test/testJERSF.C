@@ -16,6 +16,11 @@ const bool debug = true;
 
 void testJERSF(string filename) {
 
+  gROOT->ProcessLine(".! mkdir pdf");
+  gROOT->ProcessLine(".! mkdir pdf/JERSF");
+  gROOT->ProcessLine(".! touch pdf");
+  gROOT->ProcessLine(".! touch pdf/JERSF");
+  
   setTDRStyle();
 
   cout << "Open " << filename << endl << flush;
@@ -35,6 +40,8 @@ void testJERSF(string filename) {
     cout << "JER(eta=0,pt=100,rho=5)="<<jer->getCorrection()<<endl;
   }
 
+  const double eps = 1e-4;
+  const double sfmaxeta = 5.191-eps;
   const int ndiv = 1;//5;
   const int nbins = 60*ndiv;
   const double deta = TMath::TwoPi()/72./ndiv;
@@ -50,8 +57,8 @@ void testJERSF(string filename) {
   TH1D *hxmaxm = new TH1D("hxmaxm",";-#eta_{jet};JER SF",nbins,0.,maxeta);
   for (int i = 0; i != h100->GetNbinsX()+1; ++i) {
 
-    double eta = h100->GetBinCenter(i);
-    double etamin = h100->GetBinLowEdge(i);
+    double eta = max(min(h100->GetBinCenter(i),sfmaxeta),-sfmaxeta);
+    double etamin = max(min(h100->GetBinLowEdge(i),sfmaxeta),-sfmaxeta);
 
     jer->setJetEta(eta);
     jer->setJetPt(10.);

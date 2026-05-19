@@ -123,7 +123,8 @@ mlum["2026CNS"] = "1.18 fb^{-1}";
 //mfile["JERC_Summer24MG_MC"] = "rootfiles/Prompt2024/Jet_v134/jmenano_mc_out_Summer24MG_v134.root";
 //mfile["JERC_Summer24MG_MC"] = "rootfiles/Prompt2025/Jet_v150/jmenano_mc_out_Summer24MG_v150.root";
 mfile["JERC_Summer24MG_MC"] = "rootfiles/Prompt2024/Jet_v155/jmenano_mc_out_Summer24MG_v155.root"; // no JERSF
-mfile["JERC_Summer24MG_MC_NOJERSF"] = "rootfiles/Prompt2024/Jet_v155/jmenano_mc_out_Summer24MG_v155.root"; // no JERSF
+//mfile["JERC_Summer24MG_MC_NOJERSF"] = "rootfiles/Prompt2024/Jet_v155/jmenano_mc_out_Summer24MG_v155.root"; // no JERSF
+mfile["JERC_Summer24MG_NOJERSF_MC"] = "rootfiles/Prompt2024/Jet_v155/jmenano_mc_out_Summer24MG_v155.root"; // no JERSF
 //
 //mfile["JERC_Summer24MC_Flat_MC"] = "rootfiles/Prompt2025/Jet_v150/jmenano_mc_out_Summer24MC_Flat_v150.root";
 //mfile["JERC_Summer24MC_Flat_MC"] = "rootfiles/Prompt2024/Jet_v155/jmenano_mc_out_Summer24MC_Flat_v155.root"; // non-JMENANO?
@@ -230,7 +231,7 @@ mfile["JET_2025CDEFG_MC"]       = mfile["JET_2025_MC"];
 mfile["JET_2025JER_DATA_OUT"] = mfile["JET_2025CDEFG_DATA_OUT"];
 mfile["JET_2025JER_DATA_CMB"] = mfile["JET_2025CDEFG_DATA_CMB"];
 mfile["JET_2025JER_MC"]       = "rootfiles/Prompt2026/Jet_v158/jmenano_mc_out_Summer24MC_Flat_JMENANO_JERSF_v158.root";
-//
+
 //mfile["JET_2025DEFG_DATA_OUT"] = "rootfiles/Prompt2025/Jet_v153/jmenano_data_out_2025DEFG_JME_v153.root";
 //mfile["JET_2025DEFG_DATA_CMB"] = "rootfiles/Prompt2025/Jet_v153/jmenano_data_cmb_2025DEFG_JME_v153.root";
 //mfile["JET_2025DEFG_MC"]       = mfile["JET_2025_MC"];
@@ -560,8 +561,8 @@ mfile["JET_2026B_MC"]       = mfile["JET_2025_MC"];
 mfile["JET_2026C_DATA_OUT"] = "rootfiles/Prompt/Jet_v163_v4/jmenano_data_out_2026C_JME_v163_v4.root";
 mfile["JET_2026C_DATA_CMB"] = "rootfiles/Prompt/Jet_v163_v4/jmenano_data_cmb_2026C_JME_v163_v4.root";
 mfile["JET_2026C_MC"]       = mfile["JET_2025_MC"];
-mfile["JET_2026D_DATA_OUT"] = "rootfiles/Prompt/Jet_v165/jmenano_data_out_2026D_JME_v165.root";
-mfile["JET_2026D_DATA_CMB"] = "rootfiles/Prompt/Jet_v165/jmenano_data_cmb_2026D_JME_v165.root";
+mfile["JET_2026D_DATA_OUT"] = "rootfiles/Prompt/Jet_v167/jmenano_data_out_2026D_JME_v167.root";
+mfile["JET_2026D_DATA_CMB"] = "rootfiles/Prompt/Jet_v167/jmenano_data_cmb_2026D_JME_v167.root";
 mfile["JET_2026D_MC"]       = mfile["JET_2025_MC"];
 
 mfile["GAM_2026B_DATA"]   = "rootfiles/Prompt/Gam_w79/GamHistosFill_data_2026B_w79.root"; // with L2L3Res, for V0M closure
@@ -572,7 +573,7 @@ mfile["GAM_2026C_DATA"]   = "rootfiles/Prompt/Gam_w79/GamHistosFill_data_2026C_w
 mfile["GAM_2026C_MC"]     = mfile["GAM_2025_MC"];
 mfile["GAM_2026C_MIX"]    = mfile["GAM_2025_MIX"];
 //
-mfile["GAM_2026D_DATA"]   = "rootfiles/Prompt/Gam_w81/GamHistosFill_data_2026D_w81.root";
+mfile["GAM_2026D_DATA"]   = "rootfiles/Prompt/Gam_w81/GamHistosFill_data_2026D-jmenano_w81_17May2026.root";
 mfile["GAM_2026D_MC"]     = mfile["GAM_2025_MC"];
 mfile["GAM_2026D_MIX"]    = mfile["GAM_2025_MIX"];
 
