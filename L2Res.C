@@ -2798,7 +2798,7 @@ void L2Res(bool _doClosure = doClosure, string onlyEra = "", string onlyMC  = ""
     }
     ftxt2 << endl;
   }
-  }
+  } // writeRefitVsPtRaw
   
   // Loop over gamjet pT bins for plotting
   for (int ipt = 1; ipt != p2g->GetNbinsY()+1; ++ipt) {
