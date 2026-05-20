@@ -28,6 +28,11 @@ void addLines(map<string,pair<int,int>>& ml, TH1D *hcumlum2, double kf,
 
 void drawTimeStability() {
 
+  gROOT->ProcessLine(".! mkdir pdf");
+  gROOT->ProcessLine(".! mkdir pdf/drawTimeStability");
+  gROOT->ProcessLine(".! touch pdf");
+  gROOT->ProcessLine(".! touch pdf/drawTimeStability");
+  
   setTDRStyle();
   TDirectory *curdir = gDirectory;
 
@@ -55,7 +60,8 @@ void drawTimeStability() {
     "2024CDEFGHI_nib",
     //
     "2025C","2025D","2025E", "2025F","2025G",
-    
+    "2026B",//"2026C",
+
     // gamma+jet
     "GamJet",
     "2022C","2022D","2022E","2022F","2022G",
@@ -65,6 +71,7 @@ void drawTimeStability() {
     "2024H_nib1","2024I_nib1",
     //
     "2025C","2025D","2025E","2025F","2025G",
+    "2026B",//"2026",
 
     // Z+jet
     "ZmmJet",
@@ -78,9 +85,11 @@ void drawTimeStability() {
     "2024H_nib1","2024I_nib1",
     //
     "2025C","2025D","2025E","2025F","2025G",
+    "2026B",//"2026C"
 
     "TTBar",
     "2024"
+
   };
   const int nf = sizeof(vf)/sizeof(vf[0]);
 
@@ -94,9 +103,11 @@ void drawTimeStability() {
 
     // Gamma+jet
     "GamJet",
-    //"pr50m_eta08hi","pr50m_eta08lo",
-    //"pr50m_eta3to4","pr50m_eta4to5",
-    //"pr110m_eta3to4","pr110m_eta4to5",
+    "pr50m_eta08hi","pr50m_eta08lo",
+    "pr50m_eta3to4","pr50m_eta4to5",
+    "pr110m_eta3to4","pr110m_eta4to5",
+    "pr50b_eta3to4","pr50b_eta4to5",
+    "pr110b_eta3to4","pr110b_eta4to5",
 
     "pr50n","pr110n","pr230n",
  
@@ -109,15 +120,19 @@ void drawTimeStability() {
 
     // Zmm+jet
     "ZmmJet",
-    "mz_run_zpt0","mz_run_zpt30","mz_run_zpt50","mz_run_zpt110",
-    "nz_run_zpt0","nz_run_zpt30","nz_run_zpt50","nz_run_zpt110",
+    "mz_run_zpt0","mz_run_zpt15","mz_run_zpt30","mz_run_zpt50","mz_run_zpt110",
+    "nz_run_zpt0","nz_run_zpt15","nz_run_zpt30","nz_run_zpt50","nz_run_zpt110",
 
-    "mpf_run_zpt30","mpf_run_zpt110","mpf_run_zpt50",
-    "db_run_zpt30","db_run_zpt110","db_run_zpt50",
+    "mpf_run_zpt15","mpf_run_zpt30","mpf_run_zpt110","mpf_run_zpt50",
+    "db_run_zpt15","db_run_zpt30","db_run_zpt110","db_run_zpt50",
 
-    //"chf_run_zpt30","nef_run_zpt30","nhf_run_zpt30",
-    //"chf_run_zpt50","nef_run_zpt50","nhf_run_zpt50",
-    //"chf_run_zpt110","nef_run_zpt110","nhf_run_zpt110",
+    "mpf1_run_zpt15","mpf1_run_zpt30","mpf1_run_zpt110","mpf1_run_zpt50",
+    "mpfn_run_zpt15","mpfn_run_zpt30","mpfn_run_zpt110","mpfn_run_zpt50",
+    "mpfu_run_zpt15","mpfu_run_zpt30","mpfu_run_zpt110","mpfu_run_zpt50",
+
+    "chf_run_zpt30","nef_run_zpt30","nhf_run_zpt30",
+    "chf_run_zpt50","nef_run_zpt50","nhf_run_zpt50",
+    "chf_run_zpt110","nef_run_zpt110","nhf_run_zpt110",
 
 
     // ttbar
@@ -133,6 +148,8 @@ void drawTimeStability() {
   mcolor["pr110n"] = kBlue;
   mcolor["pr230n"] = kGreen+2;
   mcolor["pr50m"] = kRed;
+  mcolor["pr50m_eta08hi"] = kRed;
+  mcolor["pr50m_eta08lo"] = kBlue;
   mcolor["pr110m"] = kBlue;
   mcolor["pr230m"] = kGreen+2;
   mcolor["pr50chf"] = kRed;
@@ -153,7 +170,19 @@ void drawTimeStability() {
   mhead["pr110n"] = "#gamma+jet Xsec 110EB";
   mhead["pr230n"] = "#gamma+jet Xsec 200";
   mhead["pr50m"] = "#gamma+jet MPF 50EB";
+  mhead["pr50m_eta08hi"] = "#gamma+jet MPF 50EB (|#eta|>0.8)";
+  mhead["pr50m_eta08lo"] = "#gamma+jet MPF 50EB (|#eta|<0.8)";
+  mhead["pr50m_eta3to4"] = "#gamma+jet MPF 50EB (3<|#eta|<4)";
+  mhead["pr50m_eta4to5"] = "#gamma+jet MPF 50EB (4<|#eta|<5)";
+  mhead["pr50b_eta3to4"] = "#gamma+jet DB 50EB (3<|#eta|<4)";
+  mhead["pr50b_eta4to5"] = "#gamma+jet DB 50EB (4<|#eta|<5)";
   mhead["pr110m"] = "#gamma+jet MPF 110EB";
+  mhead["pr110m_eta08hi"] = "#gamma+jet MPF 110EB (|#eta|>0.8)";
+  mhead["pr110m_eta08lo"] = "#gamma+jet MPF 110EB (|#eta|<0.8)";
+  mhead["pr110m_eta3to4"] = "#gamma+jet MPF 110EB (3<|#eta|<4)";
+  mhead["pr110m_eta4to5"] = "#gamma+jet MPF 110EB (4<|#eta|<5)";
+  mhead["pr110b_eta3to4"] = "#gamma+jet DB 110EB (3<|#eta|<4)";
+  mhead["pr110b_eta4to5"] = "#gamma+jet DB 110EB (4<|#eta|<5)";
   mhead["pr230m"] = "#gamma+jet MPF 200";
   mhead["pr50b"] = "#gamma+jet DB 50EB";
   mhead["pr110b"] = "#gamma+jet DB 110EB";
@@ -164,12 +193,26 @@ void drawTimeStability() {
   mhead["pr110chf"] = "#gamma+jet CHF 110EB";
   mhead["pr110nhf"] = "#gamma+jet NHF 110EB";
   mhead["pr110nef"] = "#gamma+jet NEF 110EB";
+  mhead["db_run_zpt15"] = "Z(#mu#mu)+jet DB 15";
   mhead["db_run_zpt30"] = "Z(#mu#mu)+jet DB 30";
   mhead["db_run_zpt50"] = "Z(#mu#mu)+jet DB 50";
   mhead["db_run_zpt110"] = "Z(#mu#mu)+jet DB 110";
+  mhead["mpf_run_zpt15"] = "Z(#mu#mu)+jet MPF 15";
   mhead["mpf_run_zpt30"] = "Z(#mu#mu)+jet MPF 30";
   mhead["mpf_run_zpt50"] = "Z(#mu#mu)+jet MPF 50";
   mhead["mpf_run_zpt110"] = "Z(#mu#mu)+jet MPF 110";
+  mhead["mpf1_run_zpt15"] = "Z(#mu#mu)+jet MPF1 15";
+  mhead["mpf1_run_zpt30"] = "Z(#mu#mu)+jet MPF1 30";
+  mhead["mpf1_run_zpt50"] = "Z(#mu#mu)+jet MPF1 50";
+  mhead["mpf1_run_zpt110"] = "Z(#mu#mu)+jet MPF1 110";
+  mhead["mpfn_run_zpt15"] = "Z(#mu#mu)+jet MPFn 15";
+  mhead["mpfn_run_zpt30"] = "Z(#mu#mu)+jet MPFn 30";
+  mhead["mpfn_run_zpt50"] = "Z(#mu#mu)+jet MPFn 50";
+  mhead["mpfn_run_zpt110"] = "Z(#mu#mu)+jet MPFn 110";
+  mhead["mpfu_run_zpt15"] = "Z(#mu#mu)+jet MPFu 15";
+  mhead["mpfu_run_zpt30"] = "Z(#mu#mu)+jet MPFu 30";
+  mhead["mpfu_run_zpt50"] = "Z(#mu#mu)+jet MPFu 50";
+  mhead["mpfu_run_zpt110"] = "Z(#mu#mu)+jet MPFu 110";
   mhead["chf_run_zpt30"] = "Z(#mu#mu)+jet CHF 30";
   mhead["nef_run_zpt30"] = "Z(#mu#mu)+jet NEF 30";
   mhead["nhf_run_zpt30"] = "Z(#mu#mu)+jet NHF 30";
@@ -197,7 +240,7 @@ void drawTimeStability() {
     if (sh=="TTBar")  { useGam = false; useZmm = false; useJet = false; useTT = true; continue; }
     bool isPF = (th.Contains("nhf") || th.Contains("nef") || th.Contains("chf"));
     bool isZmass = (th.Contains("mz_run"));
-    bool isEta = (th.Contains("eta"));
+    bool isEta = (th.Contains("eta") && !th.Contains("eta08"));
     double kpf(1);
     if (th.Contains("nhf")) kpf = 20;  // 5%
     if (th.Contains("nef")) kpf = 4;   // 25%
@@ -237,7 +280,8 @@ void drawTimeStability() {
 	if (tf.Contains("2023")) f = new TFile(Form("rootfiles/Summer23_L2L3Res/GamHistosFill_data_%s_w8.root",cf),"READ");
 	if (tf.Contains("2022")) f = new TFile(Form("../gamjet/rootfiles/GamHistosFill_data_%s_v32.root",cf),"READ");
 	if (tf.Contains("2024")) f = new TFile(Form("rootfiles/Prompt2024/w48_Gam/GamHistosFill_data_%s_w48.root",cf),"READ"); // V9M prompt
-	if (tf.Contains("2025")) f = new TFile(Form("rootfiles/Prompt2025/Gam_w65/GamHistosFill_data_%s_w65.root",cf),"READ"); // V2M prompt
+	if (tf.Contains("2025")) f = new TFile(Form("rootfiles/Prompt2025/Gam_w73/GamHistosFill_data_%s_w73.root",cf),"READ"); // V3M prompt (was w65,66,67,68)
+	if (tf.Contains("2026")) f = new TFile(Form("rootfiles/Prompt2026/Gam_w77/GamHistosFill_data_%s_w77.root",cf),"READ"); // V0M prompt
       }
       
       // Zmm+jet files
@@ -246,8 +290,14 @@ void drawTimeStability() {
 	if (tf.Contains("2022F") || tf.Contains("2022G")) f = new TFile(Form("rootfiles/jme_bplusZ_%s_Zmm_sync_v78.root",cf),"READ");
 	else if (tf.Contains("2022")) f = new TFile(Form("rootfiles/jme_bplusZ_%s_Zmm_sync_v76.root",cf),"READ");
 	if (tf.Contains("2023")) f = new TFile(Form("rootfiles/Prompt2024/jme_bplusZ_%s_Zmm_sync_v84.root",cf),"READ");
-	if (tf.Contains("2024")) f = new TFile(Form("rootfiles/Prompt2024/v97_Zmm/jme_Zj_%s_Zmm_pileup_69200_V8M_v97.root",cf), "READ"); // V9M prompt
-	if (tf.Contains("2025")) f = new TFile(Form("rootfiles/Prompt2025/Zmm_v102/jme_Zj_%s_Zmm_v102_nomu.root",cf), "READ"); // V2M prompt
+	//if (tf.Contains("2024")) f = new TFile(Form("rootfiles/Prompt2024/v97_Zmm/jme_Zj_%s_Zmm_pileup_69200_V8M_v97.root",cf), "READ"); // V9M prompt
+	if (tf.Contains("2024")) f = new TFile(Form("rootfiles/Prompt2025/Zmm_v103_2024_V9M/jme_Zj_%s_Zmm_V9M_v103.root",cf), "READ"); // V9M prompt
+	//if (tf.Contains("2025")) f = new TFile(Form("rootfiles/Prompt2025/Zmm_v102/jme_Zj_%s_Zmm_v102_nomu.root",cf), "READ"); // V2M prompt
+	//if (tf.Contains("2025")) f = new TFile(Form("rootfiles/Prompt2025/Zmm_v105/jme_Zj_%s_Zmm_V3M_v105_nomu.root",cf), "READ"); // V2M prompt + MPF1,n,u, was v103, v104
+	//if (tf.Contains("2025")) f = new TFile(Form("rootfiles/Prompt2025/Zmm_v110/jme_Zj_%s_Zmm_V3M_v110_nomu.root",cf), "READ"); // V3M prompt + MPF1,n,u, was v103, v104
+	if (tf.Contains("2025")) f = new TFile(Form("rootfiles/Prompt/Zmm_v113/jme_Zj_%s_Zmm_V3M_v113_nomu_nAOD.root",cf), "READ");
+	if (tf.Contains("2026B")) f = new TFile(Form("rootfiles/Prompt/Zmm_v113/jme_Zj_%s_Zmm_V0M_v113_nomu.root",cf), "READ"); // V0M prompt
+	if (tf.Contains("2026C")) f = new TFile(Form("rootfiles/Prompt/Zmm_v113/jme_Zj_%s_Zmm_V0M_v113_nomu_16042026.root",cf), "READ"); // V0M prompt
       }
 
       // Inclusive jet files
@@ -271,11 +321,15 @@ void drawTimeStability() {
 	  f = new TFile(Form("rootfiles/Prompt2024/v121_v2_Jet/jmenano_data_out_%s_Rereco_JME_v121_v2.root",cf),"READ"); // V9M re-reco
 	else if (tf.Contains("2024"))
 	  f = new TFile(Form("rootfiles/Prompt2024/v121_v2_Jet/jmenano_data_out_%s_JME_v121_v2.root",cf),"READ"); // V9M prompt
-	if (tf.Contains("2025F") || tf.Contains("2025G")) {
-	  f = new TFile(Form("rootfiles/Prompt2025/Jet_v147/jmenano_data_out_%s_JME_v147.root",cf),"READ"); // V9M prompt
-	}
+	//if (tf.Contains("2025F") || tf.Contains("2025G")) {
+	//f = new TFile(Form("rootfiles/Prompt2025/Jet_v147/jmenano_data_out_%s_JME_v147.root",cf),"READ"); // V9M prompt
+	//}
 	else if (tf.Contains("2025")) {
-	  f = new TFile(Form("rootfiles/Prompt2025/Jet_v146/jmenano_data_out_%s_JME_v146.root",cf),"READ"); // V9M prompt
+	  //f = new TFile(Form("rootfiles/Prompt2025/Jet_v146/jmenano_data_out_%s_JME_v146.root",cf),"READ"); // V9M prompt
+	  f = new TFile(Form("rootfiles/Prompt2025/Jet_v153/jmenano_data_out_%s_JME_v153.root",cf),"READ"); // V3M
+	}
+	else if (tf.Contains("2026")) {
+	  f = new TFile(Form("rootfiles/Prompt2026/Jet_v158/jmenano_data_out_%s_JME_v158.root",cf),"READ"); // V0M
 	}
       }
 
@@ -319,6 +373,7 @@ void drawTimeStability() {
 	else if (th.Contains("110")) { pt1 = 110; pt2=230; }
 	else if (th.Contains("50"))  { pt1 = 50;  pt2=110; }
 	else if (th.Contains("30"))  { pt1 = 30;  pt2=50;  }
+	else if (th.Contains("15"))  { pt1 = 15;  pt2=30;  }
 	int ipt1 = p2res->GetYaxis()->FindBin(pt1);
 	int ipt2 = p2res->GetYaxis()->FindBin(pt2);
 	
@@ -345,9 +400,10 @@ void drawTimeStability() {
 	if (debug) cout << "Fill p for file " << cf << endl << flush;
 	//rebinProfileCustom(psum, p);
 
-	// Scale out L2L3Res
+	// Scale out L2L3Res (if not unclustered energy)
+	bool isU = th.Contains("mpfu");
 	TProfile *pjes = (TProfile*)p->Clone(Form("pjes_%s",ch));
-	pjes->Scale(jes);
+	if (!isU) pjes->Scale(jes);
 	
 	for (int i = 1; i != p->GetNbinsX()+1; ++i) {
 	  int run = p->GetBinCenter(i);
@@ -384,6 +440,8 @@ void drawTimeStability() {
 	  psumjes->SetEntries(psumjes->GetEntries() + pjes->GetEntries());
 	} // for i
       } // if p
+
+      f->Close(); // to avoid "Too many open files" error
     } // for iff
     hsum->Divide(hlum2);
 
@@ -400,10 +458,11 @@ void drawTimeStability() {
       ymin = -0.2; ymax = +0.3;
     }
     if (isEta) {
-      ymin = -10; ymax = +22;
+      //ymin = -10; ymax = +22;
+      ymin = -14; ymax = +14;
     }
     TH1D *h1 = tdrHist(Form("h1_%s",ch),"JES-1 (%)",ymin,ymax,"Cumulative luminosity (fb^{-1})",xmin,xmax);
-    lumi_136TeV = "Run3, 2022-25";
+    lumi_136TeV = "Run3, 2022-26";
     extraText = "Private";
     TCanvas *c1 = tdrCanvas(Form("c1_%s",ch),h1,8,11,kRectangular);
 
@@ -616,23 +675,38 @@ void drawTimeStability() {
       double cumlum2 = hcumlum2->GetBinContent(j2);
       f1->SetRange(cumlum1,cumlum2);
       f2->SetRange(cumlum1,cumlum2);
+
+      // Check if we have MPF components
+      bool is1 = th.Contains("mpf1");
+      bool isN = th.Contains("mpfn");
+      bool isU = th.Contains("mpfu");
+      bool isNU = isN || isU;
       
       // Normalize average to unity to focus on time dependence
       psum->Fit(f1,"QRN");
       TH1D *h = psum->ProjectionX(Form("h_%s",ch));
-      h->Scale(1./f1->GetParameter(0));
+      if (f1->GetNDF()>0 && !isNU && !is1 )
+	h->Scale(1./f1->GetParameter(0));
+      if (f1->GetNDF()>0 && isNU)
+      	h->Scale(1./(1+f1->GetParameter(0)));
       
       psumjes->Fit(f2,"QRN");
       TH1D *hjes = psumjes->ProjectionX(Form("hjes_%s",ch));
-      hjes->Scale(1./f2->GetParameter(0));
+      if (f2->GetNDF()>0 && !isNU && !is1)
+	hjes->Scale(1./f2->GetParameter(0));
+      if (f2->GetNDF()>0 && isNU)
+	hjes->Scale(1./(1+f2->GetParameter(0)));
 
       // Turn JES into JES-1 (%)
       for (int i = 1; i != h->GetNbinsX()+1; ++i) {
 	if (h->GetBinContent(i)!=0) {
-	  h->SetBinContent(i, (h->GetBinContent(i)-1)*100.);
+	  //double one = (isNU ? 0.05 : (is1 ? 0.9 : 1));
+	  //double one = (isNU ? 0.05 : 1);
+	  double one = (isNU ? 0.0 : 1);
+	  h->SetBinContent(i, (h->GetBinContent(i)-one)*100.);
 	  h->SetBinError(i, h->GetBinError(i)*100.);
 	  
-	  hjes->SetBinContent(i, (hjes->GetBinContent(i)-1)*100.);
+	  hjes->SetBinContent(i, (hjes->GetBinContent(i)-one)*100.);
 	  hjes->SetBinError(i, hjes->GetBinError(i)*100.);
 	}
       }
