@@ -15,10 +15,10 @@ bool symmetrizeEta = false;
 bool scaleNeutral = true;
 
 // Scale HF results up to account for Long vs Short fibre balance
-bool scaleHF = true;
+//bool scaleHF = true;
 
 // Scale HE+BE resulst to account for changes in timing
-bool scaleTiming = true;
+//bool scaleTiming = true;
 
 void randomConeL2L3Res_era(string era = "2024I");
 
@@ -34,7 +34,8 @@ void randomConeL2L3Res() {
   randomConeL2L3Res_era("2024H");
   randomConeL2L3Res_era("2024I");
   */
-  /*
+
+  // V9M
   randomConeL2L3Res_era("2024C_nib1");
   randomConeL2L3Res_era("2024D_nib1");
   //randomConeL2L3Res_era("2024Ev1_nib1");
@@ -47,8 +48,8 @@ void randomConeL2L3Res() {
   randomConeL2L3Res_era("2024G_nib2");
   randomConeL2L3Res_era("2024H_nib1");
   randomConeL2L3Res_era("2024I_nib1");
-  */
-  /*
+
+  // V3M
   //randomConeL2L3Res_era("2025B");
   randomConeL2L3Res_era("2025C");
   randomConeL2L3Res_era("2025D");
@@ -56,11 +57,11 @@ void randomConeL2L3Res() {
   randomConeL2L3Res_era("2025F");
   randomConeL2L3Res_era("2025G");
   randomConeL2L3Res_era("2025CDEFG");
-  */
 
+  // V1M
   //randomConeL2L3Res_era("2026A");
-  randomConeL2L3Res_era("2025G");
   randomConeL2L3Res_era("2026B");
+  randomConeL2L3Res_era("2026C");
   
   exit(0);
 }
@@ -84,8 +85,12 @@ void randomConeL2L3Res_era(string era) {
   assert(frc25 && !frc25->IsZombie());
 
   //TFile *frc26 = new TFile("rootfiles/Hirak_2026B/compare_sf_Run2026-Summer24MC.root","READ");
-  TFile *frc26 = new TFile("rootfiles/Hirak_2026B/compare_sf_Run2026-Summer24MC_mu60-v3.root","READ");
-  assert(frc26 && !frc26->IsZombie());
+  TFile *frc26b = new TFile("rootfiles/Hirak_2026B/compare_sf_Run2026-Summer24MC_mu60-v3.root","READ");
+  assert(frc26b && !frc26b->IsZombie());
+
+  //TFile *frc26c = new TFile("rootfiles/Jin_2026C/compare_sf_Run2026C-Summer24MC-recalculated.root","READ"); // jumpy and off?
+  TFile *frc26c = new TFile("rootfiles/Jin_2026C/compare_sf_Run2026C_lowPU.root","READ");
+  assert(frc26c && !frc26c->IsZombie());
 
   
   curdir->cd();
@@ -115,7 +120,8 @@ void randomConeL2L3Res_era(string era) {
   TH1D *hrc(0);
   if (s.Contains("2024")) hrc = (TH1D*)frc->Get(Form("Run%s",cr2));
   if (s.Contains("2025")) hrc = (TH1D*)frc25->Get(Form("Run%s",cr2));
-  if (so.Contains("2026")) hrc = (TH1D*)frc26->Get(Form("%s",cr2));
+  if (so.Contains("2026B")) hrc = (TH1D*)frc26b->Get(Form("%s",cr2));
+  if (so.Contains("2026C")) hrc = (TH1D*)frc26c->Get(Form("%s",cr2));
   /*
   if (s.Contains("2025C") && !hrc) hrc = (TH1D*)frc25->Get("Run2025B");
   if (s.Contains("2025D") && !hrc) hrc = (TH1D*)frc25->Get("Run2025B");
@@ -133,7 +139,7 @@ void randomConeL2L3Res_era(string era) {
     hrc753->Scale(69.2/75.3);
 
   // For 2024CDE re-reco, apply extra scaling to match HF
-  if (s.Contains("reReco") &&
+  if (//s.Contains("reReco") &&
       (s.Contains("2024C") || s.Contains("2024D") || s.Contains("2024E"))) {
     cout << "Apply extra scaling to reReco" << endl;
     hrc753->Scale(pow(69.2/75.3,2));
@@ -146,8 +152,11 @@ void randomConeL2L3Res_era(string era) {
     double eta = hrc753->GetBinCenter(i);
     double r = hrc753->GetBinContent(i);
     // For 2024CDE re-reco, apply scaling to EB only, not EE
-    if (s.Contains("reReco") &&
+    if (//s.Contains("reReco") &&
 	(s.Contains("2024C") || s.Contains("2024D") || s.Contains("2024E"))) {
+      //if (i==1) cout << "No extra scaling for 2024CDE" << endl;
+      /*
+      if (i==1) cout << "Extra scaling for 2024CDE EB" << endl;
       if (fabs(eta)<1.218) // HE-1
 	hrc753jes->SetBinContent(i, (r-1)*0.4+1);
       else if (fabs(eta)<1.305) // HB-HE
@@ -156,9 +165,36 @@ void randomConeL2L3Res_era(string era) {
 	hrc753jes->SetBinContent(i, (r-1)*0.6+1);
       else if (fabs(eta)<1.479) // EB-EE
 	hrc753jes->SetBinContent(i, (r-1)*0.7+1);
+      */
+      if (fabs(eta)<2.65)
+	hrc753jes->SetBinContent(i, (r-1)*0.8+1);
+      else if (fabs(eta)>2.964)
+	hrc753jes->SetBinContent(i, 1.20*r);
+      if (i==1) cout << "Extra x0.8/x1.20 scaling for 2024CDE HBHE/HF" << endl;
     }
     else if (s.Contains("2024F-nib1")) {
-      // do nothing
+      if (fabs(eta)<2.65)
+	hrc753jes->SetBinContent(i, (r-1)*0.5+1);
+      else if (fabs(eta)>2.964)
+	hrc753jes->SetBinContent(i, 1.20*r);
+      if (i==1) cout << "Extra x0.80/x1.20 scaling for 2024F-nib1 HBHE/HB" << endl;
+    }
+    else if (s.Contains("2024")) { // rest of 2024 (FGHI)
+      //if (i==1) cout << "No extra scaling for 2024GHI" << endl;
+      if (fabs(eta)<2.65)
+	hrc753jes->SetBinContent(i, (r-1)*0.32+1);
+      else if (fabs(eta)>2.964)
+	hrc753jes->SetBinContent(i, 1.20*r);
+      if (i==1) cout << "Extra x0.32/x1.20 scaling for 2024FGHI HBHE/HF" << endl;
+    }
+    else if (era=="2025C") {//s.Contains("2025C")) { // before HCAL timing
+      if (fabs(eta)<2.65)
+	hrc753jes->SetBinContent(i, (r-1)*1.2+1);
+      else if (fabs(eta)>2.964) {
+	if      (eta>0) hrc753jes->SetBinContent(i, 0.85*r);
+	else if (eta<0) hrc753jes->SetBinContent(i, 0.80*r);
+      }
+      if (i==1) cout << "Extra x1.2/x0.83 scaling for 2025C HBHE/HF" << endl;
     }
     else if (s.Contains("2025")) {
       /*
@@ -170,23 +206,58 @@ void randomConeL2L3Res_era(string era) {
 	hrc753jes->SetBinContent(i, (r-1)*0.6+1);
       // do nothing
       */
-      //if (fabs(eta)<2.65)
-      //hrc753jes->SetBinContent(i, (r-1)*0.4+1);
-      //
-      if (fabs(eta)>2.964)
+      if (fabs(eta)<2.65)
+	hrc753jes->SetBinContent(i, (r-1)*0.5+1);
+      else if (fabs(eta)>2.964) {
 	//hrc753jes->SetBinContent(i, era=="2025C" ? 0.75*r : 0.80*r);
 	//hrc753jes->SetBinContent(i, era=="2025C" ? 0.80*r : 0.85*r);
 	//hrc753jes->SetBinContent(i, era=="2025C" ? 0.85*r : 0.90*r);
-	hrc753jes->SetBinContent(i, era=="2025C" ? 0.83*r : 0.88*r);
-      if (i==1) cout << "Extra scaling for 2025 HF" << endl;
+	//hrc753jes->SetBinContent(i, era=="2025C" ? 0.83*r : 0.88*r);
+      	if      (eta>0) hrc753jes->SetBinContent(i, 1.02*r);
+	else if (eta<0) hrc753jes->SetBinContent(i, 0.98*r);
+      }
+      //else if (eta>2.964)
+      //hrc753jes->SetBinContent(i, (era=="2025C" ? 0.83*r : 0.88*r)*1.10);
+      //if (i==1) cout << "Extra scaling for 2025 HF" << endl;
+      //if (i==1) cout << "Extra x0.5/x0.83-0.88 scaling for 2025 HBHE/HF" << endl;
+      if (i==1) cout << "Extra x0.83-0.88 scaling for 2025DEFG HF" << endl;
     }
-    else if (so.Contains("2026")) {
-      //if (i==1) cout << "2026: no extra scalings so far " << endl << flush;
-      if (fabs(eta)>2.964)
+    else if (so.Contains("2026B")) {
+      //if (i==1) cout << "2026B: no extra scalings so far " << endl << flush;
+      if (fabs(eta)<1.305)
+	hrc753jes->SetBinContent(i, (r-1)*0.5+1);
+      else if (fabs(eta)<2.322)//2.65)
+	hrc753jes->SetBinContent(i, (r-1)*0.25+1);
+      else if (fabs(eta)>2.964)
 	hrc753jes->SetBinContent(i, 0.93*r);
-      if (i==1) cout << "Extra scaling for 2026 HF, as in 2025, but smaller (0.93 vs 0.83-0.88" << endl;
+      if (i==1) cout << "Extra scaling for 2026B HF, as in 2025, but smaller (0.93 vs 0.83-0.88), reduce HB by x0.5 and x0.25" << endl;
+    }
+    else if (so.Contains("2026C")) {
+      //if (i==1) cout << "2026C: no extra scalings so far " << endl << flush;
+      if (fabs(eta)<2.964)//2.65)
+	hrc753jes->SetBinContent(i, (r-1)*0.1+1);
+      if (fabs(eta)>2.964)
+	hrc753jes->SetBinContent(i, 0.75*r);
+      if (i==1) cout << "2026C: flatten tracker by x0.1, the scale HF back by x0.75 " << endl << flush;
+      /*
+      // Scalings for older recalculated variant
+      if (fabs(eta)>2.964)
+	hrc753jes->SetBinContent(i, 0.80*r);
+      if (fabs(eta)>2.65 && fabs(eta)<2.964)
+	hrc753jes->SetBinContent(i, 0.90*r);
+      if (fabs(eta)>2.3 && fabs(eta)<2.65)
+	hrc753jes->SetBinContent(i, 1.5*r);
+      if (fabs(eta)>1.305 && fabs(eta)<2.3)
+	hrc753jes->SetBinContent(i, 1.25*r);
+      if (i==1) cout << "Extra scaling for C HF, as in 2025, but larger (0.80 vs 0.83-0.88)\n and adding x1.25-x1.50 for HE within tracker, x0.90 outside" << endl;
+      */
+
+    }
+    else if (true) {
+      assert(false); // avoid generic scalings
     }
     else if (fabs(eta)<2.65) {
+      assert(false); // avoid generic scalings
       hrc753jes->SetBinContent(i, (r-1)*0.4+1);
       if (i==1) cout << "Generic extra scaling for tracker coverage" << endl;
     }
@@ -245,6 +316,7 @@ void randomConeL2L3Res_era(string era) {
     hrc13->SetBinError(i, 0.);
     hrc13jes->SetBinError(i, 0.);
     if (symmetrizeEta) {
+      assert(false); // don't do this anymore, can recalculate in L2Res.C
       double eta = hrc13jes->GetBinCenter(i);
       if (eta<0) {
 	int j = hrc13jes->GetXaxis()->FindBin(-eta);
@@ -286,14 +358,21 @@ void randomConeL2L3Res_era(string era) {
   //TFile *fl2 = new TFile("rootfiles/L2Res_2024_V9M_2025_V2M.root","READ");
   //TFile *fl2 = new TFile("rootfiles/L2Res_2025CDEFG_V2M.root","READ");
   //TFile *fl2 = new TFile("rootfiles/L2Res_2025CDEFG_V3M_withoutRC_v1.root","READ");
-  TFile *fl2_norc = new TFile("rootfiles/L2Res_2025CDEFG_V3M_withoutRC.root","READ");
-  if (so.Contains("2026"))
-    fl2_norc = new TFile("rootfiles/L2Res_2026B_noincjet_norc.root","READ");
+  //TFile *fl2_norc = new TFile("rootfiles/L2Res_2025CDEFG_V3M_withoutRC.root","READ");
+  TFile *fl2_norc = new TFile("rootfiles/L2Res_Prompt24to26C_noRC_v2.root","READ");
+  //if (so.Contains("2026B"))
+  //fl2_norc = new TFile("rootfiles/L2Res_2026B_noincjet_norc.root","READ");
+  //if (so.Contains("2026C"))
+  //fl2_norc = new TFile("rootfiles/L2Res.root","READ");
   assert(fl2_norc && !fl2_norc->IsZombie());
   //TFile *fl2_wrc = new TFile("rootfiles/L2Res_2025CDEFG_V3M_withRC_v2.root","READ");
-  TFile *fl2_wrc = new TFile("rootfiles/L2Res_2025CDEFG_V3M_withRC_v3.root","READ");
-  if (so.Contains("2026"))
-    fl2_wrc = new TFile("rootfiles/L2Res_2026B_withRC_v2.root","READ");
+  //TFile *fl2_wrc = new TFile("rootfiles/L2Res_2025CDEFG_V3M_withRC_v3.root","READ");
+  TFile *fl2_wrc = new TFile("rootfiles/L2Res_Prompt24to26C_withRC_v2.root","READ");
+  //if (so.Contains("2026B"))
+    //fl2_wrc = new TFile("rootfiles/L2Res_2026B_withRC_v2.root","READ");
+    //fl2_wrc = new TFile("rootfiles/L2Res.root","READ");
+  //if (so.Contains("2026C"))
+  //fl2_wrc = new TFile("rootfiles/L2Res.root","READ");
   //TFile *fl2 = new TFile("rootfiles/L2Res_2025CDEFG_V2M_withRC.root","READ");
   assert(fl2_wrc && !fl2_wrc->IsZombie());
 
@@ -386,7 +465,8 @@ void randomConeL2L3Res_era(string era) {
   //TH1D *h = tdrHist(Form("h_%s",cr),"JES or RC SF ",0.4+eps,1.8-eps,
   //TH1D *h = tdrHist(Form("h_%s",cr),"JES or RC",0.25+eps,1.7-eps,
   //TH1D *h = tdrHist(Form("h_%s",cr),"JES or RC",0.6+eps,1.45-eps,
-  TH1D *h = tdrHist(Form("h_%s",cr),"JES or RC",0.65+eps,1.65-eps,
+  //TH1D *h = tdrHist(Form("h_%s",cr),"JES or RC",0.65+eps,1.65-eps,
+  TH1D *h = tdrHist(Form("h_%s",cr),"JES or RC",0.45+eps,1.85-eps,
 		    "#eta",-5.2,5.2);
   //TH1D *hd = tdrHist(Form("hd_%s",cr),"JES / RC SF ",0.8+eps,1.8-eps,
   TH1D *hd = tdrHist(Form("hd_%s",cr),"JES / RCF",0.4+eps,1.6-eps,
@@ -479,9 +559,11 @@ void randomConeL2L3Res_era(string era) {
   TFile *fout = new TFile("rootfiles/randomConeL2L3Res.root","UPDATE");
   hrc13jes->Write(Form("hrc13jes_%s",cr), TObject::kOverwrite);
   fout->Close();
-  
+
   frc->Close();
   frc25->Close();
+  frc26b->Close();
+  frc26c->Close();
   fl2_norc->Close();
   fl2_wrc->Close();
   fl3->Close();
