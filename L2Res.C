@@ -1162,7 +1162,8 @@ void L2Res(bool _doClosure = doClosure, string onlyEra = "", string onlyMC  = ""
   // Load Random Cone
   TFile *frc(0), *frc1(0);
   if (tr.Contains("2024") || tr.Contains("2025") || tr.Contains("2026")) {
-    frc = frc1 = new TFile("rootfiles/randomConeL2L3Res_for_Prompt24to26C_V10M_V4M_V1M.root","READ");
+    //frc = frc1 = new TFile("rootfiles/randomConeL2L3Res_for_Prompt24to26C_V10M_V4M_V1M.root","READ");
+    frc = frc1 = new TFile("rootfiles/randomConeL2L3Res_for_Prompt24to26D.root","READ");
   }
   else if (true) {
     assert(false); // force check of new file above

@@ -62,6 +62,7 @@ void randomConeL2L3Res() {
   //randomConeL2L3Res_era("2026A");
   randomConeL2L3Res_era("2026B");
   randomConeL2L3Res_era("2026C");
+  randomConeL2L3Res_era("2026D");
   
   exit(0);
 }
@@ -91,6 +92,9 @@ void randomConeL2L3Res_era(string era) {
   //TFile *frc26c = new TFile("rootfiles/Jin_2026C/compare_sf_Run2026C-Summer24MC-recalculated.root","READ"); // jumpy and off?
   TFile *frc26c = new TFile("rootfiles/Jin_2026C/compare_sf_Run2026C_lowPU.root","READ");
   assert(frc26c && !frc26c->IsZombie());
+
+  TFile *frc26d = new TFile("rootfiles/Jin_2026C/sf_direct_Run2026D_nPU59.root","READ");
+  assert(frc26d && !frc26d->IsZombie());
 
   
   curdir->cd();
@@ -122,6 +126,7 @@ void randomConeL2L3Res_era(string era) {
   if (s.Contains("2025")) hrc = (TH1D*)frc25->Get(Form("Run%s",cr2));
   if (so.Contains("2026B")) hrc = (TH1D*)frc26b->Get(Form("%s",cr2));
   if (so.Contains("2026C")) hrc = (TH1D*)frc26c->Get(Form("%s",cr2));
+  if (so.Contains("2026D")) hrc = (TH1D*)frc26d->Get("Run2026C"); // [sic]
   /*
   if (s.Contains("2025C") && !hrc) hrc = (TH1D*)frc25->Get("Run2025B");
   if (s.Contains("2025D") && !hrc) hrc = (TH1D*)frc25->Get("Run2025B");
@@ -230,6 +235,16 @@ void randomConeL2L3Res_era(string era) {
 	hrc753jes->SetBinContent(i, (r-1)*0.25+1);
       else if (fabs(eta)>2.964)
 	hrc753jes->SetBinContent(i, 0.93*r);
+      if (i==1) cout << "Extra scaling for 2026B HF, as in 2025, but smaller (0.93 vs 0.83-0.88), reduce HB by x0.5 and x0.25" << endl;
+    }
+    else if (so.Contains("2026D")) {
+      //if (i==1) cout << "2026D: no extra scalings so far " << endl << flush;
+      if (fabs(eta)<1.305)
+	hrc753jes->SetBinContent(i, (r-1)*0.5+1);
+      else if (fabs(eta)<2.322)//2.65)
+	hrc753jes->SetBinContent(i, (r-1)*0.25+1);
+      else if (fabs(eta)>2.964)
+	hrc753jes->SetBinContent(i, 0.88*r);//0.93*r);
       if (i==1) cout << "Extra scaling for 2026B HF, as in 2025, but smaller (0.93 vs 0.83-0.88), reduce HB by x0.5 and x0.25" << endl;
     }
     else if (so.Contains("2026C")) {
@@ -359,7 +374,8 @@ void randomConeL2L3Res_era(string era) {
   //TFile *fl2 = new TFile("rootfiles/L2Res_2025CDEFG_V2M.root","READ");
   //TFile *fl2 = new TFile("rootfiles/L2Res_2025CDEFG_V3M_withoutRC_v1.root","READ");
   //TFile *fl2_norc = new TFile("rootfiles/L2Res_2025CDEFG_V3M_withoutRC.root","READ");
-  TFile *fl2_norc = new TFile("rootfiles/L2Res_Prompt24to26C_noRC_v2.root","READ");
+  //TFile *fl2_norc = new TFile("rootfiles/L2Res_Prompt24to26C_noRC_v2.root","READ");
+  TFile *fl2_norc = new TFile("rootfiles/L2Res_Prompt24to26D_noRC.root","READ");
   //if (so.Contains("2026B"))
   //fl2_norc = new TFile("rootfiles/L2Res_2026B_noincjet_norc.root","READ");
   //if (so.Contains("2026C"))
@@ -367,7 +383,9 @@ void randomConeL2L3Res_era(string era) {
   assert(fl2_norc && !fl2_norc->IsZombie());
   //TFile *fl2_wrc = new TFile("rootfiles/L2Res_2025CDEFG_V3M_withRC_v2.root","READ");
   //TFile *fl2_wrc = new TFile("rootfiles/L2Res_2025CDEFG_V3M_withRC_v3.root","READ");
-  TFile *fl2_wrc = new TFile("rootfiles/L2Res_Prompt24to26C_withRC_v2.root","READ");
+  //TFile *fl2_wrc = new TFile("rootfiles/L2Res_Prompt24to26C_withRC_v2.root","READ");
+  //TFile *fl2_wrc = new TFile("rootfiles/L2Res_Prompt24to26D_V10MV4MV1M.root","READ");
+  TFile *fl2_wrc = new TFile("rootfiles/L2Res_Prompt24to26D_withRC.root","READ");
   //if (so.Contains("2026B"))
     //fl2_wrc = new TFile("rootfiles/L2Res_2026B_withRC_v2.root","READ");
     //fl2_wrc = new TFile("rootfiles/L2Res.root","READ");
@@ -401,7 +419,7 @@ void randomConeL2L3Res_era(string era) {
   //TH2D *h2l2 = (TH2D*)fl2->Get(Form("h2jes_%s_nib1",cr2)); assert(h2l2);
   //TH2D *h2l2 = (TH2D*)fl2->Get(Form("h2jes_%s",m[era])); assert(h2l2);
   //TH2D *h2l2 = (TH2D*)fl2->Get(Form("h2jes_%s",cr)); assert(h2l2); // eta-symmetric
-  TH2D *h2l2_norc = (TH2D*)fl2_norc->Get(Form("h2jes1_%s",cr)); assert(h2l2_norc); // eta-asymmetric
+  TH2D *h2l2_norc = (TH2D*)fl2_norc->Get(Form("h2jes1_%s",cr)); assert(h2l2_norc); // eta-asymmetric // PATCH
   //TH2D *h2l2_wrc = (TH2D*)fl2_wrc->Get(Form("h2jes1_%s",cr)); assert(h2l2_wrc); // eta-asymmetric
   TH2D *h2l2_wrc = (TH2D*)fl2_wrc->Get(Form("h2jes1_%s",cr)); assert(h2l2_wrc); // eta-asymmetric
   double pt1 = 10;
