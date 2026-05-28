@@ -1439,7 +1439,7 @@ void JERSF(bool _doClosure = doClosure, string onlyEra = "", string onlyMC = "")
   //ofstream txt(Form("textFiles/Prompt24/Prompt24_%s_JRV7M_MC_SF_AK4PFPuppi.txt",cr));
   //ofstream txt(Form("textFiles/Prompt24/Prompt24_%s_JRV9M_MC_SF_AK4PFPuppi.txt",cr));
   //ofstream txt(tr.Contains("25") ? Form("textFiles/Prompt25/Prompt25_%s_JRV3M_MC_SF_AK4PFPuppi.txt",cr) : tr.Contains("26") ? Form("textFiles/Prompt26/Prompt26_%s_JRV1M_MC_SF_AK4PFPuppi.txt",cr) : Form("textFiles/ReReco24/ReReco24_%s_JRV9M_MC_SF_AK4PFPuppi.txt",cr));
-  ofstream txt(tr.Contains("25") ? Form("textFiles/Prompt/Prompt25_%s_JRV4M_MC_SF_AK4PFPuppi.txt",cr) : tr.Contains("26") ? Form("textFiles/Prompt/Prompt26_%s_JRV1M_MC_SF_AK4PFPuppi.txt",cr) : tr.Contains("24") ? Form("textFiles/Prompt/Prompt24_%s_JRV10M_MC_SF_AK4PFPuppi.txt",cr) : "textFiles/Prompt/JERerror.txt");
+  ofstream txt(tr.Contains("25") ? Form("textFiles/Prompt/Prompt25_%s_JRV5M_MC_SF_AK4PFPuppi.txt",cr) : tr.Contains("26") ? Form("textFiles/Prompt/Prompt26_%s_JRV2M_MC_SF_AK4PFPuppi.txt",cr) : tr.Contains("24") ? Form("textFiles/Prompt/Prompt24_%s_JRV11M_MC_SF_AK4PFPuppi.txt",cr) : "textFiles/Prompt/JERerror.txt");
   txt << "{1 JetEta 1 JetPt "
       << "sqrt([0]*fabs([0])/(x*x)+[1]*[1]/x+[2]*[2])/"
       << "sqrt([3]*fabs([3])/(x*x)+[4]*[4]/x+[5]*[5])"
