@@ -1844,13 +1844,15 @@ void reprocess(string epoch="") {
 	  // Add flavor stuff for gamma+jet
 	  if (sp=="gamjet") {
 	    if (s=="gi"||s=="gb"||s=="gc"||s=="gq"||s=="gg"||s=="gn")
-	      if (d=="mc"||tepoch.Contains("2024")||tepoch.Contains("2025"))
+	      //if (d=="mc"||tepoch.Contains("2024")||tepoch.Contains("2025"))
+	      if (d=="mc")
 		//if (d!="mc"&&(tepoch.Contains("2024")||tepoch.Contains("2025")))
 		c = Form("flavor_old/%s_%si",tt,ss); // TMP
 	      else
 		c = Form("flavor/%s_%si",tt,ss);
 	    else
-	      if (d=="mc"||tepoch.Contains("2024")||tepoch.Contains("2025"))
+	      //if (d=="mc"||tepoch.Contains("2024")||tepoch.Contains("2025"))
+	      if (d=="mc")
 		//if (d!="mc"&&(tepoch.Contains("2024")||tepoch.Contains("2025")))
 		c = Form("flavor_old/%s_%s",tt,ss);//s.c_str()); // TMP
 	      else

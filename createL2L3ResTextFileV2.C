@@ -100,14 +100,14 @@ void createL2L3ResTextFileV2s(string run) {
   const char *cn3 = name3.c_str();
 
   // Input L2Residual files
-  if (tr.Contains("24")) sin = Form("%s/Prompt24_Run%s_V10M_%s.txt",cp,cr,cn2);
-  if (tr.Contains("25")) sin = Form("%s/Prompt25_Run%s_V4M_%s.txt",cp,cr,cn2);
-  if (tr.Contains("26")) sin = Form("%s/Prompt26_Run%s_V1M_%s.txt",cp,cr,cn2);
+  if (tr.Contains("24")) sin = Form("%s/Prompt24_Run%s_V11M_%s.txt",cp,cr,cn2);
+  if (tr.Contains("25")) sin = Form("%s/Prompt25_Run%s_V5M_%s.txt",cp,cr,cn2);
+  if (tr.Contains("26")) sin = Form("%s/Prompt26_Run%s_V2M_%s.txt",cp,cr,cn2);
 
   // Output L2L3Residual files
-  if (tr.Contains("24")) sout = Form("%s/Prompt24_Run%s_V10M_%s.txt",cp,cr,cn3);
-  if (tr.Contains("25")) sout = Form("%s/Prompt25_Run%s_V4M_%s.txt",cp,cr,cn3);
-  if (tr.Contains("26")) sout = Form("%s/Prompt26_Run%s_V1M_%s.txt",cp,cr,cn3);
+  if (tr.Contains("24")) sout = Form("%s/Prompt24_Run%s_V11M_%s.txt",cp,cr,cn3);
+  if (tr.Contains("25")) sout = Form("%s/Prompt25_Run%s_V5M_%s.txt",cp,cr,cn3);
+  if (tr.Contains("26")) sout = Form("%s/Prompt26_Run%s_V2M_%s.txt",cp,cr,cn3);
   
   cout << "Reading in L2Residual file:" << endl
        << "   " << sin << endl << flush;  

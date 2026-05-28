@@ -40,15 +40,17 @@ IOV_list= ['2025CDEFG',
            '2025C','2025D','2025E','2025F','2025G','2025CDEFG',
            '2026B','2026C','2026D']
 
-# run first element once to recompile
+# run first element once to recompile Config.C
 os.system("root -b -q 'mk_reprocess_RunEpoch.C(\""+IOV_list[0]+"\",1,1)'")
 
-#for iov in IOV_list:
+# then run closure tests
+for iov in IOV_list:
 #os.system("mkdir pdf/"+iov)
-#    os.system("root -b -q 'mk_reprocess_RunEpoch.C(\""+iov+"\",1,0)'")
+    os.system("root -b -q 'mk_reprocess_RunEpoch.C(\""+iov+"\",1,0)'")
 #os.system("root -b -q 'recombine.C'")
 #os.system("root -b -q 'mk_reprocess_RunEpoch.C(\"Run3\")'")
 
+# then run new JECs
 for iov in IOV_list:
 #os.system("mkdir pdf/"+iov)
     os.system("root -b -q 'mk_reprocess_RunEpoch.C(\""+iov+"\",0,0)'")
