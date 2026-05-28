@@ -22,8 +22,8 @@ os.system("root -b -q 'L2Res.C++g(false,\""+IOV_list[0]+"\",\"Summer24\",0)'")
 #os.system("mv -i rootfiles/L2Res.root rootfiles/L2Res_norc.root");
 
 # then for closure tests, automatically stored in L2Res_closure.root
-#for iov in IOV_list:
-#    os.system("root -l -b -q 'L2Res.C+g(true,\""+iov+"\",\"Summer24\",0)'")
+for iov in IOV_list:
+    os.system("root -l -b -q 'L2Res.C+g(true,\""+iov+"\",\"Summer24\",0)'")
 
 # finally for new L2Res with RC
 for iov in IOV_list:

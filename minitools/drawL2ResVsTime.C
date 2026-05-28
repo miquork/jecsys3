@@ -31,7 +31,8 @@ void drawL2ResVsTimes(string set) {
   TFile *f(0);
   if (set=="Prompt26" || set=="Prompt25" || set=="Prompt24" ||
       set=="Prompt24to26") {
-    f = new TFile("rootfiles/L2Res_20250615_v2.root");
+    //f = new TFile("rootfiles/L2Res_20250615_v2.root");
+    f = new TFile("rootfiles/L2Res_Prompt24to26_V11MV5MV2M_draft.root");
   }
   else
     f = new TFile("rootfiles/L2Res.root");

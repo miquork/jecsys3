@@ -1816,40 +1816,53 @@ void L2Res(bool _doClosure = doClosure, string onlyEra = "", string onlyMC  = ""
   fref->SetParLimits(3,-0.5,0.5); // offset no more than 50% at 10 GeV
   fref->SetParLimits(4,0.,0.25); // 1/x^2
 
-  if (tr.Contains("2024")) { // switch off 1/pT^2 term (f5->f4)
-    fref->SetParameter(0, f4->GetParameter(0)); // logquad+1/pt (const)
-    fref->SetParameter(1, f4->GetParameter(1)); // logquad+1/pt (loglin)
-    fref->SetParameter(2, f4->GetParameter(2)); // logquad+1/pt (logquad)
-    fref->SetParameter(3, f4->GetParameter(3)); // logquad+1/pt (1/pt)
-    fref->FixParameter(4, 0.); // remove 1/x^2
-    fref->SetParLimits(3,-0.5,0.5); // offset no more than 50% at 10 GeV
-  }
-  if (tr.Contains("2025")) { // full quadlog+1/pt+1/pt^2
-    fref->SetParameter(0, f5->GetParameter(0)); // logquad+1/ptN (const)
-    fref->SetParameter(1, f5->GetParameter(1)); // logquad+1/ptN (loglin)
-    fref->SetParameter(2, f5->GetParameter(2)); // logquad+1/ptN (logquad)
-    fref->SetParameter(3, f5->GetParameter(3)); // logquad+1/ptN (1/pt)
-    fref->SetParameter(4, f5->GetParameter(4)); // logquad+1/ptN (1/pt2)
-    fref->SetParLimits(3,-0.5,0.5); // offset no more than 50% at 10 GeV
-    fref->SetParLimits(4,0.,0.25); // 1/x^2
-  }
-  if (tr.Contains("2026")) { // switch off 1/pT^2 term (f5->f4)
-    fref->SetParameter(0, f4->GetParameter(0)); // logquad+1/pt (const)
-    fref->SetParameter(1, f4->GetParameter(1)); // logquad+1/pt (loglin)
-    fref->SetParameter(2, f4->GetParameter(2)); // logquad+1/pt (logquad)
-    fref->SetParameter(3, f4->GetParameter(3)); // logquad+1/pt (1/pt)
-    //fref->SetParameter(4, 0.); // allow 1/x^2
-    fref->FixParameter(4, 0.); // remove 1/x^2
-    fref->SetParLimits(3,-0.5,0.5); // offset no more than 50% at 10 GeV
-  }
-  // Constrain HF to simpler log-lin+1/pT
-  if (fabs(eta)>2.964) { // switch off log^2 and 1/pT^2 (f5->f2)
+  if (_doClosure) {
+    // Constrain closure to simple log-lin+1/pT
+    // i.e. switch off log^2 and 1/pT^2 (f5->f2)
     fref->SetParameter(0, f2->GetParameter(0)); // loglin+1/pt (const)
     fref->SetParameter(1, f2->GetParameter(1)); // loglin+1/pt (loglin)
     fref->FixParameter(2, 0.); // remove log(x)^2
     fref->SetParameter(3, f2->GetParameter(2)); // loglin+1/pt (1/pt)
     fref->FixParameter(4, 0.); // remove 1/x^2
-  }
+  } // doClosure
+  else {
+    
+    if (tr.Contains("2024")) { // switch off 1/pT^2 term (f5->f4)
+      fref->SetParameter(0, f4->GetParameter(0)); // logquad+1/pt (const)
+      fref->SetParameter(1, f4->GetParameter(1)); // logquad+1/pt (loglin)
+      fref->SetParameter(2, f4->GetParameter(2)); // logquad+1/pt (logquad)
+      fref->SetParameter(3, f4->GetParameter(3)); // logquad+1/pt (1/pt)
+      fref->FixParameter(4, 0.); // remove 1/x^2
+      fref->SetParLimits(3,-0.5,0.5); // offset no more than 50% at 10 GeV
+    }
+    if (tr.Contains("2025")) { // full quadlog+1/pt+1/pt^2
+      fref->SetParameter(0, f5->GetParameter(0)); // logquad+1/ptN (const)
+      fref->SetParameter(1, f5->GetParameter(1)); // logquad+1/ptN (loglin)
+      fref->SetParameter(2, f5->GetParameter(2)); // logquad+1/ptN (logquad)
+      fref->SetParameter(3, f5->GetParameter(3)); // logquad+1/ptN (1/pt)
+      fref->SetParameter(4, f5->GetParameter(4)); // logquad+1/ptN (1/pt2)
+      fref->SetParLimits(3,-0.5,0.5); // offset no more than 50% at 10 GeV
+      fref->SetParLimits(4,0.,0.25); // 1/x^2
+    }
+    if (tr.Contains("2026")) { // switch off 1/pT^2 term (f5->f4)
+      fref->SetParameter(0, f4->GetParameter(0)); // logquad+1/pt (const)
+      fref->SetParameter(1, f4->GetParameter(1)); // logquad+1/pt (loglin)
+      fref->SetParameter(2, f4->GetParameter(2)); // logquad+1/pt (logquad)
+      fref->SetParameter(3, f4->GetParameter(3)); // logquad+1/pt (1/pt)
+      //fref->SetParameter(4, 0.); // allow 1/x^2
+      fref->FixParameter(4, 0.); // remove 1/x^2
+      fref->SetParLimits(3,-0.5,0.5); // offset no more than 50% at 10 GeV
+    }
+    // Constrain HF to simpler log-lin+1/pT
+    if (fabs(eta)>2.964) { // switch off log^2 and 1/pT^2 (f5->f2)
+      fref->SetParameter(0, f2->GetParameter(0)); // loglin+1/pt (const)
+      fref->SetParameter(1, f2->GetParameter(1)); // loglin+1/pt (loglin)
+      fref->FixParameter(2, 0.); // remove log(x)^2
+      fref->SetParameter(3, f2->GetParameter(2)); // loglin+1/pt (1/pt)
+      fref->FixParameter(4, 0.); // remove 1/x^2
+    }
+
+  } // !doClosure
   
   mg->Fit(fref,"QRN");
 
@@ -2708,7 +2721,7 @@ void L2Res(bool _doClosure = doClosure, string onlyEra = "", string onlyMC  = ""
   if (writeEtaSymmetricVsPtRef) {
     
   // 10a: Original eta-symmetric parameterization vs pTref
-  string ftxtname = (doClosure ? "textfiles/Prompt/foo.txt" : tr.Contains("25") ? Form("textfiles/Prompt/Prompt25_Run%s_V4M_DATA_L2ResidualVsPtRef_AK4PFPuppi.txt",cr) : tr.Contains("26") ? Form("textfiles/Prompt/Prompt26_Run%s_V1M_DATA_L2ResidualVsPtRef_AK4PFPuppi.txt",cr) : tr.Contains("24") ? Form("textfiles/Prompt/ReReco24_Run%s_V10M_DATA_L2ResidualVsPtRef_AK4PFPuppi.txt",cr) : "textiles/Prompt/error.txt");
+  string ftxtname = (doClosure ? "textfiles/Prompt/foo.txt" : tr.Contains("25") ? Form("textfiles/Prompt/Prompt25_Run%s_V5M_DATA_L2ResidualVsPtRef_AK4PFPuppi.txt",cr) : tr.Contains("26") ? Form("textfiles/Prompt/Prompt26_Run%s_V2M_DATA_L2ResidualVsPtRef_AK4PFPuppi.txt",cr) : tr.Contains("24") ? Form("textfiles/Prompt/ReReco24_Run%s_V11M_DATA_L2ResidualVsPtRef_AK4PFPuppi.txt",cr) : "textiles/Prompt/error.txt");
   cout << "Writing results to text file " << ftxtname << endl << flush;
   ofstream ftxt(ftxtname.c_str());
 
@@ -2739,7 +2752,7 @@ void L2Res(bool _doClosure = doClosure, string onlyEra = "", string onlyMC  = ""
   } // writeEtaSymmetricVsPtRef
 
   // 10b: Original eta-asymmetric parameterization vs pTref
-  string ftxtname1 = (doClosure ? "textfiles/Prompt/foo.txt" : tr.Contains("25") ? Form("textfiles/Prompt/Prompt25_Run%s_V4M_DATA_L2ResidualVsPtRefAsymm_AK4PFPuppi.txt",cr) : tr.Contains("26") ? Form("textfiles/Prompt/Prompt26_Run%s_V1M_DATA_L2ResidualVsPtRefAsymm_AK4PFPuppi.txt",cr) : tr.Contains("24") ? Form("textfiles/Prompt/Prompt24_Run%s_V10M_DATA_L2ResidualVsPtRefAsymm_AK4PFPuppi.txt",cr) : "textfiles/Prompt/error.txt");
+  string ftxtname1 = (doClosure ? "textfiles/Prompt/foo.txt" : tr.Contains("25") ? Form("textfiles/Prompt/Prompt25_Run%s_V5M_DATA_L2ResidualVsPtRefAsymm_AK4PFPuppi.txt",cr) : tr.Contains("26") ? Form("textfiles/Prompt/Prompt26_Run%s_V2M_DATA_L2ResidualVsPtRefAsymm_AK4PFPuppi.txt",cr) : tr.Contains("24") ? Form("textfiles/Prompt/Prompt24_Run%s_V11M_DATA_L2ResidualVsPtRefAsymm_AK4PFPuppi.txt",cr) : "textfiles/Prompt/error.txt");
   cout << "Writing results to text file " << ftxtname1 << endl << flush;
   ofstream ftxt1(ftxtname1.c_str());
 
@@ -2771,7 +2784,7 @@ void L2Res(bool _doClosure = doClosure, string onlyEra = "", string onlyMC  = ""
 
   if (writeRefitVsPtRaw) {
   // 10c: Re-parameterization vs pTraw (of symmetric response)
-  string ftxtname2 = (doClosure ? "textfiles/Prompt/foo.txt" : tr.Contains("25") ? Form("textfiles/Prompt/Prompt25_Run%s_V4M_DATA_L2Residual_AK4PFPuppi.txt",cr) : tr.Contains("26") ? Form("textfiles/Prompt/Prompt26_Run%s_V1M_DATA_L2Residual_AK4PFPuppi.txt",cr) : tr.Contains("24") ? Form("textfiles/Prompt/Prompt24_Run%s_V10M_DATA_L2Residual_AK4PFPuppi.txt",cr) : "textfiles/Prompt/error.txt");
+  string ftxtname2 = (doClosure ? "textfiles/Prompt/foo.txt" : tr.Contains("25") ? Form("textfiles/Prompt/Prompt25_Run%s_V5M_DATA_L2Residual_AK4PFPuppi.txt",cr) : tr.Contains("26") ? Form("textfiles/Prompt/Prompt26_Run%s_V2M_DATA_L2Residual_AK4PFPuppi.txt",cr) : tr.Contains("24") ? Form("textfiles/Prompt/Prompt24_Run%s_V11M_DATA_L2Residual_AK4PFPuppi.txt",cr) : "textfiles/Prompt/error.txt");
   cout << "Writing results to text file " << ftxtname2 << endl << flush;
   ofstream ftxt2(ftxtname2.c_str());
   
