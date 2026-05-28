@@ -84,6 +84,31 @@ Double_t fjes(Double_t *x, Double_t *p) {
   return (xsec>0 ? xsec2/xsec : 0);
 }
 
+// Calculate xsec ratio for given JES and [etamin,etamax,ptmin,ptmax]
+TF1 *_f1(0);
+Double_t fjes_1D(Double_t *x, Double_t *p) {
+
+  double jes = (*x);
+  double etamin = 0;
+  double ptlim = 0.5*13600./cosh(etamin);
+  double ptmin = max(5.,min(p[0],ptlim));
+  double ptmax = max(5.,min(p[1],ptlim));
+  double ptmin2 = max(5.,min(p[0]/jes,ptlim));
+  double ptmax2 = max(5.,min(p[1]/jes,ptlim));
+
+  assert(_f1);
+  if (ptmin==ptmax || ptmin2==ptmax2) return 1;
+  if (ptmax==ptlim || ptmax2==ptlim) return 1;
+  
+  double xsec = _f1->Integral(ptmin,ptmax);
+  double xsec2 = _f1->Integral(ptmin2,ptmax2);
+
+  // safety against NaN and zero
+  if (!(xsec>0 && xsec2>0)) return 1;
+      
+  return xsec2/xsec;
+}
+
 /*
 // Simple struct to hold the region boundaries for each trigger
 struct TriggerBox {
@@ -234,6 +259,10 @@ string triggerString(double pt, double eta) {
 
   };
 */
+
+  // Enable different trigger menu for 2026C lowPU data
+  std::vector<TriggerBox>& incjetBoxes = (_isLowPU ? incjetBoxes_lowPU : incjetBoxes_highPU);
+  
   string trigger("none");
   bool covered = false;
   for (auto& box : incjetBoxes) {
@@ -271,9 +300,19 @@ double triggerLumi(string run, string trg) {
   if (_trgLumCache[run][trg]!=0) return _trgLumCache[run][trg];
 
   const char *cr = run.c_str();
+  TString tr(cr);
   //string sf = Form("rootfiles/Prompt2024/lumiText/lumi_HLT_Golden385863_%s_PFJet.csv",cr);
   const char *ct = (trg=="HLT_ZeroBias" ? "ZB" : "PFJet");
-  string sf = Form("rootfiles/NestorLumiJSON/lumi_HLT_Golden_%s_%s.csv",cr,ct);
+  //string sf = Form("rootfiles/NestorLumiJSON/lumi_HLT_Golden_%s_%s.csv",cr,ct);
+  string sf = Form("rootfiles/NestorLumiJSON/v168/lumi_HLT_%s_%s.csv",ct,cr);
+  //if (tr.Contains("2025CDEFG") || tr.Contains("2024_nib") || tr.Contains("2024CDE_nib") || tr.Contains("2024FGHI_nib")|| tr.Contains("25C") || tr.Contains("25F")) // use old lumi as placeholder
+  //if (tr.Contains("2024_nib") || tr.Contains("2024CDE_nib") || tr.Contains("2024FGHI_nib")) // use old lumi as placeholder
+  //sf = Form("rootfiles/NestorLumiJSON/lumi_HLT_Golden_%s_%s.csv",cr,ct);
+  //if (tr.Contains("2026C"))
+  //sf = Form("rootfiles/NestorLumiJSON/lumi_HLT_Hybrid_%s_%s.csv",cr,ct);
+  //if (tr.Contains("2026B"))
+    //sf = Form("rootfiles/NestorLumiJSON/lumi_HLT_Hybrid_%s_%s.csv",cr,ct);
+    //sf = Form("rootfiles/Prompt2026/Jet_v158/lumi_HLT_Hybrid_%s_%s.csv",cr,ct);
   if (debug2) cout << "Opening " << sf << endl << flush;
   ifstream f(sf.c_str());
   assert(f.is_open());
@@ -305,7 +344,7 @@ double triggerLumi(string run, string trg) {
   //if (run=="2024G") lumi *= 37.8/33.1;// * 0.97;
 
   // Ad-hoc factors to match eras
-  bool doAdhocLumi = true;
+  bool doAdhocLumi = false;//true;
   if (doAdhocLumi) {
     if (run=="2024C_nib1") lumi *= 1.06;
     if (run=="2024E_nib1") lumi *= 0.94;
@@ -322,6 +361,13 @@ double triggerLumi(string run, string trg) {
     if (run=="2025D" && trg=="HLT_PFJet40")  lumi *= 0.90;
     if (run=="2025D" && trg=="HLT_PFJet60")  lumi *= 0.90;
     if (run=="2025D" && trg=="HLT_PFJet80")  lumi *= 0.90;
+
+    double kb = 0.90/0.85;
+    //if (run=="2026B" && trg=="HLT_ZeroBias") lumi *= 0.77*kb;
+    //if (run=="2026B" && trg=="HLT_PFJet40")  lumi *= 1.07*kb;
+    //if (run=="2026B" && trg=="HLT_PFJet60")  lumi *= 1.07*kb;
+    //if (run=="2026B" && trg=="HLT_PFJet80")  lumi *= 1.07*kb;
+    //if (run=="2026B" && trg=="HLT_PFJet140") lumi *= 1.19*kb;
 
     /*
     double k140 = 1.03;
@@ -357,6 +403,14 @@ double triggerLumi(string run, string trg) {
     //lumi *= (0.96*wc + 0.96*wd + 0.96*we + 0.97*wf + 1.01*wg) / w25;
     //if (run=="2025CDEFG" && trg=="HLT_PFJet140")
     //lumi *= (0.96*wc + 0.95*wd + 0.96*we + 0.97*wf + 0.99*wg) / w25;
+
+    /*
+    if (run=="2026B") lumi *= 1.10;//0.85;//0.90;//0.81;
+
+    if (run=="2026C" && trg=="HLT_ZeroBias") lumi *= 1.11;
+    if (run=="2026C" && trg=="HLT_PFJet40") lumi *= 0.97;
+    if (run=="2026C") lumi *= 0.95;
+    */
   }
 
   _trgLumCache[run][trg] = lumi * 1e3; // fb-1 to pb-1
@@ -396,14 +450,38 @@ TH1D* timeDep1Ds(string run="2025CDEFG", double lum = 109) {
   setTDRStyle();
   TDirectory *curdir = gDirectory;
 
+  _isLowPU = (run=="2026C");
   const char *cr = run.c_str();
   TString t(cr);
   //TFile *f = new TFile(Form("rootfiles/Prompt2024/v110_2024/jmenano_data_cmb_%s_JME_v110_2024.root",cr),"READ");
-  TFile *f(0);
+  TFile *f(0), *fm(0);
+  #include "../Config.C"
+  if (mfile.find(Form("JET_%s_DATA_CMB",cr))!=mfile.end() &&
+      mfile.find(Form("JET_%s_MC",cr))!=mfile.end()) {
+    string file_data = mfile[Form("JET_%s_DATA_CMB",cr)];
+    // Replace input file with _copy.root to improve incjet triggers
+    cout << "Reading JET_"<<cr<<"_DATA_CMB from Config.C:\n"<<file_data<<endl;
+    TString t(file_data.c_str());
+    t.ReplaceAll(".root","_copy.root");
+    t.ReplaceAll("_copy_copy","_copy");
+    cout << "Replacing it with: " << t << endl;
+    file_data = t.Data();
+    f = new TFile(file_data.c_str(),"READ");
+    string file_mc = mfile[Form("JET_%s_MC",cr)];
+    cout << "Reading JET_" << cr << "_MC from Config.C:\n" << file_mc << endl;
+    fm = new TFile(file_mc.c_str(),"READ");
+    if (fm) fm = (TFile*)fm->GetDirectory("HLT_MC"); // PATCH
+  }
+  else assert(false);
+  /*
+  //if (t.Contains("2026")) f = new TFile(Form("rootfiles/Prompt2026/Jet_v157/jmenano_data_cmb_%s_JME_v157_v4_copy.root",cr),"READ");
+  if (t.Contains("2026B")) f = new TFile(Form("rootfiles/Prompt2026/Jet_v158/jmenano_data_cmb_%s_JME_v158_copy.root",cr),"READ");
+  if (t.Contains("2026C")) f = new TFile(Form("rootfiles/Prompt2026/Jet_v160/jmenano_data_cmb_%s_JME_v160_copy.root",cr),"READ");
   //if (t.Contains("2025")) f = new TFile(Form("rootfiles/Prompt2025/Jet_v153/jmenano_data_cmb_%s_JME_v153_copy.root",cr),"READ");
   if (t.Contains("2025")) f = new TFile(Form("rootfiles/Prompt2025/Jet_v156/jmenano_data_cmb_%s_JME_v156_copy.root",cr),"READ");
   //if (t.Contains("2024")) f = new TFile(Form("rootfiles/Prompt2024/Jet_v155/jmenano_data_cmb_%s_JME_v155.root",cr),"READ");
   if (t.Contains("2024")) f = new TFile(Form("rootfiles/Prompt2024/Jet_v155/jmenano_data_cmb_%s_JME_v155_copy.root",cr),"READ");
+  */
   assert(f && !f->IsZombie());
 
   TH1D *hpt13 = (TH1D*)f->Get("Incjet/hpt13"); assert(hpt13);
@@ -468,6 +546,7 @@ TH1D* timeDep1Ds(string run="2025CDEFG", double lum = 109) {
   //c1->SaveAs(Form("pdf/timeDep2D/timeDep2D_1DBB_%s.pdf",cr));
   c1->Close();
 
+  
   //return hpt13p;
   return hpt13l;
 } // TH1D* timeDep1Ds
@@ -483,16 +562,59 @@ void timeDep2Ds(string run="2025G", string ref="2025CDEFG", TH1D *hr=0) {
   TString t(cr);
   //TFile *f = new TFile(Form("rootfiles/Prompt2024/v110_2024/jmenano_data_cmb_%s_JME_v110_2024.root",cr),"READ");
   TFile *f(0);
+  
+  #include "../Config.C"
+  if (mfile.find(Form("JET_%s_DATA_CMB",cr))!=mfile.end()) {// &&
+      //mfile.find(Form("JET_%s_MC",cr))!=mfile.end()) {
+    string file_data = mfile[Form("JET_%s_DATA_CMB",cr)];
+    // Replace input file with _copy.root to improve incjet triggers
+    cout << "Reading JET_"<<cr<<"_DATA_CMB from Config.C:\n"<<file_data<<endl;
+    TString t(file_data.c_str());
+    t.ReplaceAll(".root","_copy.root");
+    t.ReplaceAll("_copy_copy","_copy");
+    cout << "Replacing it with: " << t << endl;
+    file_data = t.Data();
+    f = new TFile(file_data.c_str(),"READ");
+    //string file_mc = mfile[Form("JET_%s_MC",cr)];
+    //cout << "Reading JET_" << cr << "_MC from Config.C:\n" << file_mc << endl;
+    //fm = new TFile(file_mc.c_str(),"READ");
+    //if (fm) fm = (TFile*)fm->GetDirectory("HLT_MC"); // PATCH
+  }
+  else assert(false);
+  /*
+  //if (t.Contains("2026")) f = new TFile(Form("rootfiles/Prompt2026/Jet_v157/jmenano_data_cmb_%s_JME_v157_v4_copy.root",cr),"READ");
+  if (t.Contains("2026B")) f = new TFile(Form("rootfiles/Prompt2026/Jet_v158/jmenano_data_cmb_%s_JME_v158_copy.root",cr),"READ");
+  if (t.Contains("2026C")) f = new TFile(Form("rootfiles/Prompt2026/Jet_v160/jmenano_data_cmb_%s_JME_v160_copy.root",cr),"READ");
   //if (t.Contains("2025")) f = new TFile(Form("rootfiles/Prompt2025/Jet_v153/jmenano_data_cmb_%s_JME_v153_copy.root",cr),"READ");
   if (t.Contains("2025")) f = new TFile(Form("rootfiles/Prompt2025/Jet_v156/jmenano_data_cmb_%s_JME_v156_copy.root",cr),"READ");
   //if (t.Contains("2024")) f = new TFile(Form("rootfiles/Prompt2024/Jet_v155/jmenano_data_cmb_%s_JME_v155.root",cr),"READ");
   if (t.Contains("2024")) f = new TFile(Form("rootfiles/Prompt2024/Jet_v155/jmenano_data_cmb_%s_JME_v155_copy.root",cr),"READ");
   assert(f && !f->IsZombie());
+  */
 
+  TFile *fref(0);
   const char *cref = ref.c_str();
   //TFile *fref = new TFile(Form("rootfiles/Prompt2024/v110_2024/jmenano_data_cmb_%s_JME_v110_2024.root",cref),"READ");
   //TFile *fref = new TFile(Form("rootfiles/Prompt2025/Jet_v153/jmenano_data_cmb_%s_JME_v153_copy.root",cref),"READ");
-  TFile *fref = new TFile(Form("rootfiles/Prompt2025/Jet_v156/jmenano_data_cmb_%s_JME_v156_copy.root",cref),"READ");
+  //TFile *fref = new TFile(Form("rootfiles/Prompt2025/Jet_v156/jmenano_data_cmb_%s_JME_v156_copy.root",cref),"READ");
+  if (mfile.find(Form("JET_%s_DATA_CMB",cref))!=mfile.end()) {// &&
+    //mfile.find(Form("JET_%s_MC",cref))!=mfile.end()) {
+    string file_data = mfile[Form("JET_%s_DATA_CMB",cr)];
+    // Replace input file with _copy.root to improve incjet triggers
+    cout << "Reading JET_"<<cref<<"_DATA_CMB from Config.C:\n"<<file_data<<endl;
+    TString t(file_data.c_str());
+    t.ReplaceAll(".root","_copy.root");
+    t.ReplaceAll("_copy_copy","_copy");
+    cout << "Replacing it with: " << t << endl;
+    file_data = t.Data();
+    fref = new TFile(file_data.c_str(),"READ");
+    //string file_mc = mfile[Form("JET_%s_MC",cr)];
+    //cout << "Reading JET_" << cr << "_MC from Config.C:\n" << file_mc << endl;
+    //fm = new TFile(file_mc.c_str(),"READ");
+    //if (fm) fm = (TFile*)fm->GetDirectory("HLT_MC"); // PATCH
+  }
+  else assert(false);
+  
   assert(fref && !fref->IsZombie());
 
   TH2D *h2pteta = (TH2D*)f->Get("Incjet/h2pteta"); assert(h2pteta);
@@ -652,7 +774,8 @@ void timeDep2Ds(string run="2025G", string ref="2025CDEFG", TH1D *hr=0) {
   if (extractJES) {
 
     cout << "Entering extractJES  for run " << run << endl << flush;
-    TFile *fl2res = new TFile("rootfiles/L2Res_2024_V9M_2025_V3M_noincjet.root","READ");
+    //TFile *fl2res = new TFile("rootfiles/L2Res_2024_V9M_2025_V3M_noincjet.root","READ");
+    TFile *fl2res = new TFile("rootfiles/L2Res_Prompt24to26C_withRC_v3__noIncjet.root","READ");
     TH2D *h2res = (TH2D*)fl2res->Get("h2res1_2025CDEFG");
     TH2D *h2refit = (TH2D*)fl2res->Get("h2jes1_const_eta_2025CDEFG");
     assert(h2res);
@@ -676,7 +799,7 @@ void timeDep2Ds(string run="2025G", string ref="2025CDEFG", TH1D *hr=0) {
 
     _f2 = f2;
     // Calculate xsec ratio given JES shift and [etamin,etamax,ptmin,ptmax]
-    TF1 *f1jes = new TF1("f1jes",fjes,0.5,1.5,4);
+    TF1 *f1jes = new TF1("fjes",fjes,0.5,1.5,4);
     // Full 1D JES in barrel
     for (int ipt = 1; h1jes && ipt != h1jes->GetNbinsX()+1; ++ipt) {
       
@@ -811,24 +934,47 @@ void timeDep2D() {
 
   string runs[] =
     // v155+v153_copy
-    {"2025CDEFG",
+    {"2025CDEFG","2024_nib",
      "2025C","2025D","2025E","2025F","2025G",
-     "2024C_nib1","2024D_nib1",              "2024E_nib1",
+     "2026B","2026C","2026D",
+     "2024CDE_nib","2024C_nib1","2024D_nib1","2024E_nib1",
+     "2024FGHI_nib",
      "2024F_nib1","2024F_nib2","2024F_nib3","2024G_nib1","2024G_nib2",
      "2024H_nib1","2024I_nib1"};
   const int nrun = sizeof(runs)/sizeof(runs[0]);
+  // How many of above to put in upper-right legend (rest bottom left)
+  const int nmax1(9);//8);//7);
+
+  /*
+  string runs[] =
+    {"2025CDEFG","2024_nib",
+     "2025C","2025G",
+     "2026B","2026C",//"2026D",
+     "2024CDE_nib","2024C_nib1",
+     "2024FGHI_nib","2024F_nib2"};
+  const int nrun = sizeof(runs)/sizeof(runs[0]);
+  // How many of above to put in upper-right legend (rest bottom left)
+  const int nmax1(9);//8);//7);
+  */
 
   map<string,int> marker;
-  marker["2025CDEFG"] = kNone;
+  marker["2026B"] = kFullDotMedium;//kFullCircle;//kFullStar;//kOpenStar;
+  marker["2026C"] = kFullDotMedium;//kFullCircle;//kFullStar;
+  marker["2026D"] = kFullDotMedium;//kFullCircle;//kFullStar;
+  
+  marker["2025CDEFG"] = kDot;//kNone;
   marker["2025C"] = kFullDiamond;
   marker["2025D"] = kFullDiamond;
   marker["2025E"] = kFullDiamond;
   marker["2025F"] = kFullDiamond;
   marker["2025G"] = kFullDiamond;
 
+  marker["2024_nib"] = kDot;//kOpenStar;
+  marker["2024CDE_nib"] = kDot;//kOpenStar;
   marker["2024C_nib1"] = kOpenDiamond;
   marker["2024D_nib1"] = kOpenDiamond;
   marker["2024E_nib1"] = kOpenDiamond;
+  marker["2024FGHI_nib"] = kDot;//kOpenStar;
   marker["2024F_nib1"] = kOpenDiamond;
   marker["2024F_nib2"] = kOpenDiamond;
   marker["2024F_nib3"] = kOpenDiamond;
@@ -838,16 +984,23 @@ void timeDep2D() {
   marker["2024I_nib1"] = kOpenDiamond;
   
   map<string,int> color;
+  color["2026B"] = kOrange+1;//kBlack;
+  color["2026C"] = kRed+2;//kOrange+2;//kGray+2;
+  color["2026D"] = kOrange+2;//kOrange+2;//kGray+2;
+  
   color["2025CDEFG"] = kBlack;
   color["2025C"] = kRed;
   color["2025D"] = kOrange+2;
   color["2025E"] = kGreen+2;
   color["2025F"] = kMagenta+2;
-  color["2025G"] = kBlack;
+  color["2025G"] = kMagenta+1;//kGray+2;//kBlack;
 
+  color["2024_nib"] = kBlack;
+  color["2024CDE_nib"] = kRed+1;
   color["2024C_nib1"] = kRed;
   color["2024D_nib1"] = kOrange+2;
   color["2024E_nib1"] = kGreen+2;
+  color["2024FGHI_nib"] = kBlue+2;
   color["2024F_nib1"] = kBlue-9;
   color["2024F_nib2"] = kMagenta;
   color["2024F_nib3"] = kMagenta+2;
@@ -868,7 +1021,7 @@ void timeDep2D() {
 		    "p_{T,jet} (GeV)",15,4500.);
   //TH1D *hd = tdrHist("hd","Ratio to 2024",0.50,1.50,
   //TH1D *hd = tdrHist("hd","Ratio to 2025",0.50,1.50,
-  TH1D *hd = tdrHist("hd","Ratio to 2025",0.90,1.15,
+  TH1D *hd = tdrHist("hd","Ratio to 2025",0.90,1.15,//0.80,1.30,//0.90,1.15,
 		     "p_{T,jet} (GeV)",15,4500.);
   extraText = "Private";
   //lumi_136TeV = Form("2024, %1.1f fb^{-1}",lumsum);
@@ -879,10 +1032,13 @@ void timeDep2D() {
   gPad->SetLogx();
   gPad->SetLogy();
 
-  const int nmax1(5);
-  TLegend *leg1 = tdrLeg(0.60,0.90-min(nmax1,(nrun-1))*0.05,0.85,0.90);
-  TLegend *leg2 = tdrLeg(0.17,0.03,0.42,0.03+max(0,(nrun-1)-nmax1)*0.045);
-
+  //TLegend *leg1 = tdrLeg(0.60,0.90-min(nmax1,(nrun-1))*0.05,0.85,0.90);
+  //TLegend *leg2 = tdrLeg(0.17,0.03,0.42,0.03+max(0,(nrun-1)-nmax1)*0.045);
+  TLegend *leg1 = tdrLeg(0.57,0.90-min(nmax1,(nrun-1))*0.035,0.82,0.90);
+  leg1->SetTextSize(0.035);
+  TLegend *leg2 = tdrLeg(0.17,0.03,0.42,0.03+max(0,(nrun-1)-nmax1)*0.035);
+  leg2->SetTextSize(0.035);
+  
   TLatex *tex = new TLatex();
   tex->SetNDC(); tex->SetTextSize(0.045);
   tex->DrawLatex(0.35,0.85,"|#eta| < 1.305");
@@ -929,6 +1085,8 @@ void timeDep2D() {
   href2->Fit(fref,"RN");
   fref->Draw("SAME");
 
+  cout << Form("  fref->SetParameters(%1.4g, %1.4g, %1.4g, %1.4g, %1.4g, %1.4g, %1.4g);\n",fref->GetParameter(0),fref->GetParameter(1),fref->GetParameter(2),fref->GetParameter(3),fref->GetParameter(4),fref->GetParameter(5),fref->GetParameter(6));
+
   c1->cd(2);
   TH1D *hfrefr = (TH1D*)href->Clone("hfrefr");
   hfrefr->Divide(href);
@@ -949,8 +1107,8 @@ void timeDep2D() {
     c1->cd(1);
     tdrDraw(h, i==0 ? "HIST" : "Pz", marker[r], color[r], kSolid, -1, kNone);
     TLegend *leg = (i<nmax1+1 ? leg1 : leg2);
-    if (i!=0)
-      leg->AddEntry(h,Form("%s, %1.1f fb^{-1}",cr,lum), i==0 ? "FL" : "PLE");
+    //if (i!=0)
+    leg->AddEntry(h,Form("%s, %1.1f fb^{-1}",cr,lum), i==0 ? "FL" : "PLE");
 
     c1->cd(2);
     TH1D *hr = (TH1D*)h->Clone(Form("hr_%s",cr));
@@ -1020,6 +1178,120 @@ void timeDep2D() {
   */
 
 
+  // Now turn the results into actual JECs
+  // We need:
+  // - reference 1D spectrum fitted from 2025CDEFG
+  //   - f1 in this script
+  // - xsec ratio of a given era to 2025CDEFG
+  //   - hpt13l in this script
+  // - JES (closure) newly fitted from 2025CDEFG
+  //   - jecdata2025CDEFG.root:ratio/eta00-13/run3/hFit_Rjet [was herr_l2l3res]
+  // - JEC previously applied to 2025CDEFG:
+  //   - jecdata2025CDEFG.root:ratio/eta00-13/ [was herr_l2l3res]
+  // - JES applied to 2025CDEFG as baseline
+  //   - L2Res.root:h2jes1_(const_eta)_2025CDEFG
+  // Store result as TProfile2D with same statistics as inclusive jet
+  // cross section in era to easy slicing and dicing later
+  bool extractJES1D(true);
+  if (extractJES1D) {
+
+    TDirectory *curdir = gDirectory;
+    cout << "Entering extractJES1D for run list..." << endl << flush;
+
+    // Retrieve reference 2025CDEFG JES
+    TFile  *fl3res = new TFile("rootfiles/jecdata2025CDEFG.root","READ");
+    assert(fl3res && !fl3res->IsZombie());
+    TH1D *h1res = (TH1D*)fl3res->Get("ratio/eta00-13/herr_l2l3res");
+    assert(h1res);
+    TH1D *h1refit = (TH1D*)fl3res->Get("ratio/eta00-13/run3/hFit_Rjet");
+    assert(h1refit);
+
+    // Calculate xsec ratio given JES shift and [ptmin,ptmax]
+    if (!_f1) {
+      _f1 = new TF1("f1ref","[0]*exp(-[1]/x)*pow(x,[2]+[3]*log(0.01*x))*"
+		    "pow(1-2*x*cosh([4]+[5]*log(0.001*x))/13600.,[6])",
+		    5,4500);
+      // Parameters from fref fit printed out later, if need to update
+      //_f1->SetParameters(5.76e14, 38.5, -4.82,0., 1.01,-0.47, 10.77);
+      _f1->SetParameters(5.532e+14, 39.87, -4.74, 0, 1.159, -0.5507, 11.21);
+    }
+    TF1 *f1jes = new TF1("f1jes_1D",fjes_1D,0.5,1.5,2);
+
+    // Output file
+    TFile *fout = new TFile("rootfiles/timeDep2D_1D.root","UPDATE");
+    curdir->cd();
+    for (int irun = 0; irun != nrun; ++irun) {
+
+      string r = runs[irun];
+      const char *cr = r.c_str();
+      cout << "  " << r << endl;
+
+      fout->cd();
+      TH1D *h = vhr[irun]; assert(h);
+      TH1D *hr = (TH1D*)h->Clone(Form("h1xsec_%s",cr));
+      TH1D *h1rel = (TH1D*)hr->Clone(Form("h1rel_%s",cr));
+      h1rel->Reset();
+      TH1D *h1jes = (TH1D*)hr->Clone(Form("h1jes_%s",cr));
+      h1jes->Reset();
+      curdir->cd();
+
+      hr->SetLineColor(h->GetLineColor());
+      hr->SetMarkerColor(h->GetMarkerColor());
+      hr->SetMarkerStyle(h->GetMarkerStyle());
+      
+      h1jes->SetLineColor(h->GetLineColor());
+      h1jes->SetMarkerStyle(kNone);
+
+      h1rel->SetLineColor(h->GetLineColor());
+      h1rel->SetMarkerColor(h->GetMarkerColor());
+      h1rel->SetMarkerStyle(h->GetMarkerStyle());
+      
+      for (int ipt = 1; ipt != h1jes->GetNbinsX()+1; ++ipt) {
+	
+	double eta = 0;
+	double pt = h1jes->GetXaxis()->GetBinCenter(ipt);
+	double ptmax = h1jes->GetXaxis()->GetBinLowEdge(ipt+1);
+	double ergmax = pt*cosh(eta);
+	double sqrts = 13600.;
+	
+	// Don't try to solve this for bins extending out of phase space
+	if (ergmax>0.5*sqrts) continue;
+	
+	double r = hr->GetBinContent(ipt);
+	double er = hr->GetBinError(ipt);
+	
+	f1jes->SetParameters(h1jes->GetXaxis()->GetBinLowEdge(ipt),
+			     h1jes->GetXaxis()->GetBinLowEdge(ipt+1));
+	
+	// Skip bins that are clearly out of bounds (e.g. due to low stats)
+	double r_max = f1jes->Eval(1.5);
+	double r_min = f1jes->Eval(0.5);
+	if (r-er<r_min || r+er>r_max) continue;
+	
+	double jes = f1jes->GetX(r,0.5,1.5);//,1e-4);
+	double jes_up = f1jes->GetX(r+er,0.5,1.5,1e-4);
+	double jes_dw = f1jes->GetX(r-er,0.5,1.5,1e-4);
+	double ejes = 0.5*(fabs(jes_up-jes)+fabs(jes_dw-jes));
+	
+	// Residual corrections from previous round
+	double res3 = h1res->Interpolate(pt);
+	
+	// Residual corrections from refit
+	double refit3 = h1refit->Interpolate(pt);
+	
+	// Relative scale with respect to 2025CDEFG with latest JEC
+	h1rel->SetBinContent(ipt, jes);
+	h1rel->SetBinError(ipt, ejes);
+	
+	// Same, but undoing previous JEC so can do both closure and refit
+	h1jes->SetBinContent(ipt, jes * refit3 / res3);
+	h1jes->SetBinError(ipt, ejes * refit3 / res3);
+      } // for ipt
+    } // for irun
+    
+    fout->Write("",TObject::kOverwrite);
+    fout->Close();
+  } // extractJES1D
   
 
   ///////////////////
@@ -1033,7 +1305,7 @@ void timeDep2D() {
   //timeDep2Ds("2024FG");
   */
 
-  for (int i = 0; i != nrun; ++i) {
-    timeDep2Ds(runs[i],"2025CDEFG",vhr[i]);
-  }
+  //for (int i = 0; i != nrun; ++i) {
+  //timeDep2Ds(runs[i],"2025CDEFG",vhr[i]);
+  //}
 }
