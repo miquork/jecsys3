@@ -166,13 +166,13 @@ void globalFitEtaBin(double etamin, double etamax, string run, string version,
 
   // Blacklist some shapes from various eras
   // (make configurable in globalFitSettings later)
-  if (run=="Run24F" || run=="Run24G" || run=="Run24H" || run=="Run24I" ||
-      trun.Contains("2024F") || trun.Contains("2024G") ||
-      trun.Contains("2024H") || trun.Contains("2024I") ||
-      trun.Contains("rereco")) {
-    if (whitelistshape.find("ecalcc")!=whitelistshape.end())
-      whitelistshape.erase(whitelistshape.find("ecalcc"));
-  }
+  //if (run=="Run24F" || run=="Run24G" || run=="Run24H" || run=="Run24I" ||
+  //  trun.Contains("2024F") || trun.Contains("2024G") ||
+  //  trun.Contains("2024H") || trun.Contains("2024I") ||
+  //  trun.Contains("rereco")) {
+  //if (whitelistshape.find("ecalcc")!=whitelistshape.end())
+  //  whitelistshape.erase(whitelistshape.find("ecalcc"));
+  //}
   
   // Create listing of all active datasets
   set<string> datasets;
@@ -214,7 +214,7 @@ void globalFitEtaBin(double etamin, double etamax, string run, string version,
     if (string(type)=="Rjet" && _gf_undoJESref) {
       if (debug) cout << "...undoing JES for " << type << endl << flush;
 
-      // Special treatment for multijet (old way, prior to 20260507)
+      // Special treatment for multijet 
       if (TString(name).Contains("multijet")) {
 
 	for (int i = 0; i != g->GetN(); ++i) {
@@ -442,12 +442,17 @@ void globalFitEtaBin(double etamin, double etamax, string run, string version,
   
   // Run fitter (multiple times if needed)
   int nfit = 1;
-  if (run=="Run24F") nfit = 2;//1;
-  if (run=="Run24BCD") nfit = 3;//1;
-  if (run=="Run24C_nib1") nfit = 3;
-  if (run=="Run24F_nib3") nfit = 2;
-  if (run=="Run24I_nib1") nfit = 3;//1;
-  if (run=="2024B") nfit = 1;
+  //if (run=="Run24F") nfit = 2;//1;
+  //if (run=="Run24BCD") nfit = 3;//1;
+  //if (run=="Run24C_nib1") nfit = 3;
+  //if (run=="Run24F_nib3") nfit = 2;
+  //if (run=="Run24I_nib1") nfit = 3;//1;
+  //if (run=="2024B") nfit = 1;
+  if (run=="2024F_nib1") nfit = 2;
+  if (run=="2025C") nfit = 2;
+  if (run=="2025G") nfit = 3;
+  if (run=="2026B") nfit = 1;//2;
+  if (run=="2026D") nfit = 1;//2;
   cnt = 0;
   for (int i = 0; i != nfit; ++i)
     fitter->ExecuteCommand("MINI", 0, 0);
