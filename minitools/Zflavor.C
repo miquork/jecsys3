@@ -62,8 +62,13 @@ double fixBottomAdhocMistag = 0.95;//0.85; // default:0 (none)
 // Override fixed tagging SF per era
 bool setCharmSFvsTime = true;
 double CharmAdhocSF_2024 = 1.35;
-double CharmAdhocSF_2025 = 1.25;
-double CharmAdhocSF_2026 = 1.15;
+double CharmAdhocSF_2025 = 1.23;
+double CharmAdhocSF_2026 = 1.11;
+
+bool setBottomSFvsTime = true;
+double BottomAdhocSF_2024 = 0.96;
+double BottomAdhocSF_2025 = 0.91;
+double BottomAdhocSF_2026 = 0.88;
 
 //bool useSmoothMCEff = true;
 // Allow to test rough scale changes for response
@@ -201,9 +206,16 @@ void Zflavor(double EtaMax = 1.3, string iov = "2026FLAVOR") {
   const char *ci = iov.c_str();
 
   if (setCharmSFvsTime) {
+    if (iov=="2024I_nib1") fixCharmAdhocSF = CharmAdhocSF_2024;
     if (iov=="2024FLAVOR") fixCharmAdhocSF = CharmAdhocSF_2024;
     if (iov=="2025FLAVOR") fixCharmAdhocSF = CharmAdhocSF_2025;
     if (iov=="2026FLAVOR") fixCharmAdhocSF = CharmAdhocSF_2026;
+  }
+  if (setBottomSFvsTime) {
+    if (iov=="2024I_nib1") fixBottomAdhocSF = BottomAdhocSF_2024;
+    if (iov=="2024FLAVOR") fixBottomAdhocSF = BottomAdhocSF_2024;
+    if (iov=="2025FLAVOR") fixBottomAdhocSF = BottomAdhocSF_2025;
+    if (iov=="2026FLAVOR") fixBottomAdhocSF = BottomAdhocSF_2026;
   }
   
   // pT range can be adjusted here to avoid empty bins
