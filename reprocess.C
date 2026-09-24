@@ -2734,7 +2734,7 @@ void reprocess(string epoch="") {
     s2 = "SubTotalAbsolute";
     cout << s << ":" << s2 << endl << flush;
     JetCorrectorParameters *p_ref2 = new JetCorrectorParameters(s,s2);
-    JetCorrectionUncertainty *unc_ref2 = new JetCorrectionUncertainty(*p_ref1);
+    JetCorrectionUncertainty *unc_ref2 = new JetCorrectionUncertainty(*p_ref2);
 
     // Total uncertainty, excluding Flavor and Time
     s = Form("%s/Winter22Run3_RunA_V1_DATA_UncertaintySources_AK4PFPuppi.txt",cd);
