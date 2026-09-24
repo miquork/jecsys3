@@ -126,6 +126,13 @@ double getJEC(FactorizedJetCorrector *jec, double eta, double ptcorr,
 	      double rho = 0);
 double getJES(TProfile2D *p2jes, double eta, double ptcorr);
 double getJES(TProfile *pjes, double ptcorr);
+void invertProfile2D(TProfile2D *p);
+void invertProfile(TProfile *p);
+TProfile *getProfY(TFile *f, const char *path, const char *name, bool invert);
+TProfile *getProf(TFile *f, const char *path, const char *name, bool invert);
+TProfile *unitProfile(TProfile *p, const char *name);
+TH1D *ratioOfProfiles(TProfile *pd, TProfile *pm, const char *name);
+void checkUnity(TProfile *p, double tol = 0.001);
 void setEpoch(string epoch);
 
 // put all the different methods in a single file for easy access for everybody
@@ -134,6 +141,12 @@ void reprocess(string epoch="") {
   setEpoch(epoch);
   TString tepoch = TString(epoch);
   TString tr = tepoch; tr.ReplaceAll("Run","");
+
+  // Run2 (Legacy UL) epochs from Config.C: 2016*, 2017*, 2018*.
+  // Input files use the same (new) naming as the latest Run3 files, so these
+  // epochs follow the 2024/2025/2026 code paths everywhere below.
+  bool isRun2 = (tepoch.Contains("2016") || tepoch.Contains("2017") ||
+		 tepoch.Contains("2018"));
   
   // Set TDR style to have correct graphical settings when storing graphs
   setTDRStyle();
@@ -268,6 +281,7 @@ void reprocess(string epoch="") {
     // Special cases to fix some bad fits
     if (tr.Contains("2025E")) fgptmax = 1800;
     if (tr.Contains("2024I_nib1")) { fgptmax = 1500; fmjptmax = 1500; }
+    if (tr.Contains("2024I_nix"))  { fgptmax = 1500; fmjptmax = 1500; }
     if (tr.Contains("2024H_nib1")) { fgptmax = 1500; fmjptmax = 1500; }
     if (tr.Contains("2024F_nib3")) { fgptmax = 1500; fmjptmax = 1500; }
 
@@ -280,6 +294,21 @@ void reprocess(string epoch="") {
 
     // Reduced range for low statistics eras
     if (tr.Contains("2026D")) { fzptmax = 400; fmjptmax = 1500; }
+
+    // Run2: 13 TeV and smaller data sets than 2024-2026 => shorter lever arm.
+    // FIRST GUESS scaled from the Run3 ranges by luminosity, to be tuned.
+    if (isRun2) {
+      fzptmax  = 500;
+      fjzptmax = 500;
+      fzjaptmax = 500;
+      fgptmax  = 1000;
+      fmjptmax = 2000;
+      fijptmax = 2500;
+      if (tr.Contains("2016")) { // 36/fb (19.5 or 16.8 per epoch)
+	fzptmax = 400; fjzptmax = 400; fzjaptmax = 400;
+	fgptmax = 800; fmjptmax = 1500; fijptmax = 2000;
+      }
+    }
   } // usePrompt2425RangeV3
   
   TDirectory *curdir = gDirectory;
@@ -305,6 +334,18 @@ void reprocess(string epoch="") {
     string file_mc = mfile[Form("WQQ_%s_MC",ccr)];
     cout << "Reading WQQ_" << ccr << "_MC from Config.C:\n" << file_mc << endl;
     fwm = new TFile(file_mc.c_str(),"READ");
+
+    // Wqq is optional: if the file is missing (e.g. Run2 placeholders in
+    // Config.C), drop the channel instead of crashing on a zombie file later
+    if (fwd && fwd->IsZombie()) {
+      cout << "*** WQQ data file missing, dropping Wqq channel ***"<<endl<<flush;
+      fwd = 0;
+    }
+    if (fwm && fwm->IsZombie()) {
+      cout << "*** WQQ MC file missing, dropping Wqq channel ***" << endl<<flush;
+      fwm = 0;
+    }
+    if (!fwd || !fwm) { fwd = 0; fwm = 0; }
     
     //cout << "Reading WQQ_" << ccr << "_DATA from Config.C" << endl;
     //fwd = new TFile(mfile[Form("WQQ_%s_DATA",ccr)].c_str(),"READ");
@@ -488,8 +529,10 @@ void reprocess(string epoch="") {
   TH1D *hcounts(0);
   TH1D *hmz_dt(0), *hmz_mc(0);
   if (tepoch.Contains("UL") || tepoch.Contains("nib") ||
-      tepoch.Contains("2025") || tepoch.Contains("2026") ||
-      tepoch.Contains("rereco") ||
+      tepoch.Contains("2024") ||
+      tepoch.Contains("2025") || tepoch.Contains("2026") || isRun2 ||
+      tepoch.Contains("rereco") || tepoch.Contains("PS") ||
+      tepoch.Contains("RUN3FLAVOR") ||
       epoch=="RunCD" ||
       epoch=="Run22C" || epoch=="Run22D" || epoch=="Run22CD" ||
       epoch=="Run22E" || epoch=="Run22F" || epoch=="Run22G"||
@@ -1074,8 +1117,10 @@ void reprocess(string epoch="") {
 
   // Results from Sami's Z+b analysis
   if (tepoch.Contains("UL") || tepoch.Contains("nib") ||
-      tepoch.Contains("2025") || tepoch.Contains("2026") ||
-      tepoch.Contains("rereco") ||
+      tepoch.Contains("2024") ||
+      tepoch.Contains("2025") || tepoch.Contains("2026") || isRun2 ||
+      tepoch.Contains("rereco") || tepoch.Contains("PS") ||
+      tepoch.Contains("RUN3FLAVOR") ||
       epoch=="RunCD" ||
       epoch=="Run22C" || epoch=="Run22D" || epoch=="Run22CD" ||
       epoch=="Run22E" || epoch=="Run22F" || epoch=="Run22G" ||
@@ -1459,15 +1504,18 @@ void reprocess(string epoch="") {
   //if (epoch!="2026C")
   if (epoch!="2026BJS"&&epoch!="2026BNS"&&epoch!="2026CJS"&&epoch!="2026CNS"&&
       epoch!="2024_nib"&&epoch!="2024CDE_nib"&&epoch!="2024FGHI_nib"&&
-      epoch!="2026D")
+      epoch!="2026D"&&epoch!="2026BD"&&epoch!="2026FLAVOR"&&epoch!="RUN3FLAVOR"&&
+      !isRun2) // no h1jes_<epoch> for Run2 in rootfiles/timeDep2D*.root
   types.push_back("xsec");
   types.push_back("crecoil");
   types.push_back("mpfchs1"); // Type-I MET
   types.push_back("ptchs");
   // for pfjet only (activate puf, cef, muf later?)
   if (tepoch.Contains("UL") || tepoch.Contains("nib") ||
-      tepoch.Contains("2025") || tepoch.Contains("2026") ||
-      tepoch.Contains("rereco") ||
+      tepoch.Contains("2024") ||
+      tepoch.Contains("2025") || tepoch.Contains("2026") || isRun2 ||
+      tepoch.Contains("rereco") || tepoch.Contains("PS") ||
+      tepoch.Contains("RUN3FLAVOR") ||
       epoch=="RunCD" || 
       epoch=="Run22C" || epoch=="Run22D" || epoch=="Run22CD" ||
       epoch=="Run22E" || epoch=="Run22F" || epoch=="Run22G" ||
@@ -1494,8 +1542,10 @@ void reprocess(string epoch="") {
   types.push_back("mpfu");
   types.push_back("crecoil");
   if (tepoch.Contains("UL") || tepoch.Contains("nib") ||
-      tepoch.Contains("2025") || tepoch.Contains("2026") ||
-      tepoch.Contains("rereco") ||
+      tepoch.Contains("2024") ||
+      tepoch.Contains("2025") || tepoch.Contains("2026") || isRun2 ||
+      tepoch.Contains("rereco") || tepoch.Contains("PS") ||
+      tepoch.Contains("RUN3FLAVOR") ||
       epoch=="RunCD" || 
       epoch=="Run22C" || epoch=="Run22D" || epoch=="Run22CD" ||
       epoch=="Run22E" || epoch=="Run22F" || epoch=="Run22G" ||
@@ -1516,8 +1566,10 @@ void reprocess(string epoch="") {
 
   // <pT,reco> and <pT,gen> vs ref pT (MC only)
   if (tepoch.Contains("UL") || tepoch.Contains("nib") ||
-      tepoch.Contains("2025") || tepoch.Contains("2026") ||
-      tepoch.Contains("rereco") ||
+      tepoch.Contains("2024") ||
+      tepoch.Contains("2025") || tepoch.Contains("2026") || isRun2 ||
+      tepoch.Contains("rereco") || tepoch.Contains("PS") ||
+      tepoch.Contains("RUN3FLAVOR") ||
       epoch=="RunCD" ||
       epoch=="Run22C" || epoch=="Run22D" || epoch=="Run22CD" ||
       epoch=="Run22E" || epoch=="Run22F" || epoch=="Run22G" ||
@@ -1736,8 +1788,10 @@ void reprocess(string epoch="") {
 	  } // "zjav"
 	  if (s=="zjet") {
 	    if (tepoch.Contains("UL") || tepoch.Contains("nib") ||
-		tepoch.Contains("2025") || tepoch.Contains("2026") ||
-		tepoch.Contains("rereco") ||
+		tepoch.Contains("2024") ||
+		tepoch.Contains("2025") || tepoch.Contains("2026") || isRun2 ||
+		tepoch.Contains("rereco") || tepoch.Contains("PS") ||
+		tepoch.Contains("RUN3FLAVOR") ||
 		epoch=="RunCD" ||
 		epoch=="Run22C" || epoch=="Run22D" || epoch=="Run22CD" ||
 		epoch=="Run22E" || epoch=="Run22F" || epoch=="Run22G" ||
@@ -1766,8 +1820,11 @@ void reprocess(string epoch="") {
 		c = Form("%s/eta_%02.0f_%02.0f/h_Zpt_%s_alpha%1.0f",
 			 rename[s][d],10*eta1,10*eta2,rename[s][t],100.*alpha);
 	    }
-	    if (epoch=="Run3" && true) {
+	    else if (epoch=="Run3" && true) {
 	      c = Form("%s/eta00-13/%s_%s_a100",d.c_str(),t.c_str(),s.c_str());
+	    }
+	    else {
+	      assert(false);
 	    }
 	  } // "zjet"
 	  if (s=="jetp" || s=="pjav" || s=="pjet") {
@@ -1815,7 +1872,13 @@ void reprocess(string epoch="") {
 	      c = "Incjet/hpt13";
 	    if (isfrac || isrho)
 	      c = Form("Incjet/PFcomposition/p%s13",tt);//rename[s][t]);
-	    if (isxsec)
+	    if (isxsec && tepoch.Contains("PS"))
+	      c = Form("h1jes_%s","2025CDEFG");//2024G_nib2");
+	    else if (isxsec && tepoch.Contains("FLAVOR"))
+	      c = Form("h1jes_%s","2024G_nib2");//Missing 2024_nib
+	    else if (isxsec && tepoch.Contains("nix"))
+	      c = Form("h1jes_%s","2024I_nib1");//test runs
+	    else if (isxsec)
 	      c = Form("h1jes_%s",ccr); // 2025CDEFG JES undone
 	    //c = Form("h1rel_%s",ccr); // relative to 2025CDEFG
 	    //if (d=="mc") // patch 22Sep2023, not 19Dec2023
@@ -1845,14 +1908,18 @@ void reprocess(string epoch="") {
 	  if (sp=="gamjet") {
 	    if (s=="gi"||s=="gb"||s=="gc"||s=="gq"||s=="gg"||s=="gn")
 	      //if (d=="mc"||tepoch.Contains("2024")||tepoch.Contains("2025"))
-	      if (d=="mc")
+	      //if (d=="mc" && !tepoch.Contains("PS") && !tepoch.Contains("FLAVOR") // w73 MC
+	      if (false // w85 MC
+		  && !isRun2) // Run2 files have flavor/ and flavor_new/
 		//if (d!="mc"&&(tepoch.Contains("2024")||tepoch.Contains("2025")))
 		c = Form("flavor_old/%s_%si",tt,ss); // TMP
 	      else
 		c = Form("flavor/%s_%si",tt,ss);
 	    else
 	      //if (d=="mc"||tepoch.Contains("2024")||tepoch.Contains("2025"))
-	      if (d=="mc")
+	      //if (d=="mc" && !tepoch.Contains("PS") && !tepoch.Contains("FLAVOR") // w73 MC
+	      if (false // w85 MC
+		  && !isRun2) // Run2 files have flavor/ and flavor_new/
 		//if (d!="mc"&&(tepoch.Contains("2024")||tepoch.Contains("2025")))
 		c = Form("flavor_old/%s_%s",tt,ss);//s.c_str()); // TMP
 	      else
@@ -1860,6 +1927,12 @@ void reprocess(string epoch="") {
 	    if (isfrac) continue;
 	    if (t=="rho") continue;
 	  }
+
+	  if (!c) {
+	    cout << "Naming scheme undefined: epoch=" << epoch
+		 << ", s=" << s << ", d=" << d << ", t=" << t << endl << flush;
+	  }
+	  assert(c);
 	  
 	  assert(f);
 	  TObject *obj = f->Get(c);
@@ -2055,7 +2128,12 @@ void reprocess(string epoch="") {
 		if (tr.Contains("2025")) scaleEM = 1.000;//1.003;//1.005;
 		if (tr.Contains("2026B")) scaleEM = 1.012;//1.015;
 		if (tr.Contains("2026C")) scaleEM = 1.012;//1.015;
-		if (tr.Contains("2026D")) scaleEM = 1.005;//1.015;
+		if (tr.Contains("2026D")) scaleEM = 1.006;//1.000;
+		if (tr.Contains("2026BD") ||
+		    tr.Contains("2026FLAVOR"))
+		  scaleEM = (1.012*15.3 + 1.006*9.9) / (15.3 + 9.9);
+		if (tr.Contains("RUN3FLAVOR"))
+		  scaleEM = (1.000*221 + 1.012*15.3 + 1.006*9.9) / (221 + 15.3 + 9.9);
 		// minitools/drawTimeStabilityPairs.C (GamVsZmm_DB,MPF)
 		// double-check these
 		/*
@@ -2317,15 +2395,28 @@ void reprocess(string epoch="") {
     TProfile2D *p2jes(0), *p2res(0);
     TProfile *pjes(0), *pjesw(0), *pjesz(0), *pjesp(0), *pjesm(0);
     TProfile *pres(0), *presw(0), *presz(0), *presp(0), *presm(0);
+    // Data and MC are corrected with different JEC sets (2026-09), so keep the
+    // JES and the residual of each, plus their point-by-point ratio. Keyed by
+    // the name they are written out with, into data/, mc/ and ratio/.
+    map<string, TProfile*> mout_data, mout_mc;
+    map<string, TH1D*> mout_ratio;
     //TProfile *presp(0), *presz(0), *presm(0), *presw(0);
-    if (tepoch.Contains("nib") ||
-	tepoch.Contains("2025") || tepoch.Contains("2026") ||
-	tepoch.Contains("rereco") ||
+    if (tepoch.Contains("nib") || tepoch.Contains("2024") ||
+	tepoch.Contains("2025") || tepoch.Contains("2026") || isRun2 ||
+	tepoch.Contains("RUN3FLAVOR") ||
+	tepoch.Contains("rereco") || tepoch.Contains("PS") ||
 	(epoch=="2024E_noRW" || epoch=="2024E_692mb" || epoch=="2024E_753mb")) {
       TProfile2D *p2jesp(0), *p2jesz(0);//, *p2jesm(0);
       //TProfile *pjesp(0), *pjesz(0);//, *pjesm(0);
     //pjesp = (TProfile*)fp0->Get("resp_JES_DATA_a100_eta00_13"); assert(pjesp);
-      p2jesp = (TProfile2D*)fp0->Get("Gamjet2/p2corr"); assert(p2jesp);//!!
+      // Gamjet2 stores CORR and has no p2jes, while Z+jet stores JES. Invert
+      // the whole TProfile2D (JES=1/CORR) before anything else, so that p2jes,
+      // the ProfileY below and the pjesp+pjesz sum are all in the Z+jet
+      // convention. Done on a clone to leave the object in the file untouched.
+      TProfile2D *p2corrp = (TProfile2D*)fp0->Get("Gamjet2/p2corr");
+      assert(p2corrp);//!!
+      p2jesp = (TProfile2D*)p2corrp->Clone(Form("p2jesp_%s",epoch.c_str()));
+      invertProfile2D(p2jesp);
       pjesp = p2jesp->ProfileY(Form("pjesp_%s",epoch.c_str()),1,15);//|eta|<1.3
       p2jesz = (TProfile2D*)fz->Get("data/l2res/p2jes"); assert(p2jesz);
       pjesz = p2jesz->ProfileY(Form("pjesz_%s",epoch.c_str()),1,15);//|eta|<1.3
@@ -2349,15 +2440,23 @@ void reprocess(string epoch="") {
       p2res = (TProfile2D*)p2resz->Clone(Form("p2res_%s",epoch.c_str()));
       //pres = (TProfile*)presp->Clone(Form("pres_%s",epoch.c_str()));
       pres = (TProfile*)presp->Clone(Form("pres_%s",epoch.c_str()));
+      // Wqq provides both JES and L2L3Res profiles; store both
+      const char *cwres = "prof_L2L3Res_ptpair";
+      const char *cwjes = "prof_L2L3_ptpair"; // TODO: confirm name
       if (fwd) {
-	presw = (TProfile*)fwd->Get("prof_L2L3Res_ptpair"); assert(presw);
+	presw = (TProfile*)fwd->Get(cwres); assert(presw);
+	pjesw = (TProfile*)fwd->Get(cwjes); assert(pjesw);
+	if (!pjesw)
+	  cout << "*** Wqq JES profile '" << cwjes << "' not found in "
+	       << fwd->GetName() << ", skipping pjesw ***" << endl << flush;
       }
       //pres = (TProfile*)presm->Clone(Form("pres_%s",epoch.c_str()));
       pres->Add(presz);
       //pres->Add(presm); // ratio of scales so not applicable? 2026-03-27
 
-      // Patch Wqq
-      if (presw && true) {
+      // Patch Wqq: presw stores a correction, the other pres* store responses.
+      // NB: pjesw is left as read, like pjesp and pjesz. // TODO: confirm
+      if (presw && pjesw && true) {
 	TProfile *presw_old = presw;
 	presw = (TProfile*)presw_old->Clone(Form("presw_%s",epoch.c_str()));
 	presw->Reset();
@@ -2367,10 +2466,94 @@ void reprocess(string epoch="") {
 	  if (corr>0) presw->Fill(pt, 1./corr);
 	  //presw->SetBinContent(i, 1./corr);
 	}
+	TProfile *pjesw_old = pjesw;
+	pjesw = (TProfile*)pjesw_old->Clone(Form("pjesw_%s",epoch.c_str()));
+	pjesw->Reset();
+	for (int i = 1; i != pjesw_old->GetNbinsX()+1; ++i) {
+	  double pt = pjesw_old->GetBinCenter(i);
+	  double corr = pjesw_old->GetBinContent(i);
+	  if (corr>0) pjesw->Fill(pt, 1./corr);
+	  //pjesw->SetBinContent(i, 1./corr);
+	}
       }
+    }
+    else {
+      assert(false); // careful if getting here
     }
     assert(jec || pres);
     assert(mcjec || pjes);
+
+    ///////////////////////////////////////////////////////////////////////
+    // Separate JES and residual for data and for MC.                    //
+    // For Run2 vs Run3 the two are corrected with different JEC sets     //
+    // (e.g. Summer24 for MC, Summer20 L2L3 + Summer19 residuals for      //
+    // data), so the ratio of the two is what explains the JES offset.    //
+    // Each input file stores the corrections that were applied to it.    //
+    ///////////////////////////////////////////////////////////////////////
+    {
+      // gamma+jet: Gamjet2/p2corr is a correction, so invert it to JES
+      mout_data["pjesp_data"] = getProfY(fpd,"Gamjet2/p2corr","pjesp_data",true);
+      mout_mc  ["pjesp_mc"]   = getProfY(fpm,"Gamjet2/p2corr","pjesp_mc",  true);
+      mout_data["presp_data"] = getProfY(fpd,"Gamjet2/p2res", "presp_data",false);
+      mout_mc  ["presp_mc"]   = getProfY(fpm,"Gamjet2/p2res", "presp_mc",  false);
+
+      // Z+jet stores the JES directly, in data/ and mc/ subdirectories
+      mout_data["pjesz_data"] = getProfY(fzd,"data/l2res/p2jes","pjesz_data",false);
+      mout_mc  ["pjesz_mc"]   = getProfY(fzm,"mc/l2res/p2jes",  "pjesz_mc",  false);
+      mout_data["presz_data"] = getProfY(fzd,"data/l2res/p2res","presz_data",false);
+      mout_mc  ["presz_mc"]   = getProfY(fzm,"mc/l2res/p2res",  "presz_mc",  false);
+
+      // Multijet: only the residual is stored (pjesm optional, warns if absent)
+      mout_data["pjesm_data"] = getProf(fmjd,"Multijet/pjesm","pjesm_data",false);
+      mout_mc  ["pjesm_mc"]   = getProf(fmjm,"Multijet/pjesm","pjesm_mc",  false);
+      mout_data["presm_data"] = getProf(fmjd,"Multijet/presm","presm_data",false);
+      mout_mc  ["presm_mc"]   = getProf(fmjm,"Multijet/presm","presm_mc",  false);
+
+      // Wqq stores corrections, so invert both like the ratio versions above
+      mout_data["pjesw_data"] = getProf(fwd,"prof_L2L3_ptpair",   "pjesw_data",true);
+      mout_mc  ["pjesw_mc"]   = getProf(fwm,"prof_L2L3_ptpair",   "pjesw_mc",  true);
+      mout_data["presw_data"] = getProf(fwd,"prof_L2L3Res_ptpair","presw_data",true);
+      mout_mc  ["presw_mc"]   = getProf(fwm,"prof_L2L3Res_ptpair","presw_mc",  true);
+
+      // Combined gamma+jet plus Z+jet, as for pjes and pres above
+      if (mout_data["pjesp_data"] && mout_data["pjesz_data"]) {
+	TProfile *p = (TProfile*)mout_data["pjesp_data"]->Clone("pjes_data");
+	p->Add(mout_data["pjesz_data"]); mout_data["pjes_data"] = p;
+      }
+      if (mout_mc["pjesp_mc"] && mout_mc["pjesz_mc"]) {
+	TProfile *p = (TProfile*)mout_mc["pjesp_mc"]->Clone("pjes_mc");
+	p->Add(mout_mc["pjesz_mc"]); mout_mc["pjes_mc"] = p;
+      }
+      if (mout_data["presp_data"] && mout_data["presz_data"]) {
+	TProfile *p = (TProfile*)mout_data["presp_data"]->Clone("pres_data");
+	p->Add(mout_data["presz_data"]); mout_data["pres_data"] = p;
+      }
+      if (mout_mc["presp_mc"] && mout_mc["presz_mc"]) {
+	TProfile *p = (TProfile*)mout_mc["presp_mc"]->Clone("pres_mc");
+	p->Add(mout_mc["presz_mc"]); mout_mc["pres_mc"] = p;
+      }
+
+      // No residual is applied to MC, so pres*_mc must be 1.00 everywhere.
+      // Where the MC file does not store one, create it; where it does,
+      // check it and complain if it is not unity.
+      const char *cres[] = {"presp","presz","presm","presw","pres"};
+      for (int i = 0; i != 5; ++i) {
+	string smc = Form("%s_mc",cres[i]), sdt = Form("%s_data",cres[i]);
+	if (mout_mc[smc]) checkUnity(mout_mc[smc]);
+	else if (mout_data[sdt])
+	  mout_mc[smc] = unitProfile(mout_data[sdt], smc.c_str());
+      }
+
+      // Point-by-point data/MC ratio of everything that has both
+      const char *call[] = {"pjesp","pjesz","pjesm","pjesw","pjes",
+			    "presp","presz","presm","presw","pres"};
+      for (int i = 0; i != 10; ++i) {
+	string sdt = Form("%s_data",call[i]), smc = Form("%s_mc",call[i]);
+	string sr  = Form("%s_ratio",call[i]);
+	mout_ratio[sr] = ratioOfProfiles(mout_data[sdt], mout_mc[smc],
+					 sr.c_str());
+      }
+    }
 
     //#define PAIR(a,b) (make_pair<double,FactorizedJetCorrector*>((a),getFJC("","",(b))))
     //add vjec here later to combine IOVs
@@ -2881,15 +3064,36 @@ void reprocess(string epoch="") {
       dout2->cd();
 
       if (pjes) pjes->Write();
-      if (pjesw) presw->Write(Form("pjesw_%s",cr),TObject::kOverwrite);
-      if (pjesz) presz->Write(Form("pjesz_%s",cr),TObject::kOverwrite);
-      if (pjesp) presp->Write(Form("pjesp_%s",cr),TObject::kOverwrite);
-      if (pjesm) presm->Write(Form("pjesm_%s",cr),TObject::kOverwrite);
+      if (pjesw) pjesw->Write(Form("pjesw_%s",cr),TObject::kOverwrite);
+      if (pjesz) pjesz->Write(Form("pjesz_%s",cr),TObject::kOverwrite);
+      if (pjesp) pjesp->Write(Form("pjesp_%s",cr),TObject::kOverwrite);
+      if (pjesm) pjesm->Write(Form("pjesm_%s",cr),TObject::kOverwrite);
       if (pres) pres->Write();
       if (presw) presw->Write(Form("presw_%s",cr),TObject::kOverwrite);
       if (presz) presz->Write(Form("presz_%s",cr),TObject::kOverwrite);
       if (presp) presp->Write(Form("presp_%s",cr),TObject::kOverwrite);
       if (presm) presm->Write(Form("presm_%s",cr),TObject::kOverwrite);
+
+      // Same quantities separately for data and MC, and their ratio. The
+      // names above are kept unchanged for backwards compatibility.
+      TDirectory *doutd = fout->GetDirectory(Form("data/%s",dd1));
+      TDirectory *doutm = fout->GetDirectory(Form("mc/%s",dd1));
+      assert(doutd && doutm);
+      doutd->cd();
+      for (map<string,TProfile*>::const_iterator it = mout_data.begin();
+	   it != mout_data.end(); ++it)
+	if (it->second)
+	  it->second->Write(it->first.c_str(),TObject::kOverwrite);
+      doutm->cd();
+      for (map<string,TProfile*>::const_iterator it = mout_mc.begin();
+	   it != mout_mc.end(); ++it)
+	if (it->second)
+	  it->second->Write(it->first.c_str(),TObject::kOverwrite);
+      dout2->cd();
+      for (map<string,TH1D*>::const_iterator it = mout_ratio.begin();
+	   it != mout_ratio.end(); ++it)
+	if (it->second)
+	  it->second->Write(it->first.c_str(),TObject::kOverwrite);
       
       herr->SetMarkerSize(0);
       herr->SetFillStyle(1001);
@@ -3062,7 +3266,11 @@ Double_t funcCorrPt(Double_t *x, Double_t *p) {
 
 double getJEC(FactorizedJetCorrector *jec, double eta, double ptcorr,
 	      double rho) {
-
+  if (!jec) {
+    cout << "Missing jec!" << endl << flush;
+    exit(-2);
+  }
+  
   // iterate to solve ptreco for given ptcorr
   _thejec = jec;
   if (!fCorrPt) fCorrPt = new TF1("fCorrPt",funcCorrPt,5,6500,2);
@@ -3075,7 +3283,160 @@ double getJEC(FactorizedJetCorrector *jec, double eta, double ptcorr,
   return (jec->getCorrection());
 } // getEtaPtE
 
+// Invert a TProfile2D bin by bin: y -> 1/y, e.g. CORR -> JES.
+// Operates on the internal arrays instead of on the bin contents, so that the
+// per-bin weights survive and the mean and its error stay consistent for the
+// later ProfileX/ProfileY and Add() calls:
+//   sum(w)     -> unchanged           (bin entries)
+//   sum(w*y)   -> sum(w)/<y>          (mean -> 1/<y>)
+//   sum(w*y2)  -> sum(w)*(s2/<y>^4 + 1/<y>^2), i.e. sigma -> sigma/<y>^2
+//   sum(w2)    -> unchanged           (effective entries, so ERRORMEAN scales)
+template<class T> void invertProfileT(T *p) {
+
+  assert(p);
+  Double_t *sumwy = p->GetArray();   // sum(w*y)
+  TArrayD *sumwy2 = p->GetSumw2();   // sum(w*y^2)
+  TArrayD *sumw2  = p->GetBinSumw2(); // sum(w^2), empty unless Sumw2 was set
+  assert(sumwy);
+  assert(sumwy2 && sumwy2->GetSize()==p->GetNcells());
+  bool hasw2 = (sumw2 && sumw2->GetSize()==p->GetNcells());
+
+  int nempty(0);
+  for (int bin = 0; bin != p->GetNcells(); ++bin) {
+
+    double sumw = p->GetBinEntries(bin);
+    double mean = (sumw!=0 ? sumwy[bin]/sumw : 0);
+
+    // Empty bin, or mean at zero: not invertible, so empty the bin
+    if (sumw==0 || mean==0) {
+      if (sumw!=0) ++nempty;
+      sumwy[bin] = 0;
+      (*sumwy2)[bin] = 0;
+      if (hasw2) (*sumw2)[bin] = 0;
+      p->SetBinEntries(bin, 0);
+      continue;
+    }
+
+    double sigma2 = (*sumwy2)[bin]/sumw - mean*mean;
+    if (sigma2<0) sigma2 = 0; // rounding only
+
+    double imean = 1./mean;
+    double isigma2 = sigma2*pow(imean,4);
+
+    sumwy[bin] = sumw*imean;
+    (*sumwy2)[bin] = sumw*(isigma2 + imean*imean);
+    // sumw and sumw2 are left as they are
+  } // for bin
+
+  if (nempty!=0)
+    cout << "invertProfile2D(" << p->GetName() << "): dropped " << nempty
+	 << " bin(s) with zero mean" << endl << flush;
+
+  p->ResetStats(); // recompute the global statistics from the new bins
+} // invertProfileT
+
+void invertProfile2D(TProfile2D *p) { invertProfileT(p); }
+void invertProfile(TProfile *p) { invertProfileT(p); }
+
+// Read a TProfile2D from file f and return its ProfileY over |eta|<1.3,
+// inverted first if the stored quantity is a correction instead of a JES.
+// Returns null with a message if the object is not there, so that a missing
+// input drops one curve instead of stopping the job.
+TProfile *getProfY(TFile *f, const char *path, const char *name, bool invert) {
+
+  if (!f) return 0;
+  TProfile2D *p2 = (TProfile2D*)f->Get(path);
+  if (!p2) {
+    cout << "  getProfY: no " << path << " in " << f->GetName()
+	 << ", skipping " << name << endl << flush;
+    return 0;
+  }
+  TProfile2D *p2c = (TProfile2D*)p2->Clone(Form("%s_2D",name));
+  if (invert) invertProfile2D(p2c);
+
+  if (!(p2c->GetXaxis()->GetBinLowEdge(1)==0 &&
+	fabs(p2c->GetXaxis()->GetBinLowEdge(15+1)-1.3)<0.087)) {
+      cout << "bin 1 low : " << p2c->GetXaxis()->GetBinLowEdge(1) << ", "
+	   << "bin 15 high: " << p2c->GetXaxis()->GetBinLowEdge(15+1)
+	   << endl << flush;
+      assert(false);
+    }
+
+  return p2c->ProfileY(name,1,15); // |eta|<1.3
+} // getProfY
+
+// Same for a 1D profile stored directly
+TProfile *getProf(TFile *f, const char *path, const char *name, bool invert) {
+
+  if (!f) return 0;
+  TProfile *p0 = (TProfile*)f->Get(path);
+  if (!p0) {
+    cout << "  getProf: no " << path << " in " << f->GetName()
+	 << ", skipping " << name << endl << flush;
+    return 0;
+  }
+  TProfile *p = (TProfile*)p0->Clone(name);
+  if (invert) invertProfile(p);
+
+  return p;
+} // getProf
+
+// Copy of p with every filled bin set to 1.00, for the residual of MC, which
+// has none applied
+TProfile *unitProfile(TProfile *p, const char *name) {
+
+  if (!p) return 0;
+  TProfile *u = (TProfile*)p->Clone(name);
+  u->Reset();
+  for (int i = 1; i != p->GetNbinsX()+1; ++i)
+    if (p->GetBinEntries(i)!=0) u->Fill(p->GetBinCenter(i), 1.);
+
+  return u;
+} // unitProfile
+
+// Warn if a profile that should be unity is not
+void checkUnity(TProfile *p, double tol) {
+
+  if (!p) return;
+  int nbad(0); double worst(0);
+  for (int i = 1; i != p->GetNbinsX()+1; ++i) {
+    if (p->GetBinEntries(i)==0) continue;
+    double d = p->GetBinContent(i) - 1;
+    if (fabs(d)>tol) { ++nbad; if (fabs(d)>fabs(worst)) worst = d; }
+  }
+  if (nbad!=0)
+    cout << "  checkUnity(" << p->GetName() << "): " << nbad
+	 << " bin(s) off unity, largest " << worst << endl << flush;
+} // checkUnity
+
+// Point-by-point ratio of two profiles, as a histogram
+TH1D *ratioOfProfiles(TProfile *pd, TProfile *pm, const char *name) {
+
+  if (!pd || !pm) return 0;
+  if (pd->GetNbinsX()!=pm->GetNbinsX() ||
+      pd->GetXaxis()->GetXmin()!=pm->GetXaxis()->GetXmin() ||
+      pd->GetXaxis()->GetXmax()!=pm->GetXaxis()->GetXmax()) {
+    cout << "  ratioOfProfiles(" << name << "): binning mismatch between "
+	 << pd->GetName() << " and " << pm->GetName() << ", skipping"
+	 << endl << flush;
+    return 0;
+  }
+
+  TH1D *hd = pd->ProjectionX(Form("%s_num",name));
+  TH1D *hm = pm->ProjectionX(Form("%s_den",name));
+  TH1D *h = (TH1D*)hd->Clone(name);
+  h->Divide(hd, hm);
+  delete hd; delete hm;
+
+  return h;
+} // ratioOfProfiles
+
 double getJES(TProfile2D *p2jes, double eta, double ptcorr) {
+  if (!p2jes) {
+    cout << "Missing p2jes!" << endl << flush;
+    exit(-1);
+  }
+  
   if (p2jes->GetXaxis()->GetBinLowEdge(1)==0) eta = fabs(eta);
   int i = p2jes->GetXaxis()->FindBin(eta);
   int j = p2jes->GetYaxis()->FindBin(ptcorr);
