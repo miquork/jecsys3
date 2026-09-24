@@ -96,12 +96,22 @@
   //globalFitEtaBin(0.0, 1.3, epoch, "Prompt24_V6M");
   //globalFitEtaBin(0.0, 1.3, epoch, "Prompt24_V7M");
   //globalFitEtaBin(0.0, 1.3, epoch, "Prompt24_V8N");
-  if (TString(epoch.c_str()).Contains("26"))
+  if (TString(epoch.c_str()).Contains("26C"))
+    globalFitEtaBin(0.0, 1.3, epoch, "Prompt26_lowPU_V1M", doClosure);
+  else if (TString(epoch.c_str()).Contains("26"))
     globalFitEtaBin(0.0, 1.3, epoch, "Prompt26_V2M", doClosure);
   else if (TString(epoch.c_str()).Contains("25"))
     globalFitEtaBin(0.0, 1.3, epoch, "Prompt25_V5M", doClosure);
   else if (TString(epoch.c_str()).Contains("24"))
     globalFitEtaBin(0.0, 1.3, epoch, "ReReco24_V11M", doClosure);
+  else if (TString(epoch.c_str()).Contains("PS"))
+    globalFitEtaBin(0.0, 1.3, epoch, "FSR", doClosure);
+  else if (TString(epoch.c_str()).Contains("18"))
+    globalFitEtaBin(0.0, 1.3, epoch, "UL18_V1M", doClosure);
+  else if (TString(epoch.c_str()).Contains("17"))
+    globalFitEtaBin(0.0, 1.3, epoch, "UL17_V1M", doClosure);
+  else if (TString(epoch.c_str()).Contains("16"))
+    globalFitEtaBin(0.0, 1.3, epoch, "UL16_V1M", doClosure);
   else
     //globalFitEtaBin(0.0, 1.3, epoch, "ReReco24_V9M");
     //globalFitEtaBin(0.0, 1.3, epoch, "ReReco24_V10M");
