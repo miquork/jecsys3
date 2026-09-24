@@ -19,6 +19,7 @@
 #include "TLine.h"
 #include "TProfile.h"
 #include "TProfile2D.h"
+#include <algorithm>
 
 #include "CondFormats/JetMETObjects/interface/FactorizedJetCorrector.h"
 #include "CondFormats/JetMETObjects/interface/JetCorrectorParameters.h"
@@ -133,9 +134,13 @@ TProfile *getProf(TFile *f, const char *path, const char *name, bool invert);
 TProfile *unitProfile(TProfile *p, const char *name);
 TH1D *ratioOfProfiles(TProfile *pd, TProfile *pm, const char *name);
 void checkUnity(TProfile *p, double tol = 0.001);
+TProfile *getProfYZ(TFile *f, const char *path, const char *pathres, const char *name);
+void scaleProfileBy(TProfile *p, TProfile *q, int power);
+void checkSameResidual(map<string,TProfile*> &m, string ref, double tol);
 void setEpoch(string epoch);
 
 // put all the different methods in a single file for easy access for everybody
+bool _noXsec = false; // VALIDATION PATCH
 void reprocess(string epoch="") {
 
   setEpoch(epoch);
@@ -1028,7 +1033,10 @@ void reprocess(string epoch="") {
     //fijr = new TFile("rootfiles/timeDep2D_2024_V3M_2025_V9M_2026B_v3.root","READ");
     //fijr = new TFile("rootfiles/timeDep2D_2024_V3M_2025_V9M_2026B_V0M.root","READ");
     fijr = new TFile("rootfiles/timeDep2D_2024_V3M_2025_V9M_2026BC_V0M.root","READ");
-    assert(fijr && !fijr->IsZombie());
+    if (!fijr || fijr->IsZombie()) { // VALIDATION PATCH: file not in git
+      cout << "*** VALIDATION: timeDep2D missing, xsec dropped ***" << endl;
+      fijr = fijd; _noXsec = true;
+    }
   }
   
   assert(fmjd && !fmjd->IsZombie());
@@ -1505,7 +1513,7 @@ void reprocess(string epoch="") {
   if (epoch!="2026BJS"&&epoch!="2026BNS"&&epoch!="2026CJS"&&epoch!="2026CNS"&&
       epoch!="2024_nib"&&epoch!="2024CDE_nib"&&epoch!="2024FGHI_nib"&&
       epoch!="2026D"&&epoch!="2026BD"&&epoch!="2026FLAVOR"&&epoch!="RUN3FLAVOR"&&
-      !isRun2) // no h1jes_<epoch> for Run2 in rootfiles/timeDep2D*.root
+      !isRun2 && !_noXsec) // no h1jes_<epoch> for Run2 in rootfiles/timeDep2D*.root
   types.push_back("xsec");
   types.push_back("crecoil");
   types.push_back("mpfchs1"); // Type-I MET
@@ -2442,10 +2450,14 @@ void reprocess(string epoch="") {
       pres = (TProfile*)presp->Clone(Form("pres_%s",epoch.c_str()));
       // Wqq provides both JES and L2L3Res profiles; store both
       const char *cwres = "prof_L2L3Res_ptpair";
-      const char *cwjes = "prof_L2L3_ptpair"; // TODO: confirm name
+      // VALIDATION FIX: prof_L2L3_ptpair (and 'pjes') are the MC-truth
+      // correction only; the full correction incl. L2L3Res, comparable to
+      // gamma+jet p2corr and multijet pjes13, is prof_corr_ptpair
+      // (checked: prof_corr = prof_L2L3 x prof_L2L3Res bin by bin)
+      const char *cwjes = "prof_corr_ptpair";
       if (fwd) {
 	presw = (TProfile*)fwd->Get(cwres); assert(presw);
-	pjesw = (TProfile*)fwd->Get(cwjes); assert(pjesw);
+	pjesw = (TProfile*)fwd->Get(cwjes);
 	if (!pjesw)
 	  cout << "*** Wqq JES profile '" << cwjes << "' not found in "
 	       << fwd->GetName() << ", skipping pjesw ***" << endl << flush;
@@ -2497,23 +2509,68 @@ void reprocess(string epoch="") {
       mout_data["presp_data"] = getProfY(fpd,"Gamjet2/p2res", "presp_data",false);
       mout_mc  ["presp_mc"]   = getProfY(fpm,"Gamjet2/p2res", "presp_mc",  false);
 
-      // Z+jet stores the JES directly, in data/ and mc/ subdirectories
-      mout_data["pjesz_data"] = getProfY(fzd,"data/l2res/p2jes","pjesz_data",false);
-      mout_mc  ["pjesz_mc"]   = getProfY(fzm,"mc/l2res/p2jes",  "pjesz_mc",  false);
-      mout_data["presz_data"] = getProfY(fzd,"data/l2res/p2res","presz_data",false);
-      mout_mc  ["presz_mc"]   = getProfY(fzm,"mc/l2res/p2res",  "presz_mc",  false);
+      // Z+jet: data/l2res/p2jes appears to be the MC-truth JES only (it
+      // agrees with gamma+jet pjesp/presp at pT>100 GeV to <0.3%), so the full
+      // JES is p2jes x p2res. TO BE CONFIRMED by the Z+jet analysts; set
+      // zjesIncludesRes=true if p2jes already includes the residual.
+      // Z+jet MC v116 profiles were filled with Fill(x,y*w) (unit weights),
+      // which is detected and undone here by normalizing to p2res (=1 in MC).
+      const bool zjesIncludesRes = false;
+      mout_data["pmctz_data"] = getProfYZ(fzd,"data/l2res/p2jes","data/l2res/p2res","pmctz_data");
+      mout_mc  ["pmctz_mc"]   = getProfYZ(fzm,"mc/l2res/p2jes",  "mc/l2res/p2res",  "pmctz_mc");
+      mout_data["presz_data"] = getProfYZ(fzd,"data/l2res/p2res","data/l2res/p2res","presz_data");
+      mout_mc  ["presz_mc"]   = getProfYZ(fzm,"mc/l2res/p2res",  "mc/l2res/p2res",  "presz_mc");
+      if (zjesIncludesRes) {
+	mout_data["pjesz_data"] = (TProfile*)mout_data["pmctz_data"]->Clone("pjesz_data");
+	mout_mc  ["pjesz_mc"]   = (TProfile*)mout_mc  ["pmctz_mc"]  ->Clone("pjesz_mc");
+	scaleProfileBy(mout_data["pmctz_data"], mout_data["presz_data"], -1);
+	scaleProfileBy(mout_mc  ["pmctz_mc"],   mout_mc  ["presz_mc"],   -1);
+      }
+      else {
+	mout_data["pjesz_data"] = (TProfile*)mout_data["pmctz_data"]->Clone("pjesz_data");
+	mout_mc  ["pjesz_mc"]   = (TProfile*)mout_mc  ["pmctz_mc"]  ->Clone("pjesz_mc");
+	scaleProfileBy(mout_data["pjesz_data"], mout_data["presz_data"], +1);
+	scaleProfileBy(mout_mc  ["pjesz_mc"],   mout_mc  ["presz_mc"],   +1);
+      }
 
-      // Multijet: only the residual is stored (pjesm optional, warns if absent)
-      mout_data["pjesm_data"] = getProf(fmjd,"Multijet/pjesm","pjesm_data",false);
-      mout_mc  ["pjesm_mc"]   = getProf(fmjm,"Multijet/pjesm","pjesm_mc",  false);
-      mout_data["presm_data"] = getProf(fmjd,"Multijet/presm","presm_data",false);
-      mout_mc  ["presm_mc"]   = getProf(fmjm,"Multijet/presm","presm_mc",  false);
+      // Multijet: absolute JES and residual from Incjet (vs pT,jet, |eta|<1.3,
+      // pjes13=<1-rawFactor> incl. L2L3Res, pres13=<1/L2L3Res>). Multijet/presm
+      // is the RELATIVE residual lead/recoil and is kept as presmrel.
+      mout_data["pjesm_data"] = getProf(fmjd,"Incjet/pjes13","pjesm_data",false);
+      mout_mc  ["pjesm_mc"]   = getProf(fmjm,"Incjet/pjes13","pjesm_mc",  false);
+      mout_data["presm_data"] = getProf(fmjd,"Incjet/pres13","presm_data",false);
+      mout_mc  ["presm_mc"]   = getProf(fmjm,"Incjet/pres13","presm_mc",  false);
+      mout_data["presmrel_data"] = getProf(fmjd,"Multijet/presm","presmrel_data",false);
+      mout_mc  ["presmrel_mc"]   = getProf(fmjm,"Multijet/presm","presmrel_mc",  false);
 
-      // Wqq stores corrections, so invert both like the ratio versions above
-      mout_data["pjesw_data"] = getProf(fwd,"prof_L2L3_ptpair",   "pjesw_data",true);
-      mout_mc  ["pjesw_mc"]   = getProf(fwm,"prof_L2L3_ptpair",   "pjesw_mc",  true);
+      // Wqq stores corrections, so invert. Full JES from prof_corr_ptpair,
+      // MC-truth only from prof_L2L3_ptpair, residual from prof_L2L3Res_ptpair
+      mout_data["pjesw_data"] = getProf(fwd,"prof_corr_ptpair",   "pjesw_data",true);
+      mout_mc  ["pjesw_mc"]   = getProf(fwm,"prof_corr_ptpair",   "pjesw_mc",  true);
+      mout_data["pmctw_data"] = getProf(fwd,"prof_L2L3_ptpair",   "pmctw_data",true);
+      mout_mc  ["pmctw_mc"]   = getProf(fwm,"prof_L2L3_ptpair",   "pmctw_mc",  true);
       mout_data["presw_data"] = getProf(fwd,"prof_L2L3Res_ptpair","presw_data",true);
       mout_mc  ["presw_mc"]   = getProf(fwm,"prof_L2L3Res_ptpair","presw_mc",  true);
+
+      // MC-truth only JES (JES/RES) for gamma+jet and multijet
+      const char *cmct[] = {"p","m"};
+      for (int i = 0; i != 2; ++i) {
+	for (int j = 0; j != 2; ++j) {
+	  map<string,TProfile*> &mo = (j==0 ? mout_data : mout_mc);
+	  const char *cd = (j==0 ? "data" : "mc");
+	  TProfile *pj = mo[Form("pjes%s_%s",cmct[i],cd)];
+	  TProfile *pr = mo[Form("pres%s_%s",cmct[i],cd)];
+	  if (pj && pr) {
+	    TProfile *p = (TProfile*)pj->Clone(Form("pmct%s_%s",cmct[i],cd));
+	    scaleProfileBy(p, pr, -1);
+	    mo[Form("pmct%s_%s",cmct[i],cd)] = p;
+	  }
+	}
+      }
+
+      // Cross-channel consistency of the residual applied to data: all
+      // channels should carry the same L2L3Res (to be undone by globalFit)
+      checkSameResidual(mout_data, "presp_data", 0.005);
 
       // Combined gamma+jet plus Z+jet, as for pjes and pres above
       if (mout_data["pjesp_data"] && mout_data["pjesz_data"]) {
@@ -2546,8 +2603,9 @@ void reprocess(string epoch="") {
 
       // Point-by-point data/MC ratio of everything that has both
       const char *call[] = {"pjesp","pjesz","pjesm","pjesw","pjes",
-			    "presp","presz","presm","presw","pres"};
-      for (int i = 0; i != 10; ++i) {
+			    "presp","presz","presm","presw","pres",
+			    "pmctp","pmctz","pmctm","pmctw"};
+      for (int i = 0; i != 14; ++i) {
 	string sdt = Form("%s_data",call[i]), smc = Form("%s_mc",call[i]);
 	string sr  = Form("%s_ratio",call[i]);
 	mout_ratio[sr] = ratioOfProfiles(mout_data[sdt], mout_mc[smc],
@@ -3430,6 +3488,76 @@ TH1D *ratioOfProfiles(TProfile *pd, TProfile *pm, const char *name) {
 
   return h;
 } // ratioOfProfiles
+
+// Z+jet variant of getProfY: detect profiles filled as Fill(x,y*w) with unit
+// weights (all means ~1e-5) and undo it by normalizing bin by bin to the
+// residual profile, which is identically 1 in MC.
+TProfile *getProfYZ(TFile *f, const char *path, const char *pathres,
+		    const char *name) {
+  if (!f) return 0;
+  TProfile2D *p2 = (TProfile2D*)f->Get(path);
+  TProfile2D *p2r = (TProfile2D*)f->Get(pathres);
+  if (!p2 || !p2r) {
+    cout << "  getProfYZ: no " << path << " in " << f->GetName() << endl;
+    return 0;
+  }
+  // median |mean| of filled bins
+  vector<double> v;
+  for (int i = 0; i != p2r->GetNcells(); ++i)
+    if (p2r->GetBinEntries(i)>0) v.push_back(fabs(p2r->GetBinContent(i)));
+  double med(1);
+  if (!v.empty()) { sort(v.begin(),v.end()); med = v[v.size()/2]; }
+  TProfile2D *p2c = (TProfile2D*)p2->Clone(Form("%s_2D",name));
+  if (med<1e-3) {
+    cout << "*** getProfYZ(" << path << "): profile means ~" << med
+	 << ", weights were multiplied into y. Normalizing to " << pathres
+	 << " (assumed =1, i.e. MC). FIX IN PRODUCER. ***" << endl << flush;
+    Double_t *sy = p2c->GetArray(); TArrayD *sy2 = p2c->GetSumw2();
+    for (int i = 0; i != p2c->GetNcells(); ++i) {
+      double r = p2r->GetBinContent(i);
+      double k = (r!=0 ? 1./r : 0);
+      sy[i] *= k; (*sy2)[i] *= k*k;
+    }
+  }
+  return p2c->ProfileY(name,1,15); // |eta|<1.3
+} // getProfYZ
+
+// Multiply (power=+1) or divide (power=-1) profile p bin by bin by the mean
+// of profile q, keeping the entries of p (scales sum(w*y) and sum(w*y^2))
+void scaleProfileBy(TProfile *p, TProfile *q, int power) {
+  if (!p || !q) return;
+  Double_t *sy = p->GetArray(); TArrayD *sy2 = p->GetSumw2();
+  for (int i = 1; i != p->GetNbinsX()+1; ++i) {
+    int j = q->FindBin(p->GetBinCenter(i));
+    double r = q->GetBinContent(j);
+    double k = (r!=0 ? pow(r,power) : 0);
+    sy[i] *= k; (*sy2)[i] *= k*k;
+  }
+} // scaleProfileBy
+
+// Warn if the residuals applied to data differ between channels
+void checkSameResidual(map<string,TProfile*> &m, string ref, double tol) {
+  TProfile *pr = m[ref];
+  if (!pr) return;
+  const char *cn[] = {"presz_data","presm_data","presw_data"};
+  for (int k = 0; k != 3; ++k) {
+    TProfile *p = m[cn[k]];
+    if (!p) continue;
+    double worst(0), ptw(0);
+    for (int i = 1; i != p->GetNbinsX()+1; ++i) {
+      if (p->GetBinEntries(i)==0) continue;
+      double pt = p->GetBinCenter(i);
+      int j = pr->FindBin(pt);
+      if (pr->GetBinEntries(j)==0) continue;
+      double d = p->GetBinContent(i)/pr->GetBinContent(j)-1;
+      if (fabs(d)>fabs(worst)) { worst = d; ptw = pt; }
+    }
+    if (fabs(worst)>tol)
+      cout << "*** checkSameResidual: " << cn[k] << " differs from " << ref
+	   << " by " << 100.*worst << "% at pT=" << ptw << " GeV."
+	   << " Channels carry different L2L3Res! ***" << endl << flush;
+  }
+} // checkSameResidual
 
 double getJES(TProfile2D *p2jes, double eta, double ptcorr) {
   if (!p2jes) {

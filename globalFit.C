@@ -1,3 +1,4 @@
+#include "TSystem.h"
 // Purpose: Perform Run 3 or Run 2 Legacy global fit
 //
 // Pre-requisites:
@@ -66,6 +67,37 @@ map<string, vector<fitSyst> > _msrc;    // data->sources,
 map<string, vector<fitShape> > _mshape; // obs->shapes,
 string _obs;                            // data type switch,
 TH1D *_hjesref(0), *_hjesref_mj(0);     // and reference JES
+// VALIDATION PATCH (2026-09-24): per-channel residual for undoing L2L3Res.
+// Each input channel may have been produced with a different L2L3Res; the
+// common _hjesref (entries-weighted gamjet+zjet) is then wrong for some.
+// Enable with environment variable GF_UNDO_PER_CHANNEL=1
+bool _gf_undoPerChannel = false;
+map<string, TH1D*> _hjesref_ch;
+// Interpolate in log(pT) and clamp to the filled range (no extrapolation to 0)
+double safeInterp(TH1D *h, double x) {
+  int i1(0), i2(0);
+  for (int i = 1; i != h->GetNbinsX()+1; ++i)
+    if (h->GetBinContent(i)!=0) { if (!i1) i1 = i; i2 = i; }
+  if (!i1) return 1;
+  if (x <= h->GetBinCenter(i1)) return h->GetBinContent(i1);
+  if (x >= h->GetBinCenter(i2)) return h->GetBinContent(i2);
+  int i = h->FindBin(x);
+  int ia = (x < h->GetBinCenter(i) ? i-1 : i), ib = ia+1;
+  while (ia>i1 && h->GetBinContent(ia)==0) --ia;
+  while (ib<i2 && h->GetBinContent(ib)==0) ++ib;
+  double xa = h->GetBinCenter(ia), xb = h->GetBinCenter(ib);
+  double ya = h->GetBinContent(ia), yb = h->GetBinContent(ib);
+  if (ya==0) return yb; if (yb==0) return ya;
+  return ya + (yb-ya)*log(x/xa)/log(xb/xa);
+}
+string channelOf(string name) {
+  TString t(name.c_str());
+  if (t.Contains("zjet")||t.Contains("jetz")||t.Contains("zjav")) return "z";
+  if (t.Contains("gamjet")||t.Contains("pjet")||t.Contains("jetp")||t.Contains("pjav")) return "p";
+  if (t.Contains("wqq")) return "w";
+  if (t.Contains("multijet")) return "m";
+  return "";
+}
 int cnt(0), Nk(0);
 TF1 *_jesFit(0);                        // JES fit used in jesFitter
 
@@ -150,6 +182,17 @@ void globalFitEtaBin(double etamin, double etamax, string run, string version,
   _hjesref = (TH1D*)_hjesref->Clone("hjesref");
   TProfile *presm = (TProfile*)deta->Get("presm_eta_00_13"); assert(presm);
   _hjesref_mj = presm->ProjectionX("hjesref_m");
+  _gf_undoPerChannel = (gSystem->Getenv("GF_UNDO_PER_CHANNEL") &&
+			TString(gSystem->Getenv("GF_UNDO_PER_CHANNEL"))=="1");
+  if (_gf_undoPerChannel) {
+    cout << "*** VALIDATION: undoing L2L3Res per channel ***" << endl;
+    const char *cz[] = {"z","p","w","m"};
+    for (int i = 0; i != 4; ++i) {
+      TProfile *p = (TProfile*)deta->Get(Form("pres%s_eta_00_13",cz[i]));
+      if (p) _hjesref_ch[cz[i]] = p->ProjectionX(Form("hjesref_ch_%s",cz[i]));
+      else cout << "  missing pres" << cz[i] << "_eta_00_13" << endl;
+    }
+  }
   TH1D *herr = (TH1D*)deta->Get("herr"); assert(herr);
 
   // Set whitelists for quickly selecting only subset of datasets or shapes
@@ -214,8 +257,19 @@ void globalFitEtaBin(double etamin, double etamax, string run, string version,
     if (string(type)=="Rjet" && _gf_undoJESref) {
       if (debug) cout << "...undoing JES for " << type << endl << flush;
 
+      string ch = channelOf(name);
+      if (_gf_undoPerChannel && _hjesref_ch[ch]) {
+	// presX is the residual applied in data, in JES (response) convention;
+	// for multijet presm is already res(lead)/res(recoil) vs pT,ave
+	TH1D *hr = _hjesref_ch[ch];
+	for (int i = 0; i != g->GetN(); ++i) {
+	  double k = safeInterp(hr, g->GetX()[i]);
+	  g->SetPoint(i, g->GetX()[i], k * g->GetY()[i]);
+	  g->SetPointError(i, g->GetEX()[i], k * g->GetEY()[i]);
+	}
+      }
       // Special treatment for multijet 
-      if (TString(name).Contains("multijet")) {
+      else if (TString(name).Contains("multijet")) {
 
 	for (int i = 0; i != g->GetN(); ++i) {
 	  double pt = g->GetX()[i];
@@ -263,6 +317,7 @@ void globalFitEtaBin(double etamin, double etamax, string run, string version,
 
       if (scaleJZperEra && trun.Contains("25")) scaleJZ = 1.000;
       if (scaleJZperEra && trun.Contains("26")) scaleJZ = 1.000;
+      if (scaleJZperEra && trun.Contains("RUN3")) scaleJZ = 1.000;
       
       scaleGraph(data.input, scaleJZ);
     }
@@ -281,6 +336,7 @@ void globalFitEtaBin(double etamin, double etamax, string run, string version,
 
       if (scaleJZAperEra && trun.Contains("25")) scaleJZA = 1.000;
       if (scaleJZAperEra && trun.Contains("26")) scaleJZA = 1.000;
+      if (scaleJZAperEra && trun.Contains("RUN3")) scaleJZA = 1.000;
       
       scaleGraph(data.input, scaleJZA);
     }
@@ -709,7 +765,8 @@ void globalFitDraw(string run, string version) {
       h->SetMinimum(0.90+1e-5);
     }
     if (trun.Contains("2024") || trun.Contains("2025") ||
-    	trun.Contains("2026")) {
+    	trun.Contains("2026") || trun.Contains("PS") ||
+	trun.Contains("RUN3")) {
       h->SetMaximum(1.185-1e-5);
       h->SetMinimum(0.885+1e-5);
     }
@@ -1146,6 +1203,8 @@ void globalFitDraw(string run, string version) {
     if (trun.Contains("2024")) nhf_off = 0.0;
     if (trun.Contains("2025")) nhf_off = 0.0;
     if (trun.Contains("2026")) nhf_off = 0.0;
+    if (trun.Contains("RUN3")) nhf_off = 0.0;
+    if (trun.Contains("PS")) nhf_off = 0.0;
     if (run=="Run3")  {
       nhf_off = ((5.1+3.0)*2.0 + 5.9*3.0 + (18.0+3.1)*3.0 +
 		 //8.7*1.0 + 9.8*4.0 + 9.5*4.5) / //Summer22
