@@ -66,7 +66,8 @@ void loadData(const std::string &filename, std::vector<int> &years, std::vector<
         long long minutesSince2022 = getMinutesSince2022(dateStr, timeStr);
 
         // Determine year based on run
-        int year = (run < 363380) ? 2022 : (run < 376370) ? 2023 : 2024;
+        //int year = (run < 363380) ? 2022 : (run < 376370) ? 2023 : (run < 390000) ? 2024 : (run < 401630) ? 2025 : (run < 402537) ? 2026 : 2027; // 2027 for 2026C low PU run
+	int year = (run < 350000) ? 2018 : (run < 363380) ? 2022 : (run < 376370) ? 2023 : (run < 390000) ? 2024 : (run < 400000) ? 2025 : (run < 405000 && !(run>=402536) && run<=403214) ? 2026 : 2027; // 2026C low PU as 2027, although JSONs a bit mixed in runs
 
         // Store parsed values
         years.push_back(year);
@@ -94,6 +95,9 @@ void treeRuns() {
     loadData("2022.txt", years, fills, runs, lumis, nls, times, minutes_since_2022, fill_lumi_map);
     loadData("2023.txt", years, fills, runs, lumis, nls, times, minutes_since_2022, fill_lumi_map);
     loadData("2024.txt", years, fills, runs, lumis, nls, times, minutes_since_2022, fill_lumi_map);
+    loadData("2025.txt", years, fills, runs, lumis, nls, times, minutes_since_2022, fill_lumi_map);
+    loadData("2026.txt", years, fills, runs, lumis, nls, times, minutes_since_2022, fill_lumi_map);
+    loadData("2026_lowPU.txt", years, fills, runs, lumis, nls, times, minutes_since_2022, fill_lumi_map);
 
     // Create ROOT file and TTree
     TFile *file = new TFile("luminosity_data.root", "RECREATE");
