@@ -765,7 +765,8 @@ mfile["WQQ_2026A_MC"]     = mfile["WQQ_2025_MC"];
 
 // v163_v2(B), v163_v4(C), v167(D) -> v168
 // 2026B first Prompt2026 JECs with new HB+HE+HF+PFHC+Winter26 MC JEC
-mfile["JET_2026_MC"] = "rootfiles/Prompt/Jet_v170/jmenano_mc_out_Summer24MG_JMENANO_JERSF2026B_v170.root";
+//mfile["JET_2026_MC"] = "rootfiles/Prompt/Jet_v170/jmenano_mc_out_Summer24MG_JMENANO_JERSF2026B_v170.root";
+mfile["JET_2026_MC"] = "rootfiles/Prompt/Jet_v175/jmenano_mc_out_Winter26MG_JMENANO_JERSF2024_v175.root";
 mfile["JET_2026B_DATA_OUT"] = "rootfiles/Prompt/Jet_v170/jmenano_data_out_2026B_JME_v170.root";
 mfile["JET_2026B_DATA_CMB"] = "rootfiles/Prompt/Jet_v170/jmenano_data_cmb_2026B_JME_v170.root";
 mfile["JET_2026B_MC"]       = mfile["JET_2026_MC"];
@@ -795,7 +796,8 @@ mfile["GAM_2026B_MIX"]    = mfile["GAM_2026_MIX"];
 //mfile["GAM_2026C_DATA"]   = "rootfiles/Prompt/Gam_w84/GamHistosFill_data_2026C-jmenano_w84.root"; // with L2L3Res, new low PU data w79->w83
 //mfile["GAM_2026C_DATA"]   = "rootfiles/Prompt/Gam_w87/GamHistosFill_data_2026C_w87.root"; // old MC+26C res
 mfile["GAM_2026C_DATA"]   = "rootfiles/Prompt/Gam_w90/GamHistosFill_data_2026C_w90.root"; // new MC truth+26B res
-mfile["GAM_2026C_MC"]     = mfile["GAM_2026_MC"];
+//mfile["GAM_2026C_MC"]     = mfile["GAM_2026_MC"];
+mfile["GAM_2026C_MC"]     = "rootfiles/Prompt/Gam_w91/GamHistosFill_mc_summer2026P8-jmenano_no-pu_no-jersf_w91.root";
 mfile["GAM_2026C_MIX"]    = mfile["GAM_2026_MIX"];
 //
 //mfile["GAM_2026D_DATA"]   = "rootfiles/Prompt/Gam_w84/GamHistosFill_data_2026D-jmenano_w84.root";

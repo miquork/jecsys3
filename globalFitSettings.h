@@ -113,8 +113,8 @@ const array<array<string,3>,ndt> _gf_datasets = {{
 // 'name' should match the dataset name in the list above
 // How to use: uncomment individual datasets to use only those
 const array<string,29> _gf_datasets_whitelist = {
-  //"xsec_incjet_a100",
-  //"mpfchs1_wqq_a100",
+  "xsec_incjet_a100",
+  "mpfchs1_wqq_a100",
 
   //"ptchs_zjet_a100",
   //"mpfchs1_zjet_a100",

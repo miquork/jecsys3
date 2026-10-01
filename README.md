@@ -21,13 +21,16 @@ Quick starter guide:
 `root -l -b -q 'mk_reprocess_RunEpoch.C("2025CDEFG",0,1)` [single run test]
 `python3 minitools/runAllIOVs.py` [batch process]
 [L3Res results stored in rootfiles/jecdata20*.root]
+[NB: if error band fails for some run, try increasing hard-coded `nfit` for it]
 
 `root -l -b -q createL2L3ResTextFileV2.C++g` [batch process]
 [L2L3Res corrections stored in textfiles/Prompt/*L2L3Residual[VsPtRefAsymmm]*.txt]
+`root -l -b -q test/mk_drawCMSresponse.C` [test L2L3Res, L2Res]
 
 `root -l -b -q JERSF.C++g(0,"2025CDEFG","Summer24MG_NOJERSF")` [single run test]
 `python3 minitools/runAllJERSF.py` [batch process]
 [JER SF corrections stored in textfiles/Prompt/*SF*.txt]
+`root -l -b -q test/mk_testJERSF.C` [JER SF]
 
 Core plots:
 
@@ -35,7 +38,6 @@ Core plots:
 `root -l -b -q minitools/drawL3ResVsTime.C`
 `root -l -b -q minitools/drawJERSFvsTime.C`
 
-Text file validation and plots:
-
-`root -l -b -q test/mk_drawCMSresponse.C` [L2L3Res, L2Res]
-`root -l -b -q test/mk_testJERSF.C` [JER SF]
+Inclusive jets analysis
+`root -l -b -q minitools/DijetHistosCombine.C+` [update trigger merging]
+`oot -l -b -q minitools/timeDep2D.C+g` [plot time stability]
