@@ -290,7 +290,7 @@ void reprocess(string epoch="") {
     if (tr.Contains("2024H_nib1")) { fgptmax = 1500; fmjptmax = 1500; }
     if (tr.Contains("2024F_nib3")) { fgptmax = 1500; fmjptmax = 1500; }
 
-    //if (tr.Contains("2026")) { fgptmin = 50; }
+    //if (tr.Contains("2026")) { fgptmin = 30; }
     if (tr.Contains("2026C")) { fgptmax = 1500; fmjptmax = 2200; }
 
     // Extended range to capitalize on full 2025 statistics
@@ -2136,7 +2136,7 @@ void reprocess(string epoch="") {
 		if (tr.Contains("2025")) scaleEM = 1.000;//1.003;//1.005;
 		if (tr.Contains("2026B")) scaleEM = 1.012;//1.015;
 		if (tr.Contains("2026C")) scaleEM = 1.012;//1.015;
-		if (tr.Contains("2026D")) scaleEM = 1.006;//1.000;
+		if (tr.Contains("2026D")) scaleEM = 1.009;//1.006;//1.000;
 		if (tr.Contains("2026BD") ||
 		    tr.Contains("2026FLAVOR"))
 		  scaleEM = (1.012*15.3 + 1.006*9.9) / (15.3 + 9.9);

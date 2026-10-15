@@ -589,7 +589,15 @@ mfile["ZMM_2025CT_MC"]   = mfile["ZMM_2025C_DATAMC"];
 //mfile["ZMM_2026MC"]     = "rootfiles/Prompt/Zmm_v115/jme_Zj_2026DYTT_Zmm_V1M_v115_nomu.root";
 //mfile["ZMM_2026MC"]     = "rootfiles/Prompt/Zmm_v116/jme_Zj_2026DY_Zmm_V2M_v116_nomu.root";
 //mfile["ZMM_2026MC"] = "rootfiles/Prompt/Zmm_v116/jme_Zj_2024DYTT_Zmm_V11M_v116b.root"; // with TT => v116b works best
-mfile["ZMM_2026MC"] = "rootfiles/Prompt/Zmm_v116/jme_Zj_2024DYTT_Zmm_V11M_v116c.root"; // with TT
+//mfile["ZMM_2026MC"] = "rootfiles/Prompt/Zmm_v116/jme_Zj_2024DYTT_Zmm_V11M_v116c.root"; // with TT
+//mfile["ZMM_2026MC"] = "rootfiles/Prompt/Zmm_v120/jme_Zj_2026DY_Zmm_v120.root"; // no TT, W26
+//mfile["ZMM_2026MC"] = "rootfiles/Prompt/Zmm_v120/jme_Zj_2026DY_Zmm_v120_2024_nib_JRV11M_MC_SF.root"; // TT, W26(+s24), S24-based 26B JER SF
+mfile["ZMM_2026MC"] = "rootfiles/Prompt/Zmm_v120/jme_Zj_2026DY2024TT_Zmm_v120_2024_nib_JRV11M_MC_SF.root"; // TT, W26(+s24), placeholder JER SF; 26DYTT24JER.root
+//mfile["ZMM_2026MC"] = "rootfiles/Prompt/Zmm_v120/jme_Zj_2026DY2024TT_Zmm_v120_2024_nib_JRV11M_MC_SF.root"; // TT, W26(+s24), placeholder JER SF; 26DYTT24JER.root => PATCH
+//mfile["ZMM_2026MC"] = "rootfiles/Prompt/Zmm_v120/jme_Zj_2024DY_Zmm_v120GenWeight_v2.root"; // 24DYNoJERgenW.root
+//mfile["ZMM_2026MC"] = "rootfiles/Prompt/Zmm_v120/jme_Zj_2024DY_Zmm_v120.root"; // 24DYNoJERnoGen.root
+//mfile["ZMM_2026MC"] = "rootfiles/Prompt/Zmm_v116/jme_Zj_2024DY_Zmm_V11M_v116c.root"; // 24DYNoJERnoGen_v116c.root
+  //                  "rootfiles/Prompt/Zmm_v120/jme_Zj_2026DYTT_Zmm_v120.root"; // no TT, W26
 //mfile["ZMM_2026MC"] = "rootfiles/Prompt/Zmm_v116/jme_Zj_2024DY_Zmm_V11M_v116c.root"; // no TT
 mfile["ZMM_2026B_DATA"] = "rootfiles/Prompt/Zmm_v116/jme_Zj_2026B_Zmm_V2M_v116_nomu.root";
 mfile["ZMM_2026B_MC"]     = mfile["ZMM_2026MC"];
@@ -705,20 +713,25 @@ mfile["GAM_2025_MC"]    =
 //mfile["GAM_2025_MC"]    = "rootfiles/Prompt2025/Gam_w65/GamHistosMix_mc_summer2024P8_Summer2024QCD_no-pu_w65.root"; // Summer24 MC, noPU
 //mfile["GAM_2025_MIX"]      = "rootfiles/Prompt2025/Gam_w54/GamHistosMix_mc_winter2025P8_Winter2025QCD_no-pu_w54.root";
 mfile["GAM_2025_MIX"]      = mfile["GAM_2025_MC"];
-mfile["GAM_2025C_DATA"]    = "rootfiles/Prompt/Gam_w87/GamHistosFill_data_2025C-jmenano_w87.root";
+//mfile["GAM_2025C_DATA"]    = "rootfiles/Prompt/Gam_w87/GamHistosFill_data_2025C-jmenano_w87.root";
+mfile["GAM_2025C_DATA"]    = "rootfiles/Prompt/Gam_w87/GamHistosFill_data_2025C_w87.root";
 mfile["GAM_2025C_MC"]      = mfile["GAM_2025_MC"];
 mfile["GAM_2025C_MIX"]     = mfile["GAM_2025_MIX"];
-mfile["GAM_2025D_DATA"]    = "rootfiles/Prompt/Gam_w87/GamHistosFill_data_2025D-jmenano_w87.root";
+//mfile["GAM_2025D_DATA"]    = "rootfiles/Prompt/Gam_w87/GamHistosFill_data_2025D-jmenano_w87.root";
+mfile["GAM_2025D_DATA"]    = "rootfiles/Prompt/Gam_w87/GamHistosFill_data_2025D_w87.root";
 mfile["GAM_2025D_MC"]      = mfile["GAM_2025_MC"];
 mfile["GAM_2025D_MIX"]     = mfile["GAM_2025_MIX"];
-mfile["GAM_2025E_DATA"]    = "rootfiles/Prompt/Gam_w87/GamHistosFill_data_2025E-jmenano_w87.root";
+//mfile["GAM_2025E_DATA"]    = "rootfiles/Prompt/Gam_w87/GamHistosFill_data_2025E-jmenano_w87.root";
+mfile["GAM_2025E_DATA"]    = "rootfiles/Prompt/Gam_w87/GamHistosFill_data_2025E_w87.root";
 mfile["GAM_2025E_MC"]      = mfile["GAM_2025_MC"];
 mfile["GAM_2025E_MIX"]     = mfile["GAM_2025_MIX"];
 //
-mfile["GAM_2025F_DATA"]    = "rootfiles/Prompt/Gam_w87/GamHistosFill_data_2025F-jmenano_w87.root";
+//mfile["GAM_2025F_DATA"]    = "rootfiles/Prompt/Gam_w87/GamHistosFill_data_2025F-jmenano_w87.root";
+mfile["GAM_2025F_DATA"]    = "rootfiles/Prompt/Gam_w87/GamHistosFill_data_2025F_w87.root";
 mfile["GAM_2025F_MC"]      = mfile["GAM_2025_MC"];
 mfile["GAM_2025F_MIX"]     = mfile["GAM_2025_MIX"];
-mfile["GAM_2025G_DATA"]    = "rootfiles/Prompt/Gam_w87/GamHistosFill_data_2025G-jmenano_w87.root";
+//mfile["GAM_2025G_DATA"]    = "rootfiles/Prompt/Gam_w87/GamHistosFill_data_2025G-jmenano_w87.root";
+mfile["GAM_2025G_DATA"]    = "rootfiles/Prompt/Gam_w87/GamHistosFill_data_2025G_w87.root";
 mfile["GAM_2025G_MC"]      = mfile["GAM_2025_MC"];
 mfile["GAM_2025G_MIX"]     = mfile["GAM_2025_MIX"];
 // w60: CDE, w62: CDEF, w64: CDEFG, w65: CDEFG (more G), w67: all (B)CDEFG
@@ -786,8 +799,9 @@ mfile["JET_2026BD_DATA_OUT"] = "rootfiles/Prompt/Jet_v170/jmenano_data_out_2026B
 mfile["JET_2026BD_DATA_CMB"] = "rootfiles/Prompt/Jet_v170/jmenano_data_cmb_2026BD_JME_v170.root";
 mfile["JET_2026BD_MC"]       = mfile["JET_2026_MC"];
 
-mfile["GAM_2026_MC"] = mfile["GAM_2025_MC"]; // TO BE UPDATED
-mfile["GAM_2026_MIX"] = mfile["GAM_2025_MIX"]; // TO BE UPDATED
+//mfile["GAM_2026_MC"] = mfile["GAM_2025_MC"]; // TO BE UPDATED
+mfile["GAM_2026_MC"] = "rootfiles/Prompt/Gam_w92/GamHistosFill_mc_winter2026P8-jmenano_no-pu_no-jersf_w92.root";
+mfile["GAM_2026_MIX"] = mfile["GAM_2026_MC"];//mfile["GAM_2025_MIX"]; // TO BE UPDATED
 //mfile["GAM_2026B_DATA"]   = "rootfiles/Prompt/Gam_w84/GamHistosFill_data_2026B-jmenano_w84.root"; // with L2L3Res, for V0M closure, w79->w83
 mfile["GAM_2026B_DATA"]   = "rootfiles/Prompt/Gam_w87/GamHistosFill_data_2026B_w87.root";
 mfile["GAM_2026B_MC"]     = mfile["GAM_2026_MC"];

@@ -14,7 +14,7 @@
 #include "tdrstyle_mod22.C"
 
 // Threshold for veto maps
-double pullThreshold = 50;//70; // default: 70
+double pullThreshold = 80;//50;//70; // default: 70
 
 // Separate threshold for outer HF
 double pullThresholdHF45 = 70; // default: 70
@@ -24,8 +24,8 @@ int nMinTowers = 70; // default: 70 (out of 72)
 int nMinTowersJES = 70; // default: 70 (out of 72)
 
 // Minimum events to consider bin for Pull and JES average calculation
-int nMinPull = 4; // default: 4
-int nMinJES = 5; // default: 5
+int nMinPull = 1;//4; // default: 4
+int nMinJES = 1;//5; // default: 5
 
 // Use pulls instead of relative changes
 bool doPull = true; // default: true
@@ -98,9 +98,17 @@ void JetVeto(string run = "", string version = "vx") {
   JetVetos("2025CDEFG","V3M");
   */
 
-  JetVetos("2025G","V4M");
+  //JetVetos("2025G","V4M");
   //JetVetos("2026A","V0M");
-  JetVetos("2026B","V0M");
+  //JetVetos("2026B","V0M");
+  //JetVetos("2026B","V1M");
+  //JetVetos("2026C","V1M");
+
+  // Updated veto maps on closure files
+  JetVetos("2024_nib","V11M");
+  JetVetos("2025CDEFG","V5M");
+  JetVetos("2026BD","V2M");
+  JetVetos("2026C","V2M");
 }
 
 void JetVetos(string run, string version) {
@@ -119,9 +127,11 @@ void JetVetos(string run, string version) {
 
   gROOT->ProcessLine(".! touch pdf/JetVeto");
 
+  /*
   if (run=="2026B" || run=="2026A") { nMinPull = 1; nMinJES = 1; } // Why?
-  
+  */
   TFile *f(0), *fg(0), *fpark(0);
+  /*
   if (run=="2022CD") { // Summer22
     lumi_136TeV = "Run2022CD, 8.1 fb^{-1}";
     f = new TFile("rootfiles/Iita_20230816/jmenano_data_out_2022CD_v1.root","READ");
@@ -195,6 +205,7 @@ void JetVetos(string run, string version) {
     fg = new TFile("rootfiles/Prompt2024/w48_Gam/GamHistosFill_data_2024BCDEFGHI_w48.root","READ"); // V8M
     fpark = new TFile("rootfiles/vbfparking/vbfparking_data_2024.root","READ");
   }
+  */
   /*
   if (run=="2025C") {
     lumi_136TeV = "Run2025C, 20.8 fb^{-1}";
@@ -233,15 +244,21 @@ void JetVetos(string run, string version) {
     cout << "Reading JET_" << run << "_DATA_OUT from Config.C" << endl;
     f = new TFile(mfile[Form("JET_%s_DATA_OUT",ccr)].c_str(),"READ");
   }
+  else
+    assert(false); // require Config.C to be used by now
   if (mfile.find(Form("GAM_%s_DATA",ccr))!=mfile.end()) {
     cout << "Reading GAM_" << run << "_DATA from Config.C" << endl;
     fg = new TFile(mfile[Form("GAM_%s_DATA",ccr)].c_str(),"READ");
   }
+  else
+    assert(false);  // require Config.C to be used by now
   //if (mlum[run]!="") {
   if (mlum.find(run)!=mlum.end()) {
     cout << "Reading LUM_" << run << " from Config.C" << endl;
     lumi_136TeV = Form("%s, %s",ccr,mlum[run].c_str());
   }
+  else
+    assert(false);  // require Config.C to be used by now
 
   // Don't use *cmb* files, trigger folder uncertainties messed up!!
   assert(!TString(f->GetName()).Contains("_cmb_"));
@@ -686,14 +703,16 @@ void JetVetos(string run, string version) {
     h2veto->SetTitle("JME recommended map. Hot+Cold(+not BPIX)");
     h2all->SetTitle("Union of all maps, used for JEC. Hot+cold+BPIX");
   }
-  if (run=="2024F" || run=="2024G" || run=="2024FG" ||
-      run=="2024BCDEFG" || run=="2024HI" || run=="2024BCDEFGHI" ||
-      run=="2024") {
+  //if (run=="2024F" || run=="2024G" || run=="2024FG" ||
+  //  run=="2024BCDEFG" || run=="2024HI" || run=="2024BCDEFGHI" ||
+  //  run=="2024") {
+  if (tr.Contains("2024")) {
     h2veto->SetTitle("JME recommended map. Hot+Cold+FPIX(+not BPIX)");
     h2all->SetTitle("Union of all maps, used for JEC. Hot+cold+FPIX+BPIX");
   }
-  if (run=="2025C" || run=="2025D" || run=="2025E" || run=="2025CDE" ||
-      run=="2025F" || run=="2025CDEF" || run=="2025CDEFG") {
+  //if (run=="2025C" || run=="2025D" || run=="2025E" || run=="2025CDE" ||
+  //  run=="2025F" || run=="2025CDEF" || run=="2025CDEFG") {
+  if (tr.Contains("2025")) {
     h2veto->SetTitle("JME recommended map. Hot+Cold+FPIX(+not BPIX)");
     h2all->SetTitle("Union of all maps, used for JEC. Hot+cold+FPIX+BPIX");
   }
@@ -760,17 +779,19 @@ void JetVetos(string run, string version) {
 	  h2bpix->SetBinContent(i,j,100);
 	  h2all->SetBinContent(i,j,100);
 	}
-	if (run=="2024BCD" || run=="2024BCDE" || run=="2024F" ||
-	    run=="2024G" || run=="2024FG" ||
-	    run=="2024BCDEFG" || run=="2024HI" || run=="2024BCDEFGHI" ||
-	    run=="2024") {
+	//if (run=="2024BCD" || run=="2024BCDE" || run=="2024F" ||
+	//  run=="2024G" || run=="2024FG" ||
+	//  run=="2024BCDEFG" || run=="2024HI" || run=="2024BCDEFGHI" ||
+	//  run=="2024") {
+	if (tr.Contains("2024")) {
 	  // Keep BPix for recommended, drop for JEC
 	  h2veto->SetBinContent(i,j,0);   // keep!
 	  h2bpix->SetBinContent(i,j,100); // drop
 	  h2all->SetBinContent(i,j,100);  // drop
 	}
-	if (run=="2025C" || run=="2025D" || run=="2025E" || run=="2025CDE" ||
-	    run=="2025F" || run=="2025CDEF" || run=="2025CDEFG") {
+	//if (run=="2025C" || run=="2025D" || run=="2025E" || run=="2025CDE" ||
+	//  run=="2025F" || run=="2025CDEF" || run=="2025CDEFG") {
+	if (tr.Contains("2025")) {
 	  // Keep BPix for recommended, drop for JEC
 	  h2veto->SetBinContent(i,j,0);   // keep!
 	  h2bpix->SetBinContent(i,j,100); // drop

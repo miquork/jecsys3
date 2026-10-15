@@ -1190,6 +1190,8 @@ void L2Res(bool _doClosure = doClosure, string onlyEra = "", string onlyMC  = ""
       hrc_vsEta = (TH1D*)frc->Get(Form("hrc13jes_%s","2024E_nib1"));
     if (!hrc_vsEta && (tr.Contains("2026D")))
       hrc_vsEta = (TH1D*)frc->Get(Form("hrc13jes_%s","2026B"));
+    if (!hrc_vsEta && (tr.Contains("2026BD")))
+      hrc_vsEta = (TH1D*)frc->Get(Form("hrc13jes_%s","2026B"));
     assert(hrc_vsEta);
   }
   if (frc1) {
@@ -1203,6 +1205,8 @@ void L2Res(bool _doClosure = doClosure, string onlyEra = "", string onlyMC  = ""
     if (!hrc1_vsEta && tr.Contains("2024_nib"))
       hrc1_vsEta = (TH1D*)frc1->Get(Form("hrc13jes_%s","2024E_nib1"));
     if (!hrc1_vsEta && tr.Contains("2026D"))
+      hrc1_vsEta = (TH1D*)frc1->Get(Form("hrc13jes_%s","2026B"));
+    if (!hrc1_vsEta && tr.Contains("2026BD"))
       hrc1_vsEta = (TH1D*)frc1->Get(Form("hrc13jes_%s","2026B"));
     assert(hrc1_vsEta); // force check for production JECs
     

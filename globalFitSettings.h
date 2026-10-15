@@ -178,7 +178,8 @@ const array<string,29> _gf_shapes_whitelist = {
   
   "off_nhf", // Prompt24, no hhpfc+hhnoise+hbtime+hbsipm+off with this
   "dd_nhf", // Prompt25, model HCAL problems in 2025C
-  "off_pu", // Prompt26B (high PU) vs Prompt26C (low PU)
+  "off_pu", // Prompt26B (high PU) vs Prompt26C (low PU) --- when done vs Summer24 MC
+  //"off_ho",
   
   //"ecalcc", // ECAL cc timing for 2024BCD, not 2024CR/CS/F
   //"qie11"

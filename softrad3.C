@@ -353,6 +353,7 @@ void softrad3(double etamin=0.0, double etamax=1.3, string epoch="") {
 	      TString t(cep);
 	      // Account for HB scale drop in 2025
 	      if (t.Contains("25")) Ru_d *= 0.80;
+	      if (t.Contains("PS")) Ru_d *= 0.80;
 	    }
 	    
 	    // Systematic variations for Rn_m, Ru_m numerically

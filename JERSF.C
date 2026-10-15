@@ -374,11 +374,11 @@ void JERSF(bool _doClosure = doClosure, string onlyEra = "", string onlyMC = "")
     "2025C","2025D","2025E","2025F","2025G",
     "2025CDEFG","2025DEFG"
     */
-    "2025G","2026B","2026C"
+    //"2025G","2026B","2026C"
     //"2025C0","2025CT"
     //"2025C","2025D"
     //"PhiBase","PhiIM","PhiMoM"
-		   
+    "2024_nib", "2025CDEFG"		   
   };
 
   //string vrun[] = {"2024C","2024D","2024CD"};
@@ -439,9 +439,10 @@ void JERSF(bool _doClosure = doClosure, string onlyEra = "", string onlyMC = "")
     "Summer24","Summer24","Summer24","Summer24","Summer24",
     "Summer24","Summer24"
     */
-    "Summer24","Summer24","Summer24"
+    //"Summer24","Summer24","Summer24"
     //"Winter25","Winter25"
     //"Winter25","Winter25","Winter25"
+    "Summer24","Summer24"
   };
   //string vmc[] = {"Summer23MGBPix","Summer23MGBPix","Summer23MGBPix"};
   //string vmc[] = {"Summer23MGBPix","Summer23MGBPix","Summer23MGBPix"};

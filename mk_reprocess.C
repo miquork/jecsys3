@@ -99,7 +99,8 @@
   if (TString(epoch.c_str()).Contains("26C"))
     globalFitEtaBin(0.0, 1.3, epoch, "Prompt26_lowPU_V1M", doClosure);
   else if (TString(epoch.c_str()).Contains("26"))
-    globalFitEtaBin(0.0, 1.3, epoch, "Prompt26_V2M", doClosure);
+    //globalFitEtaBin(0.0, 1.3, epoch, "Prompt26_V2M", doClosure);
+    globalFitEtaBin(0.0, 1.3, epoch, "Prompt26_highPU_V1M", doClosure);
   else if (TString(epoch.c_str()).Contains("25"))
     globalFitEtaBin(0.0, 1.3, epoch, "Prompt25_V5M", doClosure);
   else if (TString(epoch.c_str()).Contains("24"))
